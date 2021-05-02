@@ -1,0 +1,5 @@
+databaseChangeLog:
+  - include:
+      file: classpath*:liquibase/change-sets/20210501170000-initial-schema.yml
+  - include:
+      file: classpath*:liquibase/change-sets/20210501170817-initial-users.yml

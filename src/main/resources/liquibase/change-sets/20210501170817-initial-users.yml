@@ -1,0 +1,83 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-auth-user
+      author: balys
+      changes:
+        - createTable:
+            schemaName: auth
+            tableName: user
+            columns:
+              - column:
+                  name: id
+                  type: SERIAL
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: PK_user_id
+              - column:
+                  name: email
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+
+        - createTable:
+            schemaName: auth
+            tableName: user_google_credential
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: PK_user_google_credential_id
+                  name: id
+                  type: SERIAL
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    unique: true
+              - column:
+                  name: google_access_token
+                  type: VARCHAR
+              - column:
+                  name: google_refresh_token
+                  type: VARCHAR
+              - column:
+                  name: google_token_expiration_time_ms
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: updated_at
+                  type: TIMESTAMP
+
+        - addForeignKeyConstraint:
+            baseTableSchemaName: auth
+            baseTableName: user_google_credential
+            baseColumnNames: user_id
+            constraintName: FK_user_google_credential_user_id
+            referencedTableSchemaName: auth
+            referencedTableName: user
+            referencedColumnNames: id
+            validate: true
+            onDelete: CASCADE
+
+        - createIndex:
+            schemaName: auth
+            tableName: user
+            columns:
+              - column:
+                  name: email
+            indexName: IDX_email
+            unique: true
+

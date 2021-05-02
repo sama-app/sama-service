@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-auth-schema
+      author: balys
+      changes:
+        - sql:
+            sql: create schema if not exists auth;
+      rollback:
+        - sql:
+            sql: drop schema auth;

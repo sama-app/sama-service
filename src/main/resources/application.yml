@@ -1,0 +1,41 @@
+server:
+  port: 3000
+  servlet:
+    context-path: /
+
+spring:
+  datasource:
+    host: localhost
+    port: 5433
+    database-name: sama
+    username: postgres
+    password: password
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://${spring.datasource.host}:${spring.datasource.port}/${spring.datasource.database-name}
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      show-sql: true
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        jdbc:
+          batch_size: 100
+        temp:
+          use_jdbc_metadata_defaults: false
+  liquibase:
+    enabled: true
+    change-log: liquibase/db.changelog-sama.yml
+
+sama:
+  auth.jwt:
+    access:
+      signingSecret: dummy-access-secret-for-development
+      expirationSec: 21600 # 6 hours
+      keyId: dummy-access-key-id-for-development
+    refresh:
+      signingSecret: dummy-refresh-secret-for-development
+      expirationSec: 2592000 # 30 days
+      keyId: dummy-refresh-key-id-for-development
+    

@@ -1,0 +1,10 @@
+version: "3.8"
+services:
+  sama-db:
+    container_name: sama-db
+    image: postgres:13-alpine
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: sama
+      POSTGRES_PASSWORD: password
