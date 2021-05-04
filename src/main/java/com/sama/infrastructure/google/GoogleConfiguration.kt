@@ -54,6 +54,7 @@ class GoogleConfiguration {
         )
             .setDataStoreFactory(JPADataStoreFactory(authUserRepository))
             .setAccessType("offline")
+            .setApprovalPrompt("force") // TODO: remove after initial testing
             .build()
     }
 
