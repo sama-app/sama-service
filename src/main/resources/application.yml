@@ -28,6 +28,10 @@ spring:
     enabled: true
     change-log: liquibase/db.changelog-sama.yml
 
+springdoc:
+  api-docs:
+    path: /api/docs
+
 sama:
   auth.jwt:
     access:
