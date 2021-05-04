@@ -24,11 +24,11 @@ class Jwt {
         verify(jwtConfiguration)
     }
 
-    constructor(user: AuthUser, jwtConfiguration: JwtConfiguration, clock: Clock) {
+    constructor(email: String, jwtConfiguration: JwtConfiguration, clock: Clock) {
         this.token = JWT.create()
             .withKeyId(jwtConfiguration.keyId)
             .withJWTId(UUID.randomUUID().toString())
-            .withSubject(user.email())
+            .withSubject(email)
             .withIssuedAt(Date.from(clock.instant()))
             .withExpiresAt(Date.from(clock.instant().plusSeconds(jwtConfiguration.expirationSec)))
             .sign(Algorithm.HMAC256(jwtConfiguration.signingSecret))

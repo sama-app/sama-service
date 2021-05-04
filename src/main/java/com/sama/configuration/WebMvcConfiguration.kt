@@ -2,11 +2,13 @@ package com.sama.configuration
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.Import
 import org.springframework.web.filter.CommonsRequestLoggingFilter
 import org.springframework.web.servlet.config.annotation.EnableWebMvc
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport
 
 @Configuration
+@Import(WebSecurityConfiguration::class)
 @EnableWebMvc
 class WebMvcConfiguration : WebMvcConfigurationSupport() {
     private val headerBlacklist = listOf("authorization", "cookie")

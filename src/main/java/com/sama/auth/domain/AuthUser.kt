@@ -1,10 +1,5 @@
 package com.sama.auth.domain
 
-import com.google.api.client.auth.oauth2.TokenResponse
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier
-import com.google.api.client.googleapis.auth.oauth2.GoogleTokenResponse
-import liquibase.pro.packaged.it
-import liquibase.pro.packaged.t
 import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.annotation.LastModifiedDate
 import java.time.Clock
@@ -83,8 +78,8 @@ class AuthUser(email: String) {
         refreshJwtConfiguration: JwtConfiguration,
         clock: Clock,
     ): JwtPair {
-        val accessToken = Jwt(this, accessJwtConfiguration, clock).token
-        val refreshToken = Jwt(this, refreshJwtConfiguration, clock).token
+        val accessToken = Jwt(email!!, accessJwtConfiguration, clock).token
+        val refreshToken = Jwt(email!!, refreshJwtConfiguration, clock).token
         return JwtPair(accessToken, refreshToken)
     }
 
@@ -95,7 +90,7 @@ class AuthUser(email: String) {
         clock: Clock,
     ): JwtPair {
         val verifiedRefreshToken = Jwt(refreshToken, refreshJwtConfiguration).token
-        val accessToken = Jwt(this, accessJwtConfiguration, clock).token
+        val accessToken = Jwt(email!!, accessJwtConfiguration, clock).token
         return JwtPair(accessToken, verifiedRefreshToken)
     }
 }
