@@ -34,7 +34,7 @@ class TestController(
 
         val authUser = authUserRepository.findByEmail(email)
 
-        val credential = googleAuthorizationCodeFlow.loadCredential(authUser?.id().toString())
+        val credential = googleAuthorizationCodeFlow.loadCredential("authUser?.id().toString()")
         val HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport()
         val service = Calendar.Builder(HTTP_TRANSPORT, JacksonFactory.getDefaultInstance(), credential)
             .setApplicationName("Sama App")

@@ -1,7 +1,5 @@
 package com.sama.auth.application
 
-import com.google.api.client.auth.oauth2.AuthorizationCodeRequestUrl
-import com.google.api.client.auth.oauth2.TokenResponse
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier
 import com.sama.auth.configuration.AccessJwtConfiguration
@@ -9,10 +7,7 @@ import com.sama.auth.configuration.RefreshJwtConfiguration
 import com.sama.auth.domain.AuthUser
 import com.sama.auth.domain.AuthUserRepository
 import com.sama.auth.domain.InvalidEmailException
-import com.sama.auth.domain.Jwt
-import liquibase.pro.packaged.it
 import org.springframework.stereotype.Service
-import java.lang.RuntimeException
 import java.time.Clock
 
 @Service

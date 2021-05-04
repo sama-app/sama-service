@@ -34,8 +34,8 @@ class AuthUser(email: String) {
         this.updatedAt = Instant.now()
     }
 
-    fun id(): Long {
-        return id!!
+    fun id(): Long? {
+        return id
     }
 
     fun email(): String {
