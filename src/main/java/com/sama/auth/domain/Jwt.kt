@@ -38,6 +38,10 @@ class Jwt {
         return JWT.decode(token)
     }
 
+    fun userEmail(): String {
+        return decoded().subject
+    }
+
     private fun verify(jwtConfiguration: JwtConfiguration) {
         val algorithm = Algorithm.HMAC256(jwtConfiguration.signingSecret)
         val jwtVerifier = JWT.require(algorithm).build()

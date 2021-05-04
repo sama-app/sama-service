@@ -8,6 +8,7 @@ import com.google.api.client.util.DateTime
 import com.google.api.services.calendar.Calendar
 import com.google.api.services.calendar.model.Event
 import com.sama.auth.configuration.AccessJwtConfiguration
+import com.sama.auth.domain.AuthUserRepository
 import com.sama.auth.domain.Jwt
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RestController
@@ -16,6 +17,7 @@ import javax.servlet.http.HttpServletRequest
 @RestController
 class TestController(
     private val googleAuthorizationCodeFlow: GoogleAuthorizationCodeFlow,
+    private val authUserRepository: AuthUserRepository,
     private val jwtConfiguration: AccessJwtConfiguration
 ) {
 
@@ -28,9 +30,11 @@ class TestController(
     fun getCalendar(request: HttpServletRequest): List<Event> {
         val jwt = request.getHeader("Authorization").split("Bearer ".toRegex()).toTypedArray()[1]
         val decodedJwt = Jwt(jwt, jwtConfiguration).decoded()
-
         val email = decodedJwt.subject
-        val credential = googleAuthorizationCodeFlow.loadCredential(email)
+
+        val authUser = authUserRepository.findByEmail(email)
+
+        val credential = googleAuthorizationCodeFlow.loadCredential(authUser?.id().toString())
         val HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport()
         val service = Calendar.Builder(HTTP_TRANSPORT, JacksonFactory.getDefaultInstance(), credential)
             .setApplicationName("Sama App")
