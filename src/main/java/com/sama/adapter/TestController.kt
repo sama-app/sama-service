@@ -1,6 +1,5 @@
 package com.sama.adapter
 
-import com.auth0.jwt.JWT
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport
 import com.google.api.client.json.jackson2.JacksonFactory
@@ -12,6 +11,7 @@ import com.sama.auth.domain.AuthUserRepository
 import com.sama.auth.domain.Jwt
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.servlet.view.RedirectView
 import javax.servlet.http.HttpServletRequest
 
 @RestController
@@ -21,7 +21,7 @@ class TestController(
     private val jwtConfiguration: AccessJwtConfiguration
 ) {
 
-    @GetMapping("/")
+    @GetMapping("/api/")
     fun hello(): String {
         return "Hello, dear Sama user!"
     }

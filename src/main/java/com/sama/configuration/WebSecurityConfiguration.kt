@@ -36,8 +36,8 @@ class WebSecurityConfiguration(
             // OpenApi Spec
             .antMatchers(HttpMethod.GET, "/api/docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
             // Google OAuth2
-            .antMatchers(HttpMethod.POST, "/api/auth/google-authorize").permitAll()
-            .antMatchers(HttpMethod.GET, "/api/auth/google-oauth2").permitAll()
+            .antMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
+            .antMatchers(HttpMethod.GET, "/api/auth/**").permitAll()
             // All other requests require authentication
             .anyRequest().authenticated().and()
             // Setup JWT authorization filter
