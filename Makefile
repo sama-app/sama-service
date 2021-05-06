@@ -15,3 +15,9 @@ aws: build-container upload-to-ecr deploy
 
 purge-db:
 	mvn liquibase:rollback -Dliquibase.rollbackCount=9999
+
+rollback-one:
+		mvn liquibase:rollback -Dliquibase.rollbackCount=1
+
+
+https://app.yoursama.com/api/auth/success?accessToken=

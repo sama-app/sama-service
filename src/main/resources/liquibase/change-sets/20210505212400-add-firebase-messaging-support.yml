@@ -1,0 +1,39 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-firebase-messaging-support
+      author: balys
+      changes:
+        - createTable:
+            schemaName: auth
+            tableName: user_firebase_credential
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: PK_user_firebase_credential_device_id
+                  name: device_id
+                  type: UUID
+              - column:
+                  name: user_id
+                  type: BIGINT
+              - column:
+                  name: firebase_registration_token
+                  type: VARCHAR
+              - column:
+                  constraints:
+                    nullable: false
+                  name: updated_at
+                  type: TIMESTAMP
+
+        - addForeignKeyConstraint:
+            baseTableSchemaName: auth
+            baseTableName: user_firebase_credential
+            baseColumnNames: user_id
+            constraintName: FK_user_firebase_credential_user_id
+            referencedTableSchemaName: auth
+            referencedTableName: user
+            referencedColumnNames: id
+            validate: true
+            onDelete: CASCADE
+

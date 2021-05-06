@@ -36,7 +36,7 @@ sama:
   auth.jwt:
     access:
       signingSecret: dummy-access-secret-for-development
-      expirationSec: 21600 # 6 hours
+      expirationSec: 2592000 # 30 days
       keyId: dummy-access-key-id-for-development
     refresh:
       signingSecret: dummy-refresh-secret-for-development

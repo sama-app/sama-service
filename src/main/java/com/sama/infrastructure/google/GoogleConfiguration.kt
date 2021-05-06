@@ -8,7 +8,9 @@ import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.json.jackson2.JacksonFactory
 import com.google.api.services.calendar.CalendarScopes
 import com.google.api.services.oauth2.Oauth2Scopes
-import com.google.common.collect.Lists
+import com.google.auth.oauth2.GoogleCredentials
+import com.google.firebase.FirebaseApp
+import com.google.firebase.FirebaseOptions
 import com.sama.SamaApplication
 import com.sama.auth.domain.AuthUserRepository
 import org.springframework.context.annotation.Bean
@@ -16,15 +18,17 @@ import org.springframework.context.annotation.Configuration
 import java.io.FileNotFoundException
 import java.io.InputStreamReader
 
+
 @Configuration
-class GoogleConfiguration {
-    private val SCOPES: List<String> = Lists.newArrayList(
+class GoogleConfiguration() {
+    private val SCOPES: List<String> = listOf(
         CalendarScopes.CALENDAR_READONLY,
         Oauth2Scopes.USERINFO_EMAIL,
         Oauth2Scopes.USERINFO_PROFILE
     )
     private val CLIENT_ID = "690866307711-8nm12p73mo585k5njoaqepjupgm31im3.apps.googleusercontent.com"
-    private val CREDENTIALS_FILE_PATH = "/credentials.json"
+    private val GOOGLE_CREDENTIALS_FILE_PATH = "/secrets/google-credentials.json"
+    private val FIREBASE_CREDENTIALS_FILE_PATH = "/secrets/firebase-adminsdk-credentials.json"
 
     @Bean
     fun googleJacksonFactory(): JacksonFactory {
@@ -33,8 +37,8 @@ class GoogleConfiguration {
 
     @Bean
     fun googleClientSecrets(): GoogleClientSecrets {
-        val credentialsFile = SamaApplication::class.java.getResourceAsStream(CREDENTIALS_FILE_PATH)
-            ?: throw FileNotFoundException("Resource not found: $CREDENTIALS_FILE_PATH")
+        val credentialsFile = SamaApplication::class.java.getResourceAsStream(GOOGLE_CREDENTIALS_FILE_PATH)
+            ?: throw FileNotFoundException("Resource not found: $GOOGLE_CREDENTIALS_FILE_PATH")
         val jsonFactory = JacksonFactory.getDefaultInstance()
         return GoogleClientSecrets.load(jsonFactory, InputStreamReader(credentialsFile))
     }
@@ -66,5 +70,17 @@ class GoogleConfiguration {
         )
             .setAudience(listOf(CLIENT_ID))
             .build()
+    }
+
+    @Bean
+    fun firebaseAdminSdk(): FirebaseApp {
+        val serviceAccount = SamaApplication::class.java.getResourceAsStream(FIREBASE_CREDENTIALS_FILE_PATH)
+            ?: throw FileNotFoundException("Resource not found: $FIREBASE_CREDENTIALS_FILE_PATH")
+
+        val options = FirebaseOptions.builder()
+            .setCredentials(GoogleCredentials.fromStream(serviceAccount))
+            .build()
+
+        return FirebaseApp.initializeApp(options)
     }
 }

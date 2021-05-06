@@ -73,7 +73,7 @@ class JPADataStore internal constructor(
 
     override fun delete(id: String): DataStore<StoredCredential> {
         authUserRepository.findById(id.toLong()).toNullable()
-            ?.removeGoogleCredential()
+            ?.apply { removeGoogleCredential() }
             ?.also { authUserRepository.save(it) }
         return this
     }

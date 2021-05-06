@@ -8,6 +8,7 @@ import com.sama.auth.application.GoogleOauth2Redirect
 import com.sama.auth.application.GoogleOauth2Success
 import liquibase.pro.packaged.it
 import org.springframework.mobile.device.DeviceUtils
+import org.springframework.security.core.Authentication
 import org.springframework.ui.ModelMap
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
@@ -20,11 +21,11 @@ import javax.servlet.http.HttpServletRequest
 
 
 @RestController
-class GoogleOauth2Controller internal constructor(
+class GoogleOauth2Controller(
     private val googleOauth2ApplicationService: GoogleOauth2ApplicationService,
 ) {
     @PostMapping("/api/auth/google-authorize")
-    fun googleAuthorize(request: HttpServletRequest): GoogleOauth2Redirect {
+    fun googleAuthorize(authentication: Authentication?, request: HttpServletRequest): GoogleOauth2Redirect {
         val redirectUri = redirectUri(request)
         return googleOauth2ApplicationService.beginGoogleOauth2(redirectUri)
     }

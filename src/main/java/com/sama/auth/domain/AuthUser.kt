@@ -1,17 +1,30 @@
 package com.sama.auth.domain
 
+import com.google.firebase.messaging.FirebaseMessaging
+import com.google.firebase.messaging.FirebaseMessagingException
+import com.google.firebase.messaging.Message
 import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.annotation.LastModifiedDate
 import java.time.Clock
 import java.time.Instant
+import java.util.*
 import javax.persistence.*
 
 @Entity
 @Table(schema = "auth", name = "user")
-@SecondaryTable(
-    schema = "auth", name = "user_google_credential",
-    pkJoinColumns = [PrimaryKeyJoinColumn(name = "user_id")]
+@SecondaryTables(
+    value = [
+        SecondaryTable(
+            schema = "auth", name = "user_google_credential",
+            pkJoinColumns = [PrimaryKeyJoinColumn(name = "user_id")]
+        ),
+        SecondaryTable(
+            schema = "auth", name = "user_firebase_credential",
+            pkJoinColumns = [PrimaryKeyJoinColumn(name = "user_id")]
+        )
+    ]
 )
+
 class AuthUser(email: String) {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -22,6 +35,9 @@ class AuthUser(email: String) {
 
     @Embedded
     private var googleCredential: GoogleCredential? = null
+
+    @Embedded
+    private var firebaseCredential: FirebaseCredential? = null
 
     @CreatedDate
     private var createdAt: Instant? = null
@@ -67,10 +83,36 @@ class AuthUser(email: String) {
     /**
      * Remove Google OAuth2 Credentials, revoking access to Google APIs
      */
-    fun removeGoogleCredential(): AuthUser {
+    fun removeGoogleCredential() {
         this.googleCredential = null
         this.updatedAt = Instant.now()
-        return this
+    }
+
+    /**
+     * Refresh Firebase credentials with a new token
+     */
+    fun registerFirebaseDevice(deviceId: UUID, firebaseRegistrationToken: String) {
+        this.firebaseCredential = FirebaseCredential(deviceId, firebaseRegistrationToken, Instant.now())
+    }
+
+    fun unregisterFirebaseDevice(deviceId: UUID) {
+        this.firebaseCredential = null;
+    }
+
+    fun sendPushNotification(message: String, firebaseMessaging: FirebaseMessaging): String {
+        if (this.firebaseCredential == null) {
+            return "DEVICE NOT REGISTERED"
+        }
+
+        val pushNotification = Message.builder()
+            .setToken(this.firebaseCredential?.registrationToken)
+            .putData("msg", message)
+            .build()
+        try {
+            return firebaseMessaging.send(pushNotification)
+        } catch (e: FirebaseMessagingException) {
+            return e.message!!
+        }
     }
 
     fun issueJwtPair(
