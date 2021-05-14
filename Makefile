@@ -1,7 +1,7 @@
 build:
 	mvn clean install
 
-build-container: build
+container:
 	docker build -t sama-service .
 
 upload-to-ecr:
@@ -11,7 +11,7 @@ upload-to-ecr:
 deploy:
 	ssh ubuntu@18.193.45.91 -i ~/.ssh/sama-dev.pem ./deploy.sh
 
-aws: build-container upload-to-ecr deploy
+aws: build container upload-to-ecr deploy
 
 purge-db:
 	mvn liquibase:rollback -Dliquibase.rollbackCount=9999
