@@ -3,6 +3,7 @@ package com.sama.auth.domain
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.messaging.FirebaseMessagingException
 import com.google.firebase.messaging.Message
+import com.google.firebase.messaging.Notification
 import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.annotation.LastModifiedDate
 import java.time.Clock
@@ -106,7 +107,10 @@ class AuthUser(email: String) {
 
         val pushNotification = Message.builder()
             .setToken(this.firebaseCredential?.registrationToken)
-            .putData("msg", message)
+            .setNotification(Notification.builder()
+                .setBody(message)
+                .setTitle(message)
+                .build())
             .build()
         try {
             return firebaseMessaging.send(pushNotification)
