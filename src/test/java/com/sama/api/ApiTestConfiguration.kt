@@ -1,8 +1,8 @@
-package com.sama.adapter
+package com.sama.api
 
-import com.sama.adapter.common.UserIdAttributeResolver
-import com.sama.users.domain.UserRepository
+import com.sama.api.common.UserIdAttributeResolver
 import com.sama.users.domain.JwtConfiguration
+import com.sama.users.domain.UserRepository
 import org.mockito.Mockito.mock
 import org.mockito.kotlin.any
 import org.mockito.kotlin.whenever
@@ -13,7 +13,7 @@ const val jwtSigningSecret = "dummy-access-secret-for-development"
 const val jwtKeyId = "dummy-access-key-id-for-development"
 
 @Configuration
-class AdapterTestConfiguration {
+class ApiTestConfiguration {
 
     @Bean
     fun accessJwtConfiguration(): JwtConfiguration {

@@ -1,9 +1,14 @@
-package com.sama.configuration
+package com.sama.api.config
 
-import com.sama.adapter.common.UserIdAttributeResolver
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.SerializationFeature
+import com.sama.api.common.UserIdAttributeResolver
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Import
+import org.springframework.http.converter.HttpMessageConverter
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter
 import org.springframework.mobile.device.DeviceResolverHandlerInterceptor
 import org.springframework.web.filter.CommonsRequestLoggingFilter
 import org.springframework.web.method.support.HandlerMethodArgumentResolver
@@ -30,6 +35,20 @@ class WebMvcConfiguration(
         filter.setIncludeHeaders(true)
         filter.setHeaderPredicate { s: String -> !headerBlacklist.contains(s.toLowerCase()) }
         return filter
+    }
+
+    fun jsonConverter(): MappingJackson2HttpMessageConverter {
+        val objectMapper = ObjectMapper()
+        objectMapper.findAndRegisterModules()
+        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS) // enable date time serialization to string
+
+        val converter = MappingJackson2HttpMessageConverter()
+        converter.objectMapper = objectMapper
+        return converter
+    }
+
+    override fun configureMessageConverters(converters: MutableList<HttpMessageConverter<*>>) {
+        converters.add(jsonConverter())
     }
 
     override fun addInterceptors(registry: InterceptorRegistry) {

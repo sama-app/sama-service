@@ -1,11 +1,11 @@
-package com.sama.adapter.common
+package com.sama.api.common
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
-import com.sama.adapter.AdapterTestConfiguration
-import com.sama.adapter.jwtKeyId
-import com.sama.adapter.jwtSigningSecret
-import com.sama.configuration.WebMvcConfiguration
+import com.sama.api.ApiTestConfiguration
+import com.sama.api.jwtKeyId
+import com.sama.api.jwtSigningSecret
+import com.sama.api.config.WebMvcConfiguration
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
@@ -26,7 +26,7 @@ import java.util.*
 @SpringBootTest(
     classes = [
         WebMvcConfiguration::class,
-        AdapterTestConfiguration::class,
+        ApiTestConfiguration::class,
         AuthTestController::class
     ]
 )

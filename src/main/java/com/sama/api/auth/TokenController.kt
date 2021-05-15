@@ -1,4 +1,4 @@
-package com.sama.adapter.auth
+package com.sama.api.auth
 
 import com.sama.users.application.RefreshTokenCommand
 import com.sama.users.application.UserApplicationService

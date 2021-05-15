@@ -1,7 +1,7 @@
-package com.sama.adapter.users
+package com.sama.api.users
 
-import com.sama.adapter.AdapterTestConfiguration
-import com.sama.configuration.WebMvcConfiguration
+import com.sama.api.ApiTestConfiguration
+import com.sama.api.config.WebMvcConfiguration
 import com.sama.users.application.RegisterDeviceCommand
 import com.sama.users.application.UnregisterDeviceCommand
 import com.sama.users.application.UserApplicationService
@@ -26,7 +26,7 @@ import java.util.*
     classes = [
         UserController::class,
         WebMvcConfiguration::class,
-        AdapterTestConfiguration::class
+        ApiTestConfiguration::class
     ]
 )
 @AutoConfigureMockMvc
@@ -71,6 +71,22 @@ class UserControllerTest(
     }
 
     @Test
+    fun `register device without authorization fails`() {
+        val requestBody = """
+            {
+                "deviceId": "075f7e8a-e01c-4f2f-9c3b-ce5d412e618c",
+                "firebaseRegistrationToken": "some-token"
+            }
+        """
+        mockMvc.perform(
+            post("/api/user/register-device")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestBody)
+        )
+            .andExpect(status().isForbidden)
+    }
+
+    @Test
     fun `unregister device`() {
         val userId: Long = 1
         val deviceId = UUID.fromString("075f7e8a-e01c-4f2f-9c3b-ce5d412e618c")
@@ -95,5 +111,21 @@ class UserControllerTest(
         )
             .andExpect(status().isOk)
             .andExpect(content().string("true"))
+    }
+
+
+    @Test
+    fun `unregister device without authorization fails`() {
+        val requestBody = """
+            {
+                "deviceId": "075f7e8a-e01c-4f2f-9c3b-ce5d412e618c"
+            }
+        """
+        mockMvc.perform(
+            post("/api/user/unregister-device")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestBody)
+        )
+            .andExpect(status().isForbidden)
     }
 }

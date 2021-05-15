@@ -1,4 +1,4 @@
-package com.sama.infrastructure.users
+package com.sama.integration.google
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow
 import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets
@@ -8,9 +8,6 @@ import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.json.jackson2.JacksonFactory
 import com.google.api.services.calendar.CalendarScopes
 import com.google.api.services.oauth2.Oauth2Scopes
-import com.google.auth.oauth2.GoogleCredentials
-import com.google.firebase.FirebaseApp
-import com.google.firebase.FirebaseOptions
 import com.sama.SamaApplication
 import com.sama.users.domain.UserRepository
 import org.springframework.context.annotation.Bean
@@ -28,7 +25,6 @@ class GoogleConfiguration() {
     )
     private val CLIENT_ID = "690866307711-8nm12p73mo585k5njoaqepjupgm31im3.apps.googleusercontent.com"
     private val GOOGLE_CREDENTIALS_FILE_PATH = "/secrets/google-credentials.json"
-    private val FIREBASE_CREDENTIALS_FILE_PATH = "/secrets/firebase-adminsdk-credentials.json"
 
     @Bean
     fun googleJacksonFactory(): JacksonFactory {
@@ -56,7 +52,7 @@ class GoogleConfiguration() {
             googleClientSecrets(),
             SCOPES
         )
-            .setDataStoreFactory(JPADataStoreFactory(userRepository))
+            .setDataStoreFactory(GoogleCredentialJPADataStoreFactory(userRepository))
             .setAccessType("offline")
             .setApprovalPrompt("force") // TODO: remove after initial testing
             .build()
@@ -70,17 +66,5 @@ class GoogleConfiguration() {
         )
             .setAudience(listOf(CLIENT_ID))
             .build()
-    }
-
-    @Bean
-    fun firebaseAdminSdk(): FirebaseApp {
-        val serviceAccount = SamaApplication::class.java.getResourceAsStream(FIREBASE_CREDENTIALS_FILE_PATH)
-            ?: throw FileNotFoundException("Resource not found: $FIREBASE_CREDENTIALS_FILE_PATH")
-
-        val options = FirebaseOptions.builder()
-            .setCredentials(GoogleCredentials.fromStream(serviceAccount))
-            .build()
-
-        return FirebaseApp.initializeApp(options)
     }
 }

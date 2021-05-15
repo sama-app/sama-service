@@ -1,6 +1,6 @@
-package com.sama.configuration
+package com.sama.api.config
 
-import com.sama.adapter.common.JwtAuthorizationFilter
+import com.sama.api.common.JwtAuthorizationFilter
 import com.sama.users.domain.JwtConfiguration
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.annotation.Bean

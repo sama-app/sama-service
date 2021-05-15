@@ -1,6 +1,6 @@
-package com.sama.adapter.users
+package com.sama.api.users
 
-import com.sama.adapter.common.UserId
+import com.sama.api.common.UserId
 import com.sama.users.application.RegisterDeviceCommand
 import com.sama.users.application.UnregisterDeviceCommand
 import com.sama.users.application.UserApplicationService

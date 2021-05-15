@@ -1,4 +1,4 @@
-package com.sama.adapter
+package com.sama.api
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport
@@ -8,7 +8,7 @@ import com.google.api.services.calendar.Calendar
 import com.google.api.services.calendar.model.Event
 import com.google.firebase.FirebaseApp
 import com.google.firebase.messaging.FirebaseMessaging
-import com.sama.adapter.common.UserId
+import com.sama.api.common.UserId
 import com.sama.common.NotFoundException
 import com.sama.users.domain.UserRepository
 import org.springframework.data.repository.findByIdOrNull

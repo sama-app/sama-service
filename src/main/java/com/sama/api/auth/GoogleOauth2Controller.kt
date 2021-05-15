@@ -1,4 +1,4 @@
-package com.sama.adapter.auth
+package com.sama.api.auth
 
 import com.google.api.client.http.GenericUrl
 import com.sama.users.application.GoogleOauth2ApplicationService

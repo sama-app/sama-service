@@ -1,4 +1,4 @@
-package com.sama.adapter.common
+package com.sama.api.common
 
 import com.sama.users.domain.UserRepository
 import org.springframework.core.MethodParameter

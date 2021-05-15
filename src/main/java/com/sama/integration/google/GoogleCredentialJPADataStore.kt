@@ -1,4 +1,4 @@
-package com.sama.infrastructure.users
+package com.sama.integration.google
 
 import com.google.api.client.auth.oauth2.StoredCredential
 import com.google.api.client.util.store.AbstractDataStore
@@ -10,10 +10,10 @@ import com.sama.common.toNullable
 import java.util.function.Function
 import java.util.stream.Collectors
 
-class JPADataStore internal constructor(
+class GoogleCredentialJPADataStore internal constructor(
     dataStoreId: String,
     private val userRepository: UserRepository,
-    dataStoreFactory: JPADataStoreFactory
+    dataStoreFactory: GoogleCredentialJPADataStoreFactory
 ) : AbstractDataStore<StoredCredential>(dataStoreFactory, dataStoreId), DataStore<StoredCredential> {
 
     override fun keySet(): Set<String> {
