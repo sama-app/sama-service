@@ -1,4 +1,4 @@
-package com.sama.infrastructure.google
+package com.sama.infrastructure.users
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow
 import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets
@@ -12,7 +12,7 @@ import com.google.auth.oauth2.GoogleCredentials
 import com.google.firebase.FirebaseApp
 import com.google.firebase.FirebaseOptions
 import com.sama.SamaApplication
-import com.sama.auth.domain.AuthUserRepository
+import com.sama.users.domain.UserRepository
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import java.io.FileNotFoundException
@@ -49,14 +49,14 @@ class GoogleConfiguration() {
     }
 
     @Bean
-    fun googleAuthorizationCodeFlow(authUserRepository: AuthUserRepository): GoogleAuthorizationCodeFlow {
+    fun googleAuthorizationCodeFlow(userRepository: UserRepository): GoogleAuthorizationCodeFlow {
         return GoogleAuthorizationCodeFlow.Builder(
             googleNetHttpTransport(),
             googleJacksonFactory(),
             googleClientSecrets(),
             SCOPES
         )
-            .setDataStoreFactory(JPADataStoreFactory(authUserRepository))
+            .setDataStoreFactory(JPADataStoreFactory(userRepository))
             .setAccessType("offline")
             .setApprovalPrompt("force") // TODO: remove after initial testing
             .build()

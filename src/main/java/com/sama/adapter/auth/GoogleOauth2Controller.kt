@@ -1,22 +1,17 @@
 package com.sama.adapter.auth
 
 import com.google.api.client.http.GenericUrl
-import com.sama.auth.domain.JwtPair
-import com.sama.auth.application.GoogleOauth2ApplicationService
-import com.sama.auth.application.GoogleOauth2Failure
-import com.sama.auth.application.GoogleOauth2Redirect
-import com.sama.auth.application.GoogleOauth2Success
-import liquibase.pro.packaged.it
+import com.sama.users.application.GoogleOauth2ApplicationService
+import com.sama.users.application.GoogleOauth2Failure
+import com.sama.users.application.GoogleOauth2Redirect
+import com.sama.users.application.GoogleOauth2Success
 import org.springframework.mobile.device.DeviceUtils
 import org.springframework.security.core.Authentication
-import org.springframework.ui.ModelMap
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.servlet.ModelAndView
 import org.springframework.web.servlet.view.RedirectView
-import java.lang.RuntimeException
 import javax.servlet.http.HttpServletRequest
 
 

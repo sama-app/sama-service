@@ -1,4 +1,4 @@
-package com.sama.auth.domain
+package com.sama.users.domain
 
 import java.time.Instant
 import java.util.*

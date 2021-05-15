@@ -1,10 +1,10 @@
 databaseChangeLog:
   - changeSet:
-      id: create-auth-schema
+      id: create-sama-schema
       author: balys
       changes:
         - sql:
-            sql: create schema if not exists auth;
+            sql: create schema if not exists sama;
       rollback:
         - sql:
-            sql: drop schema auth;
+            sql: drop schema sama;

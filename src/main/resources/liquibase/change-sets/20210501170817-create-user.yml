@@ -1,10 +1,10 @@
 databaseChangeLog:
   - changeSet:
-      id: create-auth-user
+      id: create-user
       author: balys
       changes:
         - createTable:
-            schemaName: auth
+            schemaName: sama
             tableName: user
             columns:
               - column:
@@ -20,6 +20,11 @@ databaseChangeLog:
                   constraints:
                     nullable: false
               - column:
+                  name: active
+                  type: BOOL
+                  constraints:
+                    nullable: false
+              - column:
                   name: created_at
                   type: TIMESTAMP
                   constraints:
@@ -31,7 +36,7 @@ databaseChangeLog:
                     nullable: false
 
         - createTable:
-            schemaName: auth
+            schemaName: sama
             tableName: user_google_credential
             columns:
               - column:
@@ -62,18 +67,18 @@ databaseChangeLog:
                   type: TIMESTAMP
 
         - addForeignKeyConstraint:
-            baseTableSchemaName: auth
+            baseTableSchemaName: sama
             baseTableName: user_google_credential
             baseColumnNames: user_id
             constraintName: FK_user_google_credential_user_id
-            referencedTableSchemaName: auth
+            referencedTableSchemaName: sama
             referencedTableName: user
             referencedColumnNames: id
             validate: true
             onDelete: CASCADE
 
         - createIndex:
-            schemaName: auth
+            schemaName: sama
             tableName: user
             columns:
               - column:

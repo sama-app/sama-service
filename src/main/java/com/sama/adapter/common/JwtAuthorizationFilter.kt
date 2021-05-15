@@ -1,7 +1,7 @@
-package com.sama.adapter.auth
+package com.sama.adapter.common
 
-import com.sama.auth.domain.Jwt
-import com.sama.auth.domain.JwtConfiguration
+import com.sama.users.domain.Jwt
+import com.sama.users.domain.JwtConfiguration
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.util.StringUtils

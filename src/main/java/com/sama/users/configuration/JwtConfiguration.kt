@@ -1,6 +1,6 @@
-package com.sama.auth.configuration
+package com.sama.users.configuration
 
-import com.sama.auth.domain.JwtConfiguration
+import com.sama.users.domain.JwtConfiguration
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.context.properties.ConstructorBinding

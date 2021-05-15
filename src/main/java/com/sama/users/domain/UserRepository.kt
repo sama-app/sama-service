@@ -1,16 +1,16 @@
-package com.sama.auth.domain
+package com.sama.users.domain
 
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
 
 @Repository
-interface AuthUserRepository : JpaRepository<AuthUser, Long> {
-    @Query("select au.id from AuthUser au")
+interface UserRepository : JpaRepository<User, Long> {
+    @Query("select au.id from User au")
     fun findAllIds(): Set<Long>
 
-    fun findByEmail(email: String): AuthUser?
+    fun findByEmail(email: String): User?
 
-    @Query("select au.id from AuthUser au where email = ?1")
+    @Query("select au.id from User au where email = ?1")
     fun findIdByEmail(email: String): Long?
 }

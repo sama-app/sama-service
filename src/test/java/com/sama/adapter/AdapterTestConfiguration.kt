@@ -1,9 +1,8 @@
 package com.sama.adapter
 
-import com.sama.adapter.auth.UserIdAttributeResolver
-import com.sama.auth.domain.AuthUser
-import com.sama.auth.domain.AuthUserRepository
-import com.sama.auth.domain.JwtConfiguration
+import com.sama.adapter.common.UserIdAttributeResolver
+import com.sama.users.domain.UserRepository
+import com.sama.users.domain.JwtConfiguration
 import org.mockito.Mockito.mock
 import org.mockito.kotlin.any
 import org.mockito.kotlin.whenever
@@ -30,7 +29,7 @@ class AdapterTestConfiguration {
 
     @Bean
     fun fixedUserIdAttributeResolver(): UserIdAttributeResolver {
-        var authUserRepository = mock(AuthUserRepository::class.java)
+        var authUserRepository = mock(UserRepository::class.java)
         whenever(authUserRepository.findIdByEmail(any())).thenReturn(1)
         return UserIdAttributeResolver(authUserRepository)
     }

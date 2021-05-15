@@ -1,18 +1,18 @@
-package com.sama.auth.application
+package com.sama.users.application
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier
-import com.sama.auth.configuration.AccessJwtConfiguration
-import com.sama.auth.configuration.RefreshJwtConfiguration
-import com.sama.auth.domain.AuthUser
-import com.sama.auth.domain.AuthUserRepository
-import com.sama.auth.domain.InvalidEmailException
+import com.sama.users.configuration.AccessJwtConfiguration
+import com.sama.users.configuration.RefreshJwtConfiguration
+import com.sama.users.domain.User
+import com.sama.users.domain.UserRepository
+import com.sama.users.domain.InvalidEmailException
 import org.springframework.stereotype.Service
 import java.time.Clock
 
 @Service
 class GoogleOauth2ApplicationService(
-    private val authUserRepository: AuthUserRepository,
+    private val userRepository: UserRepository,
     private val googleAuthorizationCodeFlow: GoogleAuthorizationCodeFlow,
     private val googleIdTokenVerifier: GoogleIdTokenVerifier,
     private val accessJwtConfiguration: AccessJwtConfiguration,
@@ -52,8 +52,8 @@ class GoogleOauth2ApplicationService(
                 Pair(it, email)
             }
             .mapCatching {
-                val authUser = authUserRepository.findByEmail(email = it.second)
-                    ?: authUserRepository.save(AuthUser(email = it.second))
+                val authUser = userRepository.findByEmail(email = it.second)
+                    ?: userRepository.save(User(email = it.second))
                 Pair(it.first, authUser)
             }
             .onSuccess {

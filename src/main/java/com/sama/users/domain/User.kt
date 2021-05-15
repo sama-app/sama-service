@@ -1,4 +1,4 @@
-package com.sama.auth.domain
+package com.sama.users.domain
 
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.messaging.FirebaseMessagingException
@@ -12,27 +12,30 @@ import java.util.*
 import javax.persistence.*
 
 @Entity
-@Table(schema = "auth", name = "user")
+@Table(schema = "sama", name = "user")
 @SecondaryTables(
     value = [
         SecondaryTable(
-            schema = "auth", name = "user_google_credential",
+            schema = "sama", name = "user_google_credential",
             pkJoinColumns = [PrimaryKeyJoinColumn(name = "user_id")]
         ),
         SecondaryTable(
-            schema = "auth", name = "user_firebase_credential",
+            schema = "sama", name = "user_firebase_credential",
             pkJoinColumns = [PrimaryKeyJoinColumn(name = "user_id")]
         )
     ]
 )
 
-class AuthUser(email: String) {
+class User(email: String) {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private var id: Long? = null
 
     @Column(nullable = false)
     private var email: String? = email
+
+    @Column(nullable = false)
+    private var active: Boolean? = null
 
     @Embedded
     private var googleCredential: GoogleCredential? = null
@@ -47,6 +50,7 @@ class AuthUser(email: String) {
     private var updatedAt: Instant? = null
 
     init {
+        this.active = true
         this.createdAt = Instant.now()
         this.updatedAt = Instant.now()
     }
@@ -107,10 +111,12 @@ class AuthUser(email: String) {
 
         val pushNotification = Message.builder()
             .setToken(this.firebaseCredential?.registrationToken)
-            .setNotification(Notification.builder()
-                .setBody(message)
-                .setTitle(message)
-                .build())
+            .setNotification(
+                Notification.builder()
+                    .setBody(message)
+                    .setTitle(message)
+                    .build()
+            )
             .build()
         try {
             return firebaseMessaging.send(pushNotification)
@@ -135,6 +141,9 @@ class AuthUser(email: String) {
         refreshJwtConfiguration: JwtConfiguration,
         clock: Clock,
     ): JwtPair {
+        if (!this.active!!) {
+            throw RuntimeException("user disabled")
+        }
         val verifiedRefreshToken = Jwt(refreshToken, refreshJwtConfiguration).token
         val accessToken = Jwt(email!!, accessJwtConfiguration, clock).token
         return JwtPair(accessToken, verifiedRefreshToken)

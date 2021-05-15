@@ -1,10 +1,10 @@
 package com.sama.adapter.auth
 
 import com.sama.adapter.AdapterTestConfiguration
-import com.sama.auth.application.GoogleOauth2ApplicationService
-import com.sama.auth.application.GoogleOauth2Failure
-import com.sama.auth.application.GoogleOauth2Redirect
-import com.sama.auth.application.GoogleOauth2Success
+import com.sama.users.application.GoogleOauth2ApplicationService
+import com.sama.users.application.GoogleOauth2Failure
+import com.sama.users.application.GoogleOauth2Redirect
+import com.sama.users.application.GoogleOauth2Success
 import com.sama.configuration.WebMvcConfiguration
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith

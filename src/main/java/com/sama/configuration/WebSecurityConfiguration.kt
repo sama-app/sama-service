@@ -1,8 +1,7 @@
 package com.sama.configuration
 
-import com.sama.adapter.auth.JwtAuthorizationFilter
-import com.sama.auth.configuration.AccessJwtConfiguration
-import com.sama.auth.domain.JwtConfiguration
+import com.sama.adapter.common.JwtAuthorizationFilter
+import com.sama.users.domain.JwtConfiguration
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration

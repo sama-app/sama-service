@@ -1,4 +1,4 @@
-package com.sama.adapter.auth
+package com.sama.adapter.common
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm

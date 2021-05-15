@@ -1,6 +1,6 @@
-package com.sama.adapter.auth
+package com.sama.adapter.common
 
-import com.sama.auth.domain.AuthUserRepository
+import com.sama.users.domain.UserRepository
 import org.springframework.core.MethodParameter
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.stereotype.Component
@@ -11,7 +11,7 @@ import org.springframework.web.method.support.ModelAndViewContainer
 
 @Component
 class UserIdAttributeResolver(
-    private val authUserRepository: AuthUserRepository
+    private val userRepository: UserRepository
 ) : HandlerMethodArgumentResolver {
     override fun supportsParameter(parameter: MethodParameter): Boolean {
         return parameter.hasParameterAnnotation(UserId::class.java) &&
@@ -25,7 +25,7 @@ class UserIdAttributeResolver(
         binderFactory: WebDataBinderFactory
     ): Long {
         val token = webRequest.userPrincipal as UsernamePasswordAuthenticationToken
-        return authUserRepository.findIdByEmail(email = token.principal as String)!!
+        return userRepository.findIdByEmail(email = token.principal as String)!!
     }
 }
 

@@ -1,4 +1,4 @@
-package com.sama.auth.domain
+package com.sama.users.domain
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm

@@ -8,9 +8,9 @@ import com.google.api.services.calendar.Calendar
 import com.google.api.services.calendar.model.Event
 import com.google.firebase.FirebaseApp
 import com.google.firebase.messaging.FirebaseMessaging
-import com.sama.adapter.auth.UserId
-import com.sama.auth.domain.AuthUserRepository
+import com.sama.adapter.common.UserId
 import com.sama.common.NotFoundException
+import com.sama.users.domain.UserRepository
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController
 class TestController(
     private val googleAuthorizationCodeFlow: GoogleAuthorizationCodeFlow,
     private val firebaseApp: FirebaseApp,
-    private val authUserRepository: AuthUserRepository
+    private val userRepository: UserRepository
 ) {
 
     @GetMapping("/api/test/")
@@ -50,7 +50,7 @@ class TestController(
 
     @PostMapping("/api/test/send-push")
     fun sendPush(@UserId userId: Long, @RequestBody command: SendPushCommand): String {
-        val authUser = authUserRepository.findByIdOrNull(userId)
+        val authUser = userRepository.findByIdOrNull(userId)
             ?: throw NotFoundException(userId)
         return authUser.sendPushNotification(command.message, FirebaseMessaging.getInstance(firebaseApp))
     }

@@ -4,7 +4,7 @@ databaseChangeLog:
       author: balys
       changes:
         - createTable:
-            schemaName: auth
+            schemaName: sama
             tableName: user_firebase_credential
             columns:
               - column:
@@ -27,11 +27,11 @@ databaseChangeLog:
                   type: TIMESTAMP
 
         - addForeignKeyConstraint:
-            baseTableSchemaName: auth
+            baseTableSchemaName: sama
             baseTableName: user_firebase_credential
             baseColumnNames: user_id
             constraintName: FK_user_firebase_credential_user_id
-            referencedTableSchemaName: auth
+            referencedTableSchemaName: sama
             referencedTableName: user
             referencedColumnNames: id
             validate: true

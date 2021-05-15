@@ -2,6 +2,6 @@ databaseChangeLog:
   - include:
       file: classpath*:liquibase/change-sets/20210501170000-initial-schema.yml
   - include:
-      file: classpath*:liquibase/change-sets/20210501170817-create-auth-user.yml
+      file: classpath*:liquibase/change-sets/20210501170817-create-user.yml
   - include:
       file: classpath*:liquibase/change-sets/20210505212400-add-firebase-messaging-support.yml

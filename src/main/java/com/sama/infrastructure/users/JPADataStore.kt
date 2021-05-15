@@ -1,36 +1,35 @@
-package com.sama.infrastructure.google
+package com.sama.infrastructure.users
 
 import com.google.api.client.auth.oauth2.StoredCredential
 import com.google.api.client.util.store.AbstractDataStore
 import com.google.api.client.util.store.DataStore
-import com.sama.auth.domain.AuthUser
-import com.sama.auth.domain.AuthUserRepository
-import com.sama.auth.domain.GoogleCredential
+import com.sama.users.domain.User
+import com.sama.users.domain.UserRepository
+import com.sama.users.domain.GoogleCredential
 import com.sama.common.toNullable
-import liquibase.pro.packaged.it
 import java.util.function.Function
 import java.util.stream.Collectors
 
 class JPADataStore internal constructor(
     dataStoreId: String,
-    private val authUserRepository: AuthUserRepository,
+    private val userRepository: UserRepository,
     dataStoreFactory: JPADataStoreFactory
 ) : AbstractDataStore<StoredCredential>(dataStoreFactory, dataStoreId), DataStore<StoredCredential> {
 
     override fun keySet(): Set<String> {
-        return authUserRepository.findAllIds()
+        return userRepository.findAllIds()
             .map { it.toString() }
             .toSet()
     }
 
     override fun values(): Collection<StoredCredential> {
-        return authUserRepository.findAll().stream()
+        return userRepository.findAll().stream()
             .map(toStoredCredential)
             .collect(Collectors.toList())
     }
 
     override fun get(id: String): StoredCredential? {
-        return authUserRepository.findById(id.toLong()).toNullable()
+        return userRepository.findById(id.toLong()).toNullable()
             ?.googleCredential()
             ?.let {
                 val credential = StoredCredential()
@@ -42,7 +41,7 @@ class JPADataStore internal constructor(
     }
 
     override fun set(id: String, credential: StoredCredential): DataStore<StoredCredential> {
-        authUserRepository.findById(id.toLong()).toNullable()
+        userRepository.findById(id.toLong()).toNullable()
             ?.let {
                 when {
                     credential.refreshToken != null -> {
@@ -61,24 +60,24 @@ class JPADataStore internal constructor(
                 }
                 it
             }
-            ?.also { authUserRepository.save(it) }
+            ?.also { userRepository.save(it) }
 
         return this
     }
 
     override fun clear(): DataStore<StoredCredential> {
-        authUserRepository.deleteAll() // todo remove only google credentials
+        userRepository.deleteAll() // todo remove only google credentials
         return this
     }
 
     override fun delete(id: String): DataStore<StoredCredential> {
-        authUserRepository.findById(id.toLong()).toNullable()
+        userRepository.findById(id.toLong()).toNullable()
             ?.apply { removeGoogleCredential() }
-            ?.also { authUserRepository.save(it) }
+            ?.also { userRepository.save(it) }
         return this
     }
 
-    private val toStoredCredential = Function { au: AuthUser ->
+    private val toStoredCredential = Function { au: User ->
         val credential = StoredCredential()
         val gc: GoogleCredential = au.googleCredential()!!
         credential.accessToken = gc.accessToken
