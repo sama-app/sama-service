@@ -1,6 +1,5 @@
 package com.sama.api.config
 
-import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.sama.api.common.UserIdAttributeResolver
@@ -8,6 +7,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Import
 import org.springframework.http.converter.HttpMessageConverter
+import org.springframework.http.converter.StringHttpMessageConverter
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter
 import org.springframework.mobile.device.DeviceResolverHandlerInterceptor
 import org.springframework.web.filter.CommonsRequestLoggingFilter
@@ -41,13 +41,11 @@ class WebMvcConfiguration(
         val objectMapper = ObjectMapper()
         objectMapper.findAndRegisterModules()
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS) // enable date time serialization to string
-
-        val converter = MappingJackson2HttpMessageConverter()
-        converter.objectMapper = objectMapper
-        return converter
+        return MappingJackson2HttpMessageConverter(objectMapper)
     }
 
     override fun configureMessageConverters(converters: MutableList<HttpMessageConverter<*>>) {
+        converters.add(StringHttpMessageConverter())
         converters.add(jsonConverter())
     }
 
