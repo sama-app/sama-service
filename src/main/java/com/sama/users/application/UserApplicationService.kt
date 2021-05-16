@@ -3,10 +3,7 @@ package com.sama.users.application
 import com.sama.common.NotFoundException
 import com.sama.users.configuration.AccessJwtConfiguration
 import com.sama.users.configuration.RefreshJwtConfiguration
-import com.sama.users.domain.Jwt
-import com.sama.users.domain.JwtPair
-import com.sama.users.domain.UserRepository
-import com.sama.users.domain.UserSettingsRepository
+import com.sama.users.domain.*
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import java.time.Clock
@@ -26,7 +23,7 @@ class UserApplicationService(
 
     fun registerDevice(userId: Long, command: RegisterDeviceCommand): Boolean {
         val user = userRepository.findByIdOrNull(userId)
-            ?: throw NotFoundException(userId)
+            ?: throw NotFoundException(User::class, userId)
         user.registerFirebaseDevice(command.deviceId, command.firebaseRegistrationToken)
         userRepository.save(user)
         return true
@@ -34,7 +31,7 @@ class UserApplicationService(
 
     fun unregisterDevice(userId: Long, command: UnregisterDeviceCommand): Boolean {
         val user = userRepository.findByIdOrNull(userId)
-            ?: throw NotFoundException(userId)
+            ?: throw NotFoundException(User::class, userId)
         user.unregisterFirebaseDevice(command.deviceId)
         userRepository.save(user)
         return true
@@ -43,13 +40,14 @@ class UserApplicationService(
     fun refreshToken(command: RefreshTokenCommand): JwtPair {
         val email = Jwt(command.refreshToken, refreshJwtConfiguration).userEmail()
         val user = userRepository.findByEmail(email)
-            ?: throw NotFoundException(0L)
+            ?: throw NotFoundException(User::class, "email", email)
         return user.refreshJwt(command.refreshToken, accessJwtConfiguration, refreshJwtConfiguration, clock)
     }
 
     fun getSettings(userId: Long): UserSettingsDTO {
         val userSettings = userSettingsRepository.findByIdOrNull(userId)
-        return userSettings?.let {
+            ?: throw NotFoundException(User::class, userId)
+        return userSettings.let {
             UserSettingsDTO(
                 it.locale, it.timezone, it.format24HourTime,
                 it.workingHours.map { wh ->
@@ -57,7 +55,7 @@ class UserApplicationService(
                 }
             )
         }
-            ?: throw NotFoundException(userId)
+
     }
 }
 

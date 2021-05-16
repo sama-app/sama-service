@@ -1,5 +1,7 @@
 package com.sama.api.common
 
+import com.sama.common.NotFoundException
+import com.sama.users.domain.User
 import com.sama.users.domain.UserRepository
 import org.springframework.core.MethodParameter
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
@@ -25,7 +27,9 @@ class UserIdAttributeResolver(
         binderFactory: WebDataBinderFactory
     ): Long {
         val token = webRequest.userPrincipal as UsernamePasswordAuthenticationToken
-        return userRepository.findIdByEmail(email = token.principal as String)!!
+        val email = token.principal as String
+        return userRepository.findIdByEmail(email = email)
+            ?: throw NotFoundException(User::class, "email", email)
     }
 }
 

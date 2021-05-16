@@ -10,6 +10,7 @@ import com.google.firebase.FirebaseApp
 import com.google.firebase.messaging.FirebaseMessaging
 import com.sama.api.common.UserId
 import com.sama.common.NotFoundException
+import com.sama.users.domain.User
 import com.sama.users.domain.UserRepository
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.web.bind.annotation.GetMapping
@@ -51,7 +52,7 @@ class TestController(
     @PostMapping("/api/test/send-push")
     fun sendPush(@UserId userId: Long, @RequestBody command: SendPushCommand): String {
         val authUser = userRepository.findByIdOrNull(userId)
-            ?: throw NotFoundException(userId)
+            ?: throw NotFoundException(User::class, userId)
         return authUser.sendPushNotification(command.message, FirebaseMessaging.getInstance(firebaseApp))
     }
 }

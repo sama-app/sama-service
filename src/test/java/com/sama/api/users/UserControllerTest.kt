@@ -2,7 +2,9 @@ package com.sama.api.users
 
 import com.sama.api.ApiTestConfiguration
 import com.sama.api.config.WebMvcConfiguration
+import com.sama.common.NotFoundException
 import com.sama.users.application.*
+import com.sama.users.domain.User
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.kotlin.eq
@@ -74,7 +76,7 @@ class UserControllerTest(
     }
 
     @Test
-    fun `register device without authorization fails`() {
+    fun `register device without authorization returns 403`() {
         val requestBody = """
             {
                 "deviceId": "075f7e8a-e01c-4f2f-9c3b-ce5d412e618c",
@@ -118,7 +120,7 @@ class UserControllerTest(
 
 
     @Test
-    fun `unregister device without authorization fails`() {
+    fun `unregister device without authorization returns 403`() {
         val requestBody = """
             {
                 "deviceId": "075f7e8a-e01c-4f2f-9c3b-ce5d412e618c"
