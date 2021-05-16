@@ -4,6 +4,8 @@ import com.sama.api.common.UserId
 import com.sama.users.application.RegisterDeviceCommand
 import com.sama.users.application.UnregisterDeviceCommand
 import com.sama.users.application.UserApplicationService
+import com.sama.users.application.UserSettingsDTO
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
@@ -21,5 +23,10 @@ class UserController(
     @PostMapping("/api/user/unregister-device")
     fun unregisterDevice(@UserId userId: Long, @RequestBody command: UnregisterDeviceCommand): Boolean {
         return userApplicationService.unregisterDevice(userId, command)
+    }
+
+    @GetMapping("/api/user/settings")
+    fun getSettings(@UserId userId: Long): UserSettingsDTO {
+        return userApplicationService.getSettings(userId)
     }
 }

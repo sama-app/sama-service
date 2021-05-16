@@ -25,7 +25,6 @@ import javax.persistence.*
         )
     ]
 )
-
 class User(email: String) {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

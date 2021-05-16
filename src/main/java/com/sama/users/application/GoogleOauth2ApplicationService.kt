@@ -4,15 +4,15 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier
 import com.sama.users.configuration.AccessJwtConfiguration
 import com.sama.users.configuration.RefreshJwtConfiguration
-import com.sama.users.domain.User
-import com.sama.users.domain.UserRepository
-import com.sama.users.domain.InvalidEmailException
+import com.sama.users.domain.*
 import org.springframework.stereotype.Service
 import java.time.Clock
 
 @Service
 class GoogleOauth2ApplicationService(
     private val userRepository: UserRepository,
+    private val userSettingsRepository: UserSettingsRepository,
+    private val userSettingsDefaultsRepository: UserSettingsDefaultsRepository,
     private val googleAuthorizationCodeFlow: GoogleAuthorizationCodeFlow,
     private val googleIdTokenVerifier: GoogleIdTokenVerifier,
     private val accessJwtConfiguration: AccessJwtConfiguration,
@@ -39,6 +39,12 @@ class GoogleOauth2ApplicationService(
     }
 
     private fun completeGoogleOauth2(redirectUri: String, authorizationCode: String): GoogleOauth2Success {
+        // verifyAuthorizationCode
+        // onAuthorizationTokenVerified(email) -> createUser
+        // onUserCreated(userId) -> storeGoogleCredentials(token)
+        // onGoogleCredentialsInitialized(userId) -> loadDefaultUserSettings(userId)
+
+
         return kotlin.runCatching {
             googleAuthorizationCodeFlow.newTokenRequest(authorizationCode)
                 .setRedirectUri(redirectUri)
@@ -57,7 +63,13 @@ class GoogleOauth2ApplicationService(
                 Pair(it.first, authUser)
             }
             .onSuccess {
-                googleAuthorizationCodeFlow.createAndStoreCredential(it.first, it.second.id().toString())
+                val userId = it.second.id()!!
+                googleAuthorizationCodeFlow.createAndStoreCredential(it.first, userId.toString())
+
+                val userSettingsDefaults = userSettingsDefaultsRepository.findOne(userId)
+                val userSettings = UserSettings.usingDefaults(userId, userSettingsDefaults)
+                userSettingsRepository.save(userSettings)
+
             }
             .map {
                 val jwtPair = it.second.issueJwtPair(accessJwtConfiguration, refreshJwtConfiguration, clock)
