@@ -15,10 +15,10 @@ spring:
     driver-class-name: org.postgresql.Driver
     url: jdbc:postgresql://${spring.datasource.host}:${spring.datasource.port}/${spring.datasource.database-name}
   jpa:
+    show-sql: true
     hibernate:
       ddl-auto: none
     properties:
-      show-sql: true
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true

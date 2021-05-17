@@ -67,7 +67,7 @@ class GoogleOauth2ApplicationService(
                 googleAuthorizationCodeFlow.createAndStoreCredential(it.first, userId.toString())
 
                 val userSettingsDefaults = userSettingsDefaultsRepository.findOne(userId)
-                val userSettings = UserSettings.usingDefaults(userId, userSettingsDefaults)
+                val userSettings = UserSettings.createUsingDefaults(userId, userSettingsDefaults)
                 userSettingsRepository.save(userSettings)
 
             }

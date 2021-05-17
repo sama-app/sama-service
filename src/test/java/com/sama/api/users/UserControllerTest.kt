@@ -2,9 +2,7 @@ package com.sama.api.users
 
 import com.sama.api.ApiTestConfiguration
 import com.sama.api.config.WebMvcConfiguration
-import com.sama.common.NotFoundException
 import com.sama.users.application.*
-import com.sama.users.domain.User
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.kotlin.eq
@@ -20,8 +18,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
-import java.time.DayOfWeek.MONDAY
-import java.time.DayOfWeek.WEDNESDAY
+import java.time.DayOfWeek.*
 import java.time.LocalTime
 import java.time.ZoneId
 import java.util.*
@@ -180,6 +177,52 @@ class UserControllerTest(
     @Test
     fun `get settings without authorization fails`() {
         mockMvc.perform(get("/api/user/settings"))
+            .andExpect(status().isForbidden)
+    }
+
+    @Test
+    fun `update working hours`() {
+        val userId: Long = 1
+        whenever(
+            userApplicationService.updateWorkingHours(
+                eq(userId),
+                eq(
+                    UpdateWorkingHoursCommand(
+                        listOf(DayWorkingHoursDTO(TUESDAY, LocalTime.of(10, 0), LocalTime.of(12, 0)))
+                    )
+                )
+            )
+        )
+            .thenReturn(true)
+
+        val requestBody = """
+            {
+                "workingHours": [
+                    {
+                        "dayOfWeek": "TUESDAY",
+                        "startTime": "10:00:00",
+                        "endTime": "12:00:00"
+                    }
+                ]
+            }
+        """
+        mockMvc.perform(
+            post("/api/user/update-working-hours")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer $jwt")
+                .content(requestBody)
+        )
+            .andExpect(status().isOk)
+            .andExpect(content().string("true"))
+    }
+
+    @Test
+    fun `update working hours without authorization fails`() {
+        mockMvc.perform(
+            post("/api/user/update-working-hours")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}")
+        )
             .andExpect(status().isForbidden)
     }
 }

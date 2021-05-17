@@ -50,18 +50,30 @@ class UserApplicationService(
         return userSettings.let {
             UserSettingsDTO(
                 it.locale, it.timezone, it.format24HourTime,
-                it.workingHours.map { wh ->
-                    DayWorkingHoursDTO(wh.value.dayOfWeek, wh.value.startTime, wh.value.endTime)
+                it.workingHours().map { wh ->
+                    DayWorkingHoursDTO(wh.key, wh.value.startTime, wh.value.endTime)
                 }
             )
         }
+    }
 
+    fun updateWorkingHours(userId: Long, command: UpdateWorkingHoursCommand): Boolean {
+        val userSettings = userSettingsRepository.findByIdOrNull(userId)
+            ?: throw NotFoundException(User::class, userId)
+
+        val workingHours = command.workingHours
+            .associate { Pair(it.dayOfWeek, WorkingHours(it.startTime, it.endTime)) }
+        userSettings.updateWorkingHours(workingHours)
+
+        userSettingsRepository.save(userSettings)
+        return true
     }
 }
 
 data class RegisterDeviceCommand(val deviceId: UUID, val firebaseRegistrationToken: String)
 data class UnregisterDeviceCommand(val deviceId: UUID)
 data class RefreshTokenCommand(val refreshToken: String)
+data class UpdateWorkingHoursCommand(val workingHours: List<DayWorkingHoursDTO>)
 
 data class UserSettingsDTO(
     val locale: Locale,
