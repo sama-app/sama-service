@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories
 import java.time.Clock
 
+
 @SpringBootApplication(
     scanBasePackages = ["com.sama"]
 )

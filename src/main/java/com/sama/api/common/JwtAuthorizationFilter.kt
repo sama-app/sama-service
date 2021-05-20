@@ -14,7 +14,7 @@ import javax.servlet.http.HttpServletResponse
 
 
 /**
- * Authorizes API requests by extracting a JWT token and Authorization header in format Bearer JWT"
+ * Authorizes API requests by extracting a JWT token and Authorization header in format "Bearer $token"
  */
 class JwtAuthorizationFilter(private val accessJwtConfiguration: JwtConfiguration) : OncePerRequestFilter() {
 

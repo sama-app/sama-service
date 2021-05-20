@@ -30,6 +30,14 @@ spring:
     enabled: true
     change-log: liquibase/db.changelog-sama.yml
 
+management:
+  endpoints:
+    enabled-by-default: true
+    web:
+      base-path: /__mon
+      exposure:
+        include: "*"
+
 springdoc:
   api-docs:
     path: /api/docs

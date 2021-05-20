@@ -11,12 +11,15 @@ import org.springframework.web.context.request.NativeWebRequest
 import org.springframework.web.method.support.HandlerMethodArgumentResolver
 import org.springframework.web.method.support.ModelAndViewContainer
 
+/**
+ * Resolves [AuthUserId] annotated parameters to an Authenticated [User.id]
+ */
 @Component
 class UserIdAttributeResolver(
     private val userRepository: UserRepository
 ) : HandlerMethodArgumentResolver {
     override fun supportsParameter(parameter: MethodParameter): Boolean {
-        return parameter.hasParameterAnnotation(UserId::class.java) &&
+        return parameter.hasParameterAnnotation(AuthUserId::class.java) &&
                 parameter.parameterType.equals(Long::class.java)
     }
 
@@ -32,5 +35,3 @@ class UserIdAttributeResolver(
             ?: throw NotFoundException(User::class, "email", email)
     }
 }
-
-annotation class UserId

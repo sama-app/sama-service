@@ -8,16 +8,18 @@ import com.google.api.services.calendar.Calendar
 import com.google.api.services.calendar.model.Event
 import com.google.firebase.FirebaseApp
 import com.google.firebase.messaging.FirebaseMessaging
-import com.sama.api.common.UserId
+import com.sama.api.common.AuthUserId
 import com.sama.common.NotFoundException
 import com.sama.users.domain.User
 import com.sama.users.domain.UserRepository
+import io.swagger.v3.oas.annotations.Hidden
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
 
+@Hidden
 @RestController
 class TestController(
     private val googleAuthorizationCodeFlow: GoogleAuthorizationCodeFlow,
@@ -31,7 +33,7 @@ class TestController(
     }
 
     @GetMapping("/api/test/calendar")
-    fun getCalendar(@UserId userId: Long): List<Event> {
+    fun getCalendar(@AuthUserId userId: Long): List<Event> {
         val credential = googleAuthorizationCodeFlow.loadCredential(userId.toString())
         val HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport()
         val service = Calendar.Builder(HTTP_TRANSPORT, JacksonFactory.getDefaultInstance(), credential)
@@ -50,7 +52,7 @@ class TestController(
     }
 
     @PostMapping("/api/test/send-push")
-    fun sendPush(@UserId userId: Long, @RequestBody command: SendPushCommand): String {
+    fun sendPush(@AuthUserId userId: Long, @RequestBody command: SendPushCommand): String {
         val authUser = userRepository.findByIdOrNull(userId)
             ?: throw NotFoundException(User::class, userId)
         return authUser.sendPushNotification(command.message, FirebaseMessaging.getInstance(firebaseApp))

@@ -5,6 +5,8 @@ import com.sama.users.configuration.AccessJwtConfiguration
 import com.sama.users.configuration.RefreshJwtConfiguration
 import com.sama.users.domain.*
 import org.springframework.data.repository.findByIdOrNull
+import org.springframework.format.annotation.DateTimeFormat
+import org.springframework.format.annotation.DateTimeFormat.ISO.TIME
 import org.springframework.stereotype.Service
 import java.time.Clock
 import java.time.DayOfWeek
@@ -84,6 +86,6 @@ data class UserSettingsDTO(
 
 data class DayWorkingHoursDTO(
     val dayOfWeek: DayOfWeek,
-    val startTime: LocalTime,
-    val endTime: LocalTime
+    @DateTimeFormat(iso = TIME) val startTime: LocalTime,
+    @DateTimeFormat(iso = TIME) val endTime: LocalTime
 )

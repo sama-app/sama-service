@@ -3,8 +3,8 @@ package com.sama.api.calendar
 import com.sama.api.ApiTestConfiguration
 import com.sama.api.config.WebMvcConfiguration
 import com.sama.calendar.application.BlockApplicationService
-import com.sama.calendar.application.BlockResponse
-import com.sama.calendar.application.FetchBlocksResponse
+import com.sama.calendar.application.BlockDTO
+import com.sama.calendar.application.FetchBlocksDTO
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.kotlin.eq
@@ -54,7 +54,7 @@ class BlockControllerTest(
         val startDateTime = ZonedDateTime.of(startDate, LocalTime.of(12, 15), zoneId)
         val endDateTime = ZonedDateTime.of(startDate, LocalTime.of(12, 30), zoneId)
         whenever(blockApplicationService.fetchBlocks(eq(userId), eq(startDate), eq(endDate)))
-            .thenReturn(FetchBlocksResponse(listOf(BlockResponse(startDateTime, endDateTime, false, "test"))))
+            .thenReturn(FetchBlocksDTO(listOf(BlockDTO(startDateTime, endDateTime, false, "test"))))
 
         val expectedJson = """
         {
@@ -85,7 +85,7 @@ class BlockControllerTest(
         val endDate = LocalDate.of(2021, 1, 2)
 
         whenever(blockApplicationService.fetchBlocks(eq(userId), eq(startDate), eq(endDate)))
-            .thenReturn(FetchBlocksResponse(emptyList()))
+            .thenReturn(FetchBlocksDTO(emptyList()))
 
         val expectedJson = """
         {

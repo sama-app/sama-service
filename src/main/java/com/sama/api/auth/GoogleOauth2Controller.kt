@@ -3,10 +3,13 @@ package com.sama.api.auth
 import com.google.api.client.http.GenericUrl
 import com.sama.users.application.GoogleOauth2ApplicationService
 import com.sama.users.application.GoogleOauth2Failure
-import com.sama.users.application.GoogleOauth2Redirect
 import com.sama.users.application.GoogleOauth2Success
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.mobile.device.DeviceUtils
-import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -15,16 +18,28 @@ import org.springframework.web.servlet.view.RedirectView
 import javax.servlet.http.HttpServletRequest
 
 
+@Tag(name = "auth")
 @RestController
 class GoogleOauth2Controller(
     private val googleOauth2ApplicationService: GoogleOauth2ApplicationService,
 ) {
-    @PostMapping("/api/auth/google-authorize")
-    fun googleAuthorize(authentication: Authentication?, request: HttpServletRequest): GoogleOauth2Redirect {
-        val redirectUri = redirectUri(request)
-        return googleOauth2ApplicationService.beginGoogleOauth2(redirectUri)
-    }
 
+    @Operation(summary = "Start google OAuth2 process")
+    @PostMapping("/api/auth/google-authorize")
+    fun googleAuthorize(request: HttpServletRequest) =
+        googleOauth2ApplicationService.beginGoogleOauth2(redirectUri(request))
+
+
+    @Operation(
+        summary = "Callback for google OAuth2 process",
+        responses = [
+            ApiResponse(
+                responseCode = "302",
+                description = "Platform specific redirect URI with a authentication JWT pair",
+                content = [Content(schema = Schema(hidden = true))]
+            )
+        ],
+    )
     @GetMapping("/api/auth/google-oauth2")
     fun googleOauth2(
         request: HttpServletRequest,
