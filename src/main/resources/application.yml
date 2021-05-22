@@ -3,7 +3,8 @@ server:
   servlet:
     context-path: /
   error:
-    include-message: always
+    include-message: always  # TODO: remove for prod
+    include-stacktrace: always # TODO: remove for prod
 
 spring:
   datasource:

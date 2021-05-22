@@ -1,10 +1,9 @@
 package com.sama.api.calendar
 
-import com.sama.api.common.AuthUserId
+import com.sama.api.config.AuthUserId
 import com.sama.calendar.application.BlockApplicationService
 import com.sama.calendar.application.FetchBlocksDTO
 import io.swagger.v3.oas.annotations.Operation
-import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.format.annotation.DateTimeFormat

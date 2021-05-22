@@ -1,4 +1,4 @@
-package com.sama.api.common
+package com.sama.api.config
 
 import com.sama.users.domain.User
 import io.swagger.v3.oas.annotations.Parameter

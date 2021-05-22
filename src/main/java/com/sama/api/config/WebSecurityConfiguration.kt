@@ -1,6 +1,6 @@
 package com.sama.api.config
 
-import com.sama.api.common.JwtAuthorizationFilter
+import com.sama.api.config.security.JwtAuthorizationFilter
 import com.sama.users.domain.JwtConfiguration
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.annotation.Bean
@@ -37,9 +37,11 @@ class WebSecurityConfiguration(
             // Google OAuth2
             .antMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
             .antMatchers(HttpMethod.GET, "/api/auth/**").permitAll()
+            // Actuator
             .antMatchers(HttpMethod.GET, "/__mon/**").permitAll()
             // All other requests require authentication
-            .anyRequest().authenticated().and()
+            .anyRequest().authenticated()
+            .and()
             // Setup JWT authorization filter
             .addFilterBefore(jwtAuthorizationFilter(), UsernamePasswordAuthenticationFilter::class.java)
     }

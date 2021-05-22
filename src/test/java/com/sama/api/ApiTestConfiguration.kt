@@ -1,6 +1,6 @@
 package com.sama.api
 
-import com.sama.api.common.UserIdAttributeResolver
+import com.sama.api.config.UserIdAttributeResolver
 import com.sama.users.domain.JwtConfiguration
 import com.sama.users.domain.UserRepository
 import org.mockito.Mockito.mock

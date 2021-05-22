@@ -1,4 +1,4 @@
-package com.sama.api.common
+package com.sama.api.config.security
 
 import com.sama.users.domain.Jwt
 import com.sama.users.domain.JwtConfiguration
