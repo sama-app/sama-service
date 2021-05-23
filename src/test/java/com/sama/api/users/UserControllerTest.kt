@@ -133,7 +133,7 @@ class UserControllerTest(
 
     @Test
     fun `get settings`() {
-        whenever(userApplicationService.getSettings(eq(userId)))
+        whenever(userApplicationService.getUserSettings(eq(userId)))
             .thenReturn(
                 UserSettingsDTO(
                     Locale.ENGLISH,

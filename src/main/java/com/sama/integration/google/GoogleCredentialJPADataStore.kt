@@ -3,10 +3,11 @@ package com.sama.integration.google
 import com.google.api.client.auth.oauth2.StoredCredential
 import com.google.api.client.util.store.AbstractDataStore
 import com.google.api.client.util.store.DataStore
-import com.sama.users.domain.User
-import com.sama.users.domain.UserRepository
+import com.sama.common.findByIdOrThrow
 import com.sama.users.domain.GoogleCredential
-import com.sama.common.toNullable
+import com.sama.users.domain.UserEntity
+import com.sama.users.domain.UserRepository
+import com.sama.users.domain.applyChanges
 import java.util.function.Function
 import java.util.stream.Collectors
 
@@ -29,8 +30,8 @@ class GoogleCredentialJPADataStore internal constructor(
     }
 
     override fun get(id: String): StoredCredential? {
-        return userRepository.findById(id.toLong()).toNullable()
-            ?.googleCredential()
+        return userRepository.findByIdOrThrow(id.toLong())
+            .googleCredential
             ?.let {
                 val credential = StoredCredential()
                 credential.accessToken = it.accessToken
@@ -40,46 +41,29 @@ class GoogleCredentialJPADataStore internal constructor(
             }
     }
 
-    override fun set(id: String, credential: StoredCredential): DataStore<StoredCredential> {
-        userRepository.findById(id.toLong()).toNullable()
-            ?.let {
-                when {
-                    credential.refreshToken != null -> {
-                        it.initGoogleCredential(
-                            credential.accessToken,
-                            credential.refreshToken,
-                            credential.expirationTimeMilliseconds
-                        )
-                    }
-                    else -> {
-                        it.refreshGoogleCredential(
-                            credential.accessToken,
-                            credential.expirationTimeMilliseconds
-                        )
-                    }
-                }
-                it
-            }
-            ?.also { userRepository.save(it) }
+    override fun set(id: String, c: StoredCredential): DataStore<StoredCredential> {
+        val user = userRepository.findByIdOrThrow(id.toLong())
 
+        val newCredentials = GoogleCredential(c.accessToken, c.refreshToken, c.expirationTimeMilliseconds)
+
+        val googleCredential = user.googleCredential?.merge(newCredentials)
+            ?: newCredentials
+
+        user.applyChanges(googleCredential).also { userRepository.save(it) }
         return this
     }
 
     override fun clear(): DataStore<StoredCredential> {
-        userRepository.deleteAll() // todo remove only google credentials
-        return this
+        throw UnsupportedOperationException("Unsupported: modify GoogleCredentials directly via UserEntity")
     }
 
     override fun delete(id: String): DataStore<StoredCredential> {
-        userRepository.findById(id.toLong()).toNullable()
-            ?.apply { removeGoogleCredential() }
-            ?.also { userRepository.save(it) }
-        return this
+        throw UnsupportedOperationException("Unsupported: modify GoogleCredentials directly via UserEntity")
     }
 
-    private val toStoredCredential = Function { au: User ->
+    private val toStoredCredential = Function { au: UserEntity ->
         val credential = StoredCredential()
-        val gc: GoogleCredential = au.googleCredential()!!
+        val gc: GoogleCredential = au.googleCredential!!
         credential.accessToken = gc.accessToken
         credential.refreshToken = gc.refreshToken
         credential.expirationTimeMilliseconds = gc.expirationTimeMs

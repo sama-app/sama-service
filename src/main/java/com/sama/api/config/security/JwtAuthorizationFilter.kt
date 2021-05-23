@@ -21,11 +21,11 @@ class JwtAuthorizationFilter(private val accessJwtConfiguration: JwtConfiguratio
     @Throws(ServletException::class, IOException::class)
     override fun doFilterInternal(request: HttpServletRequest, response: HttpServletResponse, chain: FilterChain) {
         getJwtFromHeader(request)
-            ?.let {
-                runCatching { Jwt(it, accessJwtConfiguration).userEmail() }
+            ?.let { token ->
+                Jwt.verified(token, accessJwtConfiguration)
                     .onSuccess {
-                        val token = UsernamePasswordAuthenticationToken(it, null, null)
-                        SecurityContextHolder.getContext().authentication = token
+                        val auth = UsernamePasswordAuthenticationToken(it.userEmail(), null, null)
+                        SecurityContextHolder.getContext().authentication = auth
                     }
                     .onFailure { logger.info("jwt authentication error:", it) }
             }

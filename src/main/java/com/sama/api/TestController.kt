@@ -1,63 +1,18 @@
 package com.sama.api
 
-import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow
-import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport
-import com.google.api.client.json.jackson2.JacksonFactory
-import com.google.api.client.util.DateTime
-import com.google.api.services.calendar.Calendar
-import com.google.api.services.calendar.model.Event
-import com.google.firebase.FirebaseApp
-import com.google.firebase.messaging.FirebaseMessaging
-import com.sama.api.config.AuthUserId
 import com.sama.common.NotFoundException
-import com.sama.users.domain.User
-import com.sama.users.domain.UserRepository
+import com.sama.users.domain.UserEntity
 import io.swagger.v3.oas.annotations.Hidden
-import org.springframework.data.repository.findByIdOrNull
 import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
 
 @Hidden
 @RestController
-class TestController(
-    private val googleAuthorizationCodeFlow: GoogleAuthorizationCodeFlow,
-    private val firebaseApp: FirebaseApp,
-    private val userRepository: UserRepository
-) {
+class TestController {
 
     @GetMapping("/api/test/")
     fun hello(): String {
-        throw NotFoundException(User::class, 1)
+        throw NotFoundException(UserEntity::class, 1)
 //        return "Hello, dear Sama user!"
     }
-
-    @GetMapping("/api/test/calendar")
-    fun getCalendar(@AuthUserId userId: Long): List<Event> {
-        val credential = googleAuthorizationCodeFlow.loadCredential(userId.toString())
-        val HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport()
-        val service = Calendar.Builder(HTTP_TRANSPORT, JacksonFactory.getDefaultInstance(), credential)
-            .setApplicationName("Sama App")
-            .build()
-
-        // List the next 10 events from the primary calendar.
-        val now = DateTime(System.currentTimeMillis())
-        val events = service.events().list("primary")
-            .setMaxResults(10)
-            .setTimeMin(now)
-            .setOrderBy("startTime")
-            .setSingleEvents(true)
-            .execute()
-        return events.items
-    }
-
-    @PostMapping("/api/test/send-push")
-    fun sendPush(@AuthUserId userId: Long, @RequestBody command: SendPushCommand): String {
-        val authUser = userRepository.findByIdOrNull(userId)
-            ?: throw NotFoundException(User::class, userId)
-        return authUser.sendPushNotification(command.message, FirebaseMessaging.getInstance(firebaseApp))
-    }
 }
-
-data class SendPushCommand(val message: String)

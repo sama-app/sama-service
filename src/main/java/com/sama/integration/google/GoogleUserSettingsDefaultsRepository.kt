@@ -7,6 +7,7 @@ import com.google.api.services.calendar.Calendar
 import com.sama.SamaApplication
 import com.sama.users.domain.UserSettingsDefaults
 import com.sama.users.domain.UserSettingsDefaultsRepository
+import liquibase.pro.packaged.it
 import org.apache.commons.lang3.LocaleUtils
 import org.springframework.stereotype.Component
 import java.time.ZoneId
@@ -18,16 +19,21 @@ class GoogleUserSettingsDefaultsRepository(
     private val googleJacksonFactory: JacksonFactory
 ) : UserSettingsDefaultsRepository {
 
-    override fun findOne(userId: Long): UserSettingsDefaults {
-        val calendar = calendarServiceForUser(userId)
-        val settings = calendar.settings().list().execute().items
-            .associate { Pair(it.id, it.value) }
-        return UserSettingsDefaults(
-            settings["locale"]?.let { LocaleUtils.toLocale(it) },
-            settings["timezone"]?.let { ZoneId.of(it) },
-            settings["format24HourTime"]?.let { it.toBoolean() },
-            null
-        )
+    override fun findByIdOrNull(userId: Long): UserSettingsDefaults? {
+        val settings = kotlin.runCatching {
+            calendarServiceForUser(userId).settings()
+                .list().execute().items
+                .associate { Pair(it.id, it.value) }
+        }.getOrNull()
+
+        return settings?.let {
+            UserSettingsDefaults(
+                settings["locale"]?.let { LocaleUtils.toLocale(it) },
+                settings["timezone"]?.let { ZoneId.of(it) },
+                settings["format24HourTime"]?.let { it.toBoolean() },
+                null
+            )
+        }
     }
 
     private fun calendarServiceForUser(userId: Long): Calendar {

@@ -1,8 +1,8 @@
 package com.sama.api.config
 
-import com.sama.common.NotFoundException
-import com.sama.users.domain.User
+import com.sama.users.domain.UserEntity
 import com.sama.users.domain.UserRepository
+import com.sama.users.domain.findByEmailOrThrow
 import org.springframework.core.MethodParameter
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.stereotype.Component
@@ -12,7 +12,7 @@ import org.springframework.web.method.support.HandlerMethodArgumentResolver
 import org.springframework.web.method.support.ModelAndViewContainer
 
 /**
- * Resolves [AuthUserId] annotated parameters to an Authenticated [User.id]
+ * Resolves [AuthUserId] annotated parameters to an Authenticated [UserEntity.id]
  */
 @Component
 class UserIdAttributeResolver(
@@ -31,7 +31,6 @@ class UserIdAttributeResolver(
     ): Long {
         val token = webRequest.userPrincipal as UsernamePasswordAuthenticationToken
         val email = token.principal as String
-        return userRepository.findIdByEmail(email = email)
-            ?: throw NotFoundException(User::class, "email", email)
+        return userRepository.findIdByEmail(email)!!
     }
 }

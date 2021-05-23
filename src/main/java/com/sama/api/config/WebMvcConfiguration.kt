@@ -7,12 +7,15 @@ import com.sama.common.NotFoundException
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Import
+import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpStatus
 import org.springframework.http.HttpStatus.NOT_FOUND
 import org.springframework.http.ResponseEntity
 import org.springframework.http.converter.HttpMessageConverter
 import org.springframework.http.converter.StringHttpMessageConverter
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter
 import org.springframework.mobile.device.DeviceResolverHandlerInterceptor
+import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestControllerAdvice
@@ -23,6 +26,7 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler
+import java.lang.Exception
 
 
 @Configuration
@@ -66,12 +70,17 @@ class WebMvcConfiguration(
     }
 }
 
-@RestControllerAdvice
+@ControllerAdvice
 class GlobalWebMvcExceptionHandler : ResponseEntityExceptionHandler() {
 
     @ExceptionHandler(value = [NotFoundException::class])
     @ResponseStatus(NOT_FOUND)
-    fun handleNotFound(ex: NotFoundException, request: WebRequest): ResponseEntity<ApiError> =
-        ResponseEntity(ApiError.create(NOT_FOUND, ex, request), NOT_FOUND)
+    fun handleNotFound(ex: NotFoundException, request: WebRequest) =
+        handleExceptionInternal(ex, null, HttpHeaders(), NOT_FOUND, request)
 
+    override fun handleExceptionInternal(
+        ex: Exception, body: Any?, headers: HttpHeaders, status: HttpStatus, request: WebRequest
+    ): ResponseEntity<Any> = super.handleExceptionInternal(
+        ex, body ?: ApiError.create(status, ex, request), headers, status, request
+    )
 }

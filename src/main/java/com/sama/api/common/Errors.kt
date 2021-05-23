@@ -7,7 +7,7 @@ import java.util.*
 
 data class ApiError(val status: Int, val error: String, val message: String, val path: String, val timestamp: Date) {
     companion object {
-        fun create(httpStatus: HttpStatus, ex: RuntimeException, request: WebRequest) = ApiError(
+        fun create(httpStatus: HttpStatus, ex: Exception, request: WebRequest) = ApiError(
             httpStatus.value(),
             httpStatus.reasonPhrase,
             ex.message ?: "No message available",

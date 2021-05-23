@@ -1,24 +1,21 @@
 package com.sama.users.application
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier
-import com.sama.users.configuration.AccessJwtConfiguration
-import com.sama.users.configuration.RefreshJwtConfiguration
-import com.sama.users.domain.*
+import com.sama.common.ApplicationService
+import com.sama.users.domain.GoogleCredential
+import com.sama.users.domain.UserAlreadyExistsException
+import liquibase.pro.packaged.it
+import org.apache.commons.logging.LogFactory
 import org.springframework.stereotype.Service
-import java.time.Clock
 
+@ApplicationService
 @Service
 class GoogleOauth2ApplicationService(
-    private val userRepository: UserRepository,
-    private val userSettingsRepository: UserSettingsRepository,
-    private val userSettingsDefaultsRepository: UserSettingsDefaultsRepository,
+    private val userApplicationService: UserApplicationService,
     private val googleAuthorizationCodeFlow: GoogleAuthorizationCodeFlow,
-    private val googleIdTokenVerifier: GoogleIdTokenVerifier,
-    private val accessJwtConfiguration: AccessJwtConfiguration,
-    private val refreshJwtConfiguration: RefreshJwtConfiguration,
-    private val clock: Clock
 ) {
+    private val logger = LogFactory.getLog(javaClass)
+
     fun beginGoogleOauth2(redirectUri: String): GoogleOauth2Redirect {
         val authorizationUrl = googleAuthorizationCodeFlow.newAuthorizationUrl()
             .setRedirectUri(redirectUri)
@@ -26,61 +23,61 @@ class GoogleOauth2ApplicationService(
         return GoogleOauth2Redirect(authorizationUrl)
     }
 
-    fun processGoogleOauth2(
-        redirectUri: String,
-        authorizationCode: String?,
-        authorizationError: String?
-    ): GoogleOauth2Response {
+    fun processGoogleOauth2(redirectUri: String, code: String?, error: String?): GoogleOauth2Response {
         return when {
-            authorizationCode != null -> completeGoogleOauth2(redirectUri, authorizationCode)
-            authorizationError != null -> GoogleOauth2Failure("unhandled error code")
-            else -> GoogleOauth2Failure("no code or error")
+            code != null -> try {
+                processGoogleOauth2AuthCode(redirectUri, code)
+            } catch (e: Exception) {
+                logger.warn("oauth2-callback-error: $e.message")
+                GoogleOauth2Failure("sama-internal")
+            }
+            error != null -> GoogleOauth2Failure(error)
+            else -> GoogleOauth2Failure("sama-invalid-oauth-callback")
         }
     }
 
-    private fun completeGoogleOauth2(redirectUri: String, authorizationCode: String): GoogleOauth2Success {
-        // verifyAuthorizationCode
-        // onAuthorizationTokenVerified(email) -> createUser
-        // onUserCreated(userId) -> storeGoogleCredentials(token)
-        // onGoogleCredentialsInitialized(userId) -> loadDefaultUserSettings(userId)
-
-
-        return kotlin.runCatching {
+    private fun processGoogleOauth2AuthCode(redirectUri: String, authorizationCode: String): GoogleOauth2Success {
+        // Step #1: Verify Google Code
+        val verifiedToken = kotlin.runCatching {
             googleAuthorizationCodeFlow.newTokenRequest(authorizationCode)
                 .setRedirectUri(redirectUri)
                 .execute()
-        }
-            .mapCatching {
-                val email = it["id_token"]
-                    .let { it as String? }
-                    .let { googleIdTokenVerifier.verify(it) }.payload.email
-                    ?: throw InvalidEmailException()
-                Pair(it, email)
-            }
-            .mapCatching {
-                val authUser = userRepository.findByEmail(email = it.second)
-                    ?: userRepository.save(User(email = it.second))
-                Pair(it.first, authUser)
-            }
-            .onSuccess {
-                val userId = it.second.id()!!
-                googleAuthorizationCodeFlow.createAndStoreCredential(it.first, userId.toString())
+        }.map {
+            val email = it.parseIdToken().payload.email
+            VerifiedGoogleOauth2Token(email, GoogleCredential(it.accessToken, it.refreshToken, it.expiresInSeconds))
+        }.getOrThrow()
 
-                val userSettingsDefaults = userSettingsDefaultsRepository.findOne(userId)
-                val userSettings = UserSettings.createUsingDefaults(userId, userSettingsDefaults)
-                userSettingsRepository.save(userSettings)
 
+        // Step #2: Register a user with settings or refresh credentials
+        val userId = kotlin.runCatching {
+            val userId = userApplicationService.registerUser(
+                RegisterUserCommand(verifiedToken.email, verifiedToken.credential)
+            )
+            userApplicationService.createUserSettings(userId)
+            userId
+        }.recover {
+            if (it !is UserAlreadyExistsException) {
+                throw it
             }
-            .map {
-                val jwtPair = it.second.issueJwtPair(accessJwtConfiguration, refreshJwtConfiguration, clock)
-                GoogleOauth2Success(jwtPair.accessToken, jwtPair.refreshToken)
-            }
-            .getOrThrow()
+            userApplicationService.refreshCredentials(
+                RefreshCredentialsCommand(
+                    verifiedToken.email,
+                    verifiedToken.credential
+                )
+            )
+        }.getOrThrow()
+
+        // Step #3: Issue authentication tokens
+        val (accessToken, refreshToken) = userApplicationService.issueTokens(userId)
+        return GoogleOauth2Success(accessToken, refreshToken)
     }
 }
 
+data class VerifiedGoogleOauth2Token(
+    val email: String,
+    val credential: GoogleCredential
+)
 
 sealed class GoogleOauth2Response
 data class GoogleOauth2Success(val accessToken: String, val refreshToken: String) : GoogleOauth2Response()
 data class GoogleOauth2Failure(val error: String) : GoogleOauth2Response()
-data class GoogleOauth2Redirect(val authorizationUrl: String)

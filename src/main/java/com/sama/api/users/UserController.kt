@@ -3,7 +3,6 @@ package com.sama.api.users
 import com.sama.api.config.AuthUserId
 import com.sama.users.application.*
 import io.swagger.v3.oas.annotations.Operation
-import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.MediaType.APPLICATION_JSON_VALUE
@@ -51,7 +50,7 @@ class UserController(
         produces = [APPLICATION_JSON_VALUE]
     )
     fun getSettings(@AuthUserId userId: Long): UserSettingsDTO {
-        return userApplicationService.getSettings(userId)
+        return userApplicationService.getUserSettings(userId)
     }
 
     @Operation(

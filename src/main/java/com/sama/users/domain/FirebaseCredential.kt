@@ -1,9 +1,11 @@
 package com.sama.users.domain
 
+import com.sama.common.ValueObject
 import java.time.Instant
 import java.util.*
 import javax.persistence.*
 
+@ValueObject
 @Embeddable
 data class FirebaseCredential(
 

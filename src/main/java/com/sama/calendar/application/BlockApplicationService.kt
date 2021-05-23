@@ -1,11 +1,13 @@
 package com.sama.calendar.application
 
 import com.sama.calendar.domain.BlockRepository
+import com.sama.common.ApplicationService
 import org.springframework.stereotype.Service
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZonedDateTime
 
+@ApplicationService
 @Service
 class BlockApplicationService(
     private val blockRepository: BlockRepository
@@ -20,14 +22,3 @@ class BlockApplicationService(
             .map { BlockDTO(it.startDateTime, it.endDateTime, it.allDay, it.title) }
             .let { FetchBlocksDTO(it) }
 }
-
-data class BlockDTO(
-    val startDateTime: ZonedDateTime,
-    val endDateTime: ZonedDateTime,
-    val allDay: Boolean,
-    val title: String?
-)
-
-data class FetchBlocksDTO(
-    val blocks: List<BlockDTO>
-)

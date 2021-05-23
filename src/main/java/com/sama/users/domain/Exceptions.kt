@@ -1,3 +1,5 @@
 package com.sama.users.domain
 
-class InvalidEmailException : RuntimeException()
+class InactiveUserException : RuntimeException()
+class InvalidEmailException(email: String) : RuntimeException("Invalid email: '$email'")
+class UserAlreadyExistsException(email: String) : RuntimeException("User with email '$email' already exists")
