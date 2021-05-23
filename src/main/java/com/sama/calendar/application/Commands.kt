@@ -1,7 +1,7 @@
 package com.sama.calendar.application
 
 
-data class InitiateMeetingCommand(val duration: Int, val recipientEmail: String?)
+data class InitiateMeetingCommand(val duration: Long, val recipientEmail: String?)
 sealed class AddSuggestSlotCommand
 data class ModifySuggestSlotCommand(val slot: ProposedSlotDTO)
 data class RemoveSuggestSlotCommand(val slotId: Long)

@@ -7,6 +7,9 @@ import org.springframework.stereotype.Repository
 
 @Repository
 interface UserRepository : JpaRepository<UserEntity, Long> {
+    @Query("select nextval('sama.user_id_seq')", nativeQuery = true)
+    fun nextIdentity(): Long
+
     @Query("select u.id from UserEntity u")
     fun findAllIds(): Set<Long>
 

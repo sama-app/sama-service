@@ -1,0 +1,109 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-meeting
+      author: balys
+      changes:
+        - createTable:
+            schemaName: sama
+            tableName: meeting
+            columns:
+              - column:
+                  name: id
+                  type: SERIAL
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: PK_meeting_id
+              - column:
+                  name: status
+                  type: VARCHAR
+                  constraints:
+                    nullable: false
+              - column:
+                  name: initiator_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: duration_minutes
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: meeting_code
+                  type: VARCHAR
+              - column:
+                  name: recipient_id
+                  type: BIGINT
+                  constraints:
+                    nullable: true
+              - column:
+                  name: recipient_email
+                  type: VARCHAR
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+
+        - createTable:
+            schemaName: sama
+            tableName: meeting_slot
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: PK_meeting_slot_id
+                  name: id
+                  type: SERIAL
+              - column:
+                  name: meeting_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: VARCHAR
+                  constraints:
+                    nullable: false
+              - column:
+                  name: start_date_time
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: end_date_time
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  constraints:
+                    nullable: false
+                  name: updated_at
+                  type: TIMESTAMP
+
+        - addForeignKeyConstraint:
+            baseTableSchemaName: sama
+            baseTableName: meeting_slot
+            baseColumnNames: meeting_id
+            constraintName: FK_meeting_slot_meeting_id
+            referencedTableSchemaName: sama
+            referencedTableName: meeting
+            referencedColumnNames: id
+            validate: true
+            onDelete: CASCADE
+
+        - createIndex:
+            schemaName: sama
+            tableName: meeting
+            columns:
+              - column:
+                  name: initiator_id
+            indexName: IDX_initiator_id
+

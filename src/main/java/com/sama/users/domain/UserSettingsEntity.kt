@@ -52,6 +52,7 @@ data class DayWorkingHoursEntity(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private val id: Long? = null,
     private val userId: Long,
+    @Enumerated(EnumType.STRING)
     private val dayOfWeek: DayOfWeek,
 
     @Embedded

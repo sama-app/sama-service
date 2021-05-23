@@ -28,13 +28,13 @@ class UserEntity(email: String) {
     companion object {
         fun new(userRegistration: UserRegistration): UserEntity {
             val user = UserEntity(userRegistration.email)
-            user.googleCredential = userRegistration.credential
+            user.id = userRegistration.userId
+            user.googleCredential = userRegistration.credential.copy(updatedAt = Instant.now())
             return user
         }
     }
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private var id: Long? = null
 
     @Column(nullable = false)

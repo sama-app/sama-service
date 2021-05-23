@@ -1,15 +1,27 @@
 package com.sama.calendar.application
 
+import com.sama.calendar.domain.InitiatedMeeting
+import com.sama.calendar.domain.MeetingEntity
 import com.sama.calendar.domain.MeetingId
+import com.sama.calendar.domain.MeetingRepository
 import com.sama.users.domain.UserId
 import org.springframework.stereotype.Service
-import java.time.ZonedDateTime
+import java.time.Duration
 
 @Service
-class MeetingApplicationService {
+class MeetingApplicationService(
+    private val meetingRepository: MeetingRepository
+) {
 
-    fun initiateMeeting(userId: UserId, command: InitiateMeetingCommand): MeetingDTO {
-        TODO("not implemented")
+    fun initiateMeeting(userId: UserId, command: InitiateMeetingCommand): MeetingId {
+        val meetingId = meetingRepository.nextIdentity()
+        val meeting = InitiatedMeeting(meetingId, userId, Duration.ofMinutes(command.duration), emptyList())
+
+        val nextSlotIdentity = meetingRepository.nextSlotIdentity()
+
+        MeetingEntity.new(meeting).also { meetingRepository.save(it) }
+
+        return meetingId
     }
 
     fun addSuggestedSlot(userId: UserId, meetingId: MeetingId, command: AddSuggestSlotCommand): Boolean {

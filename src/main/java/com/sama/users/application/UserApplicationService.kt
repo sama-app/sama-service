@@ -22,11 +22,12 @@ class UserApplicationService(
 
     fun registerUser(command: RegisterUserCommand): Long {
         val userExistsByEmail = userRepository.existsByEmail(command.email)
+        val userId = userRepository.nextIdentity()
 
-        val userRegistration = UserRegistration(command.email, userExistsByEmail, command.googleCredential)
+        val userRegistration = UserRegistration(userId, command.email, userExistsByEmail, command.googleCredential)
 
-        val user = UserEntity.new(userRegistration).also { userRepository.save(it) }
-        return user.id()!!
+        UserEntity.new(userRegistration).also { userRepository.save(it) }
+        return userId
     }
 
     fun refreshCredentials(command: RefreshCredentialsCommand): Long {

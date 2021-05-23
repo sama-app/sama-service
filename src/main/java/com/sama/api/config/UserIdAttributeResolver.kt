@@ -2,7 +2,6 @@ package com.sama.api.config
 
 import com.sama.users.domain.UserEntity
 import com.sama.users.domain.UserRepository
-import com.sama.users.domain.findByEmailOrThrow
 import org.springframework.core.MethodParameter
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.stereotype.Component

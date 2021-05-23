@@ -10,7 +10,7 @@ import java.util.*
 import kotlin.Result.Companion.success
 
 @DomainEntity
-data class UserRegistration(val email: String, val emailExists: Boolean, val credential: GoogleCredential) {
+data class UserRegistration(val userId: Long, val email: String, val emailExists: Boolean, val credential: GoogleCredential) {
     init {
         if ('@' !in email) { // todo proper
             throw InvalidEmailException(email)
