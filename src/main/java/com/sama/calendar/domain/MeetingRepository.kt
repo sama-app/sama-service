@@ -11,4 +11,6 @@ interface MeetingRepository : JpaRepository<MeetingEntity, MeetingId> {
 
     @Query("select nextval('sama.meeting_slot_id_seq')", nativeQuery = true)
     fun nextSlotIdentity(): SlotId
+
+    fun findByCode(code: MeetingCode): MeetingEntity?
 }

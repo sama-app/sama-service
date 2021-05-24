@@ -14,6 +14,39 @@ import javax.persistence.*
 @Entity
 @Table(schema = "sama", name = "meeting")
 class MeetingEntity {
+    fun applyChanges(proposedMeeting: ProposedMeeting): MeetingEntity {
+        this.status = proposedMeeting.status
+        this.duration = proposedMeeting.duration
+        this.initiatorId = proposedMeeting.initiatorId
+        this.recipientId = proposedMeeting.meetingRecipient?.recipientId
+        this.recipientEmail = proposedMeeting.meetingRecipient?.email
+
+        val slotsMap = this.slots.associateBy { it.id!! }
+        proposedMeeting.proposedSlots
+            .forEach {
+                val slot = slotsMap[it.meetingSlotId]!!
+                slot.startDateTime = it.startTime
+                slot.endDateTime = it.endTime
+                slot.status = it.status
+            }
+
+        return this
+    }
+
+    fun applyChanges(confirmedMeeting: ConfirmedMeeting): MeetingEntity {
+        this.status = confirmedMeeting.status
+        this.duration = confirmedMeeting.duration
+        this.initiatorId = confirmedMeeting.initiatorId
+        this.recipientId = confirmedMeeting.meetingRecipient.recipientId
+        this.recipientEmail = confirmedMeeting.meetingRecipient.email
+
+        val slot = this.slots.find { it.id!! == confirmedMeeting.slot.meetingSlotId }!!
+        slot.startDateTime = confirmedMeeting.slot.startTime
+        slot.endDateTime = confirmedMeeting.slot.endTime
+        slot.status = confirmedMeeting.slot.status
+        this.updatedAt = Instant.now()
+        return this
+    }
 
     @Factory
     companion object {
@@ -32,26 +65,28 @@ class MeetingEntity {
 
 
     @Id
-    private var id: MeetingId? = null
+    var id: MeetingId? = null
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private var status: MeetingStatus? = null
+    var status: MeetingStatus? = null
 
     @Column(nullable = false)
-    private var initiatorId: UserId? = null
+    var initiatorId: UserId? = null
 
     @Column(name = "duration_minutes", nullable = false)
-    private var duration: Duration? = null
+    var duration: Duration? = null
 
-    private var recipientEmail: String? = null
+    var recipientId: UserId? = null
+
+    var recipientEmail: String? = null
 
     @OneToMany(cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(name = "meetingId", nullable = false, updatable = false, insertable = false)
-    private var slots: MutableList<MeetingSlotEntity> = mutableListOf()
+    var slots: MutableList<MeetingSlotEntity> = mutableListOf()
 
     @Column(name = "meeting_code")
-    private var code: MeetingCode? = null
+    var code: MeetingCode? = null
 
     @CreatedDate
     private var createdAt: Instant? = null
@@ -64,12 +99,12 @@ class MeetingEntity {
 @Table(schema = "sama", name = "meeting_slot")
 data class MeetingSlotEntity(
     @Id
-    private val id: SlotId? = null,
+    val id: SlotId? = null,
     private val meetingId: MeetingId,
     @Enumerated(EnumType.STRING)
-    val status: MeetingSlotStatus,
-    val startDateTime: ZonedDateTime,
-    val endDateTime: ZonedDateTime,
+    var status: MeetingSlotStatus,
+    var startDateTime: ZonedDateTime,
+    var endDateTime: ZonedDateTime,
     @LastModifiedDate
     var updatedAt: Instant? = null
 )

@@ -1,26 +1,34 @@
 package com.sama.calendar.application
 
-import com.sama.calendar.domain.InitiatedMeeting
-import com.sama.calendar.domain.MeetingEntity
-import com.sama.calendar.domain.MeetingId
-import com.sama.calendar.domain.MeetingRepository
+import com.sama.calendar.domain.*
+import com.sama.common.NotFoundException
+import com.sama.common.findByIdOrThrow
+import com.sama.common.toMinutes
+import com.sama.suggest.application.SlotSuggestionRequest
+import com.sama.suggest.application.SlotSuggestionService
 import com.sama.users.domain.UserId
 import org.springframework.stereotype.Service
-import java.time.Duration
 
 @Service
 class MeetingApplicationService(
-    private val meetingRepository: MeetingRepository
+    private val meetingRepository: MeetingRepository,
+    private val slotSuggestionService: SlotSuggestionService
 ) {
 
     fun initiateMeeting(userId: UserId, command: InitiateMeetingCommand): MeetingId {
         val meetingId = meetingRepository.nextIdentity()
-        val meeting = InitiatedMeeting(meetingId, userId, Duration.ofMinutes(command.duration), emptyList())
 
-        val nextSlotIdentity = meetingRepository.nextSlotIdentity()
+        val meetingDuration = command.duration.toMinutes()
+        val suggestedSlots = slotSuggestionService.suggestSlots(userId, SlotSuggestionRequest(10, meetingDuration))
+            .map {
+                val slotId = meetingRepository.nextSlotIdentity()
+                MeetingSlot.new(slotId, it.startTime, it.endTime)
+            }
+
+        val meetingRecipient = command.recipientEmail?.let { MeetingRecipient.fromEmail(it) }
+        val meeting = InitiatedMeeting(meetingId, userId, meetingDuration, suggestedSlots, meetingRecipient)
 
         MeetingEntity.new(meeting).also { meetingRepository.save(it) }
-
         return meetingId
     }
 
@@ -37,11 +45,30 @@ class MeetingApplicationService(
     }
 
     fun proposeMeeting(userId: UserId, meetingId: MeetingId, command: ProposeMeetingCommand): Boolean {
-        TODO("not implemented")
+        val meetingEntity = meetingRepository.findByIdOrThrow(meetingId)
+
+        // https://github.com/aventrix/jnanoid
+        // https://github.com/leprosus/kotlin-hashids
+        // TODO: generate meeting code
+        val proposedMeeting = InitiatedMeeting.of(meetingEntity).getOrThrow()
+            .propose(command.proposedSlots, "heysama")
+            .getOrThrow()
+
+        meetingEntity.applyChanges(proposedMeeting).also { meetingRepository.save(it) }
+        return true
     }
 
     fun confirmMeeting(command: ConfirmMeetingCommand): Boolean {
-        TODO("not implemented")
+        val meetingEntity = meetingRepository.findByCode(command.meetingCode)
+            ?: throw NotFoundException(MeetingEntity::class, command.meetingCode)
+
+        val meetingRecipient = command.recipientEmail.let { MeetingRecipient.fromEmail(it) }
+        val confirmedMeeting = ProposedMeeting.of(meetingEntity).getOrThrow()
+            .confirm(command.slotId, meetingRecipient)
+            .getOrThrow()
+
+        meetingEntity.applyChanges(confirmedMeeting).also { meetingRepository.save(it) }
+        return true
     }
 }
 
