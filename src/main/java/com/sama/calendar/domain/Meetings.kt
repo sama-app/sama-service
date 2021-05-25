@@ -1,5 +1,6 @@
 package com.sama.calendar.domain
 
+import com.sama.calendar.domain.MeetingSlotStatus.CONFIRMED
 import com.sama.common.DomainEntity
 import com.sama.common.Factory
 import com.sama.common.NotFoundException
@@ -23,6 +24,7 @@ enum class MeetingSlotStatus {
     SUGGESTED,
     PROPOSED,
     REMOVED,
+    CONFIRMED
 }
 
 @DomainEntity
@@ -67,7 +69,7 @@ data class InitiatedMeeting(
 
     fun removeSlot(slotId: SlotId): Result<InitiatedMeeting> {
         val slot = suggestedSlots.find { it.meetingSlotId == slotId }
-            ?: return failure(NotFoundException(MeetingSlotEntity::class, slotId))
+            ?: return failure(NotFoundException(MeetingSlot::class, slotId))
 
         val removedSlot = slot.copy(status = MeetingSlotStatus.REMOVED)
 
@@ -75,12 +77,16 @@ data class InitiatedMeeting(
     }
 
     fun propose(proposedSlotIds: Set<SlotId>, meetingCode: MeetingCode): Result<ProposedMeeting> {
+        if (proposedSlotIds.isEmpty()) {
+            return failure(InvalidMeetingProposalException(meetingId, "No slots proposed"))
+        }
+
         val proposedSlots = suggestedSlots
             .filter { it.meetingSlotId in proposedSlotIds }
             .map { it.copy(status = MeetingSlotStatus.PROPOSED) }
 
         if (proposedSlots.size != proposedSlotIds.size) {
-            return failure(NotFoundException(MeetingSlotEntity::class, proposedSlotIds))
+            return failure(NotFoundException(MeetingSlot::class, proposedSlotIds))
         }
 
         return success(
@@ -91,7 +97,7 @@ data class InitiatedMeeting(
     private fun validateSlots(slots: List<MeetingSlot>) {
         // TODO: validate duplicates
 
-        slots.firstOrNull { it.duration() < duration }
+        slots.firstOrNull { it.duration() > duration }
             ?.run {
                 throw InvalidSuggestedSlotException(meetingId, this)
             }
@@ -148,7 +154,7 @@ data class ProposedMeeting(
         // TODO: validate recipients matching
 
         return success(
-            ConfirmedMeeting(meetingId, initiatorId, duration, recipient, slot)
+            ConfirmedMeeting(meetingId, initiatorId, duration, recipient, slot.copy(status = CONFIRMED))
         )
     }
 }

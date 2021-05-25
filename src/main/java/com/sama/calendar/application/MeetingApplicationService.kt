@@ -58,7 +58,7 @@ class MeetingApplicationService(
         return true
     }
 
-    fun confirmMeeting(command: ConfirmMeetingCommand): Boolean {
+    fun confirmMeeting(userId: UserId, command: ConfirmMeetingCommand): Boolean {
         val meetingEntity = meetingRepository.findByCode(command.meetingCode)
             ?: throw NotFoundException(MeetingEntity::class, command.meetingCode)
 

@@ -47,12 +47,13 @@ class MeetingController(
     ) = meetingApplicationService.proposeMeeting(userId, meetingId, command)
 
     @Operation(
-        summary = "Confirm a meeting using a meeting code"
+        summary = "Confirm a meeting using a meeting code",
+        security = [SecurityRequirement(name = "user-auth")]
     )
     @PostMapping(
         "/api/meeting/{meetingId}/confirm",
         consumes = [MediaType.APPLICATION_JSON_VALUE]
     )
-    fun confirmMeeting(@RequestBody command: ConfirmMeetingCommand) =
-        meetingApplicationService.confirmMeeting(command)
+    fun confirmMeeting(@AuthUserId userId: Long, @RequestBody command: ConfirmMeetingCommand) =
+        meetingApplicationService.confirmMeeting(userId, command)
 }

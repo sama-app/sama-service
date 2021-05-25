@@ -8,3 +8,6 @@ class UnsupportedDurationException(meetingId: MeetingId, duration: Duration) :
 
 class InvalidSuggestedSlotException(meetingId: MeetingId, slot: MeetingSlot) :
     RuntimeException("Invalid slot '${slot.startTime} - ${slot.endTime}' for Meeting#$meetingId")
+
+class InvalidMeetingProposalException(meetingId: MeetingId, message: String) :
+    RuntimeException("Cannot propose Meeting#$meetingId: $message")
