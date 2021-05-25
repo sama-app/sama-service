@@ -6,6 +6,7 @@ import com.sama.calendar.application.InitiateMeetingCommand
 import com.sama.calendar.application.MeetingApplicationService
 import com.sama.calendar.application.ProposeMeetingCommand
 import com.sama.calendar.domain.MeetingId
+import com.sama.users.domain.UserId
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -29,7 +30,7 @@ class MeetingController(
         "/api/meeting/initiate",
         consumes = [MediaType.APPLICATION_JSON_VALUE]
     )
-    fun initiateMeeting(@AuthUserId userId: Long, @RequestBody command: InitiateMeetingCommand) =
+    fun initiateMeeting(@AuthUserId userId: UserId, @RequestBody command: InitiateMeetingCommand) =
         meetingApplicationService.initiateMeeting(userId, command)
 
     @Operation(
@@ -41,7 +42,7 @@ class MeetingController(
         consumes = [MediaType.APPLICATION_JSON_VALUE]
     )
     fun proposeMeeting(
-        @AuthUserId userId: Long,
+        @AuthUserId userId: UserId,
         @RequestParam meetingId: MeetingId,
         @RequestBody command: ProposeMeetingCommand
     ) = meetingApplicationService.proposeMeeting(userId, meetingId, command)
@@ -54,6 +55,6 @@ class MeetingController(
         "/api/meeting/{meetingId}/confirm",
         consumes = [MediaType.APPLICATION_JSON_VALUE]
     )
-    fun confirmMeeting(@AuthUserId userId: Long, @RequestBody command: ConfirmMeetingCommand) =
+    fun confirmMeeting(@AuthUserId userId: UserId, @RequestBody command: ConfirmMeetingCommand) =
         meetingApplicationService.confirmMeeting(userId, command)
 }

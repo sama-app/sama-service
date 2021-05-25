@@ -18,7 +18,7 @@ import javax.persistence.GenerationType.IDENTITY
 
 @DomainEntity
 data class UserSettings(
-    val userId: Long,
+    val userId: UserId,
     val locale: Locale,
     val timezone: ZoneId,
     val format24HourTime: Boolean,
@@ -27,7 +27,7 @@ data class UserSettings(
 
     @Factory
     companion object {
-        fun createWithDefaults(userId: Long, defaults: UserSettingsDefaults?): UserSettings {
+        fun createWithDefaults(userId: UserId, defaults: UserSettingsDefaults?): UserSettings {
             return UserSettings(
                 userId,
                 locale = defaults?.locale ?: Locale.ENGLISH,

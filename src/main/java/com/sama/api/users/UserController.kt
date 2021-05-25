@@ -2,6 +2,7 @@ package com.sama.api.users
 
 import com.sama.api.config.AuthUserId
 import com.sama.users.application.*
+import com.sama.users.domain.UserId
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -25,7 +26,7 @@ class UserController(
         "/api/user/register-device",
         consumes = [APPLICATION_JSON_VALUE]
     )
-    fun registerDevice(@AuthUserId userId: Long, @RequestBody command: RegisterDeviceCommand) =
+    fun registerDevice(@AuthUserId userId: UserId, @RequestBody command: RegisterDeviceCommand) =
         userApplicationService.registerDevice(userId, command)
 
 
@@ -37,7 +38,7 @@ class UserController(
         "/api/user/unregister-device",
         consumes = [APPLICATION_JSON_VALUE]
     )
-    fun unregisterDevice(@AuthUserId userId: Long, @RequestBody command: UnregisterDeviceCommand) =
+    fun unregisterDevice(@AuthUserId userId: UserId, @RequestBody command: UnregisterDeviceCommand) =
         userApplicationService.unregisterDevice(userId, command)
 
 
@@ -49,7 +50,7 @@ class UserController(
         "/api/user/settings",
         produces = [APPLICATION_JSON_VALUE]
     )
-    fun getSettings(@AuthUserId userId: Long): UserSettingsDTO {
+    fun getSettings(@AuthUserId userId: UserId): UserSettingsDTO {
         return userApplicationService.getUserSettings(userId)
     }
 
@@ -61,7 +62,7 @@ class UserController(
         "/api/user/update-working-hours",
         consumes = [APPLICATION_JSON_VALUE]
     )
-    fun updateWorkingHours(@AuthUserId userId: Long, @RequestBody command: UpdateWorkingHoursCommand) =
+    fun updateWorkingHours(@AuthUserId userId: UserId, @RequestBody command: UpdateWorkingHoursCommand) =
         userApplicationService.updateWorkingHours(userId, command)
 
 }

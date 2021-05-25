@@ -10,7 +10,7 @@ import java.util.*
 import kotlin.Result.Companion.success
 
 @DomainEntity
-data class UserRegistration(val userId: Long, val email: String, val emailExists: Boolean, val credential: GoogleCredential) {
+data class UserRegistration(val userId: UserId, val email: String, val emailExists: Boolean, val credential: GoogleCredential) {
     init {
         if ('@' !in email) { // todo proper
             throw InvalidEmailException(email)
@@ -23,7 +23,7 @@ data class UserRegistration(val userId: Long, val email: String, val emailExists
 }
 
 @DomainEntity
-data class UserDeviceRegistrations(val userId: Long, val deviceId: UUID?, val firebaseRegistrationToken: String?) {
+data class UserDeviceRegistrations(val userId: UserId, val deviceId: UUID?, val firebaseRegistrationToken: String?) {
 
     @Factory
     companion object {
@@ -53,7 +53,7 @@ data class UserDeviceRegistrations(val userId: Long, val deviceId: UUID?, val fi
 }
 
 @DomainService
-data class UserJwtIssuer(val userId: Long, val email: String, val active: Boolean) {
+data class UserJwtIssuer(val userId: UserId, val email: String, val active: Boolean) {
 
     @Factory
     companion object {

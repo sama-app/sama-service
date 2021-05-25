@@ -20,7 +20,7 @@ class UserApplicationService(
     private val clock: Clock
 ) {
 
-    fun registerUser(command: RegisterUserCommand): Long {
+    fun registerUser(command: RegisterUserCommand): UserId {
         val userExistsByEmail = userRepository.existsByEmail(command.email)
         val userId = userRepository.nextIdentity()
 
@@ -30,14 +30,14 @@ class UserApplicationService(
         return userId
     }
 
-    fun refreshCredentials(command: RefreshCredentialsCommand): Long {
+    fun refreshCredentials(command: RefreshCredentialsCommand): UserId {
         val user = userRepository.findByEmailOrThrow(command.email)
 
         user.applyChanges(command.googleCredential).also { userRepository.save(it) }
         return user.id()!!
     }
 
-    fun registerDevice(userId: Long, command: RegisterDeviceCommand): Boolean {
+    fun registerDevice(userId: UserId, command: RegisterDeviceCommand): Boolean {
         val user = userRepository.findByIdOrThrow(userId)
 
         val changes = UserDeviceRegistrations.of(user)
@@ -48,7 +48,7 @@ class UserApplicationService(
         return true
     }
 
-    fun unregisterDevice(userId: Long, command: UnregisterDeviceCommand): Boolean {
+    fun unregisterDevice(userId: UserId, command: UnregisterDeviceCommand): Boolean {
         val user = userRepository.findByIdOrThrow(userId)
 
         val changes = UserDeviceRegistrations.of(user)
@@ -59,7 +59,7 @@ class UserApplicationService(
         return true
     }
 
-    fun issueTokens(userId: Long): JwtPairDTO {
+    fun issueTokens(userId: UserId): JwtPairDTO {
         val user = userRepository.findByIdOrThrow(userId)
 
         val userJwtIssuer = UserJwtIssuer.of(user)
@@ -84,7 +84,7 @@ class UserApplicationService(
         return JwtPairDTO(accessToken.token, refreshToken.token)
     }
 
-    fun createUserSettings(userId: Long): Boolean {
+    fun createUserSettings(userId: UserId): Boolean {
         val userSettingsDefaults = userSettingsDefaultsRepository.findByIdOrNull(userId)
 
         val userSettings = UserSettings.createWithDefaults(userId, userSettingsDefaults)
@@ -93,7 +93,7 @@ class UserApplicationService(
         return true
     }
 
-    fun getUserSettings(userId: Long): UserSettingsDTO {
+    fun getUserSettings(userId: UserId): UserSettingsDTO {
         val userSettings = userSettingsRepository.findByIdOrThrow(userId)
         return userSettings.let {
             UserSettingsDTO(
@@ -107,7 +107,7 @@ class UserApplicationService(
         }
     }
 
-    fun updateWorkingHours(userId: Long, command: UpdateWorkingHoursCommand): Boolean {
+    fun updateWorkingHours(userId: UserId, command: UpdateWorkingHoursCommand): Boolean {
         val entity = userSettingsRepository.findByIdOrThrow(userId)
 
         val workingHours = command.workingHours

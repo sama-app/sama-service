@@ -2,6 +2,8 @@ package com.sama.calendar.domain
 
 import com.sama.calendar.domain.MeetingSlotStatus.*
 import com.sama.common.NotFoundException
+import com.sama.common.assertDoesNotThrowOrNull
+import com.sama.common.assertThrows
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.DynamicTest
@@ -91,11 +93,11 @@ class MeetingsTest {
                 val slot = MeetingSlot.new(initiatorId, _9am, _9am.plus(slotDuration))
                 val result = initiatedMeeting.suggestSlots(listOf(slot))
 
-                assertEquals(success, result.isSuccess)
                 if (success) {
-                    assertContains(result.getOrThrow().suggestedSlots, slot)
+                    val actual = result.assertDoesNotThrowOrNull()
+                    assertContains(actual.suggestedSlots, slot)
                 } else {
-                    assertThrows(InvalidSuggestedSlotException::class.java) { result.getOrThrow() }
+                    result.assertThrows(InvalidSuggestedSlotException::class.java)
                 }
             }
         }
@@ -115,13 +117,12 @@ class MeetingsTest {
         dynamicTest("removing a slot#${slot.meetingSlotId} from a meeting allowed: $success") {
             val result = initiatedMeeting.removeSlot(slot.meetingSlotId)
 
-            assertEquals(success, result.isSuccess)
             if (success) {
-                val actual = result.getOrThrow()
+                val actual = result.assertDoesNotThrowOrNull()
                 assertFalse(slot in actual.suggestedSlots)
                 assertContains(actual.suggestedSlots, slot.copy(status = REMOVED))
             } else {
-                assertThrows(NotFoundException::class.java) { result.getOrThrow() }
+                result.assertThrows(NotFoundException::class.java)
             }
         }
     }
@@ -146,10 +147,10 @@ class MeetingsTest {
             )
 
             dynamicTest("proposing slots $proposedSlotIds throws $expected") {
-                val actual = initiatedMeeting.propose(proposedSlotIds, validMeetingCode)
+                val proposedMeeting = initiatedMeeting.propose(proposedSlotIds, validMeetingCode)
 
-                assertTrue { actual.isSuccess }
-                assertEquals(expected, actual.getOrNull())
+                val actual = proposedMeeting.assertDoesNotThrowOrNull()
+                assertEquals(expected, actual)
             }
         }
     }
@@ -169,9 +170,7 @@ class MeetingsTest {
 
         dynamicTest("proposing slots $proposedSlotIds throws $expected") {
             val actual = initiatedMeeting.propose(proposedSlotIds, meetingCode)
-
-            assertTrue { actual.isFailure }
-            assertThrows(expected) { actual.getOrThrow() }
+            actual.assertThrows(expected)
         }
     }
 
@@ -205,9 +204,6 @@ class MeetingsTest {
 
         val actual = proposedMeeting.confirm(2L, recipient)
 
-        assertTrue(actual.isFailure)
-        assertThrows(NotFoundException::class.java) {
-            actual.getOrThrow()
-        }
+        actual.assertThrows(NotFoundException::class.java)
     }
 }

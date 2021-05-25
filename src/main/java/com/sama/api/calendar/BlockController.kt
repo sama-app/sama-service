@@ -3,6 +3,7 @@ package com.sama.api.calendar
 import com.sama.api.config.AuthUserId
 import com.sama.calendar.application.BlockApplicationService
 import com.sama.calendar.application.FetchBlocksDTO
+import com.sama.users.domain.UserId
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -31,7 +32,7 @@ class BlockController(
         produces = [MediaType.APPLICATION_JSON_VALUE]
     )
     fun fetchBlocks(
-        @AuthUserId userId: Long,
+        @AuthUserId userId: UserId,
         @RequestParam @DateTimeFormat(iso = DATE) startDate: LocalDate,
         @RequestParam @DateTimeFormat(iso = DATE) endDate: LocalDate
     ): FetchBlocksDTO {

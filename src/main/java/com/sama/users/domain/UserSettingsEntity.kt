@@ -13,7 +13,7 @@ import javax.persistence.*
 @Table(schema = "sama", name = "user_settings")
 class UserSettingsEntity(
     @Id
-    val userId: Long
+    val userId: UserId
 ) {
 
     @Factory
@@ -51,7 +51,7 @@ class UserSettingsEntity(
 data class DayWorkingHoursEntity(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private val id: Long? = null,
-    private val userId: Long,
+    private val userId: UserId,
     @Enumerated(EnumType.STRING)
     private val dayOfWeek: DayOfWeek,
 
@@ -59,7 +59,7 @@ data class DayWorkingHoursEntity(
     var workingHours: WorkingHours
 ) {
     companion object {
-        fun create(dayOfWeek: DayOfWeek, userId: Long, workingHours: WorkingHours): DayWorkingHoursEntity {
+        fun create(dayOfWeek: DayOfWeek, userId: UserId, workingHours: WorkingHours): DayWorkingHoursEntity {
             return DayWorkingHoursEntity(
                 userId = userId,
                 dayOfWeek = dayOfWeek,

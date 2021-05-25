@@ -6,9 +6,9 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
 
 @Repository
-interface UserRepository : JpaRepository<UserEntity, Long> {
+interface UserRepository : JpaRepository<UserEntity, UserId> {
     @Query("select nextval('sama.user_id_seq')", nativeQuery = true)
-    fun nextIdentity(): Long
+    fun nextIdentity(): UserId
 
     @Query("select u.id from UserEntity u")
     fun findAllIds(): Set<Long>
@@ -18,7 +18,7 @@ interface UserRepository : JpaRepository<UserEntity, Long> {
     fun existsByEmail(email: String): Boolean
 
     @Query("select u.id from UserEntity u where email = ?1")
-    fun findIdByEmail(email: String): Long?
+    fun findIdByEmail(email: String): UserId?
 }
 
 fun UserRepository.findByEmailOrThrow(email: String) = findByEmail(email)

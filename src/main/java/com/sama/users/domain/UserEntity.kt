@@ -35,7 +35,7 @@ class UserEntity(email: String) {
     }
 
     @Id
-    private var id: Long? = null
+    private var id: UserId? = null
 
     @Column(nullable = false)
     var email: String = email
