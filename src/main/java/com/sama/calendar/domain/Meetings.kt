@@ -201,6 +201,14 @@ data class MeetingSlot(
         return 0L.until(slotCount)
             .map { startTime.plusMinutes(intervalMinutes * it) }
     }
+
+    override fun equals(other: Any?): Boolean {
+        if (other == null || other !is MeetingSlot) {
+            return false
+        }
+        return this.startTime.isEqual(other.startTime)
+                && this.endTime.isEqual(other.endTime)
+    }
 }
 
 @DomainEntity

@@ -45,6 +45,7 @@ class MeetingEntity {
         this.initiatorId = proposedMeeting.initiatorId
         this.recipientId = proposedMeeting.meetingRecipient?.recipientId
         this.recipientEmail = proposedMeeting.meetingRecipient?.email
+        this.code = proposedMeeting.meetingCode
 
         val slots = proposedMeeting.proposedSlots.map {
             MeetingSlotEntity(

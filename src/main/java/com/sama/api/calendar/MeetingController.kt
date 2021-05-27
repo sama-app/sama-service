@@ -60,7 +60,7 @@ class MeetingController(
         security = [SecurityRequirement(name = "user-auth")]
     )
     @PostMapping(
-        "/api/meeting/{meetingId}/confirm",
+        "/api/meeting/confirm",
         consumes = [APPLICATION_JSON_VALUE]
     )
     fun confirmMeeting(@AuthUserId userId: UserId, @RequestBody command: ConfirmMeetingCommand) =
