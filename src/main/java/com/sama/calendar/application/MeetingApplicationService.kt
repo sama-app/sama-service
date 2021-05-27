@@ -15,33 +15,28 @@ class MeetingApplicationService(
     private val slotSuggestionService: SlotSuggestionService
 ) {
 
-    fun initiateMeeting(userId: UserId, command: InitiateMeetingCommand): MeetingId {
+    fun findMeeting(userId: UserId, meetingId: MeetingId): MeetingDTO {
+        val meetingEntity = meetingRepository.findByIdOrThrow(meetingId)
+        return meetingEntity.toDTO()
+    }
+
+    fun initiateMeeting(userId: UserId, command: InitiateMeetingCommand): MeetingDTO {
         val meetingId = meetingRepository.nextIdentity()
 
         val meetingDuration = command.duration.toMinutes()
-        val suggestedSlots = slotSuggestionService.suggestSlots(userId, SlotSuggestionRequest(10, meetingDuration))
+        val meetingRecipient = command.recipientEmail?.let { MeetingRecipient.fromEmail(it) }
+
+        val slotSuggestionRequest = SlotSuggestionRequest(command.suggestedSlotCount, meetingDuration)
+        val suggestedSlots = slotSuggestionService.suggestSlots(userId, slotSuggestionRequest)
             .map {
                 val slotId = meetingRepository.nextSlotIdentity()
                 MeetingSlot.new(slotId, it.startTime, it.endTime)
             }
 
-        val meetingRecipient = command.recipientEmail?.let { MeetingRecipient.fromEmail(it) }
         val meeting = InitiatedMeeting(meetingId, userId, meetingDuration, suggestedSlots, meetingRecipient)
 
-        MeetingEntity.new(meeting).also { meetingRepository.save(it) }
-        return meetingId
-    }
-
-    fun addSuggestedSlot(userId: UserId, meetingId: MeetingId, command: AddSuggestSlotCommand): Boolean {
-        TODO("not implemented")
-    }
-
-    fun modifySuggestedSlot(userId: UserId, meetingId: MeetingId, command: ModifySuggestSlotCommand): Boolean {
-        TODO("not implemented")
-    }
-
-    fun removeSuggestedSlot(userId: UserId, meetingId: MeetingId, command: RemoveSuggestSlotCommand): Boolean {
-        TODO("not implemented")
+        val meetingEntity = MeetingEntity.new(meeting).also { meetingRepository.save(it) }
+        return meetingEntity.toDTO()
     }
 
     fun proposeMeeting(userId: UserId, meetingId: MeetingId, command: ProposeMeetingCommand): Boolean {

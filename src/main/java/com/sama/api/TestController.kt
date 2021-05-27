@@ -1,6 +1,5 @@
 package com.sama.api
 
-import com.sama.calendar.application.InitiateMeetingCommand
 import com.sama.calendar.application.MeetingApplicationService
 import com.sama.common.NotFoundException
 import com.sama.users.domain.UserEntity
@@ -16,7 +15,6 @@ class TestController(
 
     @GetMapping("/api/test/")
     fun hello(): String {
-        meetingApplicationService.initiateMeeting(3, InitiateMeetingCommand(60, "test@test.com"))
         throw NotFoundException(UserEntity::class, 1)
 //        return "Hello, dear Sama user!"
     }
