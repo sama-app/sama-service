@@ -61,7 +61,7 @@ data class InitiatedMeeting(
             }
 
             return success(InitiatedMeeting(
-                meetingEntity.id!!, meetingEntity.initiatorId!!, meetingEntity.duration!!,
+                meetingEntity.id!!, meetingEntity.initiatorId!!, ofMinutes(meetingEntity.durationMinutes!!),
                 meetingEntity.slots.map { MeetingSlot(it.id!!, it.status, it.startDateTime, it.endDateTime) },
                 meetingEntity.recipientEmail?.let { MeetingRecipient.fromEmail(it) }
             ))
@@ -143,7 +143,7 @@ data class ProposedMeeting(
                 .map { MeetingSlot(it.id!!, it.status, it.startDateTime, it.endDateTime) }
             return success(
                 ProposedMeeting(
-                    meetingEntity.id!!, meetingEntity.initiatorId!!, meetingEntity.duration!!,
+                    meetingEntity.id!!, meetingEntity.initiatorId!!, ofMinutes(meetingEntity.durationMinutes!!),
                     proposedSlots, meetingEntity.recipientEmail?.let { MeetingRecipient.fromEmail(it) },
                     meetingEntity.code!!
                 )

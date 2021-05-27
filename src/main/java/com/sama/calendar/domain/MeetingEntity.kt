@@ -5,7 +5,6 @@ import com.sama.common.Factory
 import com.sama.users.domain.UserId
 import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.annotation.LastModifiedDate
-import java.time.Duration
 import java.time.Instant
 import java.time.ZonedDateTime
 import javax.persistence.*
@@ -16,7 +15,7 @@ import javax.persistence.*
 class MeetingEntity {
     fun applyChanges(proposedMeeting: ProposedMeeting): MeetingEntity {
         this.status = proposedMeeting.status
-        this.duration = proposedMeeting.duration
+        this.durationMinutes = proposedMeeting.duration.toMinutes()
         this.initiatorId = proposedMeeting.initiatorId
         this.recipientId = proposedMeeting.meetingRecipient?.recipientId
         this.recipientEmail = proposedMeeting.meetingRecipient?.email
@@ -35,7 +34,7 @@ class MeetingEntity {
 
     fun applyChanges(confirmedMeeting: ConfirmedMeeting): MeetingEntity {
         this.status = confirmedMeeting.status
-        this.duration = confirmedMeeting.duration
+        this.durationMinutes = confirmedMeeting.duration.toMinutes()
         this.initiatorId = confirmedMeeting.initiatorId
         this.recipientId = confirmedMeeting.meetingRecipient.recipientId
         this.recipientEmail = confirmedMeeting.meetingRecipient.email
@@ -55,7 +54,7 @@ class MeetingEntity {
             meetingEntity.id = initiatedMeeting.meetingId
             meetingEntity.status = initiatedMeeting.status
             meetingEntity.initiatorId = initiatedMeeting.initiatorId
-            meetingEntity.duration = initiatedMeeting.duration
+            meetingEntity.durationMinutes = initiatedMeeting.duration.toMinutes()
             meetingEntity.createdAt = Instant.now()
             meetingEntity.updatedAt = Instant.now()
 
@@ -75,7 +74,7 @@ class MeetingEntity {
     var initiatorId: UserId? = null
 
     @Column(name = "duration_minutes", nullable = false)
-    var duration: Duration? = null
+    var durationMinutes: Long? = null
 
     var recipientId: UserId? = null
 

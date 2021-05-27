@@ -57,17 +57,17 @@ databaseChangeLog:
                     nullable: false
               - column:
                   name: day_of_week
-                  type: smallint
+                  type: VARCHAR
                   constraints:
                     nullable: false
               - column:
                   name: start_time
-                  type: time
+                  type: TIME
                   constraints:
                     nullable: false
               - column:
                   name: end_time
-                  type: time
+                  type: TIME
                   constraints:
                     nullable: false
 
@@ -86,20 +86,3 @@ databaseChangeLog:
             tableName: user_day_working_hours
             columnNames: user_id, day_of_week
             constraintName: UQ_user_day_working_hours_day_of_week
-
-
-  # Separate changeset because addCheckConstraint required Liquibase Pro.
-  - changeSet:
-      id: add-day-working-hours_constraint
-      author: balys
-      changes:
-        - sql:
-            sql: ALTER TABLE sama.user_day_working_hours ADD CONSTRAINT CK_user_day_working_hour_day_of_week
-              CHECK (day_of_week >=0 AND day_of_week <= 6)
-      rollback:
-        - sql:
-            sql: ALTER TABLE sama.user_day_working_hours DROP CONSTRAINT CK_user_day_working_hour_day_of_week
-
-
-
-

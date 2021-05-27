@@ -23,14 +23,14 @@ fun MeetingEntity.toDTO(): MeetingDTO {
         this.id!!,
         this.initiatorId!!,
         this.toRecipientDTO(),
-        this.duration!!.toMinutes(),
+        this.durationMinutes!!,
         this.slots.filter { it.status == MeetingSlotStatus.SUGGESTED }
             .map { it.toDTO() },
         this.slots.filter { it.status == MeetingSlotStatus.PROPOSED }
             .map { it.toDTO() },
         this.slots.filter { it.status == MeetingSlotStatus.CONFIRMED }
             .map { it.toDTO() }
-            .first()
+            .firstOrNull()
     )
 }
 
