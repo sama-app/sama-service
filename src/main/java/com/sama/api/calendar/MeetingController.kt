@@ -25,7 +25,7 @@ class MeetingController(
         consumes = [APPLICATION_JSON_VALUE],
         produces = [APPLICATION_JSON_VALUE],
     )
-    fun findMeeting(@AuthUserId userId: UserId, @RequestParam meetingId: MeetingId): MeetingDTO {
+    fun findMeeting(@AuthUserId userId: UserId, @PathVariable meetingId: MeetingId): MeetingDTO {
         return meetingApplicationService.findMeeting(userId, meetingId)
     }
 
@@ -51,7 +51,7 @@ class MeetingController(
     )
     fun proposeMeeting(
         @AuthUserId userId: UserId,
-        @RequestParam meetingId: MeetingId,
+        @PathVariable meetingId: MeetingId,
         @RequestBody command: ProposeMeetingCommand
     ) = meetingApplicationService.proposeMeeting(userId, meetingId, command)
 

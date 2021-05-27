@@ -8,6 +8,7 @@ import com.sama.suggest.application.SlotSuggestionRequest
 import com.sama.suggest.application.SlotSuggestionService
 import com.sama.users.domain.UserId
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 
 @Service
 class MeetingApplicationService(
@@ -20,6 +21,7 @@ class MeetingApplicationService(
         return meetingEntity.toDTO()
     }
 
+    @Transactional
     fun initiateMeeting(userId: UserId, command: InitiateMeetingCommand): MeetingDTO {
         val meetingId = meetingRepository.nextIdentity()
 
@@ -39,6 +41,7 @@ class MeetingApplicationService(
         return meetingEntity.toDTO()
     }
 
+    @Transactional
     fun proposeMeeting(userId: UserId, meetingId: MeetingId, command: ProposeMeetingCommand): Boolean {
         val meetingEntity = meetingRepository.findByIdOrThrow(meetingId)
 
@@ -51,6 +54,7 @@ class MeetingApplicationService(
         return true
     }
 
+    @Transactional
     fun confirmMeeting(userId: UserId, command: ConfirmMeetingCommand): Boolean {
         val meetingEntity = meetingRepository.findByCode(command.meetingCode)
             ?: throw NotFoundException(MeetingEntity::class, command.meetingCode)

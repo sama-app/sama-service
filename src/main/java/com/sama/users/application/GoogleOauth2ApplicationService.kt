@@ -7,6 +7,7 @@ import com.sama.users.domain.UserAlreadyExistsException
 import liquibase.pro.packaged.it
 import org.apache.commons.logging.LogFactory
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 
 @ApplicationService
 @Service
@@ -23,6 +24,7 @@ class GoogleOauth2ApplicationService(
         return GoogleOauth2Redirect(authorizationUrl)
     }
 
+    @Transactional
     fun processGoogleOauth2(redirectUri: String, code: String?, error: String?): GoogleOauth2Response {
         return when {
             code != null -> try {

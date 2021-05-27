@@ -6,6 +6,7 @@ import com.sama.users.configuration.AccessJwtConfiguration
 import com.sama.users.configuration.RefreshJwtConfiguration
 import com.sama.users.domain.*
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import java.time.Clock
 import java.util.*
 
@@ -20,6 +21,7 @@ class UserApplicationService(
     private val clock: Clock
 ) {
 
+    @Transactional
     fun registerUser(command: RegisterUserCommand): UserId {
         val userExistsByEmail = userRepository.existsByEmail(command.email)
         val userId = userRepository.nextIdentity()
@@ -30,6 +32,7 @@ class UserApplicationService(
         return userId
     }
 
+    @Transactional
     fun refreshCredentials(command: RefreshCredentialsCommand): UserId {
         val user = userRepository.findByEmailOrThrow(command.email)
 
@@ -37,6 +40,7 @@ class UserApplicationService(
         return user.id()!!
     }
 
+    @Transactional
     fun registerDevice(userId: UserId, command: RegisterDeviceCommand): Boolean {
         val user = userRepository.findByIdOrThrow(userId)
 
@@ -48,6 +52,7 @@ class UserApplicationService(
         return true
     }
 
+    @Transactional
     fun unregisterDevice(userId: UserId, command: UnregisterDeviceCommand): Boolean {
         val user = userRepository.findByIdOrThrow(userId)
 
@@ -84,6 +89,7 @@ class UserApplicationService(
         return JwtPairDTO(accessToken.token, refreshToken.token)
     }
 
+    @Transactional
     fun createUserSettings(userId: UserId): Boolean {
         val userSettingsDefaults = userSettingsDefaultsRepository.findByIdOrNull(userId)
 
@@ -107,6 +113,7 @@ class UserApplicationService(
         }
     }
 
+    @Transactional
     fun updateWorkingHours(userId: UserId, command: UpdateWorkingHoursCommand): Boolean {
         val entity = userSettingsRepository.findByIdOrThrow(userId)
 
