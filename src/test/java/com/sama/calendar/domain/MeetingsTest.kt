@@ -110,12 +110,12 @@ class MeetingsTest {
     fun `propose meeting`(): List<DynamicTest> {
         val initiatorId = initiatorId
         return listOf(
-            listOf(proposedSlotID1) to ProposedMeeting(
+            listOf(proposedSlotID1.copy()) to ProposedMeeting(
                 1L, initiatorId, ofHours(1), listOf(proposedSlotID1),
                 null, validMeetingCode
             ),
 
-            listOf(proposedSlotID1, proposedSlotID2) to ProposedMeeting(
+            listOf(proposedSlotID1.copy(), proposedSlotID2.copy()) to ProposedMeeting(
                 1L, initiatorId, ofHours(1), listOf(proposedSlotID1, proposedSlotID2),
                 null, validMeetingCode
             ),
@@ -142,7 +142,7 @@ class MeetingsTest {
 
         val initiatedMeeting = InitiatedMeeting(
             1L, initiatorId, ofHours(1),
-            listOf(proposedSlotID1, proposedSlotID2), null
+            listOf(proposedSlotID1.copy(), proposedSlotID2.copy()), null
         )
         val meetingCode = "meet-me-kei"
 
@@ -159,7 +159,7 @@ class MeetingsTest {
             1L, initiatorId, ofHours(1), listOf(slot), null, validMeetingCode
         )
         val recipient = MeetingRecipient(null, null) // todo
-        val slotToConfirm = proposedSlotID1
+        val slotToConfirm = proposedSlotID1.copy()
 
         val actual = proposedMeeting.confirm(slotToConfirm, recipient)
 
@@ -181,7 +181,7 @@ class MeetingsTest {
         )
         val recipient = MeetingRecipient(null, null) // todo
 
-        val slotToConfirm = proposedSlotID2
+        val slotToConfirm = proposedSlotID2.copy()
         val actual = proposedMeeting.confirm(slotToConfirm, recipient)
 
         actual.assertThrows(NotFoundException::class.java)
