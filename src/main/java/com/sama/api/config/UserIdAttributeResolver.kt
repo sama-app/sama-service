@@ -1,6 +1,7 @@
 package com.sama.api.config
 
 import com.sama.users.domain.UserEntity
+import com.sama.users.domain.UserId
 import com.sama.users.domain.UserRepository
 import org.springframework.core.MethodParameter
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
@@ -19,7 +20,7 @@ class UserIdAttributeResolver(
 ) : HandlerMethodArgumentResolver {
     override fun supportsParameter(parameter: MethodParameter): Boolean {
         return parameter.hasParameterAnnotation(AuthUserId::class.java) &&
-                parameter.parameterType.equals(Long::class.java)
+                parameter.parameterType.equals(UserId::class.java)
     }
 
     override fun resolveArgument(

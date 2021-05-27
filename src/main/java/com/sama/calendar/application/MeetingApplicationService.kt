@@ -7,6 +7,8 @@ import com.sama.common.toMinutes
 import com.sama.suggest.application.SlotSuggestionRequest
 import com.sama.suggest.application.SlotSuggestionService
 import com.sama.users.domain.UserId
+import org.springframework.security.access.prepost.PostAuthorize
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -42,6 +44,7 @@ class MeetingApplicationService(
     }
 
     @Transactional
+    @PreAuthorize("@auth.hasAccess(#userId, #meetingId)")
     fun proposeMeeting(userId: UserId, meetingId: MeetingId, command: ProposeMeetingCommand): Boolean {
         val meetingEntity = meetingRepository.findByIdOrThrow(meetingId)
 
