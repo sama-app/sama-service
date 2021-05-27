@@ -47,11 +47,9 @@ class MeetingApplicationService(
     fun proposeMeeting(userId: UserId, meetingId: MeetingId, command: ProposeMeetingCommand): Boolean {
         val meetingEntity = meetingRepository.findByIdOrThrow(meetingId)
 
-        // https://github.com/aventrix/jnanoid
-        // https://github.com/leprosus/kotlin-hashids
-        // TODO: generate meeting code
+        val meetingCode = MeetingCodeGenerator.default().generate()
         val proposedMeeting = InitiatedMeeting.of(meetingEntity).getOrThrow()
-            .propose(command.proposedSlots, "heysama")
+            .propose(command.proposedSlots, meetingCode)
             .getOrThrow()
 
         meetingEntity.applyChanges(proposedMeeting).also { meetingRepository.save(it) }

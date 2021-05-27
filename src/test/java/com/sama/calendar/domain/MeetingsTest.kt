@@ -10,11 +10,15 @@ import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.DynamicTest.dynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
-import java.time.*
 import java.time.Duration.ofHours
 import java.time.Duration.ofMinutes
+import java.time.LocalDate
+import java.time.LocalTime
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
 class MeetingsTest {
@@ -205,5 +209,22 @@ class MeetingsTest {
         val actual = proposedMeeting.confirm(2L, recipient)
 
         actual.assertThrows(NotFoundException::class.java)
+    }
+
+    @Test
+    fun `meeting code generated with length 10`() {
+        assertTrue(MeetingCodeGenerator.default().generate().length == 10)
+    }
+
+    @Test
+    fun `different meeting code generated each time`() {
+        val generator1 = MeetingCodeGenerator.default()
+        val generator2 = MeetingCodeGenerator.default()
+        val code1 = generator1.generate()
+        val code2 = generator1.generate()
+        val code3 = generator2.generate()
+
+        assertNotEquals(code1, code2)
+        assertNotEquals(code2, code3)
     }
 }

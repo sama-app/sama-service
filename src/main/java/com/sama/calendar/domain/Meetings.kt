@@ -1,10 +1,9 @@
 package com.sama.calendar.domain
 
+import com.aventrix.jnanoid.jnanoid.NanoIdUtils
+import com.aventrix.jnanoid.jnanoid.NanoIdUtils.randomNanoId
 import com.sama.calendar.domain.MeetingSlotStatus.CONFIRMED
-import com.sama.common.DomainEntity
-import com.sama.common.Factory
-import com.sama.common.NotFoundException
-import com.sama.common.replace
+import com.sama.common.*
 import com.sama.users.domain.UserId
 import java.time.Duration
 import java.time.Duration.ofMinutes
@@ -26,6 +25,22 @@ enum class MeetingSlotStatus {
     REMOVED,
     CONFIRMED
 }
+
+@DomainService
+data class MeetingCodeGenerator(val codeLength: Int) {
+    @Factory
+    companion object {
+        private const val defaultCodeLength = 10
+        fun default(): MeetingCodeGenerator {
+            return MeetingCodeGenerator(defaultCodeLength)
+        }
+    }
+
+    fun generate(): String {
+        return randomNanoId(NanoIdUtils.DEFAULT_NUMBER_GENERATOR, NanoIdUtils.DEFAULT_ALPHABET, codeLength)
+    }
+}
+
 
 @DomainEntity
 data class InitiatedMeeting(

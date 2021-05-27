@@ -107,3 +107,12 @@ databaseChangeLog:
                   name: initiator_id
             indexName: IDX_initiator_id
 
+        - createIndex:
+            schemaName: sama
+            tableName: meeting
+            columns:
+              - column:
+                  name: meeting_code
+            indexName: IDX_meeting_code
+            unique: true
+

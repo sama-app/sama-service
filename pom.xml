@@ -77,6 +77,11 @@
             <artifactId>java-jwt</artifactId>
             <version>3.15.0</version>
         </dependency>
+        <dependency>
+            <groupId>com.aventrix.jnanoid</groupId>
+            <artifactId>jnanoid</artifactId>
+            <version>2.0.0</version>
+        </dependency>
 
         <!-- Google -->
         <dependency>
