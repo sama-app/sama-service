@@ -13,39 +13,6 @@ import javax.persistence.*
 @Entity
 @Table(schema = "sama", name = "meeting")
 class MeetingEntity {
-    fun applyChanges(proposedMeeting: ProposedMeeting): MeetingEntity {
-        this.status = proposedMeeting.status
-        this.durationMinutes = proposedMeeting.duration.toMinutes()
-        this.initiatorId = proposedMeeting.initiatorId
-        this.recipientId = proposedMeeting.meetingRecipient?.recipientId
-        this.recipientEmail = proposedMeeting.meetingRecipient?.email
-
-        val slotsMap = this.slots.associateBy { it.id!! }
-        proposedMeeting.proposedSlots
-            .forEach {
-                val slot = slotsMap[it.meetingSlotId]!!
-                slot.startDateTime = it.startTime
-                slot.endDateTime = it.endTime
-                slot.status = it.status
-            }
-
-        return this
-    }
-
-    fun applyChanges(confirmedMeeting: ConfirmedMeeting): MeetingEntity {
-        this.status = confirmedMeeting.status
-        this.durationMinutes = confirmedMeeting.duration.toMinutes()
-        this.initiatorId = confirmedMeeting.initiatorId
-        this.recipientId = confirmedMeeting.meetingRecipient.recipientId
-        this.recipientEmail = confirmedMeeting.meetingRecipient.email
-
-        val slot = this.slots.find { it.id!! == confirmedMeeting.slot.meetingSlotId }!!
-        slot.startDateTime = confirmedMeeting.slot.startTime
-        slot.endDateTime = confirmedMeeting.slot.endTime
-        slot.status = confirmedMeeting.slot.status
-        this.updatedAt = Instant.now()
-        return this
-    }
 
     @Factory
     companion object {
@@ -57,9 +24,59 @@ class MeetingEntity {
             meetingEntity.durationMinutes = initiatedMeeting.duration.toMinutes()
             meetingEntity.createdAt = Instant.now()
             meetingEntity.updatedAt = Instant.now()
-
+            val slots = initiatedMeeting.suggestedSlots.map {
+                MeetingSlotEntity(
+                    null,
+                    initiatedMeeting.meetingId,
+                    MeetingSlotStatus.SUGGESTED,
+                    it.startTime,
+                    it.endTime,
+                    Instant.now()
+                )
+            }
+            meetingEntity.slots.addAll(slots)
             return meetingEntity
         }
+    }
+
+    fun applyChanges(proposedMeeting: ProposedMeeting): MeetingEntity {
+        this.status = proposedMeeting.status
+        this.durationMinutes = proposedMeeting.duration.toMinutes()
+        this.initiatorId = proposedMeeting.initiatorId
+        this.recipientId = proposedMeeting.meetingRecipient?.recipientId
+        this.recipientEmail = proposedMeeting.meetingRecipient?.email
+
+        val slots = proposedMeeting.proposedSlots.map {
+            MeetingSlotEntity(
+                null,
+                proposedMeeting.meetingId,
+                MeetingSlotStatus.PROPOSED,
+                it.startTime,
+                it.endTime,
+                Instant.now()
+            )
+        }
+        this.slots.addAll(slots)
+        return this
+    }
+
+    fun applyChanges(confirmedMeeting: ConfirmedMeeting): MeetingEntity {
+        this.status = confirmedMeeting.status
+        this.durationMinutes = confirmedMeeting.duration.toMinutes()
+        this.initiatorId = confirmedMeeting.initiatorId
+        this.recipientId = confirmedMeeting.meetingRecipient.recipientId
+        this.recipientEmail = confirmedMeeting.meetingRecipient.email
+
+        val slot = MeetingSlotEntity(
+            null,
+            confirmedMeeting.meetingId,
+            MeetingSlotStatus.CONFIRMED,
+            confirmedMeeting.slot.startTime,
+            confirmedMeeting.slot.endTime,
+            Instant.now()
+        )
+        this.slots.add(slot)
+        return this
     }
 
 
@@ -97,13 +114,13 @@ class MeetingEntity {
 @Entity
 @Table(schema = "sama", name = "meeting_slot")
 data class MeetingSlotEntity(
-    @Id
-    val id: SlotId? = null,
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    var id: SlotId? = null,
     private val meetingId: MeetingId,
     @Enumerated(EnumType.STRING)
     var status: MeetingSlotStatus,
     var startDateTime: ZonedDateTime,
     var endDateTime: ZonedDateTime,
-    @LastModifiedDate
-    var updatedAt: Instant? = null
+    @CreatedDate
+    var createdAt: Instant? = null
 )

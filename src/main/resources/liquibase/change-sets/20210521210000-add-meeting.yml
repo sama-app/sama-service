@@ -85,7 +85,7 @@ databaseChangeLog:
               - column:
                   constraints:
                     nullable: false
-                  name: updated_at
+                  name: created_at
                   type: TIMESTAMP
 
         - addForeignKeyConstraint:

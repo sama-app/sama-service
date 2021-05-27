@@ -1,10 +1,8 @@
 package com.sama.calendar.application
 
-import com.sama.calendar.domain.MeetingEntity
-import com.sama.calendar.domain.MeetingId
-import com.sama.calendar.domain.MeetingSlotEntity
-import com.sama.calendar.domain.MeetingSlotStatus
+import com.sama.calendar.domain.*
 import com.sama.users.domain.UserId
+import liquibase.pro.packaged.it
 import java.time.ZonedDateTime
 
 data class BlockDTO(
@@ -57,7 +55,17 @@ fun MeetingEntity.toRecipientDTO(): RecipientDTO {
     return RecipientDTO(this.recipientId, this.recipientEmail)
 }
 
+fun MeetingSlotDTO.toValueObject(): MeetingSlot {
+    return MeetingSlot(this.startDateTime, this.endDateTime)
+}
+
 data class RecipientDTO(
     val recipientId: UserId?,
     val recipientEmail: String?
+)
+
+data class ProposedMeetingDTO(
+    val meetingId: MeetingId,
+    val meetingCode: MeetingCode,
+    val meetingUrl: String
 )

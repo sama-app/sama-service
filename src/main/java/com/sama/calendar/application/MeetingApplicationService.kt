@@ -7,10 +7,10 @@ import com.sama.common.toMinutes
 import com.sama.suggest.application.SlotSuggestionRequest
 import com.sama.suggest.application.SlotSuggestionService
 import com.sama.users.domain.UserId
-import org.springframework.security.access.prepost.PostAuthorize
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.web.util.UriComponentsBuilder
 
 @Service
 class MeetingApplicationService(
@@ -32,10 +32,7 @@ class MeetingApplicationService(
 
         val slotSuggestionRequest = SlotSuggestionRequest(command.suggestedSlotCount, meetingDuration)
         val suggestedSlots = slotSuggestionService.suggestSlots(userId, slotSuggestionRequest)
-            .map {
-                val slotId = meetingRepository.nextSlotIdentity()
-                MeetingSlot.new(slotId, it.startTime, it.endTime)
-            }
+            .map { MeetingSlot(it.startTime, it.endTime) }
 
         val meeting = InitiatedMeeting(meetingId, userId, meetingDuration, suggestedSlots, meetingRecipient)
 
@@ -45,16 +42,27 @@ class MeetingApplicationService(
 
     @Transactional
     @PreAuthorize("@auth.hasAccess(#userId, #meetingId)")
-    fun proposeMeeting(userId: UserId, meetingId: MeetingId, command: ProposeMeetingCommand): Boolean {
+    fun proposeMeeting(userId: UserId, meetingId: MeetingId, command: ProposeMeetingCommand): ProposedMeetingDTO {
         val meetingEntity = meetingRepository.findByIdOrThrow(meetingId)
 
         val meetingCode = MeetingCodeGenerator.default().generate()
+        val proposedSlots = command.proposedSlots.map { it.toValueObject() }
         val proposedMeeting = InitiatedMeeting.of(meetingEntity).getOrThrow()
-            .propose(command.proposedSlots, meetingCode)
+            .propose(proposedSlots, meetingCode)
             .getOrThrow()
 
         meetingEntity.applyChanges(proposedMeeting).also { meetingRepository.save(it) }
-        return true
+
+        return ProposedMeetingDTO(meetingId, meetingCode, meetingCode.toUrl())
+    }
+
+    // TODO: properly configure
+    fun MeetingCode.toUrl(): String {
+        return UriComponentsBuilder.newInstance()
+            .scheme("https")
+            .host("app.yoursama.com")
+            .path("/$this")
+            .build().toUriString()
     }
 
     @Transactional
@@ -64,7 +72,7 @@ class MeetingApplicationService(
 
         val meetingRecipient = command.recipientEmail.let { MeetingRecipient.fromEmail(it) }
         val confirmedMeeting = ProposedMeeting.of(meetingEntity).getOrThrow()
-            .confirm(command.slotId, meetingRecipient)
+            .confirm(command.slot.toValueObject(), meetingRecipient)
             .getOrThrow()
 
         meetingEntity.applyChanges(confirmedMeeting).also { meetingRepository.save(it) }

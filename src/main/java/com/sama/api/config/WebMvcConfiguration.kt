@@ -3,12 +3,14 @@ package com.sama.api.config
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.sama.api.common.ApiError
+import com.sama.common.DomainValidationException
 import com.sama.common.NotFoundException
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Import
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
+import org.springframework.http.HttpStatus.BAD_REQUEST
 import org.springframework.http.HttpStatus.NOT_FOUND
 import org.springframework.http.ResponseEntity
 import org.springframework.http.converter.HttpMessageConverter
@@ -18,7 +20,6 @@ import org.springframework.mobile.device.DeviceResolverHandlerInterceptor
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.ResponseStatus
-import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.context.request.WebRequest
 import org.springframework.web.filter.CommonsRequestLoggingFilter
 import org.springframework.web.method.support.HandlerMethodArgumentResolver
@@ -26,7 +27,6 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler
-import java.lang.Exception
 
 
 @Configuration
@@ -77,6 +77,11 @@ class GlobalWebMvcExceptionHandler : ResponseEntityExceptionHandler() {
     @ResponseStatus(NOT_FOUND)
     fun handleNotFound(ex: NotFoundException, request: WebRequest) =
         handleExceptionInternal(ex, null, HttpHeaders(), NOT_FOUND, request)
+
+    @ExceptionHandler(value = [DomainValidationException::class])
+    @ResponseStatus(BAD_REQUEST)
+    fun handleDomainValidation(ex: DomainValidationException, request: WebRequest) =
+        handleExceptionInternal(ex, null, HttpHeaders(), BAD_REQUEST, request)
 
     override fun handleExceptionInternal(
         ex: Exception, body: Any?, headers: HttpHeaders, status: HttpStatus, request: WebRequest

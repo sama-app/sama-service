@@ -7,3 +7,5 @@ class NotFoundException(clazz: KClass<*>, field: String, value: Any?) :
 
     constructor(clazz: KClass<*>, id: Any?) : this(clazz, "Id", id)
 }
+
+open class DomainValidationException(message: String) : RuntimeException(message)

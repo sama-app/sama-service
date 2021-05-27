@@ -2,7 +2,6 @@ package com.sama.calendar.domain
 
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils.randomNanoId
-import com.sama.calendar.domain.MeetingSlotStatus.CONFIRMED
 import com.sama.common.*
 import com.sama.users.domain.UserId
 import java.time.Duration
@@ -62,7 +61,9 @@ data class InitiatedMeeting(
 
             return success(InitiatedMeeting(
                 meetingEntity.id!!, meetingEntity.initiatorId!!, ofMinutes(meetingEntity.durationMinutes!!),
-                meetingEntity.slots.map { MeetingSlot(it.id!!, it.status, it.startDateTime, it.endDateTime) },
+                meetingEntity.slots
+                    .filter { it.status == MeetingSlotStatus.SUGGESTED }
+                    .map { MeetingSlot(it.startDateTime, it.endDateTime) },
                 meetingEntity.recipientEmail?.let { MeetingRecipient.fromEmail(it) }
             ))
         }
@@ -70,7 +71,7 @@ data class InitiatedMeeting(
 
     init {
         if (duration !in allowedDurations) {
-            throw UnsupportedDurationException(meetingId, duration)
+            throw InvalidDurationException(meetingId, duration)
         }
         validateSlots(suggestedSlots)
     }
@@ -82,27 +83,13 @@ data class InitiatedMeeting(
         return success(copy(suggestedSlots = suggestedSlots.plus(slots)))
     }
 
-    fun removeSlot(slotId: SlotId): Result<InitiatedMeeting> {
-        val slot = suggestedSlots.find { it.meetingSlotId == slotId }
-            ?: return failure(NotFoundException(MeetingSlot::class, slotId))
-
-        val removedSlot = slot.copy(status = MeetingSlotStatus.REMOVED)
-
-        return success(copy(suggestedSlots = suggestedSlots.replace(removedSlot) { it == slot }))
-    }
-
-    fun propose(proposedSlotIds: Set<SlotId>, meetingCode: MeetingCode): Result<ProposedMeeting> {
-        if (proposedSlotIds.isEmpty()) {
+    fun propose(proposedSlots: List<MeetingSlot>, meetingCode: MeetingCode): Result<ProposedMeeting> {
+        if (proposedSlots.isEmpty()) {
             return failure(InvalidMeetingProposalException(meetingId, "No slots proposed"))
         }
 
-        val proposedSlots = suggestedSlots
-            .filter { it.meetingSlotId in proposedSlotIds }
-            .map { it.copy(status = MeetingSlotStatus.PROPOSED) }
-
-        if (proposedSlots.size != proposedSlotIds.size) {
-            return failure(NotFoundException(MeetingSlot::class, proposedSlotIds))
-        }
+        kotlin.runCatching { validateSlots(proposedSlots) }
+            .onFailure { return failure(it) }
 
         return success(
             ProposedMeeting(meetingId, initiatorId, duration, proposedSlots, meetingRecipient, meetingCode)
@@ -112,9 +99,9 @@ data class InitiatedMeeting(
     private fun validateSlots(slots: List<MeetingSlot>) {
         // TODO: validate duplicates
 
-        slots.firstOrNull { it.duration() > duration }
+        slots.firstOrNull { it.duration() < duration }
             ?.run {
-                throw InvalidSuggestedSlotException(meetingId, this)
+                throw InvalidMeetingSlotException(meetingId, this)
             }
     }
 }
@@ -140,7 +127,7 @@ data class ProposedMeeting(
 
             val proposedSlots = meetingEntity.slots
                 .filter { it.status == MeetingSlotStatus.PROPOSED }
-                .map { MeetingSlot(it.id!!, it.status, it.startDateTime, it.endDateTime) }
+                .map { MeetingSlot(it.startDateTime, it.endDateTime) }
             return success(
                 ProposedMeeting(
                     meetingEntity.id!!, meetingEntity.initiatorId!!, ofMinutes(meetingEntity.durationMinutes!!),
@@ -162,14 +149,14 @@ data class ProposedMeeting(
         }
     }
 
-    fun confirm(slotId: SlotId, recipient: MeetingRecipient): Result<ConfirmedMeeting> {
-        val slot = proposedSlots.find { it.meetingSlotId == slotId }
-            ?: return failure(NotFoundException(MeetingSlotEntity::class, slotId))
+    fun confirm(slot: MeetingSlot, recipient: MeetingRecipient): Result<ConfirmedMeeting> {
+        val confirmedSlot = proposedSlots.find { it == slot }
+            ?: return failure(NotFoundException(MeetingSlotEntity::class, slot))
 
         // TODO: validate recipients matching
 
         return success(
-            ConfirmedMeeting(meetingId, initiatorId, duration, recipient, slot.copy(status = CONFIRMED))
+            ConfirmedMeeting(meetingId, initiatorId, duration, recipient, confirmedSlot)
         )
     }
 }
@@ -185,22 +172,14 @@ data class ConfirmedMeeting(
     val status = MeetingStatus.CONFIRMED
 }
 
-@DomainEntity
+@ValueObject
 data class MeetingSlot(
-    val meetingSlotId: SlotId,
-    val status: MeetingSlotStatus,
     val startTime: ZonedDateTime,
     val endTime: ZonedDateTime
 ) {
-    @Factory
-    companion object {
-        fun new(meetingSlotId: SlotId, startTime: ZonedDateTime, endTime: ZonedDateTime): MeetingSlot {
-            return MeetingSlot(meetingSlotId, MeetingSlotStatus.SUGGESTED, startTime, endTime)
-        }
-    }
 
-    fun isRange(duration: Duration): Boolean {
-        return duration() != duration
+    fun isRange(meetingDuration: Duration): Boolean {
+        return duration() != meetingDuration
     }
 
     fun duration(): Duration {

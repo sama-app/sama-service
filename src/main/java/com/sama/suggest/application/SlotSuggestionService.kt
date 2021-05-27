@@ -11,7 +11,11 @@ import java.time.ZonedDateTime
 class SlotSuggestionService {
 
     fun suggestSlots(userId: UserId, request: SlotSuggestionRequest): List<SlotSuggestion> {
-        return emptyList()
+        val now = ZonedDateTime.now()
+        return listOf(
+            SlotSuggestion(now, now.plusHours(1)),
+            SlotSuggestion(now.plusHours(2), now.plusHours(3))
+        )
     }
 }
 
