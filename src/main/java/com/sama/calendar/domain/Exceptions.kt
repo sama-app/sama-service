@@ -4,11 +4,11 @@ import com.sama.common.DomainValidationException
 import java.time.Duration
 
 
-class InvalidDurationException(meetingId: MeetingId, duration: Duration) :
-    DomainValidationException("Unsupported duration '${duration.toMinutes()} min' for Meeting#$meetingId")
+class InvalidDurationException(meetingIntentId: MeetingIntentId, duration: Duration) :
+    DomainValidationException("Unsupported duration '${duration.toMinutes()} min' for Meeting#$meetingIntentId")
 
-class InvalidMeetingSlotException(meetingId: MeetingId, slot: MeetingSlot) :
-    DomainValidationException("Invalid slot '${slot.startTime} - ${slot.endTime}' for Meeting#$meetingId")
+class InvalidMeetingSlotException(meetingIntentId: MeetingIntentId, slot: MeetingSlot) :
+    DomainValidationException("Invalid slot '${slot.startTime} - ${slot.endTime}' for Meeting#$meetingIntentId")
 
-class InvalidMeetingProposalException(meetingId: MeetingId, message: String) :
-    DomainValidationException("Cannot propose Meeting#$meetingId: $message")
+class InvalidMeetingProposalException(meetingIntentId: MeetingIntentId, message: String) :
+    DomainValidationException("Cannot propose Meeting#$meetingIntentId: $message")

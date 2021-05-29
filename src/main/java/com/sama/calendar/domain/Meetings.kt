@@ -4,26 +4,13 @@ import com.aventrix.jnanoid.jnanoid.NanoIdUtils
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils.randomNanoId
 import com.sama.common.*
 import com.sama.users.domain.UserId
+import liquibase.pro.packaged.it
 import java.time.Duration
 import java.time.Duration.ofMinutes
 import java.time.ZonedDateTime
+import javax.persistence.Embeddable
 import kotlin.Result.Companion.failure
 import kotlin.Result.Companion.success
-
-enum class MeetingStatus {
-    INITIATED,
-    PROPOSED,
-    CONFIRMED,
-    REJECTED,
-    EXPIRED,
-}
-
-enum class MeetingSlotStatus {
-    SUGGESTED,
-    PROPOSED,
-    REMOVED,
-    CONFIRMED
-}
 
 @DomainService
 data class MeetingCodeGenerator(val codeLength: Int) {
@@ -40,59 +27,52 @@ data class MeetingCodeGenerator(val codeLength: Int) {
     }
 }
 
-
 @DomainEntity
-data class InitiatedMeeting(
-    val meetingId: MeetingId,
+data class MeetingIntent(
+    val meetingIntentId: MeetingIntentId,
     val initiatorId: UserId,
+    val recipientId: UserId?,
     val duration: Duration,
     val suggestedSlots: List<MeetingSlot>,
-    val meetingRecipient: MeetingRecipient?
 ) {
-    val status = MeetingStatus.INITIATED
     val allowedDurations = setOf(ofMinutes(30), ofMinutes(45), ofMinutes(60))
 
     @Factory
     companion object {
-        fun of(meetingEntity: MeetingEntity): Result<InitiatedMeeting> {
-            if (meetingEntity.status != MeetingStatus.INITIATED) {
-                return failure(NotFoundException(InitiatedMeeting::class, meetingEntity.id))
+        fun of(meetingIntentEntity: MeetingIntentEntity): Result<MeetingIntent> {
+            return kotlin.runCatching {
+                MeetingIntent(
+                    meetingIntentEntity.id!!, meetingIntentEntity.initiatorId!!,
+                    meetingIntentEntity.recipientId,
+                    ofMinutes(meetingIntentEntity.durationMinutes!!),
+                    meetingIntentEntity.suggestedSlots
+                        .map { MeetingSlot(it.startDateTime, it.endDateTime) }
+                )
             }
-
-            return success(InitiatedMeeting(
-                meetingEntity.id!!, meetingEntity.initiatorId!!, ofMinutes(meetingEntity.durationMinutes!!),
-                meetingEntity.slots
-                    .filter { it.status == MeetingSlotStatus.SUGGESTED }
-                    .map { MeetingSlot(it.startDateTime, it.endDateTime) },
-                meetingEntity.recipientEmail?.let { MeetingRecipient.fromEmail(it) }
-            ))
         }
     }
 
     init {
         if (duration !in allowedDurations) {
-            throw InvalidDurationException(meetingId, duration)
+            throw InvalidDurationException(meetingIntentId, duration)
         }
         validateSlots(suggestedSlots)
     }
 
-    fun suggestSlots(slots: List<MeetingSlot>): Result<InitiatedMeeting> {
-        kotlin.runCatching { validateSlots(slots) }
-            .onFailure { return failure(it) }
-
-        return success(copy(suggestedSlots = suggestedSlots.plus(slots)))
-    }
-
-    fun propose(proposedSlots: List<MeetingSlot>, meetingCode: MeetingCode): Result<ProposedMeeting> {
+    fun propose(
+        meetingProposalId: MeetingProposalId,
+        meetingCode: MeetingCode,
+        proposedSlots: List<MeetingSlot>
+    ): Result<MeetingProposal> {
         if (proposedSlots.isEmpty()) {
-            return failure(InvalidMeetingProposalException(meetingId, "No slots proposed"))
+            return failure(InvalidMeetingProposalException(meetingIntentId, "No slots proposed"))
         }
 
         kotlin.runCatching { validateSlots(proposedSlots) }
             .onFailure { return failure(it) }
 
         return success(
-            ProposedMeeting(meetingId, initiatorId, duration, proposedSlots, meetingRecipient, meetingCode)
+            MeetingProposal(meetingProposalId, meetingIntentId, initiatorId, duration, proposedSlots, meetingCode)
         )
     }
 
@@ -101,38 +81,51 @@ data class InitiatedMeeting(
 
         slots.firstOrNull { it.duration() < duration }
             ?.run {
-                throw InvalidMeetingSlotException(meetingId, this)
+                throw InvalidMeetingSlotException(meetingIntentId, this)
             }
     }
 }
 
+enum class MeetingProposalStatus {
+    INITIATED,
+    PROPOSED,
+    CONFIRMED,
+    REJECTED,
+    EXPIRED,
+}
+
 @DomainEntity
-data class ProposedMeeting(
-    val meetingId: MeetingId,
+data class MeetingProposal(
+    val meetingProposalId: MeetingProposalId,
+    val meetingIntentId: MeetingIntentId,
     val initiatorId: UserId,
     val duration: Duration,
     val proposedSlots: List<MeetingSlot>,
-    val meetingRecipient: MeetingRecipient?,
     val meetingCode: MeetingCode
 ) {
-    val status = MeetingStatus.PROPOSED
+    val status = MeetingProposalStatus.PROPOSED
     val slotInterval = ofMinutes(15)
 
     @Factory
     companion object {
-        fun of(meetingEntity: MeetingEntity): Result<ProposedMeeting> {
-            if (meetingEntity.status != MeetingStatus.PROPOSED) {
-                return failure(NotFoundException(ProposedMeeting::class, meetingEntity.id))
+        fun of(
+            meetingIntentEntity: MeetingIntentEntity,
+            meetingProposalEntity: MeetingProposalEntity
+        ): Result<MeetingProposal> {
+            if (meetingProposalEntity.status != MeetingProposalStatus.PROPOSED) {
+                return failure(NotFoundException(MeetingProposal::class, meetingProposalEntity.id))
             }
 
-            val proposedSlots = meetingEntity.slots
-                .filter { it.status == MeetingSlotStatus.PROPOSED }
+            val proposedSlots = meetingProposalEntity.proposedSlots
                 .map { MeetingSlot(it.startDateTime, it.endDateTime) }
             return success(
-                ProposedMeeting(
-                    meetingEntity.id!!, meetingEntity.initiatorId!!, ofMinutes(meetingEntity.durationMinutes!!),
-                    proposedSlots, meetingEntity.recipientEmail?.let { MeetingRecipient.fromEmail(it) },
-                    meetingEntity.code!!
+                MeetingProposal(
+                    meetingProposalEntity.id!!,
+                    meetingIntentEntity.id!!,
+                    meetingIntentEntity.initiatorId!!,
+                    ofMinutes(meetingIntentEntity.durationMinutes!!),
+                    proposedSlots,
+                    meetingProposalEntity.code!!
                 )
             )
         }
@@ -151,27 +144,27 @@ data class ProposedMeeting(
 
     fun confirm(slot: MeetingSlot, recipient: MeetingRecipient): Result<ConfirmedMeeting> {
         val confirmedSlot = proposedSlots.find { it == slot }
-            ?: return failure(NotFoundException(MeetingSlotEntity::class, slot))
+            ?: return failure(NotFoundException(MeetingSuggestedSlotEntity::class, slot))
 
-        // TODO: validate recipients matching
 
         return success(
-            ConfirmedMeeting(meetingId, initiatorId, duration, recipient, confirmedSlot)
+            ConfirmedMeeting(meetingProposalId, initiatorId, duration, recipient, confirmedSlot)
         )
     }
 }
 
 @DomainEntity
 data class ConfirmedMeeting(
-    val meetingId: MeetingId,
+    val meetingProposalId: MeetingProposalId,
     val initiatorId: UserId,
     val duration: Duration,
     val meetingRecipient: MeetingRecipient,
     val slot: MeetingSlot
 ) {
-    val status = MeetingStatus.CONFIRMED
+    val status = MeetingProposalStatus.CONFIRMED
 }
 
+@Embeddable
 @ValueObject
 data class MeetingSlot(
     val startTime: ZonedDateTime,
@@ -209,9 +202,16 @@ data class MeetingSlot(
         return this.startTime.isEqual(other.startTime)
                 && this.endTime.isEqual(other.endTime)
     }
+
+    override fun hashCode(): Int {
+        var result = startTime.hashCode()
+        result = 31 * result + endTime.hashCode()
+        return result
+    }
 }
 
-@DomainEntity
+@Embeddable
+@ValueObject
 data class MeetingRecipient(val recipientId: UserId?, val email: String?) {
     @Factory
     companion object {

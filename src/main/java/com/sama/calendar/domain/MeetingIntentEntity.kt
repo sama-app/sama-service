@@ -1,0 +1,73 @@
+package com.sama.calendar.domain
+
+import com.sama.common.AggregateRoot
+import com.sama.common.Factory
+import com.sama.users.domain.UserId
+import org.springframework.data.annotation.CreatedDate
+import org.springframework.data.annotation.LastModifiedDate
+import java.time.Instant
+import java.time.ZonedDateTime
+import javax.persistence.*
+
+@AggregateRoot
+@Entity
+@Table(schema = "sama", name = "meeting_intent")
+class MeetingIntentEntity {
+
+    @Factory
+    companion object {
+        fun new(meetingIntent: MeetingIntent): MeetingIntentEntity {
+            val meetingEntity = MeetingIntentEntity()
+            meetingEntity.id = meetingIntent.meetingIntentId
+            meetingEntity.initiatorId = meetingIntent.initiatorId
+            meetingEntity.durationMinutes = meetingIntent.duration.toMinutes()
+            meetingEntity.createdAt = Instant.now()
+            meetingEntity.updatedAt = Instant.now()
+            val slots = meetingIntent.suggestedSlots.map {
+                MeetingSuggestedSlotEntity(
+                    null,
+                    meetingIntent.meetingIntentId,
+                    it.startTime,
+                    it.endTime,
+                    Instant.now()
+                )
+            }
+            meetingEntity.suggestedSlots.addAll(slots)
+            return meetingEntity
+        }
+    }
+
+    @Id
+    var id: MeetingIntentId? = null
+
+    @Column(nullable = false)
+    var initiatorId: UserId? = null
+
+    @Column(nullable = true)
+    var recipientId: UserId? = null
+
+    @Column(nullable = false)
+    var durationMinutes: Long? = null
+
+    @OneToMany(cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinColumn(name = "meetingIntentId", nullable = false, updatable = false, insertable = false)
+    var suggestedSlots: MutableList<MeetingSuggestedSlotEntity> = mutableListOf()
+
+    @CreatedDate
+    private var createdAt: Instant? = null
+
+    @LastModifiedDate
+    private var updatedAt: Instant? = null
+}
+
+@Entity
+@Table(schema = "sama", name = "meeting_suggested_slot")
+data class MeetingSuggestedSlotEntity(
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    var id: SlotId? = null,
+    private val meetingIntentId: MeetingIntentId,
+    var startDateTime: ZonedDateTime,
+    var endDateTime: ZonedDateTime,
+    @CreatedDate
+    var createdAt: Instant? = null
+)

@@ -2,7 +2,6 @@ package com.sama.calendar.application
 
 import com.sama.calendar.domain.*
 import com.sama.users.domain.UserId
-import liquibase.pro.packaged.it
 import java.time.ZonedDateTime
 
 data class BlockDTO(
@@ -16,33 +15,25 @@ data class FetchBlocksDTO(
     val blocks: List<BlockDTO>
 )
 
-fun MeetingEntity.toDTO(): MeetingDTO {
-    return MeetingDTO(
+fun MeetingIntentEntity.toDTO(): MeetingIntentDTO {
+    return MeetingIntentDTO(
         this.id!!,
         this.initiatorId!!,
         this.toRecipientDTO(),
         this.durationMinutes!!,
-        this.slots.filter { it.status == MeetingSlotStatus.SUGGESTED }
-            .map { it.toDTO() },
-        this.slots.filter { it.status == MeetingSlotStatus.PROPOSED }
-            .map { it.toDTO() },
-        this.slots.filter { it.status == MeetingSlotStatus.CONFIRMED }
-            .map { it.toDTO() }
-            .firstOrNull()
+        this.suggestedSlots.map { it.toDTO() }
     )
 }
 
-data class MeetingDTO(
-    val meetingId: MeetingId,
+data class MeetingIntentDTO(
+    val meetingIntentId: MeetingProposalId,
     val initiatorId: UserId,
     val recipient: RecipientDTO,
     val durationMinutes: Long,
-    val suggestedSlots: List<MeetingSlotDTO>?,
-    val proposedSlots: List<MeetingSlotDTO>?,
-    val confirmedSlot: MeetingSlotDTO?
+    val suggestedSlots: List<MeetingSlotDTO>,
 )
 
-fun MeetingSlotEntity.toDTO(): MeetingSlotDTO {
+fun MeetingSuggestedSlotEntity.toDTO(): MeetingSlotDTO {
     return MeetingSlotDTO(this.startDateTime, this.endDateTime)
 }
 
@@ -51,8 +42,8 @@ data class MeetingSlotDTO(
     val endDateTime: ZonedDateTime
 )
 
-fun MeetingEntity.toRecipientDTO(): RecipientDTO {
-    return RecipientDTO(this.recipientId, this.recipientEmail)
+fun MeetingIntentEntity.toRecipientDTO(): RecipientDTO {
+    return RecipientDTO(this.recipientId, null)
 }
 
 fun MeetingSlotDTO.toValueObject(): MeetingSlot {
@@ -60,12 +51,13 @@ fun MeetingSlotDTO.toValueObject(): MeetingSlot {
 }
 
 data class RecipientDTO(
-    val recipientId: UserId?,
-    val recipientEmail: String?
+    val userId: UserId?,
+    val email: String?
 )
 
-data class ProposedMeetingDTO(
-    val meetingId: MeetingId,
+data class MeetingProposalDTO(
+    val meetingIntentId: MeetingIntentId,
+    val meetingProposalId: MeetingProposalId,
     val meetingCode: MeetingCode,
     val meetingUrl: String
 )
