@@ -27,10 +27,11 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler
+import java.time.zone.ZoneRulesException
 
 
 @Configuration
-@Import(WebSecurityConfiguration::class)
+@Import(WebSecurityConfiguration::class, GlobalWebMvcExceptionHandler::class)
 @EnableWebMvc
 class WebMvcConfiguration(
     private val userIdAttributeResolver: UserIdAttributeResolver
@@ -77,6 +78,11 @@ class GlobalWebMvcExceptionHandler : ResponseEntityExceptionHandler() {
     @ResponseStatus(NOT_FOUND)
     fun handleNotFound(ex: NotFoundException, request: WebRequest) =
         handleExceptionInternal(ex, null, HttpHeaders(), NOT_FOUND, request)
+
+    @ExceptionHandler(value = [ZoneRulesException::class])
+    @ResponseStatus(BAD_REQUEST)
+    fun handleBadRequest(ex: ZoneRulesException, request: WebRequest) =
+        handleExceptionInternal(ex, null, HttpHeaders(), BAD_REQUEST, request)
 
     @ExceptionHandler(value = [DomainValidationException::class])
     @ResponseStatus(BAD_REQUEST)

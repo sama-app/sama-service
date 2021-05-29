@@ -18,10 +18,7 @@ import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
-import java.time.LocalDate
-import java.time.LocalTime
-import java.time.ZoneId
-import java.time.ZonedDateTime
+import java.time.*
 
 @ExtendWith(SpringExtension::class)
 @SpringBootTest(
@@ -53,7 +50,7 @@ class BlockControllerTest(
 
         val startDateTime = ZonedDateTime.of(startDate, LocalTime.of(12, 15), zoneId)
         val endDateTime = ZonedDateTime.of(startDate, LocalTime.of(12, 30), zoneId)
-        whenever(blockApplicationService.fetchBlocks(eq(userId), eq(startDate), eq(endDate)))
+        whenever(blockApplicationService.fetchBlocks(eq(userId), eq(startDate), eq(endDate), eq(zoneId)))
             .thenReturn(FetchBlocksDTO(listOf(BlockDTO(startDateTime, endDateTime, false, "test"))))
 
         val expectedJson = """
@@ -74,6 +71,7 @@ class BlockControllerTest(
                 .header("Authorization", "Bearer $jwt")
                 .queryParam("startDate", "2021-01-01")
                 .queryParam("endDate", "2021-01-02")
+                .queryParam("timezone", "Europe/Rome")
         )
             .andExpect(status().isOk)
             .andExpect(content().json(expectedJson, true))
@@ -83,8 +81,9 @@ class BlockControllerTest(
     fun `fetch blocks empty`() {
         val startDate = LocalDate.of(2021, 1, 1)
         val endDate = LocalDate.of(2021, 1, 2)
+        val zoneId = ZoneId.of("Europe/Rome")
 
-        whenever(blockApplicationService.fetchBlocks(eq(userId), eq(startDate), eq(endDate)))
+        whenever(blockApplicationService.fetchBlocks(eq(userId), eq(startDate), eq(endDate), eq(zoneId)))
             .thenReturn(FetchBlocksDTO(emptyList()))
 
         val expectedJson = """
@@ -99,6 +98,7 @@ class BlockControllerTest(
                 .header("Authorization", "Bearer $jwt")
                 .queryParam("startDate", "2021-01-01")
                 .queryParam("endDate", "2021-01-02")
+                .queryParam("timezone", "Europe/Rome")
         )
             .andExpect(status().isOk)
             .andExpect(content().json(expectedJson, true))
@@ -111,6 +111,7 @@ class BlockControllerTest(
                 .header("Authorization", "Bearer $jwt")
                 .queryParam("startDate", "01/01/2021")
                 .queryParam("endDate", "2021-01-02")
+                .queryParam("timezone", "Europe/Rome")
         )
             .andExpect(status().isBadRequest)
     }
@@ -122,6 +123,19 @@ class BlockControllerTest(
                 .header("Authorization", "Bearer $jwt")
                 .queryParam("startDate", "2021-01-03")
                 .queryParam("endDate", "2021-01-02")
+                .queryParam("timezone", "Europe/Rome")
+        )
+            .andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `fetch blocks with invalid timezone fails`() {
+        mockMvc.perform(
+            get("/api/calendar/blocks")
+                .header("Authorization", "Bearer $jwt")
+                .queryParam("startDate", "2021-01-03")
+                .queryParam("endDate", "2021-01-02")
+                .queryParam("timezone", "Invalid")
         )
             .andExpect(status().isBadRequest)
     }
@@ -132,6 +146,7 @@ class BlockControllerTest(
             get("/api/calendar/blocks")
                 .queryParam("startDate", "2021-01-01")
                 .queryParam("endDate", "2021-01-02")
+                .queryParam("timezone", "Europe/Rome")
         )
             .andExpect(status().isForbidden)
     }

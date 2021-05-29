@@ -32,11 +32,11 @@ class MeetingApplicationService(
 
         val meetingDuration = command.duration.toMinutes()
 
-        val slotSuggestionRequest = SlotSuggestionRequest(command.suggestedSlotCount, meetingDuration)
+        val slotSuggestionRequest = SlotSuggestionRequest(command.suggestedSlotCount, meetingDuration, command.timezone)
         val suggestedSlots = slotSuggestionService.suggestSlots(userId, slotSuggestionRequest)
             .map { MeetingSlot(it.startTime, it.endTime) }
 
-        val meeting = MeetingIntent(meetingId, userId, null, meetingDuration, suggestedSlots)
+        val meeting = MeetingIntent(meetingId, userId, null, meetingDuration, command.timezone, suggestedSlots)
 
         val meetingEntity = MeetingIntentEntity.new(meeting).also { meetingIntentRepository.save(it) }
         return meetingEntity.toDTO()

@@ -7,6 +7,7 @@ import com.sama.users.domain.UserId
 import liquibase.pro.packaged.it
 import java.time.Duration
 import java.time.Duration.ofMinutes
+import java.time.ZoneId
 import java.time.ZonedDateTime
 import javax.persistence.Embeddable
 import kotlin.Result.Companion.failure
@@ -33,6 +34,7 @@ data class MeetingIntent(
     val initiatorId: UserId,
     val recipientId: UserId?,
     val duration: Duration,
+    val timezone: ZoneId,
     val suggestedSlots: List<MeetingSlot>,
 ) {
     val allowedDurations = setOf(ofMinutes(30), ofMinutes(45), ofMinutes(60))
@@ -45,6 +47,7 @@ data class MeetingIntent(
                     meetingIntentEntity.id!!, meetingIntentEntity.initiatorId!!,
                     meetingIntentEntity.recipientId,
                     ofMinutes(meetingIntentEntity.durationMinutes!!),
+                    meetingIntentEntity.timezone!!,
                     meetingIntentEntity.suggestedSlots
                         .map { MeetingSlot(it.startDateTime, it.endDateTime) }
                 )

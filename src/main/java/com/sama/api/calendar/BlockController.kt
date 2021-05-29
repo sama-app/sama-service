@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ResponseStatusException
 import java.time.LocalDate
+import java.time.ZoneId
 
 @Tag(name = "calendar")
 @RestController
@@ -34,12 +35,13 @@ class BlockController(
     fun fetchBlocks(
         @AuthUserId userId: UserId,
         @RequestParam @DateTimeFormat(iso = DATE) startDate: LocalDate,
-        @RequestParam @DateTimeFormat(iso = DATE) endDate: LocalDate
+        @RequestParam @DateTimeFormat(iso = DATE) endDate: LocalDate,
+        @RequestParam timezone: ZoneId,
     ): FetchBlocksDTO {
         if (endDate.isBefore(startDate)) {
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "'endDate' must be after 'startDate'")
         }
 
-        return blockApplicationService.fetchBlocks(userId, startDate, endDate)
+        return blockApplicationService.fetchBlocks(userId, startDate, endDate, timezone)
     }
 }

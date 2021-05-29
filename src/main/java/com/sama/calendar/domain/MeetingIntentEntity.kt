@@ -5,7 +5,9 @@ import com.sama.common.Factory
 import com.sama.users.domain.UserId
 import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.annotation.LastModifiedDate
+import org.springframework.data.jpa.convert.threeten.Jsr310JpaConverters
 import java.time.Instant
+import java.time.ZoneId
 import java.time.ZonedDateTime
 import javax.persistence.*
 
@@ -21,6 +23,7 @@ class MeetingIntentEntity {
             meetingEntity.id = meetingIntent.meetingIntentId
             meetingEntity.initiatorId = meetingIntent.initiatorId
             meetingEntity.durationMinutes = meetingIntent.duration.toMinutes()
+            meetingEntity.timezone = meetingIntent.timezone
             meetingEntity.createdAt = Instant.now()
             meetingEntity.updatedAt = Instant.now()
             val slots = meetingIntent.suggestedSlots.map {
@@ -48,6 +51,10 @@ class MeetingIntentEntity {
 
     @Column(nullable = false)
     var durationMinutes: Long? = null
+
+    @Column(nullable = false)
+    @Convert(converter = Jsr310JpaConverters.ZoneIdConverter::class)
+    var timezone: ZoneId? = null
 
     @OneToMany(cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(name = "meetingIntentId", nullable = false, updatable = false, insertable = false)
