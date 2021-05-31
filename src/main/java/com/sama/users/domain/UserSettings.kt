@@ -71,4 +71,8 @@ data class WorkingHours(
             )
         }
     }
+
+    fun isAllDay(): Boolean {
+        return startTime == LocalTime.MIN && endTime == LocalTime.MAX
+    }
 }

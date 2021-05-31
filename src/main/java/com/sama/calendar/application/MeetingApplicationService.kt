@@ -13,6 +13,8 @@ import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.util.UriComponentsBuilder
+import java.time.LocalDate
+import java.time.LocalDateTime
 
 @Service
 class MeetingApplicationService(
@@ -31,9 +33,14 @@ class MeetingApplicationService(
         val meetingId = meetingIntentRepository.nextIdentity()
 
         val meetingDuration = command.duration.toMinutes()
-
-        val slotSuggestionRequest = SlotSuggestionRequest(command.suggestedSlotCount, meetingDuration, command.timezone)
-        val suggestedSlots = slotSuggestionService.suggestSlots(userId, slotSuggestionRequest)
+        val slotSuggestionRequest = SlotSuggestionRequest(
+            meetingDuration,
+            command.timezone,
+            command.suggestionSlotCount,
+            LocalDateTime.now(),
+            LocalDateTime.now().plusDays(command.suggestionDayCount.toLong())
+        )
+        val suggestedSlots = slotSuggestionService.suggestSlots(userId, slotSuggestionRequest).suggestions
             .map { MeetingSlot(it.startTime, it.endTime) }
 
         val meeting = MeetingIntent(meetingId, userId, null, meetingDuration, command.timezone, suggestedSlots)
@@ -44,7 +51,11 @@ class MeetingApplicationService(
 
     @Transactional
     @PreAuthorize("@auth.hasAccess(#userId, #meetingIntentId)")
-    fun proposeMeeting(userId: UserId, meetingIntentId: MeetingIntentId, command: ProposeMeetingCommand): MeetingProposalDTO {
+    fun proposeMeeting(
+        userId: UserId,
+        meetingIntentId: MeetingIntentId,
+        command: ProposeMeetingCommand
+    ): MeetingProposalDTO {
         val meetingEntity = meetingIntentRepository.findByIdOrThrow(meetingIntentId)
         val meetingProposalId = meetingProposalRepository.nextIdentity()
 
