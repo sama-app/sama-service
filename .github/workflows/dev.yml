@@ -1,0 +1,63 @@
+name: dev
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-central-1
+
+      - uses: actions/checkout@v2
+
+      - name: Set up JDK 15
+        uses: actions/setup-java@v2
+        with:
+          java-version: '15'
+          distribution: 'adopt'
+
+      - name: Build
+        run: make container
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Upload to ECR
+        run: make upload-to-ecr
+
+#  deploy:
+#    runs-on: ubuntu-latest
+#
+#    steps:
+#      - name: Configure AWS credentials
+#        uses: aws-actions/configure-aws-credentials@v1
+#        with:
+#          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#          aws-region: eu-central-1
+#
+#      - name: Pull deployment repository
+#        uses: actions/checkout@v2
+#        with:
+#          repository: sama-app/sama-infra
+#          token: ${{ secrets.GH_TOKEN }}
+#          path: sama-infra
+#
+#      - name: Setup Terraform
+#        uses: hashicorp/setup-terraform@v1
+#
+#      - name: Init Terraform
+#        working-directory: ./sama-infra
+#        run: make init
+#
+#      - name: Deploy
+#        working-directory: ./sama-infra
+#        run: make dev-deploy-green
