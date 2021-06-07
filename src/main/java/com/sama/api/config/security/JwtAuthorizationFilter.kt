@@ -7,6 +7,7 @@ import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.util.StringUtils
 import org.springframework.web.filter.OncePerRequestFilter
 import java.io.IOException
+import java.time.Clock
 import javax.servlet.FilterChain
 import javax.servlet.ServletException
 import javax.servlet.http.HttpServletRequest
@@ -16,13 +17,16 @@ import javax.servlet.http.HttpServletResponse
 /**
  * Authorizes API requests by extracting a JWT token and Authorization header in format "Bearer $token"
  */
-class JwtAuthorizationFilter(private val accessJwtConfiguration: JwtConfiguration) : OncePerRequestFilter() {
+class JwtAuthorizationFilter(
+    private val accessJwtConfiguration: JwtConfiguration,
+    private val clock: Clock
+) : OncePerRequestFilter() {
 
     @Throws(ServletException::class, IOException::class)
     override fun doFilterInternal(request: HttpServletRequest, response: HttpServletResponse, chain: FilterChain) {
         getJwtFromHeader(request)
             ?.let { token ->
-                Jwt.verified(token, accessJwtConfiguration)
+                Jwt.verified(token, accessJwtConfiguration, clock)
                     .onSuccess {
                         val auth = UsernamePasswordAuthenticationToken(it.userEmail(), null, null)
                         SecurityContextHolder.getContext().authentication = auth

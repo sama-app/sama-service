@@ -8,6 +8,7 @@ import org.mockito.kotlin.any
 import org.mockito.kotlin.whenever
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import java.time.*
 
 const val jwtSigningSecret = "dummy-access-secret-for-development"
 const val jwtKeyId = "dummy-access-key-id-for-development"
@@ -32,5 +33,11 @@ class ApiTestConfiguration {
         var authUserRepository = mock(UserRepository::class.java)
         whenever(authUserRepository.findIdByEmail(any())).thenReturn(1)
         return UserIdAttributeResolver(authUserRepository)
+    }
+
+    @Bean
+    fun fixedClock(): Clock {
+        val fixedDate = LocalDate.of(2021, 6, 1).atStartOfDay().toInstant(ZoneOffset.UTC)
+        return Clock.fixed(fixedDate, ZoneId.systemDefault());
     }
 }

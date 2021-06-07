@@ -77,7 +77,7 @@ class UserApplicationService(
     }
 
     fun refreshToken(command: RefreshTokenCommand): JwtPairDTO {
-        val refreshToken = Jwt.verified(command.refreshToken, refreshJwtConfiguration)
+        val refreshToken = Jwt.verified(command.refreshToken, refreshJwtConfiguration, clock)
             .getOrThrow()
 
         val user = userRepository.findByEmailOrThrow(refreshToken.userEmail())

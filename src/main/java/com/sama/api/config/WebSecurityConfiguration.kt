@@ -11,17 +11,19 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter
 import org.springframework.security.config.http.SessionCreationPolicy.STATELESS
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
+import java.time.Clock
 
 
 @Configuration
 @EnableWebSecurity
 class WebSecurityConfiguration(
-    @Qualifier("accessJwtConfiguration") private val accessJwtConfiguration: JwtConfiguration
+    @Qualifier("accessJwtConfiguration") private val accessJwtConfiguration: JwtConfiguration,
+    private val clock: Clock
 ) : WebSecurityConfigurerAdapter() {
 
     @Bean
     fun jwtAuthorizationFilter(): JwtAuthorizationFilter {
-        return JwtAuthorizationFilter(accessJwtConfiguration)
+        return JwtAuthorizationFilter(accessJwtConfiguration, clock)
     }
 
     override fun configure(httpSecurity: HttpSecurity) {

@@ -32,9 +32,9 @@ import java.util.*
 )
 @AutoConfigureMockMvc
 internal class AuthorizationFiltersTest(
-    @Autowired val mockMvc: MockMvc
+    @Autowired private val mockMvc: MockMvc,
+    @Autowired private val clock: Clock
 ) {
-    private val clock = Clock.fixed(Instant.now(), ZoneId.systemDefault())
 
     private val validJwt = JWT.create()
         .withKeyId(jwtKeyId)
