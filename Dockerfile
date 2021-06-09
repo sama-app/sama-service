@@ -1,8 +1,12 @@
 FROM amazoncorretto:16-alpine
 
+ENV USER=sama
+ENV UID=1001
+ENV GID=1001
+
 RUN mkdir /opt/sama && \
-    addgroup -S sama && \
-    adduser -S sama -G sama
+    addgroup --gid $GID -S $USER && \
+    adduser --uid $UID -S $USER -G $USER
 
 RUN mkdir -p /var/log/sama/sama-service
 

@@ -4,6 +4,13 @@ build:
 container: build
 	docker build -t sama-service .
 
+container-run:
+	docker run -d \
+          --name sama-service \
+          -p 3000:3000 \
+          -v /var/log/sama/sama-service:/var/log/sama/sama-service \
+          sama-service:latest
+
 upload-to-ecr:
 	docker tag sama-service:latest 216862985054.dkr.ecr.eu-central-1.amazonaws.com/sama-service:latest
 	docker push 216862985054.dkr.ecr.eu-central-1.amazonaws.com/sama-service:latest
