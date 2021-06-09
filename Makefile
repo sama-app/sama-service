@@ -1,5 +1,5 @@
 build:
-	./mvnw clean install -DskipTests
+	mvn --batch-mode clean install -DskipTests
 
 container: build
 	docker build -t sama-service .
