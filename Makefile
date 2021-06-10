@@ -1,7 +1,8 @@
 build:
-	mvn --batch-mode clean install -DskipTests
+	@mvn --batch-mode clean install -DskipTests
 
 container: build
+	docker pull 216862985054.dkr.ecr.eu-central-1.amazonaws.com/sama-service:latest || true
 	docker build -t sama-service .
 
 container-run:
