@@ -67,9 +67,6 @@ jobs:
       - name: Init Terraform
         run: make init
 
-      - name: Validate Terraform
-        run: make validate
-
       - name: Get Current Deployment Colour
         id: current_deployment
         run: echo ::set-output name=COLOUR::$(make dev-current-deployment)
