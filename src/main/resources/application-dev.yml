@@ -1,0 +1,7 @@
+spring:
+  datasource:
+    host: sama-dev.cp9s2aovpufd.eu-central-1.rds.amazonaws.com
+    port: 5432
+    database-name: sama
+    username: sama
+    # password: loaded from aws-secrets-manager

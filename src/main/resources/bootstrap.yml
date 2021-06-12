@@ -1,0 +1,8 @@
+aws:
+  secretsmanager:
+    enabled: true
+    failFast: false
+    name: sama-service
+    prefix: secret
+    profileSeparator: _
+    region: eu-central-1
