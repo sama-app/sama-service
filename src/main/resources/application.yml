@@ -7,6 +7,8 @@ server:
     include-stacktrace: always # TODO: remove for prod
 
 spring:
+  profiles:
+    default: local
   datasource:
     host: localhost
     port: 5433
