@@ -118,6 +118,12 @@
             <version>2.0.0</version>
         </dependency>
 
+        <!-- Templating -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mustache</artifactId>
+        </dependency>
+
         <!-- Monitoring -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

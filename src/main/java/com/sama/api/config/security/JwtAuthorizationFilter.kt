@@ -24,15 +24,15 @@ class JwtAuthorizationFilter(
 
     @Throws(ServletException::class, IOException::class)
     override fun doFilterInternal(request: HttpServletRequest, response: HttpServletResponse, chain: FilterChain) {
-        getJwtFromHeader(request)
-            ?.let { token ->
-                Jwt.verified(token, accessJwtConfiguration, clock)
-                    .onSuccess {
-                        val auth = UsernamePasswordAuthenticationToken(it.userEmail(), null, null)
-                        SecurityContextHolder.getContext().authentication = auth
-                    }
-                    .onFailure { logger.info("jwt authentication error:", it) }
-            }
+        val jwt = getJwtFromHeader(request) ?: getJwtFromCookie(request)
+        jwt?.let { token ->
+            Jwt.verified(token, accessJwtConfiguration, clock)
+                .onSuccess {
+                    val auth = UsernamePasswordAuthenticationToken(it.userEmail(), null, null)
+                    SecurityContextHolder.getContext().authentication = auth
+                }
+                .onFailure { logger.info("jwt authentication error:", it) }
+        }
 
         chain.doFilter(request, response)
     }
@@ -43,6 +43,10 @@ class JwtAuthorizationFilter(
             return bearerToken.substring(7)
         }
         return null
+    }
+
+    private fun getJwtFromCookie(request: HttpServletRequest): String? {
+        return request.cookies?.first { it.name == "sama.access" }?.value
     }
 }
 

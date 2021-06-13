@@ -1,0 +1,27 @@
+<body>
+
+</script>
+
+<div id="conditional">
+
+    <table cellspacing="0" cellpadding="4" style=border:none;>
+        <tr>
+            <!-- looping data headers-->
+            {{#headers}}
+                <th>{{.}}</th> {{/headers}}
+            <!-- end looping data headers-->
+        </tr>
+
+        {{#vectors}}
+            <tr>
+                {{#. }}
+                    <td style=background-color:{{second}};text-align:center;>
+                        {{first}}
+                    </td>
+                {{/.}}
+            </tr>
+        {{/vectors}}
+    </table>
+
+</div>
+</body>
