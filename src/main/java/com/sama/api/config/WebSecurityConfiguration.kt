@@ -39,6 +39,7 @@ class WebSecurityConfiguration(
             // Google OAuth2
             .antMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
             .antMatchers(HttpMethod.GET, "/api/auth/**").permitAll()
+            .antMatchers(HttpMethod.GET, "/__debug/auth/**").permitAll()
             // Actuator
             .antMatchers(HttpMethod.GET, "/__mon/**").permitAll()
             // All other requests require authentication

@@ -5,6 +5,7 @@ import com.sama.common.ApplicationService
 import com.sama.common.findByIdOrThrow
 import com.sama.suggest.domain.Block
 import com.sama.suggest.domain.SlotSuggestionEngine
+import com.sama.suggest.domain.UserHeapMap
 import com.sama.suggest.domain.UserHeatMapGenerator
 import com.sama.users.domain.UserId
 import com.sama.users.domain.UserSettingsRepository
@@ -20,6 +21,23 @@ class SlotSuggestionService(
     private val userSettingsRepository: UserSettingsRepository,
     private val blockRepository: BlockRepository
 ) {
+
+    fun computeHeapMap(userId: UserId): UserHeapMap {
+        val userSettings = userSettingsRepository.findByIdOrThrow(userId)
+
+        // Generate HeatMap
+        val pastBlocksByDate = blockRepository.findAll(
+            userId,
+            ZonedDateTime.now(userSettings.timezone!!).minusDays(90),
+            ZonedDateTime.now(userSettings.timezone!!),
+        )
+            .filter { !it.allDay }
+            .map { Block(it.startDateTime, it.endDateTime) }
+            .groupBy { it.startDateTime.toLocalDate() }
+
+        return UserHeatMapGenerator(pastBlocksByDate)
+            .generate()
+    }
 
     fun suggestSlots(userId: UserId, request: SlotSuggestionRequest): SlotSuggestionResponse {
         val userSettings = userSettingsRepository.findByIdOrThrow(userId)
