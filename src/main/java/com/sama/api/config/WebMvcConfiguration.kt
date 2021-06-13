@@ -46,7 +46,7 @@ class WebMvcConfiguration(
         filter.setIncludePayload(true)
         filter.setMaxPayloadLength(10000)
         filter.setIncludeHeaders(true)
-        filter.setHeaderPredicate { s: String -> !headerBlacklist.contains(s.toLowerCase()) }
+        filter.setHeaderPredicate { s: String -> !headerBlacklist.contains(s.lowercase()) }
         return filter
     }
 
