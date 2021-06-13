@@ -1,5 +1,7 @@
 package com.sama.common
 
+import liquibase.pro.packaged.T
+import liquibase.pro.packaged.li
 import org.springframework.data.repository.CrudRepository
 import java.time.Duration
 import java.util.*
@@ -9,7 +11,7 @@ fun <T : Any> Optional<T>.toNullable(): T? = this.orElse(null)
 inline fun <reified T, ID> CrudRepository<T, ID>.findByIdOrThrow(id: ID): T = findById(id)
     .orElseThrow { NotFoundException(T::class, id) }
 
-fun <T> MutableList<T>.mapMutating(transform: (T) -> T): MutableList<T>  {
+fun <T> MutableList<T>.mapMutating(transform: (T) -> T): MutableList<T> {
     Objects.requireNonNull(transform)
     val li: MutableListIterator<T> = this.listIterator()
     while (li.hasNext()) {
@@ -18,11 +20,21 @@ fun <T> MutableList<T>.mapMutating(transform: (T) -> T): MutableList<T>  {
     return this
 }
 
-fun <T> MutableList<T>.mapIndexedMutating(transform: (Int, T) -> T): MutableList<T> {
+fun <T> MutableList<T>.mapIndexed(transform: (Int, T) -> T): MutableList<T> {
     Objects.requireNonNull(transform)
     val li: MutableListIterator<T> = this.listIterator()
     while (li.hasNext()) {
         li.set(transform.invoke(li.nextIndex(), li.next()))
+    }
+    return this
+}
+
+fun DoubleArray.mapIndexed(transform: (Int, Double) -> Double): DoubleArray {
+    Objects.requireNonNull(transform)
+
+    var index = 0
+    for (item in this) {
+        this[index] = transform.invoke(index++, item)
     }
     return this
 }

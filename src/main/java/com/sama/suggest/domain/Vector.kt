@@ -1,33 +1,18 @@
 package com.sama.suggest.domain
 
-import com.sama.common.mapIndexedMutating
+import com.sama.common.mapIndexed
 import kotlin.math.abs
 import kotlin.math.exp
 
-typealias Vector = MutableList<Double>
-
-// TODO: this is bad
-fun Vector.isOnes(): Boolean {
-    return find { v -> v != 1.0 } != null
-}
-
-// TODO: this is bad
-fun Vector.isZeroes(): Boolean {
-    return find { v -> v != 0.0 } != null
-}
-
-fun Vector.copy(): Vector {
-    return toMutableList()
-}
+typealias Vector = DoubleArray
 
 fun zeroes(vectorSize: Int): Vector {
-    return MutableList(vectorSize) { 0.0 }
+    return DoubleArray(vectorSize) { 0.0 }
 }
 
 fun ones(vectorSize: Int): Vector {
-    return MutableList(vectorSize) { 1.0 }
+    return DoubleArray(vectorSize) { 1.0 }
 }
-
 
 fun cliff(outsideValue: Double, insideValue: Double, vectorSize: Int, start: Int, end: Int): Vector {
     return slope(outsideValue, insideValue, vectorSize, start, end, 0 to 0)
@@ -98,7 +83,7 @@ fun slope(
 
     val valueRange = outsideValue - insideValue
     return ones(vectorSize)
-        .mapIndexedMutating { idx, _ ->
+        .mapIndexed { idx, _ ->
             if (idx < startSlopeStart || idx >= endSlopeEnd) {
                 outsideValue
             } else if (idx in startSlopeStart until startSlopeEnd) {
@@ -115,8 +100,7 @@ fun slope(
 
 fun Vector.multiply(other: Vector): Vector {
     check(size == other.size) { "Vectors must be the same size" }
-    // TODO check if other is ones and do nothing
-    mapIndexedMutating { idx, value -> value * other[idx] }
+    mapIndexed { idx, value -> value * other[idx] }
     return this
 }
 
@@ -129,15 +113,13 @@ fun Vector.multiply(others: Collection<Vector>): Vector {
 
 fun Vector.divide(other: Vector): Vector {
     check(size == other.size) { "Vectors must be the same size" }
-    // TODO check if other is ones and do nothing
-    mapIndexedMutating { idx, value -> value / other[idx] }
+    mapIndexed { idx, value -> value / other[idx] }
     return this
 }
 
 fun Vector.add(other: Vector): Vector {
     check(size == other.size) { "Vectors must be the same size" }
-    // TODO check if other is zeroes and do nothing
-    mapIndexedMutating { idx, value -> value + other[idx] }
+    mapIndexed { idx, value -> value + other[idx] }
     return this
 }
 
@@ -148,21 +130,21 @@ fun Vector.add(others: Collection<Vector>): Vector {
     return add(others.reduce { acc, mask -> acc.add(mask) })
 }
 
-fun Vector.scalarMultiply(value: Double): Vector {
-    check(value >= 0) { "Scalar value must be greater than or equal to 0" }
-    if (value == 1.0) {
+fun Vector.scalarMultiply(input: Double): Vector {
+    check(input >= 0) { "Scalar value must be greater than or equal to 0" }
+    if (input == 1.0) {
         return this
     }
-    replaceAll { it * value }
+    mapIndexed { _, value -> value * input }
     return this
 }
 
-fun Vector.scalarDivide(value: Double): Vector {
-    check(value > 0) { "Scalar value must be greater than 0" }
-    if (value == 1.0) {
+fun Vector.scalarDivide(input: Double): Vector {
+    check(input > 0) { "Scalar value must be greater than 0" }
+    if (input == 1.0) {
         return this
     }
-    replaceAll { it / value }
+    mapIndexed { _, value -> value / input }
     return this
 }
 
@@ -175,16 +157,9 @@ fun Vector.normalize(): Vector {
 }
 
 fun Vector.zipMultiplying(slotSize: Int): Vector {
-    return windowed(slotSize)
+    // not efficient as we're converting to List<List<Double>>
+    // and then back to DoubleArray
+    return asIterable().windowed(slotSize)
         .map { it.reduce { acc, d -> acc * d } }
-        .toMutableList()
-}
-
-typealias Matrix = MutableList<Vector>
-
-@JvmName("matrixMultiply")
-fun Matrix.multiply(other: Vector): Matrix {
-    check(size == other.size) { "Matrix size must be the same as the input Vector" }
-    mapIndexedMutating { idx, value -> value.scalarMultiply(other[idx]) }
-    return this
+        .toDoubleArray()
 }
