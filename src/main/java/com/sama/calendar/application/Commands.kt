@@ -1,12 +1,16 @@
 package com.sama.calendar.application
 
 import java.time.ZoneId
+import javax.validation.constraints.Min
 
 
 data class InitiateMeetingCommand(
+    @Min(0)
     val duration: Long,
     val timezone: ZoneId,
+    @Min(0)
     val suggestionSlotCount: Int,
+    @Min(0)
     val suggestionDayCount: Int,
 )
 

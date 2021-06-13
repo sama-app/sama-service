@@ -1,4 +1,4 @@
-package com.sama.authorization
+package com.sama.acl
 
 import com.sama.calendar.domain.MeetingIntentId
 import com.sama.calendar.domain.MeetingIntentRepository

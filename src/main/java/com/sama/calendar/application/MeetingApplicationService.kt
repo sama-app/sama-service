@@ -8,21 +8,22 @@ import com.sama.common.toMinutes
 import com.sama.suggest.application.SlotSuggestionRequest
 import com.sama.suggest.application.SlotSuggestionService
 import com.sama.users.domain.UserId
-import liquibase.pro.packaged.it
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.util.UriComponentsBuilder
-import java.time.LocalDate
+import java.time.Clock
 import java.time.LocalDateTime
 
 @Service
 class MeetingApplicationService(
     private val meetingIntentRepository: MeetingIntentRepository,
     private val meetingProposalRepository: MeetingProposalRepository,
-    private val slotSuggestionService: SlotSuggestionService
+    private val slotSuggestionService: SlotSuggestionService,
+    private val clock: Clock
 ) {
 
+    @Transactional(readOnly = true)
     fun findMeeting(userId: UserId, meetingIntentId: MeetingIntentId): MeetingIntentDTO {
         val meetingEntity = meetingIntentRepository.findByIdOrThrow(meetingIntentId)
         return meetingEntity.toDTO()
@@ -32,21 +33,37 @@ class MeetingApplicationService(
     fun initiateMeeting(userId: UserId, command: InitiateMeetingCommand): MeetingIntentDTO {
         val meetingId = meetingIntentRepository.nextIdentity()
 
-        val meetingDuration = command.duration.toMinutes()
-        val slotSuggestionRequest = SlotSuggestionRequest(
-            meetingDuration,
-            command.timezone,
-            command.suggestionSlotCount,
-            LocalDateTime.now(),
-            LocalDateTime.now().plusDays(command.suggestionDayCount.toLong())
-        )
-        val suggestedSlots = slotSuggestionService.suggestSlots(userId, slotSuggestionRequest).suggestions
-            .map { MeetingSlot(it.startTime, it.endTime) }
 
-        val meeting = MeetingIntent(meetingId, userId, null, meetingDuration, command.timezone, suggestedSlots)
+        val suggestedSlots = when (command.suggestionSlotCount) {
+            0 -> emptyList()
+            else -> {
+                val request = command.toSlotSuggestionRequest()
+                slotSuggestionService.suggestSlots(userId, request).suggestions
+                    .map { MeetingSlot(it.startTime, it.endTime) }
+            }
+        }
+
+        val meeting = MeetingIntent(
+            meetingId,
+            userId,
+            null,
+            command.duration.toMinutes(),
+            command.timezone,
+            suggestedSlots
+        )
 
         val meetingEntity = MeetingIntentEntity.new(meeting).also { meetingIntentRepository.save(it) }
         return meetingEntity.toDTO()
+    }
+
+    private fun InitiateMeetingCommand.toSlotSuggestionRequest(): SlotSuggestionRequest {
+        return SlotSuggestionRequest(
+            duration.toMinutes(),
+            timezone,
+            suggestionSlotCount,
+            LocalDateTime.now(clock),
+            LocalDateTime.now(clock).plusDays(suggestionDayCount.toLong())
+        )
     }
 
     @Transactional

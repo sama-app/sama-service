@@ -18,6 +18,7 @@ class FirebaseConfiguration {
     }
 
     @Bean
+    @Profile("!ci")
     fun firebaseAdminSdk(firebaseCredentials: GoogleCredentials): FirebaseApp {
         val options = FirebaseOptions.builder()
             .setCredentials(firebaseCredentials)

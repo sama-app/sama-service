@@ -7,6 +7,8 @@ server:
     include-stacktrace: always # TODO: remove for prod
 
 spring:
+  main:
+    allow-bean-definition-overriding: true
   profiles:
     default: local
   datasource:
