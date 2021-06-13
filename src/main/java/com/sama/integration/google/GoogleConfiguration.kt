@@ -10,33 +10,22 @@ import com.google.api.services.calendar.CalendarScopes
 import com.google.api.services.oauth2.Oauth2Scopes
 import com.sama.SamaApplication
 import com.sama.users.domain.UserRepository
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Conditional
 import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.Profile
 import java.io.FileNotFoundException
 import java.io.InputStreamReader
+import java.io.StringReader
 
 
 @Configuration
 class GoogleConfiguration() {
-    private val SCOPES: List<String> = listOf(
-        CalendarScopes.CALENDAR_READONLY,
-        Oauth2Scopes.USERINFO_EMAIL,
-        Oauth2Scopes.USERINFO_PROFILE
-    )
-    private val CLIENT_ID = "690866307711-8nm12p73mo585k5njoaqepjupgm31im3.apps.googleusercontent.com"
-    private val GOOGLE_CREDENTIALS_FILE_PATH = "/secrets/google-credentials.json"
 
     @Bean
     fun googleJacksonFactory(): JacksonFactory {
         return JacksonFactory.getDefaultInstance()
-    }
-
-    @Bean
-    fun googleClientSecrets(): GoogleClientSecrets {
-        val credentialsFile = SamaApplication::class.java.getResourceAsStream(GOOGLE_CREDENTIALS_FILE_PATH)
-            ?: throw FileNotFoundException("Resource not found: $GOOGLE_CREDENTIALS_FILE_PATH")
-        val jsonFactory = JacksonFactory.getDefaultInstance()
-        return GoogleClientSecrets.load(jsonFactory, InputStreamReader(credentialsFile))
     }
 
     @Bean
@@ -45,12 +34,23 @@ class GoogleConfiguration() {
     }
 
     @Bean
-    fun googleAuthorizationCodeFlow(userRepository: UserRepository): GoogleAuthorizationCodeFlow {
+    @Profile("!ci")
+    fun googleClientSecrets(@Value("\${integration.google.credentials}") credentials: String): GoogleClientSecrets {
+        return GoogleClientSecrets.load(googleJacksonFactory(), StringReader(credentials))
+    }
+
+    @Bean
+    @Profile("!ci")
+    fun googleAuthorizationCodeFlow(
+        @Value("\${integration.google.scopes}") scopes: List<String>,
+        googleClientSecrets: GoogleClientSecrets,
+        userRepository: UserRepository
+    ): GoogleAuthorizationCodeFlow {
         return GoogleAuthorizationCodeFlow.Builder(
             googleNetHttpTransport(),
             googleJacksonFactory(),
-            googleClientSecrets(),
-            SCOPES
+            googleClientSecrets,
+            scopes
         )
             .setDataStoreFactory(GoogleCredentialJPADataStoreFactory(userRepository))
             .setAccessType("offline")
@@ -59,12 +59,12 @@ class GoogleConfiguration() {
     }
 
     @Bean
-    fun googleIdTokenVerifier(): GoogleIdTokenVerifier {
+    fun googleIdTokenVerifier(@Value("\${integration.google.client-id}") clientId: String): GoogleIdTokenVerifier {
         return GoogleIdTokenVerifier.Builder(
             googleNetHttpTransport(),
             googleJacksonFactory()
         )
-            .setAudience(listOf(CLIENT_ID))
+            .setAudience(listOf(clientId))
             .build()
     }
 }

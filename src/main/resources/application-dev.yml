@@ -4,4 +4,4 @@ spring:
     port: 5432
     database-name: sama
     username: sama
-    # password: loaded from aws-secrets-manager
+    password: "dummy-value-this-is-loaded-from-AWS-SM"

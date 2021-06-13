@@ -12,7 +12,9 @@ import org.testcontainers.junit.jupiter.Testcontainers
 
 
 @Testcontainers
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(
+    webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT
+)
 class ApplicationBootstrapTest(@Autowired val context: ApplicationContext) {
 
     companion object {

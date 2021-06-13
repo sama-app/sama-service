@@ -1,5 +1,5 @@
 build:
-	@mvn --batch-mode clean install
+	@mvn --batch-mode clean install -Dspring.profiles.active=ci
 
 container: build
 	docker pull 216862985054.dkr.ecr.eu-central-1.amazonaws.com/sama-service:latest || true

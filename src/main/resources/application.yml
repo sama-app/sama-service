@@ -53,4 +53,11 @@ sama:
       signingSecret: dummy-refresh-secret-for-development
       expirationSec: 2592000 # 30 days
       keyId: dummy-refresh-key-id-for-development
-    
+
+integration:
+  google:
+    client-id: 690866307711-8nm12p73mo585k5njoaqepjupgm31im3.apps.googleusercontent.com
+    scopes: https://www.googleapis.com/auth/calendar.readonly, https://www.googleapis.com/auth/userinfo.email, https://www.googleapis.com/auth/userinfo.profile
+    credentials: "dummy-value-this-is-loaded-from-AWS-SM"
+  firebase:
+    credentials: "dummy-value-this-is-loaded-from-AWS-SM"

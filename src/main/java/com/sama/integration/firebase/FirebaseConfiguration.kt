@@ -3,23 +3,24 @@ package com.sama.integration.firebase
 import com.google.auth.oauth2.GoogleCredentials
 import com.google.firebase.FirebaseApp
 import com.google.firebase.FirebaseOptions
-import com.sama.SamaApplication
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import java.io.FileNotFoundException
+import org.springframework.context.annotation.Profile
 
 @Configuration
 class FirebaseConfiguration {
 
-    private val FIREBASE_CREDENTIALS_FILE_PATH = "/secrets/firebase-adminsdk-credentials.json"
+    @Bean
+    @Profile("!ci")
+    fun firebaseCredentials(@Value("\${integration.firebase.credentials}") credentials: String): GoogleCredentials {
+        return GoogleCredentials.fromStream(credentials.byteInputStream())
+    }
 
     @Bean
-    fun firebaseAdminSdk(): FirebaseApp {
-        val serviceAccount = SamaApplication::class.java.getResourceAsStream(FIREBASE_CREDENTIALS_FILE_PATH)
-            ?: throw FileNotFoundException("Resource not found: $FIREBASE_CREDENTIALS_FILE_PATH")
-
+    fun firebaseAdminSdk(firebaseCredentials: GoogleCredentials): FirebaseApp {
         val options = FirebaseOptions.builder()
-            .setCredentials(GoogleCredentials.fromStream(serviceAccount))
+            .setCredentials(firebaseCredentials)
             .build()
 
         return FirebaseApp.initializeApp(options)
