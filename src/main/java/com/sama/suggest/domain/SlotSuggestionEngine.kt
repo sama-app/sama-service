@@ -47,15 +47,17 @@ data class SlotSuggestionEngine(
                     ?.map { blockMask(it) }
                     ?: emptyList()
 
+                val userHeatMask = userHeatMap.value[date.dayOfWeek]!!
+
                 // Apply masks
-                val userHeapMap = userHeatMap.value[date.dayOfWeek]!!.copy()
-                userHeapMap
+                ones()
+                    .multiply(userHeatMask)
                     .multiply(searchBoundaryMask)
                     .multiply(workingHoursMask)
                     .multiply(blockMasks)
             }
             // Convert all days into one long vector
-            .reduce { acc, mutableList -> acc.plus(mutableList) as Vector }
+            .reduce { acc, mutableList -> acc.plus(mutableList) }
             // TODO: apply recency bias and any other "date-based" filters
             // TODO: move search boundary mask here
             // Create ranking for each slot of the specified duration
