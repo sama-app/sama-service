@@ -1,4 +1,4 @@
-package com.sama.authorization
+package com.sama.acl
 
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity
