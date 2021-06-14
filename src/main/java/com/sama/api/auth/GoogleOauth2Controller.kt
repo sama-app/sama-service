@@ -62,10 +62,11 @@ class GoogleOauth2Controller(
                     }
 
                     currentDevice.isNormal -> {
-                        val genericUrl = GenericUrl(request.requestURL.toString())
-                        genericUrl.rawPath = "/api/auth/success"
-                        genericUrl.scheme = if (genericUrl.host != "localhost") "https" else "http"
-                        redirectView.url = genericUrl.build()
+                        redirectView.url = "yoursama://auth/success"
+//                        val genericUrl = GenericUrl(request.requestURL.toString())
+//                        genericUrl.rawPath = "/api/auth/success"
+//                        genericUrl.scheme = if (genericUrl.host != "localhost") "https" else "http"
+//                        redirectView.url = genericUrl.build()
                     }
                 }
 
@@ -82,10 +83,11 @@ class GoogleOauth2Controller(
                     }
 
                     currentDevice.isNormal -> {
-                        val genericUrl = GenericUrl(request.requestURL.toString())
-                        genericUrl.rawPath = "/api/auth/error"
-                        genericUrl.scheme = if (genericUrl.host != "localhost") "https" else "http"
-                        redirectView.url = genericUrl.build()
+                        redirectView.url = "yoursama://auth/error"
+//                        val genericUrl = GenericUrl(request.requestURL.toString())
+//                        genericUrl.rawPath = "/api/auth/error"
+//                        genericUrl.scheme = if (genericUrl.host != "localhost") "https" else "http"
+//                        redirectView.url = genericUrl.build()
                     }
                 }
                 redirectView

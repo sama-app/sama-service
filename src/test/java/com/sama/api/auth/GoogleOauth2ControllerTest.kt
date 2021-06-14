@@ -101,7 +101,7 @@ class GoogleOauth2ControllerTest(
             .andExpect(status().isFound)
             .andExpect(
                 redirectedUrl(
-                    "http://localhost/api/auth/success" +
+                    "yoursama://auth/success" +
                             "?accessToken=${accessToken}" +
                             "&refreshToken=${refreshToken}"
                 )
@@ -140,7 +140,7 @@ class GoogleOauth2ControllerTest(
             .andExpect(status().isFound)
             .andExpect(
                 redirectedUrl(
-                    "http://localhost/api/auth/error?error=${error}"
+                    "yoursama://auth/error?error=${error}"
                 )
             )
     }
