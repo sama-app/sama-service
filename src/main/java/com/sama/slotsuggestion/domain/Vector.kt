@@ -6,12 +6,17 @@ import kotlin.math.exp
 
 typealias Vector = DoubleArray
 
+
+fun line(vectorSize: Int, value: Double): Vector {
+    return DoubleArray(vectorSize) { value }
+}
+
 fun zeroes(vectorSize: Int): Vector {
-    return DoubleArray(vectorSize) { 0.0 }
+    return line(vectorSize, 0.0)
 }
 
 fun ones(vectorSize: Int): Vector {
-    return DoubleArray(vectorSize) { 1.0 }
+    return line(vectorSize, 1.0)
 }
 
 fun cliff(outsideValue: Double, insideValue: Double, vectorSize: Int, start: Int, end: Int): Vector {
@@ -40,8 +45,8 @@ fun sigmoidSlope(
     { x -> 0.5 / sigmoid(1.0) * sigmoid(2 * x - 1) + 0.5 }
 }
 
-private fun sigmoid(x: Double, sharpness: Double = 4.0): Double {
-    return (1 / (1 + exp(-sharpness * x))) - 0.5
+fun sigmoid(x: Double, sharpness: Double = 1.0): Double {
+    return 1 / (1 + exp(-x))
 }
 
 /**
@@ -70,7 +75,6 @@ fun slope(
     check(slopeRange.first <= 0 && slopeRange.second >= 0) { "Invalid slope range" }
     check(end > start) { "End index must be greater than the start index" }
     check(end <= vectorSize) { "End index must be smaller than the vector size" }
-    check(outsideValue in 0.0..1.0 && insideValue in 0.0..1.0)
 
     val slopeLength = abs(slopeRange.first) + slopeRange.second.toDouble()
     val startSlopeStart = start + slopeRange.first

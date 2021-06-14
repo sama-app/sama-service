@@ -2,7 +2,9 @@ package com.sama.view.suggest
 
 import com.google.api.client.http.GenericUrl
 import com.sama.api.config.AuthUserId
+import com.sama.common.mapIndexed
 import com.sama.slotsuggestion.application.SlotSuggestionService
+import com.sama.slotsuggestion.domain.sigmoid
 import com.sama.users.application.GoogleOauth2ApplicationService
 import com.sama.users.application.GoogleOauth2Failure
 import com.sama.users.application.GoogleOauth2Success
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.servlet.ModelAndView
 import org.springframework.web.servlet.view.RedirectView
+import java.time.LocalTime
 import javax.servlet.http.Cookie
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
@@ -55,17 +58,26 @@ class DebugViewController(
 
     @GetMapping("/__debug/user/heatmap")
     fun renderUserHeapMap(@AuthUserId userId: UserId, model: MutableMap<String, Any>): ModelAndView {
-        val heatMap = slotSuggestionService.computeHeapMap(userId).value.toSortedMap()
-        model["headers"] = heatMap.keys
+        val heatMap = slotSuggestionService.computeFutureHeatMap(userId).value
+            .mapValues { it.value.mapIndexed { _, value -> sigmoid(value) } }
+            .toSortedMap()
+
+        model["headers"] = listOf(" ") + heatMap.keys.map { it.toString().substring(5) }
 
         // TODO replace this poor implementation of Matrix transpose
         val values = heatMap.values.toList()
-        val transposed = MutableList(values[0].size) { MutableList(values.size) { 0 to "" } }
+        val transposed = MutableList(values[0].size) { MutableList(values.size) { "0" to "" } }
         for (i in values.indices) {
             for (j in values[0].indices) {
                 val percentage = (values[i][j] * 100).toInt()
-                transposed[j][i] = percentage to percentageToColour(percentage)
+                transposed[j][i] = percentage.toString() to percentageToColour(percentage)
             }
+        }
+
+        for (i in transposed.indices) {
+            val time = LocalTime.MIDNIGHT.plusMinutes(i * 15L)
+            transposed[i] =
+                (mutableListOf(Pair("${time.hour}:${time.minute}", "#FFFFFF")) + transposed[i]).toMutableList()
         }
 
         model["vectors"] = transposed

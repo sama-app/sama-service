@@ -3,72 +3,69 @@ package com.sama.slotsuggestion.application
 import com.sama.calendar.domain.BlockRepository
 import com.sama.common.ApplicationService
 import com.sama.common.findByIdOrThrow
-import com.sama.slotsuggestion.domain.Block
-import com.sama.slotsuggestion.domain.SlotSuggestionEngine
-import com.sama.slotsuggestion.domain.UserHeapMap
-import com.sama.slotsuggestion.domain.UserHeatMapGenerator
+import com.sama.slotsuggestion.configuration.HeatMapConfiguration
+import com.sama.slotsuggestion.domain.*
 import com.sama.users.domain.UserId
 import com.sama.users.domain.UserSettingsRepository
+import liquibase.pro.packaged.it
 import org.springframework.stereotype.Service
-import java.time.Duration
-import java.time.LocalDateTime
-import java.time.ZoneId
-import java.time.ZonedDateTime
+import java.time.*
 
 @ApplicationService
 @Service
 class SlotSuggestionService(
     private val userSettingsRepository: UserSettingsRepository,
-    private val blockRepository: BlockRepository
+    private val blockRepository: BlockRepository,
+    private val heatMapConfiguration: HeatMapConfiguration
 ) {
 
-    fun computeHeapMap(userId: UserId): UserHeapMap {
+    fun computeHistoricalHeatMap(userId: UserId): HistoricalHeapMap {
         val userSettings = userSettingsRepository.findByIdOrThrow(userId)
 
-        // Generate HeatMap
         val pastBlocksByDate = blockRepository.findAll(
             userId,
-            ZonedDateTime.now(userSettings.timezone!!).minusDays(90),
+            ZonedDateTime.now(userSettings.timezone!!).minusDays(heatMapConfiguration.pastDays),
             ZonedDateTime.now(userSettings.timezone!!),
         )
             .filter { !it.allDay }
             .map { Block(it.startDateTime, it.endDateTime) }
             .groupBy { it.startDateTime.toLocalDate() }
 
-        return UserHeatMapGenerator(pastBlocksByDate)
+        return HistoricalHeatMapGenerator(pastBlocksByDate)
             .generate()
     }
 
-    fun suggestSlots(userId: UserId, request: SlotSuggestionRequest): SlotSuggestionResponse {
+    fun computeFutureHeatMap(userId: UserId): FutureHeatMap {
+        val historicalHeatMap = computeHistoricalHeatMap(userId)
+
         val userSettings = userSettingsRepository.findByIdOrThrow(userId)
-
-        // Generate HeatMap
-        val pastBlocksByDate = blockRepository.findAll(
-            userId,
-            request.startDate.atZone(userSettings.timezone!!).minusDays(90),
-            request.startDate.atZone(userSettings.timezone!!)
-        )
-            .filter { !it.allDay }
-            .map { Block(it.startDateTime, it.endDateTime) }
-            .groupBy { it.startDateTime.toLocalDate() }
-
-        val userHeatMap = UserHeatMapGenerator(pastBlocksByDate)
-            .generate()
-
-        // Generate suggestions
         val dayWorkingHours = userSettings.dayWorkingHours
             .mapValues { it.value.workingHours }
 
-        val futureBlocksByDate = blockRepository.findAll(
+        val futureBlocks = blockRepository.findAll(
             userId,
-            request.startDate.atZone(request.timezone),
-            request.endDate.atZone(request.timezone)
+            LocalDate.now().atStartOfDay(userSettings.timezone),
+            LocalDate.now().atStartOfDay(userSettings.timezone).plusDays(heatMapConfiguration.futureDays)
         )
             .map { Block(it.startDateTime, it.endDateTime) }
             .groupBy { it.startDateTime.toLocalDate() }
 
-        val suggestions = SlotSuggestionEngine(userHeatMap, dayWorkingHours, futureBlocksByDate, request.timezone)
-            .suggest(request.startDate, request.endDate, request.slotDuration, request.suggestionCount)
+        return FutureHeatMapGenerator(
+            historicalHeatMap, dayWorkingHours, futureBlocks, heatMapConfiguration.futureDays
+        ).generate()
+    }
+
+    fun suggestSlots(userId: UserId, request: SlotSuggestionRequest): SlotSuggestionResponse {
+        val futureHeatMap = computeFutureHeatMap(userId)
+
+        val suggestions = SlotSuggestionEngine(futureHeatMap)
+            .suggest(
+                request.startDate,
+                request.endDate,
+                request.timezone,
+                request.slotDuration,
+                request.suggestionCount
+            )
 
         return SlotSuggestionResponse(suggestions)
     }
