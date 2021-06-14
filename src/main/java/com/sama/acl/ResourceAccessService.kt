@@ -1,7 +1,7 @@
 package com.sama.acl
 
-import com.sama.calendar.domain.MeetingIntentId
-import com.sama.calendar.domain.MeetingIntentRepository
+import com.sama.meeting.domain.MeetingIntentId
+import com.sama.meeting.domain.MeetingIntentRepository
 import com.sama.users.domain.UserId
 import org.springframework.stereotype.Service
 

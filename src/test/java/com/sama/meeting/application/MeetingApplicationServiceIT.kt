@@ -1,13 +1,13 @@
-package com.sama.calendar.application
+package com.sama.meeting.application
 
-import com.sama.calendar.domain.MeetingIntent
-import com.sama.calendar.domain.MeetingIntentRepository
+import com.sama.meeting.domain.MeetingIntentRepository
 import com.sama.common.assertDoesNotThrowOrNull
 import com.sama.common.findByIdOrThrow
-import com.sama.suggest.application.SlotSuggestion
-import com.sama.suggest.application.SlotSuggestionRequest
-import com.sama.suggest.application.SlotSuggestionResponse
-import com.sama.suggest.application.SlotSuggestionService
+import com.sama.meeting.domain.MeetingIntent
+import com.sama.slotsuggestion.application.SlotSuggestion
+import com.sama.slotsuggestion.application.SlotSuggestionRequest
+import com.sama.slotsuggestion.application.SlotSuggestionResponse
+import com.sama.slotsuggestion.application.SlotSuggestionService
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
 import org.mockito.kotlin.eq

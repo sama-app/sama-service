@@ -1,4 +1,4 @@
-package com.sama.calendar.application
+package com.sama.meeting.application
 
 import java.time.ZoneId
 import javax.validation.constraints.Min

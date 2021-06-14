@@ -1,12 +1,12 @@
-package com.sama.suggest.application
+package com.sama.slotsuggestion.application
 
 import com.sama.calendar.domain.BlockRepository
 import com.sama.common.ApplicationService
 import com.sama.common.findByIdOrThrow
-import com.sama.suggest.domain.Block
-import com.sama.suggest.domain.SlotSuggestionEngine
-import com.sama.suggest.domain.UserHeapMap
-import com.sama.suggest.domain.UserHeatMapGenerator
+import com.sama.slotsuggestion.domain.Block
+import com.sama.slotsuggestion.domain.SlotSuggestionEngine
+import com.sama.slotsuggestion.domain.UserHeapMap
+import com.sama.slotsuggestion.domain.UserHeatMapGenerator
 import com.sama.users.domain.UserId
 import com.sama.users.domain.UserSettingsRepository
 import org.springframework.stereotype.Service

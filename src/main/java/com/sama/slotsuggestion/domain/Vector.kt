@@ -1,4 +1,4 @@
-package com.sama.suggest.domain
+package com.sama.slotsuggestion.domain
 
 import com.sama.common.mapIndexed
 import kotlin.math.abs

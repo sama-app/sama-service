@@ -1,8 +1,7 @@
-package com.sama.calendar.domain
+package com.sama.meeting.domain
 
 import com.sama.common.DomainValidationException
 import java.time.Duration
-
 
 class InvalidDurationException(meetingIntentId: MeetingIntentId, duration: Duration) :
     DomainValidationException("Unsupported duration '${duration.toMinutes()} min' for Meeting#$meetingIntentId")

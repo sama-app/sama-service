@@ -1,9 +1,8 @@
-package com.sama.suggest.domain
+package com.sama.slotsuggestion.domain
 
 import com.sama.common.DomainService
-import com.sama.suggest.application.SlotSuggestion
+import com.sama.slotsuggestion.application.SlotSuggestion
 import com.sama.users.domain.WorkingHours
-import liquibase.pro.packaged.it
 import java.time.*
 import kotlin.math.ceil
 import kotlin.streams.asSequence
