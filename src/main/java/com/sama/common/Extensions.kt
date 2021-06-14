@@ -29,6 +29,15 @@ fun <T> MutableList<T>.mapIndexed(transform: (Int, T) -> T): MutableList<T> {
     return this
 }
 
+fun DoubleArray.mapValues(transform: (Double) -> Double): DoubleArray {
+    Objects.requireNonNull(transform)
+
+    for ((index, item) in this.withIndex()) {
+        this[index] = transform.invoke(item)
+    }
+    return this
+}
+
 fun DoubleArray.mapIndexed(transform: (Int, Double) -> Double): DoubleArray {
     Objects.requireNonNull(transform)
 

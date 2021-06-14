@@ -58,6 +58,11 @@ sama:
       expirationSec: 2592000 # 30 days
       keyId: dummy-refresh-key-id-for-development
 
+  slotsuggestion:
+    heatmap:
+      past-days: 90
+      future-days: 21
+
 integration:
   google:
     client-id: 690866307711-8nm12p73mo585k5njoaqepjupgm31im3.apps.googleusercontent.com
