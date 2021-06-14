@@ -1,10 +1,9 @@
-package com.sama.calendar.domain
+package com.sama.meeting.domain
 
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils.randomNanoId
 import com.sama.common.*
 import com.sama.users.domain.UserId
-import liquibase.pro.packaged.it
 import java.time.Duration
 import java.time.Duration.ofMinutes
 import java.time.ZoneId

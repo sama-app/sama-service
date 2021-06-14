@@ -1,5 +1,6 @@
-package com.sama.calendar.domain
+package com.sama.meeting.domain
 
+import com.sama.calendar.domain.SlotId
 import com.sama.common.AggregateRoot
 import com.sama.common.Factory
 import com.sama.users.domain.UserId

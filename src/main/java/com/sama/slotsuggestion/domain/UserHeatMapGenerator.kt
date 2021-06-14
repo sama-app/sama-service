@@ -1,4 +1,4 @@
-package com.sama.suggest.domain
+package com.sama.slotsuggestion.domain
 
 import com.sama.common.DomainEntity
 import com.sama.common.DomainService

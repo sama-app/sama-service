@@ -2,7 +2,7 @@ package com.sama.view.suggest
 
 import com.google.api.client.http.GenericUrl
 import com.sama.api.config.AuthUserId
-import com.sama.suggest.application.SlotSuggestionService
+import com.sama.slotsuggestion.application.SlotSuggestionService
 import com.sama.users.application.GoogleOauth2ApplicationService
 import com.sama.users.application.GoogleOauth2Failure
 import com.sama.users.application.GoogleOauth2Success
@@ -19,7 +19,7 @@ import javax.servlet.http.HttpServletResponse
 import kotlin.math.round
 
 @Controller
-class HeatMapViewController(
+class DebugViewController(
     private val googleOauth2ApplicationService: GoogleOauth2ApplicationService,
     private val slotSuggestionService: SlotSuggestionService
 ) {

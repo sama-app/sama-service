@@ -1,12 +1,11 @@
-package com.sama.calendar.application
+package com.sama.meeting.application
 
-import com.sama.calendar.domain.*
-import com.sama.calendar.domain.MeetingProposalStatus.PROPOSED
 import com.sama.common.NotFoundException
 import com.sama.common.findByIdOrThrow
 import com.sama.common.toMinutes
-import com.sama.suggest.application.SlotSuggestionRequest
-import com.sama.suggest.application.SlotSuggestionService
+import com.sama.meeting.domain.*
+import com.sama.slotsuggestion.application.SlotSuggestionRequest
+import com.sama.slotsuggestion.application.SlotSuggestionService
 import com.sama.users.domain.UserId
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
@@ -99,7 +98,10 @@ class MeetingApplicationService(
 
     @Transactional
     fun confirmMeeting(userId: UserId, command: ConfirmMeetingCommand): Boolean {
-        val proposalEntity = meetingProposalRepository.findByCodeAndStatus(command.meetingCode, PROPOSED)
+        val proposalEntity = meetingProposalRepository.findByCodeAndStatus(
+            command.meetingCode,
+            MeetingProposalStatus.PROPOSED
+        )
             ?: throw NotFoundException(MeetingProposalEntity::class, "code", command.meetingCode)
         val intentEntity = meetingIntentRepository.findByIdOrThrow(proposalEntity.meetingIntentId)
 

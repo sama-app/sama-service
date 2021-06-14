@@ -1,7 +1,7 @@
 package com.sama.api
 
-import com.sama.calendar.application.MeetingApplicationService
 import com.sama.common.NotFoundException
+import com.sama.meeting.application.MeetingApplicationService
 import com.sama.users.domain.UserEntity
 import io.swagger.v3.oas.annotations.Hidden
 import org.springframework.web.bind.annotation.GetMapping

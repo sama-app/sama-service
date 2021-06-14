@@ -1,4 +1,4 @@
-package com.sama.calendar.domain
+package com.sama.meeting.domain
 
 import com.sama.common.NotFoundException
 import com.sama.common.assertDoesNotThrowOrNull
@@ -12,10 +12,8 @@ import java.time.Duration.ofHours
 import java.time.Duration.ofMinutes
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.ZoneId
 import java.time.ZoneId.systemDefault
 import java.time.ZonedDateTime
-import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
@@ -97,7 +95,12 @@ class MeetingsTest {
 
             ).map { (proposedSlots, expected) ->
             val initiatedMeeting = MeetingIntent(
-                meetingIntentId, initiatorId, null, ofHours(1), systemDefault(), listOf(suggestedSlotID1, suggestedSlotID2),
+                meetingIntentId,
+                initiatorId,
+                null,
+                ofHours(1),
+                systemDefault(),
+                listOf(suggestedSlotID1, suggestedSlotID2),
             )
 
             dynamicTest("proposing slots $proposedSlots throws $expected") {

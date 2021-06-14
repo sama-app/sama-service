@@ -2,7 +2,11 @@ package com.sama.api.calendar
 
 import com.sama.api.config.AuthUserId
 import com.sama.calendar.application.*
-import com.sama.calendar.domain.MeetingIntentId
+import com.sama.meeting.application.ConfirmMeetingCommand
+import com.sama.meeting.application.InitiateMeetingCommand
+import com.sama.meeting.application.MeetingApplicationService
+import com.sama.meeting.application.ProposeMeetingCommand
+import com.sama.meeting.domain.MeetingIntentId
 import com.sama.users.domain.UserId
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.security.SecurityRequirement

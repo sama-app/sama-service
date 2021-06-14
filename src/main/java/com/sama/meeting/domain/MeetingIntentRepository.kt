@@ -1,4 +1,4 @@
-package com.sama.calendar.domain
+package com.sama.meeting.domain
 
 import com.sama.users.domain.UserId
 import org.springframework.data.jpa.repository.JpaRepository
