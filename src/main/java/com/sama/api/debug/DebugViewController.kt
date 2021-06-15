@@ -1,4 +1,4 @@
-package com.sama.view.suggest
+package com.sama.api.debug
 
 import com.google.api.client.http.GenericUrl
 import com.sama.api.config.AuthUserId
@@ -27,13 +27,13 @@ class DebugViewController(
     private val slotSuggestionService: SlotSuggestionService
 ) {
 
-    @GetMapping("/__debug/auth/google-authorize")
+    @GetMapping("/api/__debug/auth/google-authorize")
     fun googleAuthorize(request: HttpServletRequest): RedirectView {
         val googleOAuth2Redirect = googleOauth2ApplicationService.beginGoogleOauth2(redirectUri(request))
         return RedirectView(googleOAuth2Redirect.authorizationUrl)
     }
 
-    @GetMapping("/__debug/auth/google-oauth2")
+    @GetMapping("/api/__debug/auth/google-oauth2")
     fun googleOAuth2Callback(
         request: HttpServletRequest,
         response: HttpServletResponse,
@@ -50,13 +50,13 @@ class DebugViewController(
                 cookie.maxAge = -1
                 cookie.path = "/"
                 response.addCookie(cookie)
-                response.sendRedirect("/__debug/user/heatmap")
+                response.sendRedirect("/api/__debug/user/heatmap")
             }
             is GoogleOauth2Failure -> response.status = HttpStatus.FORBIDDEN.value()
         }
     }
 
-    @GetMapping("/__debug/user/heatmap")
+    @GetMapping("/api/__debug/user/heatmap")
     fun renderUserHeapMap(@AuthUserId userId: UserId, model: MutableMap<String, Any>): ModelAndView {
         val heatMap = slotSuggestionService.computeFutureHeatMap(userId).value
             .mapValues { it.value.mapIndexed { _, value -> sigmoid(value) } }
@@ -99,7 +99,7 @@ class DebugViewController(
 
     private fun redirectUri(request: HttpServletRequest): String {
         val genericUrl = GenericUrl(request.requestURL.toString())
-        genericUrl.rawPath = "/__debug/auth/google-oauth2"
+        genericUrl.rawPath = "/api/__debug/auth/google-oauth2"
         genericUrl.scheme = if (genericUrl.host != "localhost") "https" else "http"
         return genericUrl.build()
     }
