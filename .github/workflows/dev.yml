@@ -18,10 +18,10 @@ jobs:
 
       - uses: actions/checkout@v2
 
-      - name: Set up JDK 15
+      - name: Set up JDK 16
         uses: actions/setup-java@v2
         with:
-          java-version: '15'
+          java-version: '16'
           distribution: 'adopt'
 
       - name: Cache Maven packages
@@ -53,11 +53,7 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: eu-central-1
 
-      - name: Pull deployment repository
-        uses: actions/checkout@v2
-        with:
-          repository: sama-app/sama-infra
-          token: ${{ secrets.GH_TOKEN }}
+      - uses: actions/checkout@v2
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v1
@@ -65,7 +61,10 @@ jobs:
           terraform_wrapper: false
 
       - name: Init Terraform
-        run: make init
+        run: make terraform-init
+
+      - name: Validate Terraform
+        run: make terraform-validate
 
       - name: Get Current Deployment Colour
         id: current_deployment
