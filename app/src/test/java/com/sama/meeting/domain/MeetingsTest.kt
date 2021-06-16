@@ -169,14 +169,14 @@ class MeetingsTest {
     }
 
     @Test
-    fun `meeting code generated with length 10`() {
-        assertTrue(MeetingCodeGenerator.default().generate().length == 10)
+    fun `meeting code generated with at desired length`() {
+        assertTrue(MeetingCodeGenerator(10).generate().length == 10)
     }
 
     @Test
     fun `different meeting code generated each time`() {
-        val generator1 = MeetingCodeGenerator.default()
-        val generator2 = MeetingCodeGenerator.default()
+        val generator1 = MeetingCodeGenerator(10)
+        val generator2 = MeetingCodeGenerator(10)
         val code1 = generator1.generate()
         val code2 = generator1.generate()
         val code3 = generator2.generate()
