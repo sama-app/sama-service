@@ -1,4 +1,4 @@
-package com.sama.api.calendar
+package com.sama.api.meeting
 
 import com.sama.api.config.AuthUserId
 import com.sama.calendar.application.*
@@ -6,6 +6,7 @@ import com.sama.meeting.application.ConfirmMeetingCommand
 import com.sama.meeting.application.InitiateMeetingCommand
 import com.sama.meeting.application.MeetingApplicationService
 import com.sama.meeting.application.ProposeMeetingCommand
+import com.sama.meeting.domain.MeetingCode
 import com.sama.meeting.domain.MeetingIntentId
 import com.sama.users.domain.UserId
 import io.swagger.v3.oas.annotations.Operation
@@ -46,14 +47,20 @@ class MeetingController(
         @RequestBody command: ProposeMeetingCommand
     ) = meetingApplicationService.proposeMeeting(userId, meetingIntentId, command)
 
-    @Operation(
-        summary = "Confirm a meeting using a meeting code",
-        security = [SecurityRequirement(name = "user-auth")]
+
+    @Operation(summary = "Retrieve meeting proposal details using a shared meeting code")
+    @GetMapping(
+        "/api/meeting/by-code/{meetingCode}",
+        produces = [APPLICATION_JSON_VALUE]
     )
+    fun loadMeetingProposal(@PathVariable meetingCode: MeetingCode) =
+        meetingApplicationService.loadMeetingProposalFromCode(meetingCode)
+
+    @Operation(summary = "Confirm a meeting using a meeting code")
     @PostMapping(
-        "/api/meeting/confirm",
+        "/api/meeting/by-code/{meetingCode}/confirm",
         consumes = [APPLICATION_JSON_VALUE]
     )
-    fun confirmMeeting(@AuthUserId userId: UserId, @RequestBody command: ConfirmMeetingCommand) =
-        meetingApplicationService.confirmMeeting(userId, command)
+    fun confirmMeeting(@PathVariable meetingCode: MeetingCode, @RequestBody command: ConfirmMeetingCommand) =
+        meetingApplicationService.confirmMeeting(meetingCode, command)
 }

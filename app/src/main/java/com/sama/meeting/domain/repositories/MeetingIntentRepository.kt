@@ -1,5 +1,7 @@
-package com.sama.meeting.domain
+package com.sama.meeting.domain.repositories
 
+import com.sama.meeting.domain.MeetingIntentId
+import com.sama.meeting.domain.aggregates.MeetingIntentEntity
 import com.sama.users.domain.UserId
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query

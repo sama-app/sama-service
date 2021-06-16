@@ -1,13 +1,13 @@
-package com.sama.meeting.domain
+package com.sama.meeting.domain.aggregates
 
 import com.sama.calendar.domain.SlotId
 import com.sama.common.Factory
+import com.sama.meeting.domain.*
 import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.annotation.LastModifiedDate
 import java.time.Instant
 import java.time.ZonedDateTime
 import javax.persistence.*
-
 
 @Entity
 @Table(schema = "sama", name = "meeting_proposal")
@@ -15,18 +15,18 @@ class MeetingProposalEntity {
 
     @Factory
     companion object {
-        fun new(meetingProposal: MeetingProposal): MeetingProposalEntity {
+        fun new(proposedMeeting: ProposedMeeting): MeetingProposalEntity {
             val entity = MeetingProposalEntity()
-            entity.id = meetingProposal.meetingProposalId
-            entity.code = meetingProposal.meetingCode
-            entity.meetingIntentId = meetingProposal.meetingIntentId
+            entity.id = proposedMeeting.meetingProposalId
+            entity.code = proposedMeeting.meetingCode
+            entity.meetingIntentId = proposedMeeting.meetingIntentId
             entity.createdAt = Instant.now()
             entity.updatedAt = Instant.now()
-            entity.status = meetingProposal.status
-            val slots = meetingProposal.proposedSlots.map {
+            entity.status = proposedMeeting.status
+            val slots = proposedMeeting.proposedSlots.map {
                 MeetingProposedSlotEntity(
                     null,
-                    meetingProposal.meetingProposalId,
+                    proposedMeeting.meetingProposalId,
                     it.startTime,
                     it.endTime,
                     Instant.now()
@@ -55,7 +55,7 @@ class MeetingProposalEntity {
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    var status: MeetingProposalStatus? = null
+    var status: MeetingStatus? = null
 
     @Column(name = "meeting_code")
     var code: MeetingCode? = null

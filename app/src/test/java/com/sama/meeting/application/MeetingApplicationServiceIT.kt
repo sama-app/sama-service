@@ -1,6 +1,6 @@
 package com.sama.meeting.application
 
-import com.sama.meeting.domain.MeetingIntentRepository
+import com.sama.meeting.domain.repositories.MeetingIntentRepository
 import com.sama.common.assertDoesNotThrowOrNull
 import com.sama.common.findByIdOrThrow
 import com.sama.meeting.domain.MeetingIntent

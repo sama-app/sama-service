@@ -3,6 +3,7 @@ package com.sama.meeting.domain
 import com.sama.common.NotFoundException
 import com.sama.common.assertDoesNotThrowOrNull
 import com.sama.common.assertThrows
+import com.sama.meeting.domain.MeetingStatus.PROPOSED
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.DynamicTest.dynamicTest
@@ -83,12 +84,12 @@ class MeetingsTest {
         val meetingProposalId = 11L
         val meetingIntentId = 2L
         return listOf(
-            listOf(proposedSlotID1.copy()) to MeetingProposal(
+            listOf(proposedSlotID1.copy()) to ProposedMeeting(
                 meetingProposalId, meetingIntentId, initiatorId, ofHours(1),
                 listOf(proposedSlotID1), validMeetingCode
             ),
 
-            listOf(proposedSlotID1.copy(), proposedSlotID2.copy()) to MeetingProposal(
+            listOf(proposedSlotID1.copy(), proposedSlotID2.copy()) to ProposedMeeting(
                 meetingProposalId, meetingIntentId, initiatorId, ofHours(1),
                 listOf(proposedSlotID1, proposedSlotID2), validMeetingCode
             ),
@@ -134,7 +135,7 @@ class MeetingsTest {
     fun `confirm meeting`() {
         val meetingProposalId = 11L
         val slot = proposedSlotID1
-        val proposedMeeting = MeetingProposal(
+        val proposedMeeting = ProposedMeeting(
             meetingProposalId, 1L, initiatorId, ofHours(1), listOf(slot), validMeetingCode
         )
         val recipient = MeetingRecipient(null, null) // todo
@@ -156,7 +157,7 @@ class MeetingsTest {
     fun `confirm meeting fails`() {
         val meetingProposalId = 11L
         val slot = proposedSlotID1
-        val proposedMeeting = MeetingProposal(
+        val proposedMeeting = ProposedMeeting(
             meetingProposalId, 1L, initiatorId, ofHours(1), listOf(slot), validMeetingCode
         )
         val recipient = MeetingRecipient(null, null) // todo
@@ -164,7 +165,7 @@ class MeetingsTest {
         val slotToConfirm = proposedSlotID2.copy()
         val actual = proposedMeeting.confirm(slotToConfirm, recipient)
 
-        actual.assertThrows(NotFoundException::class.java)
+        actual.assertThrows(MeetingSlotUnavailableException::class.java)
     }
 
     @Test

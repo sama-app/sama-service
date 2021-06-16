@@ -1,8 +1,10 @@
-package com.sama.meeting.domain
+package com.sama.meeting.domain.aggregates
 
 import com.sama.calendar.domain.SlotId
 import com.sama.common.AggregateRoot
 import com.sama.common.Factory
+import com.sama.meeting.domain.MeetingIntent
+import com.sama.meeting.domain.MeetingIntentId
 import com.sama.users.domain.UserId
 import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.annotation.LastModifiedDate
@@ -25,8 +27,6 @@ class MeetingIntentEntity {
             meetingEntity.initiatorId = meetingIntent.initiatorId
             meetingEntity.durationMinutes = meetingIntent.duration.toMinutes()
             meetingEntity.timezone = meetingIntent.timezone
-            meetingEntity.createdAt = Instant.now()
-            meetingEntity.updatedAt = Instant.now()
             val slots = meetingIntent.suggestedSlots.map {
                 MeetingSuggestedSlotEntity(
                     null,
@@ -37,6 +37,8 @@ class MeetingIntentEntity {
                 )
             }
             meetingEntity.suggestedSlots.addAll(slots)
+            meetingEntity.createdAt = Instant.now()
+            meetingEntity.updatedAt = Instant.now()
             return meetingEntity
         }
     }

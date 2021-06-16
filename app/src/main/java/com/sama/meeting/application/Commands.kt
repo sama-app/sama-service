@@ -15,4 +15,4 @@ data class InitiateMeetingCommand(
 )
 
 data class ProposeMeetingCommand(val proposedSlots: List<MeetingSlotDTO>)
-data class ConfirmMeetingCommand(val meetingCode: String, val slot: MeetingSlotDTO, val recipientEmail: String)
+data class ConfirmMeetingCommand(val slot: MeetingSlotDTO, val recipientEmail: String)
