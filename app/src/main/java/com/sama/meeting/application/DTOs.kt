@@ -1,6 +1,11 @@
 package com.sama.meeting.application
 
-import com.sama.meeting.domain.*
+import com.sama.meeting.domain.MeetingCode
+import com.sama.meeting.domain.MeetingIntentId
+import com.sama.meeting.domain.MeetingProposalId
+import com.sama.meeting.domain.MeetingSlot
+import com.sama.meeting.domain.aggregates.MeetingIntentEntity
+import com.sama.meeting.domain.aggregates.MeetingSuggestedSlotEntity
 import com.sama.users.domain.UserId
 import java.time.ZonedDateTime
 
@@ -26,6 +31,10 @@ fun MeetingSuggestedSlotEntity.toDTO(): MeetingSlotDTO {
     return MeetingSlotDTO(this.startDateTime, this.endDateTime)
 }
 
+fun MeetingSlot.toDTO(): MeetingSlotDTO {
+    return MeetingSlotDTO(this.startTime, this.endTime)
+}
+
 data class MeetingSlotDTO(
     val startDateTime: ZonedDateTime,
     val endDateTime: ZonedDateTime
@@ -47,6 +56,7 @@ data class RecipientDTO(
 data class MeetingProposalDTO(
     val meetingIntentId: MeetingIntentId,
     val meetingProposalId: MeetingProposalId,
+    val proposedSlots: List<MeetingSlotDTO>,
     val meetingCode: MeetingCode,
-    val meetingUrl: String
+    val meetingUrl: String,
 )

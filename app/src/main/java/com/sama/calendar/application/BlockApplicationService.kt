@@ -9,9 +9,7 @@ import java.time.ZoneId
 
 @ApplicationService
 @Service
-class BlockApplicationService(
-    private val blockRepository: BlockRepository
-) {
+class BlockApplicationService(private val blockRepository: BlockRepository) {
 
     fun fetchBlocks(userId: UserId, startDate: LocalDate, endDate: LocalDate, timezone: ZoneId) =
         blockRepository.findAll(
