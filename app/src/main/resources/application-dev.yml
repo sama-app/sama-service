@@ -5,3 +5,9 @@ spring:
     database-name: sama
     username: sama
     password: "dummy-value-this-is-loaded-from-AWS-SM"
+
+sama:
+  meeting:
+    url:
+      scheme: https
+      host: app.yoursama.com

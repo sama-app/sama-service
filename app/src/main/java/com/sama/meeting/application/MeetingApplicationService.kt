@@ -3,6 +3,7 @@ package com.sama.meeting.application
 import com.sama.calendar.domain.BlockRepository
 import com.sama.common.findByIdOrThrow
 import com.sama.common.toMinutes
+import com.sama.meeting.configuration.MeetingUrlConfiguration
 import com.sama.meeting.domain.*
 import com.sama.meeting.domain.aggregates.MeetingIntentEntity
 import com.sama.meeting.domain.aggregates.MeetingProposalEntity
@@ -12,6 +13,7 @@ import com.sama.meeting.domain.repositories.findByCodeOrThrow
 import com.sama.slotsuggestion.application.SlotSuggestionRequest
 import com.sama.slotsuggestion.application.SlotSuggestionService
 import com.sama.users.domain.UserId
+import liquibase.pro.packaged.it
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -25,6 +27,7 @@ class MeetingApplicationService(
     private val meetingProposalRepository: MeetingProposalRepository,
     private val slotSuggestionService: SlotSuggestionService,
     private val blockRepository: BlockRepository,
+    private val meetingUrlConfiguration: MeetingUrlConfiguration,
     private val clock: Clock
 ) {
 
@@ -81,7 +84,7 @@ class MeetingApplicationService(
         val meetingEntity = meetingIntentRepository.findByIdOrThrow(meetingIntentId)
         val meetingProposalId = meetingProposalRepository.nextIdentity()
 
-        val meetingCode = MeetingCodeGenerator.default().generate()
+        val meetingCode = MeetingCodeGenerator(meetingUrlConfiguration.codeLength).generate()
         val proposedSlots = command.proposedSlots.map { it.toValueObject() }
 
         val meetingProposal = MeetingIntent.of(meetingEntity).getOrThrow()
@@ -95,17 +98,8 @@ class MeetingApplicationService(
             meetingProposalId,
             proposedSlots.map { it.toDTO() },
             meetingCode,
-            meetingCode.toUrl()
+            meetingCode.toUrl(meetingUrlConfiguration)
         )
-    }
-
-    // TODO: properly configure
-    fun MeetingCode.toUrl(): String {
-        return UriComponentsBuilder.newInstance()
-            .scheme("https")
-            .host("app.yoursama.com")
-            .path("/$this")
-            .build().toUriString()
     }
 
     @Transactional(readOnly = true)
@@ -129,7 +123,7 @@ class MeetingApplicationService(
             proposedMeeting.meetingProposalId,
             availableProposedSlots.map { it.toDTO() },
             proposedMeeting.meetingCode,
-            proposedMeeting.meetingCode.toUrl()
+            proposedMeeting.meetingCode.toUrl(meetingUrlConfiguration)
         )
     }
 
