@@ -1,5 +1,7 @@
 package com.sama.meeting.domain
 
+import com.sama.common.DomainInvalidActionException
+import com.sama.common.DomainIntegrityException
 import com.sama.common.DomainValidationException
 import java.time.Duration
 
@@ -13,13 +15,13 @@ class InvalidMeetingProposalException(meetingIntentId: MeetingIntentId, message:
     DomainValidationException("MeetingIntent#$meetingIntentId cannot be proposed: $message")
 
 class MeetingAlreadyConfirmedException(meetingId: MeetingId) :
-    DomainValidationException("Meeting#$meetingId already confirmed")
+    DomainIntegrityException("already_confirmed", "Meeting#$meetingId already confirmed")
 
 class MeetingProposalExpiredException(meetingId: MeetingId) :
-    DomainValidationException("Meeting#$meetingId has expired")
+    DomainIntegrityException("proposal_expired", "Meeting#$meetingId has expired")
 
 class InvalidMeetingStatusException(meetingId: MeetingId, status: MeetingStatus):
-    DomainValidationException("Meeting#$meetingId: Invalid status: $status")
+    DomainIntegrityException("invalid_status", "Meeting#$meetingId: Invalid status: $status")
 
 class MeetingSlotUnavailableException(meetingId: MeetingId, slot: MeetingSlot):
-    DomainValidationException("Meeting#$meetingId: Slot unavailable: '${slot.startTime} - ${slot.endTime}'")
+    DomainInvalidActionException("slot_unavailable", "Meeting#$meetingId: Slot unavailable: '${slot.startTime} - ${slot.endTime}'")

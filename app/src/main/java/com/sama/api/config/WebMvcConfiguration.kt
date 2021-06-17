@@ -3,6 +3,8 @@ package com.sama.api.config
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.sama.api.common.ApiError
+import com.sama.common.DomainIntegrityException
+import com.sama.common.DomainInvalidActionException
 import com.sama.common.DomainValidationException
 import com.sama.common.NotFoundException
 import org.springframework.context.annotation.Bean
@@ -10,8 +12,7 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Import
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
-import org.springframework.http.HttpStatus.BAD_REQUEST
-import org.springframework.http.HttpStatus.NOT_FOUND
+import org.springframework.http.HttpStatus.*
 import org.springframework.http.ResponseEntity
 import org.springframework.http.converter.HttpMessageConverter
 import org.springframework.http.converter.StringHttpMessageConverter
@@ -77,17 +78,27 @@ class GlobalWebMvcExceptionHandler : ResponseEntityExceptionHandler() {
     @ExceptionHandler(value = [NotFoundException::class])
     @ResponseStatus(NOT_FOUND)
     fun handleNotFound(ex: NotFoundException, request: WebRequest) =
-        handleExceptionInternal(ex, null, HttpHeaders(), NOT_FOUND, request)
+        ResponseEntity(ApiError.create(NOT_FOUND, ex, request), HttpHeaders(), NOT_FOUND)
 
     @ExceptionHandler(value = [ZoneRulesException::class])
     @ResponseStatus(BAD_REQUEST)
     fun handleBadRequest(ex: ZoneRulesException, request: WebRequest) =
-        handleExceptionInternal(ex, null, HttpHeaders(), BAD_REQUEST, request)
+        ResponseEntity(ApiError.create(BAD_REQUEST, ex, request), HttpHeaders(), BAD_REQUEST)
 
     @ExceptionHandler(value = [DomainValidationException::class])
     @ResponseStatus(BAD_REQUEST)
     fun handleDomainValidation(ex: DomainValidationException, request: WebRequest) =
-        handleExceptionInternal(ex, null, HttpHeaders(), BAD_REQUEST, request)
+        ResponseEntity(ApiError.create(BAD_REQUEST, ex, request), HttpHeaders(), BAD_REQUEST)
+
+    @ExceptionHandler(value = [DomainIntegrityException::class])
+    @ResponseStatus(CONFLICT)
+    fun handleDomainIntegrity(ex: DomainIntegrityException, request: WebRequest) =
+        ResponseEntity(ApiError.create(CONFLICT, ex, request), HttpHeaders(), CONFLICT)
+
+    @ExceptionHandler(value = [DomainInvalidActionException::class])
+    @ResponseStatus(UNPROCESSABLE_ENTITY)
+    fun handleDomainInvalidAction(ex: DomainInvalidActionException, request: WebRequest) =
+        ResponseEntity(ApiError.create(UNPROCESSABLE_ENTITY, ex, request), HttpHeaders(), UNPROCESSABLE_ENTITY)
 
     override fun handleExceptionInternal(
         ex: Exception, body: Any?, headers: HttpHeaders, status: HttpStatus, request: WebRequest
