@@ -3,6 +3,7 @@ package com.sama.meeting.application
 import com.sama.calendar.domain.BlockRepository
 import com.sama.common.findByIdOrThrow
 import com.sama.common.toMinutes
+import com.sama.events.EventPublisher
 import com.sama.meeting.configuration.MeetingUrlConfiguration
 import com.sama.meeting.domain.*
 import com.sama.meeting.domain.aggregates.MeetingIntentEntity
@@ -13,11 +14,9 @@ import com.sama.meeting.domain.repositories.findByCodeOrThrow
 import com.sama.slotsuggestion.application.SlotSuggestionRequest
 import com.sama.slotsuggestion.application.SlotSuggestionService
 import com.sama.users.domain.UserId
-import liquibase.pro.packaged.it
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import org.springframework.web.util.UriComponentsBuilder
 import java.time.Clock
 import java.time.LocalDateTime
 
@@ -27,6 +26,7 @@ class MeetingApplicationService(
     private val meetingProposalRepository: MeetingProposalRepository,
     private val slotSuggestionService: SlotSuggestionService,
     private val blockRepository: BlockRepository,
+    private val eventPublisher: EventPublisher,
     private val meetingUrlConfiguration: MeetingUrlConfiguration,
     private val clock: Clock
 ) {
@@ -34,7 +34,6 @@ class MeetingApplicationService(
     @Transactional
     fun initiateMeeting(userId: UserId, command: InitiateMeetingCommand): MeetingIntentDTO {
         val meetingId = meetingIntentRepository.nextIdentity()
-
 
         val suggestedSlots = when (command.suggestionSlotCount) {
             0 -> emptyList()
@@ -143,6 +142,8 @@ class MeetingApplicationService(
         val confirmedMeeting = proposedMeeting
             .confirm(command.slot.toValueObject(), meetingRecipient)
             .getOrThrow()
+
+        eventPublisher.publish(MeetingConfirmedEvent(confirmedMeeting))
 
         proposalEntity.applyChanges(confirmedMeeting).also { meetingProposalRepository.save(it) }
         return true

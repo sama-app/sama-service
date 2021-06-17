@@ -3,10 +3,8 @@ package com.sama.meeting.domain
 import com.sama.calendar.domain.Block
 import com.sama.common.DomainEntity
 import com.sama.common.Factory
-import com.sama.common.NotFoundException
 import com.sama.meeting.domain.aggregates.MeetingIntentEntity
 import com.sama.meeting.domain.aggregates.MeetingProposalEntity
-import com.sama.meeting.domain.aggregates.MeetingSuggestedSlotEntity
 import com.sama.users.domain.UserId
 import java.time.Clock
 import java.time.Duration

@@ -72,7 +72,11 @@ sama:
 integration:
   google:
     client-id: 690866307711-8nm12p73mo585k5njoaqepjupgm31im3.apps.googleusercontent.com
-    scopes: https://www.googleapis.com/auth/calendar.readonly, https://www.googleapis.com/auth/userinfo.email, https://www.googleapis.com/auth/userinfo.profile
+    scopes: |
+      https://www.googleapis.com/auth/calendar.events,
+      https://www.googleapis.com/auth/calendar.readonly,
+      https://www.googleapis.com/auth/userinfo.email,
+      https://www.googleapis.com/auth/userinfo.profile
     credentials: "dummy-value-this-is-loaded-from-AWS-SM"
   firebase:
     credentials: "dummy-value-this-is-loaded-from-AWS-SM"
