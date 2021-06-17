@@ -4,7 +4,7 @@ import com.sama.calendar.domain.Block
 import com.sama.common.DomainEntity
 import com.sama.common.Factory
 import com.sama.meeting.domain.aggregates.MeetingIntentEntity
-import com.sama.meeting.domain.aggregates.MeetingProposalEntity
+import com.sama.meeting.domain.aggregates.MeetingEntity
 import com.sama.users.domain.UserId
 import java.time.Clock
 import java.time.Duration
@@ -12,41 +12,41 @@ import java.time.ZonedDateTime
 import kotlin.Result.Companion.success
 
 sealed interface Meeting {
-    val meetingProposalId: MeetingProposalId
+    val meetingId: MeetingId
     val status: MeetingStatus
 }
 
 @Factory
 fun meetingFrom(
     meetingIntentEntity: MeetingIntentEntity,
-    meetingProposalEntity: MeetingProposalEntity
+    meetingEntity: MeetingEntity
 ): Result<Meeting> {
-    return when (meetingProposalEntity.status!!) {
+    return when (meetingEntity.status!!) {
         MeetingStatus.PROPOSED -> {
-            val proposedSlots = meetingProposalEntity.proposedSlots
+            val proposedSlots = meetingEntity.proposedSlots
                 .map { MeetingSlot(it.startDateTime, it.endDateTime) }
             success(
                 ProposedMeeting(
-                    meetingProposalEntity.id!!,
+                    meetingEntity.id!!,
                     meetingIntentEntity.id!!,
                     meetingIntentEntity.initiatorId!!,
                     Duration.ofMinutes(meetingIntentEntity.durationMinutes!!),
                     proposedSlots,
-                    meetingProposalEntity.code!!,
+                    meetingEntity.code!!,
                 )
             )
         }
         MeetingStatus.CONFIRMED -> success(
             ConfirmedMeeting(
-                meetingProposalEntity.id!!,
+                meetingEntity.id!!,
                 meetingIntentEntity.initiatorId!!,
                 Duration.ofMinutes(meetingIntentEntity.durationMinutes!!),
-                meetingProposalEntity.meetingRecipient!!,
-                meetingProposalEntity.confirmedSlot!!
+                meetingEntity.meetingRecipient!!,
+                meetingEntity.confirmedSlot!!
             )
         )
-        MeetingStatus.REJECTED -> success(RejectedMeeting(meetingProposalEntity.id!!))
-        MeetingStatus.EXPIRED -> success(ExpiredMeeting(meetingProposalEntity.id!!))
+        MeetingStatus.REJECTED -> success(RejectedMeeting(meetingEntity.id!!))
+        MeetingStatus.EXPIRED -> success(ExpiredMeeting(meetingEntity.id!!))
     }
 }
 
@@ -60,7 +60,7 @@ enum class MeetingStatus {
 
 @DomainEntity
 data class ProposedMeeting(
-    override val meetingProposalId: MeetingProposalId,
+    override val meetingId: MeetingId,
     val meetingIntentId: MeetingIntentId,
     val initiatorId: UserId,
     val duration: Duration,
@@ -74,18 +74,18 @@ data class ProposedMeeting(
     companion object {
         fun of(
             meetingIntentEntity: MeetingIntentEntity,
-            meetingProposalEntity: MeetingProposalEntity
+            meetingEntity: MeetingEntity
         ): Result<ProposedMeeting> {
-            val proposedSlots = meetingProposalEntity.proposedSlots
+            val proposedSlots = meetingEntity.proposedSlots
                 .map { MeetingSlot(it.startDateTime, it.endDateTime) }
             return success(
                 ProposedMeeting(
-                    meetingProposalEntity.id!!,
+                    meetingEntity.id!!,
                     meetingIntentEntity.id!!,
                     meetingIntentEntity.initiatorId!!,
                     Duration.ofMinutes(meetingIntentEntity.durationMinutes!!),
                     proposedSlots,
-                    meetingProposalEntity.code!!,
+                    meetingEntity.code!!,
                 )
             )
         }
@@ -119,16 +119,16 @@ data class ProposedMeeting(
     fun confirm(slot: MeetingSlot, recipient: MeetingRecipient): Result<ConfirmedMeeting> {
         return kotlin.runCatching {
             val confirmedSlot = expandedSlots().find { it == slot }
-                ?: throw MeetingSlotUnavailableException(meetingProposalId, slot)
+                ?: throw MeetingSlotUnavailableException(meetingId, slot)
 
-            ConfirmedMeeting(meetingProposalId, initiatorId, duration, recipient, confirmedSlot)
+            ConfirmedMeeting(meetingId, initiatorId, duration, recipient, confirmedSlot)
         }
     }
 }
 
 @DomainEntity
 data class ConfirmedMeeting(
-    override val meetingProposalId: MeetingProposalId,
+    override val meetingId: MeetingId,
     val initiatorId: UserId,
     val duration: Duration,
     val meetingRecipient: MeetingRecipient,
@@ -138,11 +138,11 @@ data class ConfirmedMeeting(
 }
 
 @DomainEntity
-data class RejectedMeeting(override val meetingProposalId: MeetingProposalId) : Meeting {
+data class RejectedMeeting(override val meetingId: MeetingId) : Meeting {
     override val status = MeetingStatus.CONFIRMED
 }
 
 @DomainEntity
-data class ExpiredMeeting(override val meetingProposalId: MeetingProposalId) : Meeting {
+data class ExpiredMeeting(override val meetingId: MeetingId) : Meeting {
     override val status = MeetingStatus.CONFIRMED
 }

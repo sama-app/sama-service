@@ -12,14 +12,14 @@ class InvalidMeetingSlotException(meetingIntentId: MeetingIntentId, slot: Meetin
 class InvalidMeetingProposalException(meetingIntentId: MeetingIntentId, message: String) :
     DomainValidationException("MeetingIntent#$meetingIntentId cannot be proposed: $message")
 
-class MeetingAlreadyConfirmedException(meetingProposalId: MeetingProposalId) :
-    DomainValidationException("Meeting#$meetingProposalId already confirmed")
+class MeetingAlreadyConfirmedException(meetingId: MeetingId) :
+    DomainValidationException("Meeting#$meetingId already confirmed")
 
-class MeetingProposalExpiredException(meetingProposalId: MeetingProposalId) :
-    DomainValidationException("Meeting#$meetingProposalId has expired")
+class MeetingProposalExpiredException(meetingId: MeetingId) :
+    DomainValidationException("Meeting#$meetingId has expired")
 
-class InvalidMeetingStatusException(meetingProposalId: MeetingProposalId, status: MeetingStatus):
-    DomainValidationException("Meeting#$meetingProposalId: Invalid status: $status")
+class InvalidMeetingStatusException(meetingId: MeetingId, status: MeetingStatus):
+    DomainValidationException("Meeting#$meetingId: Invalid status: $status")
 
-class MeetingSlotUnavailableException(meetingProposalId: MeetingProposalId, slot: MeetingSlot):
-    DomainValidationException("Meeting#$meetingProposalId: Slot unavailable: '${slot.startTime} - ${slot.endTime}'")
+class MeetingSlotUnavailableException(meetingId: MeetingId, slot: MeetingSlot):
+    DomainValidationException("Meeting#$meetingId: Slot unavailable: '${slot.startTime} - ${slot.endTime}'")
