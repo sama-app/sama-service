@@ -3,7 +3,9 @@ package com.sama.api.users
 import com.sama.api.ApiTestConfiguration
 import com.sama.api.config.WebMvcConfiguration
 import com.sama.users.application.*
+import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestFactory
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.whenever
@@ -11,13 +13,17 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.mock.mockito.MockBean
+import org.springframework.http.HttpStatus
+import org.springframework.http.HttpStatus.FORBIDDEN
 import org.springframework.http.MediaType
+import org.springframework.http.MediaType.APPLICATION_JSON
 import org.springframework.test.context.junit.jupiter.SpringExtension
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import org.springframework.test.web.servlet.result.isEqualTo
 import java.time.DayOfWeek.*
 import java.time.LocalTime
 import java.time.ZoneId
@@ -45,6 +51,18 @@ class UserControllerTest(
             "zg8"
 
     @Test
+    fun `delete user`() {
+        whenever(userApplicationService.deleteUser(eq(userId))).thenReturn(true)
+
+        mockMvc.perform(
+            post("/api/user/me/delete")
+                .header("Authorization", "Bearer $jwt")
+        )
+            .andExpect(status().isOk)
+            .andExpect(content().string("true"))
+    }
+
+    @Test
     fun `register device`() {
         val deviceId = UUID.fromString("075f7e8a-e01c-4f2f-9c3b-ce5d412e618c")
         val registrationToken = "some-token"
@@ -63,29 +81,13 @@ class UserControllerTest(
             }
         """
         mockMvc.perform(
-            post("/api/user/register-device")
-                .contentType(MediaType.APPLICATION_JSON)
+            post("/api/user/me/register-device")
+                .contentType(APPLICATION_JSON)
                 .header("Authorization", "Bearer $jwt")
                 .content(requestBody)
         )
             .andExpect(status().isOk)
             .andExpect(content().string("true"))
-    }
-
-    @Test
-    fun `register device without authorization returns 403`() {
-        val requestBody = """
-            {
-                "deviceId": "075f7e8a-e01c-4f2f-9c3b-ce5d412e618c",
-                "firebaseRegistrationToken": "some-token"
-            }
-        """
-        mockMvc.perform(
-            post("/api/user/register-device")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(requestBody)
-        )
-            .andExpect(status().isForbidden)
     }
 
     @Test
@@ -106,29 +108,13 @@ class UserControllerTest(
             }
         """
         mockMvc.perform(
-            post("/api/user/unregister-device")
-                .contentType(MediaType.APPLICATION_JSON)
+            post("/api/user/me/unregister-device")
+                .contentType(APPLICATION_JSON)
                 .header("Authorization", "Bearer $jwt")
                 .content(requestBody)
         )
             .andExpect(status().isOk)
             .andExpect(content().string("true"))
-    }
-
-
-    @Test
-    fun `unregister device without authorization returns 403`() {
-        val requestBody = """
-            {
-                "deviceId": "075f7e8a-e01c-4f2f-9c3b-ce5d412e618c"
-            }
-        """
-        mockMvc.perform(
-            post("/api/user/unregister-device")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(requestBody)
-        )
-            .andExpect(status().isForbidden)
     }
 
     @Test
@@ -167,17 +153,11 @@ class UserControllerTest(
         """
 
         mockMvc.perform(
-            get("/api/user/settings")
+            get("/api/user/me/settings")
                 .header("Authorization", "Bearer $jwt")
         )
             .andExpect(status().isOk)
             .andExpect(content().json(expectedJson, true))
-    }
-
-    @Test
-    fun `get settings without authorization fails`() {
-        mockMvc.perform(get("/api/user/settings"))
-            .andExpect(status().isForbidden)
     }
 
     @Test
@@ -207,8 +187,8 @@ class UserControllerTest(
             }
         """
         mockMvc.perform(
-            post("/api/user/update-working-hours")
-                .contentType(MediaType.APPLICATION_JSON)
+            post("/api/user/me/update-working-hours")
+                .contentType(APPLICATION_JSON)
                 .header("Authorization", "Bearer $jwt")
                 .content(requestBody)
         )
@@ -216,13 +196,18 @@ class UserControllerTest(
             .andExpect(content().string("true"))
     }
 
-    @Test
-    fun `update working hours without authorization fails`() {
-        mockMvc.perform(
-            post("/api/user/update-working-hours")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{}")
-        )
-            .andExpect(status().isForbidden)
-    }
+    @TestFactory
+    fun `endpoint authorization without jwt`() = listOf(
+        post("/api/user/me/update-working-hours") to FORBIDDEN,
+        get("/api/user/me/settings") to FORBIDDEN,
+        post("/api/user/me/unregister-device") to FORBIDDEN,
+        post("/api/user/me/register-device") to FORBIDDEN,
+        post("/api/user/me/delete") to FORBIDDEN
+    )
+        .mapIndexed { idx, (request, expectedStatus) ->
+            DynamicTest.dynamicTest("request#$idx returns $expectedStatus") {
+                mockMvc.perform(request)
+                    .andExpect(status().isEqualTo(expectedStatus.value()))
+            }
+        }
 }

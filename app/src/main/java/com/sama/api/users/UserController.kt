@@ -19,11 +19,21 @@ class UserController(
 ) {
 
     @Operation(
+        summary = "Deletes the user from the system",
+        security = [SecurityRequirement(name = "user-auth")]
+    )
+    @PostMapping(
+        "/api/user/me/delete"
+    )
+    fun deleteUser(@AuthUserId userId: UserId) =
+        userApplicationService.deleteUser(userId)
+
+    @Operation(
         summary = "Register a device for push notifications via Firebase",
         security = [SecurityRequirement(name = "user-auth")]
     )
     @PostMapping(
-        "/api/user/register-device",
+        "/api/user/me/register-device",
         consumes = [APPLICATION_JSON_VALUE]
     )
     fun registerDevice(@AuthUserId userId: UserId, @RequestBody command: RegisterDeviceCommand) =
@@ -35,7 +45,7 @@ class UserController(
         security = [SecurityRequirement(name = "user-auth")]
     )
     @PostMapping(
-        "/api/user/unregister-device",
+        "/api/user/me/unregister-device",
         consumes = [APPLICATION_JSON_VALUE]
     )
     fun unregisterDevice(@AuthUserId userId: UserId, @RequestBody command: UnregisterDeviceCommand) =
@@ -47,7 +57,7 @@ class UserController(
         security = [SecurityRequirement(name = "user-auth")]
     )
     @GetMapping(
-        "/api/user/settings",
+        "/api/user/me/settings",
         produces = [APPLICATION_JSON_VALUE]
     )
     fun getSettings(@AuthUserId userId: UserId): UserSettingsDTO {
@@ -59,7 +69,7 @@ class UserController(
         security = [SecurityRequirement(name = "user-auth")]
     )
     @PostMapping(
-        "/api/user/update-working-hours",
+        "/api/user/me/update-working-hours",
         consumes = [APPLICATION_JSON_VALUE]
     )
     fun updateWorkingHours(@AuthUserId userId: UserId, @RequestBody command: UpdateWorkingHoursCommand) =
