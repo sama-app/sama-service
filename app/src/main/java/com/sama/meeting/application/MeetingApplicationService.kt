@@ -4,7 +4,9 @@ import com.sama.calendar.domain.BlockRepository
 import com.sama.common.findByIdOrThrow
 import com.sama.common.toMinutes
 import com.sama.events.EventPublisher
+import com.sama.meeting.configuration.MeetingProposalMessageModel
 import com.sama.meeting.configuration.MeetingUrlConfiguration
+import com.sama.meeting.configuration.toUrl
 import com.sama.meeting.domain.*
 import com.sama.meeting.domain.aggregates.MeetingIntentEntity
 import com.sama.meeting.domain.aggregates.MeetingEntity
@@ -14,6 +16,9 @@ import com.sama.meeting.domain.repositories.findByCodeOrThrow
 import com.sama.slotsuggestion.application.SlotSuggestionRequest
 import com.sama.slotsuggestion.application.SlotSuggestionService
 import com.sama.users.domain.UserId
+import com.samskivert.mustache.Mustache
+import com.samskivert.mustache.Template
+import liquibase.pro.packaged.it
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -28,6 +33,7 @@ class MeetingApplicationService(
     private val blockRepository: BlockRepository,
     private val eventPublisher: EventPublisher,
     private val meetingUrlConfiguration: MeetingUrlConfiguration,
+    private val meetingProposalMessageTemplate: Template,
     private val clock: Clock
 ) {
 
@@ -79,7 +85,7 @@ class MeetingApplicationService(
         userId: UserId,
         meetingIntentId: MeetingIntentId,
         command: ProposeMeetingCommand
-    ): MeetingDTO {
+    ): MeetingInvitationDTO {
         val meetingEntity = meetingIntentRepository.findByIdOrThrow(meetingIntentId)
         val meetingId = meetingRepository.nextIdentity()
 
@@ -90,19 +96,31 @@ class MeetingApplicationService(
             .propose(meetingId, meetingCode, proposedSlots)
             .getOrThrow()
 
+        val meetingInvitation = buildMeetingInvitation(proposedMeeting)
+
         MeetingEntity.new(proposedMeeting).also { meetingRepository.save(it) }
 
-        return MeetingDTO(
-            meetingIntentId,
-            meetingId,
-            proposedSlots.map { it.toDTO() },
-            meetingCode,
-            meetingCode.toUrl(meetingUrlConfiguration)
+        return meetingInvitation
+    }
+
+    fun buildMeetingInvitation(proposedMeeting: ProposedMeeting): MeetingInvitationDTO {
+        val meetingUrl = proposedMeeting.meetingCode.toUrl(meetingUrlConfiguration)
+        val shareableMessage = meetingProposalMessageTemplate.execute(
+            MeetingProposalMessageModel(proposedMeeting.proposedSlots, meetingUrl)
+        )
+        return MeetingInvitationDTO(
+            ProposedMeetingDTO(
+                proposedMeeting.meetingId,
+                proposedMeeting.proposedSlots.map { it.toDTO() },
+                proposedMeeting.meetingCode,
+            ),
+            meetingUrl,
+            shareableMessage
         )
     }
 
     @Transactional(readOnly = true)
-    fun loadMeetingProposalFromCode(meetingCode: MeetingCode): MeetingDTO {
+    fun loadMeetingProposalFromCode(meetingCode: MeetingCode): ProposedMeetingDTO {
         val meetingEntity = meetingRepository.findByCodeOrThrow(meetingCode)
         val intentEntity = meetingIntentRepository.findByIdOrThrow(meetingEntity.meetingIntentId)
 
@@ -117,12 +135,10 @@ class MeetingApplicationService(
         val blocks = blockRepository.findAll(proposedMeeting.initiatorId, start, end)
         val availableProposedSlots = proposedMeeting.availableProposedSlots(blocks, clock)
 
-        return MeetingDTO(
-            proposedMeeting.meetingIntentId,
+        return ProposedMeetingDTO(
             proposedMeeting.meetingId,
             availableProposedSlots.map { it.toDTO() },
-            proposedMeeting.meetingCode,
-            proposedMeeting.meetingCode.toUrl(meetingUrlConfiguration)
+            meetingCode
         )
     }
 
