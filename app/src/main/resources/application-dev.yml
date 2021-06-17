@@ -7,6 +7,15 @@ spring:
     password: "dummy-value-this-is-loaded-from-AWS-SM"
 
 sama:
+  auth.jwt:
+    access:
+      signing-secret: "dummy-value-this-is-loaded-from-AWS-SM"
+      expiration-sec: 86400 # 1 day
+      key-id: sama-access-dev
+    refresh:
+      signing-secret: "dummy-value-this-is-loaded-from-AWS-SM"
+      expiration-sec: 31536000 # 365 days
+      key-id: sama-refresh-dev
   meeting:
     url:
       scheme: https

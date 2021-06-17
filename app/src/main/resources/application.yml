@@ -52,13 +52,13 @@ springdoc:
 sama:
   auth.jwt:
     access:
-      signingSecret: dummy-access-secret-for-development
-      expirationSec: 2592000 # 30 days
-      keyId: dummy-access-key-id-for-development
+      signing-secret: dummy-access-secret-for-development
+      expiration-sec: 31536000 # 365 days
+      key-id: sama-access-local
     refresh:
-      signingSecret: dummy-refresh-secret-for-development
-      expirationSec: 2592000 # 30 days
-      keyId: dummy-refresh-key-id-for-development
+      signing-secret: dummy-refresh-secret-for-development
+      expiration-sec: 31536000 # 365 days
+      key-id: sama-refresh-local
 
   meeting:
     url:
