@@ -35,7 +35,7 @@ class WebSecurityConfiguration(
             .sessionManagement().sessionCreationPolicy(STATELESS).and()
             .authorizeRequests()
             // OpenApi Spec
-            .antMatchers(HttpMethod.GET, "/api/docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
+            .antMatchers(HttpMethod.GET, "/api/docs/**", "/api/swagger-ui.html", "/api/swagger-ui/**").permitAll()
             // Google OAuth2
             .antMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
             .antMatchers(HttpMethod.GET, "/api/auth/**").permitAll()
