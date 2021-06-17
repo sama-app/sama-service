@@ -268,7 +268,6 @@ class MeetingControllerTes(
             .andExpect(MockMvcResultMatchers.content().string("true"))
     }
 
-
     @TestFactory
     fun `endpoint authorization without jwt`() = listOf(
         post("/api/meeting/initiate") to FORBIDDEN,
