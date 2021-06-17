@@ -16,11 +16,3 @@ data class MeetingCodeGenerator(val codeLength: Int) {
         return NanoIdUtils.randomNanoId(DEFAULT_NUMBER_GENERATOR, DEFAULT_ALPHABET, codeLength)
     }
 }
-
-fun MeetingCode.toUrl(config: MeetingUrlConfiguration): String {
-    return UriComponentsBuilder.newInstance()
-        .scheme(config.scheme)
-        .host(config.host)
-        .path("/$this")
-        .build().toUriString()
-}

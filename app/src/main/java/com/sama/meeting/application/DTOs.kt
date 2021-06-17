@@ -53,10 +53,14 @@ data class RecipientDTO(
     val email: String?
 )
 
-data class MeetingDTO(
-    val meetingIntentId: MeetingIntentId,
+data class ProposedMeetingDTO(
     val meetingId: MeetingId,
     val proposedSlots: List<MeetingSlotDTO>,
     val meetingCode: MeetingCode,
+)
+
+data class MeetingInvitationDTO(
+    val meeting: ProposedMeetingDTO,
     val meetingUrl: String,
+    val shareableMessage: String
 )
