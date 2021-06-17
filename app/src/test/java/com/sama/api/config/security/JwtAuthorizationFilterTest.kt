@@ -21,6 +21,7 @@ import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
 import java.util.*
+import javax.servlet.http.Cookie
 
 @ExtendWith(SpringExtension::class)
 @SpringBootTest(
@@ -83,6 +84,23 @@ internal class AuthorizationFiltersTest(
             .andExpect(MockMvcResultMatchers.status().isForbidden)
     }
 
+    @Test
+    fun `authorization with cookie jwt works`() {
+        mockMvc.perform(
+            get("/test-endpoint")
+                .cookie(Cookie( "sama.access", validJwt))
+        )
+            .andExpect(MockMvcResultMatchers.status().isOk)
+    }
+
+    @Test
+    fun `authorization with expired cookie jwt returns 403`() {
+        mockMvc.perform(
+            get("/test-endpoint")
+                .cookie(Cookie( "sama.access", expiredJwt))
+        )
+            .andExpect(MockMvcResultMatchers.status().isForbidden)
+    }
 }
 
 @RestController

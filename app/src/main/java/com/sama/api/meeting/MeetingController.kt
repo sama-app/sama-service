@@ -1,7 +1,6 @@
 package com.sama.api.meeting
 
 import com.sama.api.config.AuthUserId
-import com.sama.calendar.application.*
 import com.sama.meeting.application.ConfirmMeetingCommand
 import com.sama.meeting.application.InitiateMeetingCommand
 import com.sama.meeting.application.MeetingApplicationService
@@ -14,6 +13,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.MediaType.APPLICATION_JSON_VALUE
 import org.springframework.web.bind.annotation.*
+import javax.validation.Valid
 
 @Tag(name = "meeting")
 @RestController
@@ -30,7 +30,7 @@ class MeetingController(
         consumes = [APPLICATION_JSON_VALUE],
         produces = [APPLICATION_JSON_VALUE],
     )
-    fun initiateMeeting(@AuthUserId userId: UserId, @RequestBody command: InitiateMeetingCommand) =
+    fun initiateMeeting(@AuthUserId userId: UserId,  @RequestBody @Valid command: InitiateMeetingCommand) =
         meetingApplicationService.initiateMeeting(userId, command)
 
     @Operation(

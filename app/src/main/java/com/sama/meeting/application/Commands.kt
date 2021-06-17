@@ -5,12 +5,12 @@ import javax.validation.constraints.Min
 
 
 data class InitiateMeetingCommand(
-    @Min(0)
-    val duration: Long,
-    val timezone: ZoneId,
-    @Min(0)
+    @field:Min(15)
+    val durationMinutes: Long,
+    val timeZone: ZoneId,
+    @field:Min(0)
     val suggestionSlotCount: Int,
-    @Min(0)
+    @field:Min(0)
     val suggestionDayCount: Int,
 )
 
