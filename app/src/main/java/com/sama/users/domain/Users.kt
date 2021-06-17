@@ -10,7 +10,12 @@ import java.util.*
 import kotlin.Result.Companion.success
 
 @DomainEntity
-data class UserRegistration(val userId: UserId, val email: String, val emailExists: Boolean, val credential: GoogleCredential) {
+data class UserRegistration(
+    val userId: UserId,
+    val email: String,
+    val emailExists: Boolean,
+    val credential: GoogleCredential
+) {
     init {
         if ('@' !in email) { // todo proper
             throw InvalidEmailException(email)
@@ -67,11 +72,11 @@ data class UserJwtIssuer(val userId: UserId, val email: String, val active: Bool
     }
 
     fun issue(jwtId: UUID, jwtConfiguration: JwtConfiguration, clock: Clock): Result<Jwt> {
-        if (!active) {
-            return Result.failure(InactiveUserException())
-        }
-
         return kotlin.runCatching {
+            if (!active) {
+                throw InactiveUserException()
+            }
+
             val accessToken = JWT.create()
                 .withKeyId(jwtConfiguration.keyId)
                 .withJWTId(jwtId.toString())

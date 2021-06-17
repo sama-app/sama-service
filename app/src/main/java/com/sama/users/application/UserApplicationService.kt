@@ -2,6 +2,7 @@ package com.sama.users.application
 
 import com.sama.common.ApplicationService
 import com.sama.common.findByIdOrThrow
+import com.sama.events.EventPublisher
 import com.sama.users.configuration.AccessJwtConfiguration
 import com.sama.users.configuration.RefreshJwtConfiguration
 import com.sama.users.domain.*
@@ -18,6 +19,7 @@ class UserApplicationService(
     private val userSettingsDefaultsRepository: UserSettingsDefaultsRepository,
     private val accessJwtConfiguration: AccessJwtConfiguration,
     private val refreshJwtConfiguration: RefreshJwtConfiguration,
+    private val eventPublisher: EventPublisher,
     private val clock: Clock
 ) {
 
@@ -30,6 +32,15 @@ class UserApplicationService(
 
         UserEntity.new(userRegistration).also { userRepository.save(it) }
         return userId
+    }
+
+    @Transactional
+    fun deleteUser(userId: UserId): Boolean {
+        userSettingsRepository.deleteById(userId)
+        userRepository.deleteById(userId)
+
+        eventPublisher.publish(UserDeletedEvent(userId))
+        return true
     }
 
     @Transactional
