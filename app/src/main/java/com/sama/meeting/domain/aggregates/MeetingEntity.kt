@@ -10,14 +10,14 @@ import java.time.ZonedDateTime
 import javax.persistence.*
 
 @Entity
-@Table(schema = "sama", name = "meeting_proposal")
-class MeetingProposalEntity {
+@Table(schema = "sama", name = "meeting")
+class MeetingEntity {
 
     @Factory
     companion object {
-        fun new(proposedMeeting: ProposedMeeting): MeetingProposalEntity {
-            val entity = MeetingProposalEntity()
-            entity.id = proposedMeeting.meetingProposalId
+        fun new(proposedMeeting: ProposedMeeting): MeetingEntity {
+            val entity = MeetingEntity()
+            entity.id = proposedMeeting.meetingId
             entity.code = proposedMeeting.meetingCode
             entity.meetingIntentId = proposedMeeting.meetingIntentId
             entity.createdAt = Instant.now()
@@ -26,7 +26,7 @@ class MeetingProposalEntity {
             val slots = proposedMeeting.proposedSlots.map {
                 MeetingProposedSlotEntity(
                     null,
-                    proposedMeeting.meetingProposalId,
+                    proposedMeeting.meetingId,
                     it.startTime,
                     it.endTime,
                     Instant.now()
@@ -37,7 +37,7 @@ class MeetingProposalEntity {
         }
     }
 
-    fun applyChanges(confirmedMeeting: ConfirmedMeeting): MeetingProposalEntity {
+    fun applyChanges(confirmedMeeting: ConfirmedMeeting): MeetingEntity {
         this.status = confirmedMeeting.status
         this.meetingRecipient = confirmedMeeting.meetingRecipient
         this.confirmedSlot = confirmedMeeting.slot
@@ -48,7 +48,7 @@ class MeetingProposalEntity {
     }
 
     @Id
-    var id: MeetingProposalId? = null
+    var id: MeetingId? = null
 
     @Column(nullable = false)
     var meetingIntentId: MeetingIntentId? = null
@@ -61,7 +61,7 @@ class MeetingProposalEntity {
     var code: MeetingCode? = null
 
     @OneToMany(cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY)
-    @JoinColumn(name = "meetingProposalId", nullable = false, updatable = false, insertable = false)
+    @JoinColumn(name = "meetingId", nullable = false, updatable = false, insertable = false)
     var proposedSlots: MutableList<MeetingProposedSlotEntity> = mutableListOf()
 
 
@@ -94,7 +94,7 @@ class MeetingProposalEntity {
 data class MeetingProposedSlotEntity(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: SlotId? = null,
-    private val meetingProposalId: MeetingProposalId,
+    private val meetingId: MeetingId,
     var startDateTime: ZonedDateTime,
     var endDateTime: ZonedDateTime,
     @CreatedDate

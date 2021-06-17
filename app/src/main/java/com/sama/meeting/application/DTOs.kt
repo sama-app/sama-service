@@ -2,7 +2,7 @@ package com.sama.meeting.application
 
 import com.sama.meeting.domain.MeetingCode
 import com.sama.meeting.domain.MeetingIntentId
-import com.sama.meeting.domain.MeetingProposalId
+import com.sama.meeting.domain.MeetingId
 import com.sama.meeting.domain.MeetingSlot
 import com.sama.meeting.domain.aggregates.MeetingIntentEntity
 import com.sama.meeting.domain.aggregates.MeetingSuggestedSlotEntity
@@ -20,7 +20,7 @@ fun MeetingIntentEntity.toDTO(): MeetingIntentDTO {
 }
 
 data class MeetingIntentDTO(
-    val meetingIntentId: MeetingProposalId,
+    val meetingIntentId: MeetingId,
     val initiatorId: UserId,
     val recipient: RecipientDTO,
     val durationMinutes: Long,
@@ -53,9 +53,9 @@ data class RecipientDTO(
     val email: String?
 )
 
-data class MeetingProposalDTO(
+data class MeetingDTO(
     val meetingIntentId: MeetingIntentId,
-    val meetingProposalId: MeetingProposalId,
+    val meetingId: MeetingId,
     val proposedSlots: List<MeetingSlotDTO>,
     val meetingCode: MeetingCode,
     val meetingUrl: String,

@@ -42,7 +42,7 @@ data class MeetingIntent(
     }
 
     fun propose(
-        meetingProposalId: MeetingProposalId,
+        meetingId: MeetingId,
         meetingCode: MeetingCode,
         proposedSlots: List<MeetingSlot>
     ): Result<ProposedMeeting> {
@@ -55,7 +55,7 @@ data class MeetingIntent(
 
         return Result.success(
             ProposedMeeting(
-                meetingProposalId,
+                meetingId,
                 meetingIntentId,
                 initiatorId,
                 duration,

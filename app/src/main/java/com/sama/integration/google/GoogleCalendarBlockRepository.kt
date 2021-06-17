@@ -120,7 +120,11 @@ class GoogleCalendarBlockRepository(
             this.end.toZonedDateTime(defaultZoneId),
             this.isAllDay(),
             this.summary,
-            this.attendees.firstOrNull()?.email
+            if (this.attendees != null) {
+                this.attendees.firstOrNull()?.email
+            } else {
+                null
+            }
         )
     }
 }

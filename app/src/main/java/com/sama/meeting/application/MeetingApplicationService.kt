@@ -7,9 +7,9 @@ import com.sama.events.EventPublisher
 import com.sama.meeting.configuration.MeetingUrlConfiguration
 import com.sama.meeting.domain.*
 import com.sama.meeting.domain.aggregates.MeetingIntentEntity
-import com.sama.meeting.domain.aggregates.MeetingProposalEntity
+import com.sama.meeting.domain.aggregates.MeetingEntity
 import com.sama.meeting.domain.repositories.MeetingIntentRepository
-import com.sama.meeting.domain.repositories.MeetingProposalRepository
+import com.sama.meeting.domain.repositories.MeetingRepository
 import com.sama.meeting.domain.repositories.findByCodeOrThrow
 import com.sama.slotsuggestion.application.SlotSuggestionRequest
 import com.sama.slotsuggestion.application.SlotSuggestionService
@@ -23,7 +23,7 @@ import java.time.LocalDateTime
 @Service
 class MeetingApplicationService(
     private val meetingIntentRepository: MeetingIntentRepository,
-    private val meetingProposalRepository: MeetingProposalRepository,
+    private val meetingRepository: MeetingRepository,
     private val slotSuggestionService: SlotSuggestionService,
     private val blockRepository: BlockRepository,
     private val eventPublisher: EventPublisher,
@@ -79,22 +79,22 @@ class MeetingApplicationService(
         userId: UserId,
         meetingIntentId: MeetingIntentId,
         command: ProposeMeetingCommand
-    ): MeetingProposalDTO {
+    ): MeetingDTO {
         val meetingEntity = meetingIntentRepository.findByIdOrThrow(meetingIntentId)
-        val meetingProposalId = meetingProposalRepository.nextIdentity()
+        val meetingId = meetingRepository.nextIdentity()
 
         val meetingCode = MeetingCodeGenerator(meetingUrlConfiguration.codeLength).generate()
         val proposedSlots = command.proposedSlots.map { it.toValueObject() }
 
-        val meetingProposal = MeetingIntent.of(meetingEntity).getOrThrow()
-            .propose(meetingProposalId, meetingCode, proposedSlots)
+        val proposedMeeting = MeetingIntent.of(meetingEntity).getOrThrow()
+            .propose(meetingId, meetingCode, proposedSlots)
             .getOrThrow()
 
-        MeetingProposalEntity.new(meetingProposal).also { meetingProposalRepository.save(it) }
+        MeetingEntity.new(proposedMeeting).also { meetingRepository.save(it) }
 
-        return MeetingProposalDTO(
+        return MeetingDTO(
             meetingIntentId,
-            meetingProposalId,
+            meetingId,
             proposedSlots.map { it.toDTO() },
             meetingCode,
             meetingCode.toUrl(meetingUrlConfiguration)
@@ -102,24 +102,24 @@ class MeetingApplicationService(
     }
 
     @Transactional(readOnly = true)
-    fun loadMeetingProposalFromCode(meetingCode: MeetingCode): MeetingProposalDTO {
-        val proposalEntity = meetingProposalRepository.findByCodeOrThrow(meetingCode)
-        val intentEntity = meetingIntentRepository.findByIdOrThrow(proposalEntity.meetingIntentId)
+    fun loadMeetingProposalFromCode(meetingCode: MeetingCode): MeetingDTO {
+        val meetingEntity = meetingRepository.findByCodeOrThrow(meetingCode)
+        val intentEntity = meetingIntentRepository.findByIdOrThrow(meetingEntity.meetingIntentId)
 
-        val proposedMeeting = when (val meeting = meetingFrom(intentEntity, proposalEntity).getOrThrow()) {
+        val proposedMeeting = when (val meeting = meetingFrom(intentEntity, meetingEntity).getOrThrow()) {
             is ProposedMeeting -> meeting
-            is ConfirmedMeeting -> throw MeetingAlreadyConfirmedException(meeting.meetingProposalId)
-            is ExpiredMeeting -> throw  MeetingProposalExpiredException(meeting.meetingProposalId)
-            else -> throw InvalidMeetingStatusException(meeting.meetingProposalId, meeting.status)
+            is ConfirmedMeeting -> throw MeetingAlreadyConfirmedException(meeting.meetingId)
+            is ExpiredMeeting -> throw  MeetingProposalExpiredException(meeting.meetingId)
+            else -> throw InvalidMeetingStatusException(meeting.meetingId, meeting.status)
         }
 
         val (start, end) = proposedMeeting.proposedSlotsRange()
         val blocks = blockRepository.findAll(proposedMeeting.initiatorId, start, end)
         val availableProposedSlots = proposedMeeting.availableProposedSlots(blocks, clock)
 
-        return MeetingProposalDTO(
+        return MeetingDTO(
             proposedMeeting.meetingIntentId,
-            proposedMeeting.meetingProposalId,
+            proposedMeeting.meetingId,
             availableProposedSlots.map { it.toDTO() },
             proposedMeeting.meetingCode,
             proposedMeeting.meetingCode.toUrl(meetingUrlConfiguration)
@@ -128,14 +128,14 @@ class MeetingApplicationService(
 
     @Transactional
     fun confirmMeeting(meetingCode: MeetingCode, command: ConfirmMeetingCommand): Boolean {
-        val proposalEntity = meetingProposalRepository.findByCodeOrThrow(meetingCode)
-        val intentEntity = meetingIntentRepository.findByIdOrThrow(proposalEntity.meetingIntentId)
+        val meetingEntity = meetingRepository.findByCodeOrThrow(meetingCode)
+        val intentEntity = meetingIntentRepository.findByIdOrThrow(meetingEntity.meetingIntentId)
 
-        val proposedMeeting = when (val meeting = meetingFrom(intentEntity, proposalEntity).getOrThrow()) {
+        val proposedMeeting = when (val meeting = meetingFrom(intentEntity, meetingEntity).getOrThrow()) {
             is ProposedMeeting -> meeting
-            is ConfirmedMeeting -> throw MeetingAlreadyConfirmedException(meeting.meetingProposalId)
-            is ExpiredMeeting -> throw  MeetingProposalExpiredException(meeting.meetingProposalId)
-            else -> throw InvalidMeetingStatusException(meeting.meetingProposalId, meeting.status)
+            is ConfirmedMeeting -> throw MeetingAlreadyConfirmedException(meeting.meetingId)
+            is ExpiredMeeting -> throw  MeetingProposalExpiredException(meeting.meetingId)
+            else -> throw InvalidMeetingStatusException(meeting.meetingId, meeting.status)
         }
 
         val meetingRecipient = command.recipientEmail.let { MeetingRecipient.fromEmail(it) }
@@ -145,7 +145,7 @@ class MeetingApplicationService(
 
         eventPublisher.publish(MeetingConfirmedEvent(confirmedMeeting))
 
-        proposalEntity.applyChanges(confirmedMeeting).also { meetingProposalRepository.save(it) }
+        meetingEntity.applyChanges(confirmedMeeting).also { meetingRepository.save(it) }
         return true
     }
 }

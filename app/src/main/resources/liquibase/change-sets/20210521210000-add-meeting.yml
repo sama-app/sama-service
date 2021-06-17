@@ -98,7 +98,7 @@ databaseChangeLog:
 
         - createTable:
             schemaName: sama
-            tableName: meeting_proposal
+            tableName: meeting
             columns:
               - column:
                   name: id
@@ -106,7 +106,7 @@ databaseChangeLog:
                   constraints:
                     nullable: false
                     primaryKey: true
-                    primaryKeyName: PK_meeting_proposal_id
+                    primaryKeyName: PK_meeting_id
               - column:
                   name: meeting_intent_id
                   type: BIGINT
@@ -150,9 +150,9 @@ databaseChangeLog:
 
         - addForeignKeyConstraint:
             baseTableSchemaName: sama
-            baseTableName: meeting_proposal
+            baseTableName: meeting
             baseColumnNames: meeting_intent_id
-            constraintName: FK_meeting_proposal_meeting_intent_id
+            constraintName: FK_meeting_meeting_intent_id
             referencedTableSchemaName: sama
             referencedTableName: meeting_intent
             referencedColumnNames: id
@@ -161,11 +161,11 @@ databaseChangeLog:
 
         - createIndex:
             schemaName: sama
-            tableName: meeting_proposal
+            tableName: meeting
             columns:
               - column:
                   name: meeting_code
-            indexName: IDX_meeting_proposal_code
+            indexName: IDX_meeting_code
             unique: true
 
         - createTable:
@@ -180,7 +180,7 @@ databaseChangeLog:
                   name: id
                   type: SERIAL
               - column:
-                  name: meeting_proposal_id
+                  name: meeting_id
                   type: BIGINT
                   constraints:
                     nullable: false
@@ -203,10 +203,10 @@ databaseChangeLog:
         - addForeignKeyConstraint:
             baseTableSchemaName: sama
             baseTableName: meeting_proposed_slot
-            baseColumnNames: meeting_proposal_id
-            constraintName: FK_meeting_proposed_slot_meeting_proposal_id
+            baseColumnNames: meeting_id
+            constraintName: FK_meeting_proposed_slot_meeting_id
             referencedTableSchemaName: sama
-            referencedTableName: meeting_proposal
+            referencedTableName: meeting
             referencedColumnNames: id
             validate: true
             onDelete: CASCADE
