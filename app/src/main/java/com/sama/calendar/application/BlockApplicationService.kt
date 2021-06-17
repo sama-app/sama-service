@@ -1,5 +1,6 @@
 package com.sama.calendar.application
 
+import com.sama.calendar.domain.Block
 import com.sama.calendar.domain.BlockRepository
 import com.sama.common.ApplicationService
 import com.sama.users.domain.UserId
@@ -19,4 +20,10 @@ class BlockApplicationService(private val blockRepository: BlockRepository) {
         )
             .map { BlockDTO(it.startDateTime, it.endDateTime, it.allDay, it.title) }
             .let { FetchBlocksDTO(it) }
+
+
+    fun createBlock(userId: UserId, command: CreateBlockCommand) {
+        val block = Block(command.startDateTime, command.endDateTime, false, null, command.recipientEmail)
+        blockRepository.save(userId, block)
+    }
 }

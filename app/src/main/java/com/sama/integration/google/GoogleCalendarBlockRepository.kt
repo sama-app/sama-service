@@ -6,10 +6,12 @@ import com.google.api.client.json.jackson2.JacksonFactory
 import com.google.api.client.util.DateTime
 import com.google.api.services.calendar.Calendar
 import com.google.api.services.calendar.model.Event
+import com.google.api.services.calendar.model.EventAttendee
 import com.google.api.services.calendar.model.EventDateTime
 import com.sama.SamaApplication
 import com.sama.calendar.domain.Block
 import com.sama.calendar.domain.BlockRepository
+import com.sama.users.domain.UserId
 import org.springframework.stereotype.Component
 import java.time.Instant
 import java.time.LocalDateTime.ofInstant
@@ -27,7 +29,7 @@ class GoogleCalendarBlockRepository(
 
     // https://developers.google.com/calendar/v3/reference/events/list
     // https://developers.google.com/calendar/v3/reference/events#resource
-    override fun findAll(userId: Long, startDateTime: ZonedDateTime, endDateTime: ZonedDateTime): List<Block> {
+    override fun findAll(userId: UserId, startDateTime: ZonedDateTime, endDateTime: ZonedDateTime): List<Block> {
         val calendarService = calendarServiceForUser(userId)
 
         var nextPageToken: String? = null
@@ -39,21 +41,36 @@ class GoogleCalendarBlockRepository(
 
             blocks.addAll(result.items
                 .filter { it.status in listOf("confirmed", "tentative") }
-                .map {
-                    Block(
-                        UUID.randomUUID(), // generating random uuid for future reference
-                        it.id,
-                        it.start.toZonedDateTime(defaultZoneId),
-                        it.end.toZonedDateTime(defaultZoneId),
-                        it.isAllDay(),
-                        it.summary
-                    )
-                }
+                .map { it.toBlock(defaultZoneId) }
             )
 
         } while (nextPageToken != null)
 
         return blocks
+    }
+
+    // https://developers.google.com/calendar/api/v3/reference/events/insert
+    // https://developers.google.com/calendar/api/v3/reference/events/insert#request-body
+    override fun save(userId: UserId, block: Block): Block {
+        val calendarService = calendarServiceForUser(userId)
+        val timeZone = block.startDateTime.zone
+        val event = Event().apply {
+            start = EventDateTime()
+                .setDateTime(block.startDateTime.toGoogleCalendarDateTime())
+                .setTimeZone(timeZone.id)
+            end = EventDateTime()
+                .setDateTime(block.endDateTime.toGoogleCalendarDateTime())
+                .setTimeZone(timeZone.id)
+            attendees = listOf(EventAttendee().apply {
+                email = block.recipientEmail
+            })
+        }
+
+        val inserted = calendarService.events()
+            .insert("primary", event)
+            .setSendNotifications(true)
+            .execute()
+        return inserted.toBlock(timeZone)
     }
 
     private fun calendarServiceForUser(userId: Long): Calendar {
@@ -95,5 +112,15 @@ class GoogleCalendarBlockRepository(
 
     private fun Event.isAllDay(): Boolean {
         return this.start.date != null
+    }
+
+    private fun Event.toBlock(defaultZoneId: ZoneId): Block {
+        return Block(
+            this.start.toZonedDateTime(defaultZoneId),
+            this.end.toZonedDateTime(defaultZoneId),
+            this.isAllDay(),
+            this.summary,
+            this.attendees.firstOrNull()?.email
+        )
     }
 }
