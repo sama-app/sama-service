@@ -16,9 +16,7 @@ import com.sama.meeting.domain.repositories.findByCodeOrThrow
 import com.sama.slotsuggestion.application.SlotSuggestionRequest
 import com.sama.slotsuggestion.application.SlotSuggestionService
 import com.sama.users.domain.UserId
-import com.samskivert.mustache.Mustache
 import com.samskivert.mustache.Template
-import liquibase.pro.packaged.it
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -54,8 +52,8 @@ class MeetingApplicationService(
             meetingId,
             userId,
             null,
-            command.duration.toMinutes(),
-            command.timezone,
+            command.durationMinutes.toMinutes(),
+            command.timeZone,
             suggestedSlots
         )
 
@@ -65,8 +63,8 @@ class MeetingApplicationService(
 
     private fun InitiateMeetingCommand.toSlotSuggestionRequest(): SlotSuggestionRequest {
         return SlotSuggestionRequest(
-            duration.toMinutes(),
-            timezone,
+            durationMinutes.toMinutes(),
+            timeZone,
             suggestionSlotCount,
             LocalDateTime.now(clock),
             LocalDateTime.now(clock).plusDays(suggestionDayCount.toLong())
