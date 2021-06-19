@@ -64,10 +64,10 @@ class MeetingIntentEntity {
     var suggestedSlots: MutableList<MeetingSuggestedSlotEntity> = mutableListOf()
 
     @CreatedDate
-    private var createdAt: Instant? = null
+    var createdAt: Instant? = null
 
     @LastModifiedDate
-    private var updatedAt: Instant? = null
+    var updatedAt: Instant? = null
 }
 
 @Entity
