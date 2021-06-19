@@ -24,10 +24,10 @@ data class SlotSuggestionEngine(val futureHeatMap: FutureHeatMap) {
         val startDate = startDateTime.toLocalDate()
         val endDate = endDateTime.toLocalDate()
 
-        check(startDate in futureHeatMap.value && endDate in futureHeatMap.value)
-        { "FutureHeapMap must contain queried date range" }
+        require(startDate in futureHeatMap.value && endDate in futureHeatMap.value)
+        { "FutureHeapMap does not contain queried date range: $startDate - $endDate" }
 
-        return startDate.datesUntil(endDate).asSequence()
+        val computedVector = startDate.datesUntil(endDate).asSequence()
             .map { date -> futureHeatMap.value[date]!! }
             // Convert all days into one long vector
             .reduce { acc, vector -> acc.plus(vector) }
@@ -37,13 +37,34 @@ data class SlotSuggestionEngine(val futureHeatMap: FutureHeatMap) {
             .mapValues { sigmoid(it) }
             // Create ranking for each slot of the specified duration
             .zipMultiplying(durationLength)
-            // Sort by rank
+
+        // Sort by rank
+        val rankedVector = computedVector
             .mapIndexed { index, value -> index to value }
             .sortedByDescending { it.second }
-            // Take the best suggestions, filtering out any zeroes
-            .take(count)
-            .filter { it.second != 0.0 }
-            // Create resulting slots
+
+        // Feed best slots into a filter to exclude overlapping slots
+        val suggestionSlots = mutableListOf<Pair<Int, Double>>()
+        for ((idx, rank) in rankedVector) {
+            val isSlotOverlapping = suggestionSlots
+                .filter {
+                    val blockedRangeStart = it.first - durationLength + 1
+                    val blockedRangeEnd = it.first + durationLength
+                    idx in blockedRangeStart until blockedRangeEnd
+                }
+                .any()
+            val isSlotAvailable = rank > 0
+
+            if (!isSlotOverlapping && isSlotAvailable) {
+                suggestionSlots.add(idx to rank)
+            }
+
+            if (suggestionSlots.size == count) {
+                break
+            }
+        }
+
+        return suggestionSlots
             .map {
                 val start = startDate.atStartOfDay(timezone).plus(indexToDurationOffset(it.first))
                 val end = start.plus(duration)
