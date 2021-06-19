@@ -40,9 +40,8 @@ class MeetingTest {
         ofMinutes(30) to true,
         ofMinutes(45) to true,
         ofMinutes(60) to true,
-        ofMinutes(15) to false,
-        ofMinutes(57) to false,
-        ofMinutes(82) to false
+        ofMinutes(14) to false,
+        ofMinutes(0) to false
     )
         .map { (duration, success) ->
             dynamicTest("meeting with duration '${duration.toMinutes()}min' allowed: $success") {

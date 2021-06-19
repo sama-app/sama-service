@@ -16,7 +16,7 @@ data class MeetingIntent(
     val timezone: ZoneId,
     val suggestedSlots: List<MeetingSlot>,
 ) {
-    val allowedDurations = setOf(Duration.ofMinutes(30), Duration.ofMinutes(45), Duration.ofMinutes(60))
+    val minimumDuration = Duration.ofMinutes(15)
 
     @Factory
     companion object {
@@ -35,7 +35,7 @@ data class MeetingIntent(
     }
 
     init {
-        if (duration !in allowedDurations) {
+        if (duration < minimumDuration) {
             throw InvalidDurationException(meetingIntentId, duration)
         }
         validateSlots(suggestedSlots)
