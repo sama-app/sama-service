@@ -70,27 +70,6 @@ data class ProposedMeeting(
     override val status = MeetingStatus.PROPOSED
     val slotInterval = Duration.ofMinutes(15)
 
-    @Factory
-    companion object {
-        fun of(
-            meetingIntentEntity: MeetingIntentEntity,
-            meetingEntity: MeetingEntity
-        ): Result<ProposedMeeting> {
-            val proposedSlots = meetingEntity.proposedSlots
-                .map { MeetingSlot(it.startDateTime, it.endDateTime) }
-            return success(
-                ProposedMeeting(
-                    meetingEntity.id!!,
-                    meetingIntentEntity.id!!,
-                    meetingIntentEntity.initiatorId!!,
-                    Duration.ofMinutes(meetingIntentEntity.durationMinutes!!),
-                    proposedSlots,
-                    meetingEntity.code!!,
-                )
-            )
-        }
-    }
-
     fun proposedSlotsRange(): Pair<ZonedDateTime, ZonedDateTime> {
         val start = proposedSlots.minOf { it.startTime }
         val end = proposedSlots.maxOf { it.endTime }

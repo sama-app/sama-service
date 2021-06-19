@@ -80,13 +80,13 @@ class MeetingEntity {
     var confirmedSlot: MeetingSlot? = null
 
     @CreatedDate
-    private var confirmedAt: Instant? = null
+    var confirmedAt: Instant? = null
 
     @CreatedDate
-    private var createdAt: Instant? = null
+    var createdAt: Instant? = null
 
     @LastModifiedDate
-    private var updatedAt: Instant? = null
+    var updatedAt: Instant? = null
 }
 
 @Entity
