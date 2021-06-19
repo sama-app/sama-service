@@ -150,7 +150,6 @@ class MeetingTest {
         )
     }
 
-
     @Test
     fun `confirm meeting fails`() {
         val meetingId = 11L
@@ -164,22 +163,5 @@ class MeetingTest {
         val actual = proposedMeeting.confirm(slotToConfirm, recipient)
 
         actual.assertThrows(MeetingSlotUnavailableException::class.java)
-    }
-
-    @Test
-    fun `meeting code generated with at desired length`() {
-        assertTrue(MeetingCodeGenerator(10).generate().length == 10)
-    }
-
-    @Test
-    fun `different meeting code generated each time`() {
-        val generator1 = MeetingCodeGenerator(10)
-        val generator2 = MeetingCodeGenerator(10)
-        val code1 = generator1.generate()
-        val code2 = generator1.generate()
-        val code3 = generator2.generate()
-
-        assertNotEquals(code1, code2)
-        assertNotEquals(code2, code3)
     }
 }
