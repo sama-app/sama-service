@@ -139,10 +139,10 @@ data class ConfirmedMeeting(
 
 @DomainEntity
 data class RejectedMeeting(override val meetingId: MeetingId) : Meeting {
-    override val status = MeetingStatus.CONFIRMED
+    override val status = MeetingStatus.REJECTED
 }
 
 @DomainEntity
 data class ExpiredMeeting(override val meetingId: MeetingId) : Meeting {
-    override val status = MeetingStatus.CONFIRMED
+    override val status = MeetingStatus.EXPIRED
 }
