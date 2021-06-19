@@ -80,9 +80,9 @@ class GlobalWebMvcExceptionHandler : ResponseEntityExceptionHandler() {
     fun handleNotFound(ex: NotFoundException, request: WebRequest) =
         ResponseEntity(ApiError.create(NOT_FOUND, ex, request), HttpHeaders(), NOT_FOUND)
 
-    @ExceptionHandler(value = [ZoneRulesException::class])
+    @ExceptionHandler(value = [ZoneRulesException::class, IllegalArgumentException::class])
     @ResponseStatus(BAD_REQUEST)
-    fun handleBadRequest(ex: ZoneRulesException, request: WebRequest) =
+    fun handleBadRequest(ex: Exception, request: WebRequest) =
         ResponseEntity(ApiError.create(BAD_REQUEST, ex, request), HttpHeaders(), BAD_REQUEST)
 
     @ExceptionHandler(value = [DomainValidationException::class])
