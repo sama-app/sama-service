@@ -3,12 +3,16 @@ package com.sama.api.debug
 import com.google.api.client.http.GenericUrl
 import com.sama.api.config.AuthUserId
 import com.sama.common.mapIndexed
+import com.sama.slotsuggestion.application.FutureHeatMapService
+import com.sama.slotsuggestion.application.HistoricalHeatMapService
 import com.sama.slotsuggestion.application.SlotSuggestionService
+import com.sama.slotsuggestion.domain.FutureHeatMapGenerator
 import com.sama.slotsuggestion.domain.sigmoid
 import com.sama.users.application.GoogleOauth2ApplicationService
 import com.sama.users.application.GoogleOauth2Failure
 import com.sama.users.application.GoogleOauth2Success
 import com.sama.users.domain.UserId
+import liquibase.pro.packaged.it
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.GetMapping
@@ -24,7 +28,7 @@ import kotlin.math.round
 @Controller
 class DebugViewController(
     private val googleOauth2ApplicationService: GoogleOauth2ApplicationService,
-    private val slotSuggestionService: SlotSuggestionService
+    private val futureHeatMapService: FutureHeatMapService,
 ) {
 
     @GetMapping("/api/__debug/auth/google-authorize")
@@ -58,7 +62,7 @@ class DebugViewController(
 
     @GetMapping("/api/__debug/user/heatmap")
     fun renderUserHeapMap(@AuthUserId userId: UserId, model: MutableMap<String, Any>): ModelAndView {
-        val heatMap = slotSuggestionService.computeFutureHeatMap(userId).value
+        val heatMap = futureHeatMapService.find(userId).value
             .mapValues { it.value.mapIndexed { _, value -> sigmoid(value) } }
             .toSortedMap()
 
