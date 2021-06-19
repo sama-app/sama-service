@@ -22,14 +22,6 @@ class MeetingUrlConfiguration(
     val host: String
 )
 
-fun MeetingCode.toUrl(config: MeetingUrlConfiguration): String {
-    return UriComponentsBuilder.newInstance()
-        .scheme(config.scheme)
-        .host(config.host)
-        .path("/$this")
-        .build().toUriString()
-}
-
 @Configuration
 class MeetingProposalMessageConfiguration {
 
