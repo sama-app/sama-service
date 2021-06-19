@@ -34,6 +34,10 @@ spring:
   liquibase:
     enabled: true
     change-log: liquibase/db.changelog-sama.yml
+  cache:
+    cache-names: historical-heat-map
+    caffeine:
+      spec: maximumSize=1000,expireAfterAccess=12h
 
 management:
   endpoints:
@@ -68,7 +72,8 @@ sama:
 
   slotsuggestion:
     heatmap:
-      past-days: 90
+      historical-days: 90
+      historical-cache-duration-hours: 12
       future-days: 21
 
 integration:
