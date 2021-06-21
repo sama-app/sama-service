@@ -1,8 +1,8 @@
 package com.sama.meeting.application
 
+import com.sama.calendar.application.BlockEventConsumer
 import com.sama.calendar.domain.BlockRepository
 import com.sama.common.NotFoundException
-import com.sama.events.EventPublisher
 import com.sama.meeting.domain.*
 import com.sama.meeting.domain.aggregates.MeetingEntity
 import com.sama.meeting.domain.aggregates.MeetingIntentEntity
@@ -38,7 +38,7 @@ class MeetingApplicationServiceTest(
     @Mock private val meetingInvitationService: MeetingInvitationService,
     @Mock private val meetingCodeGenerator: MeetingCodeGenerator,
     @Mock private val blockRepository: BlockRepository,
-    @Mock private val eventPublisher: EventPublisher,
+    @Mock private val blockEventConsumer: BlockEventConsumer,
 ) {
     private val clock: Clock = Clock.fixed(ofEpochSecond(3600), systemDefault())
 
@@ -53,7 +53,7 @@ class MeetingApplicationServiceTest(
             meetingInvitationService,
             meetingCodeGenerator,
             blockRepository,
-            eventPublisher,
+            blockEventConsumer,
             clock
         )
     }
@@ -354,7 +354,7 @@ class MeetingApplicationServiceTest(
                 slot.toValueObject()
             )
         )
-        verify(eventPublisher).publish(eq(expectedEvent))
+        verify(blockEventConsumer).onMeetingConfirmed(eq(expectedEvent))
 
         assertEquals(true, result)
     }

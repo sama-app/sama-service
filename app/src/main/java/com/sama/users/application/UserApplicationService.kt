@@ -2,7 +2,7 @@ package com.sama.users.application
 
 import com.sama.common.ApplicationService
 import com.sama.common.findByIdOrThrow
-import com.sama.events.EventPublisher
+import com.sama.meeting.application.MeetingEventConsumer
 import com.sama.users.configuration.AccessJwtConfiguration
 import com.sama.users.configuration.RefreshJwtConfiguration
 import com.sama.users.domain.*
@@ -19,7 +19,7 @@ class UserApplicationService(
     private val userSettingsDefaultsRepository: UserSettingsDefaultsRepository,
     private val accessJwtConfiguration: AccessJwtConfiguration,
     private val refreshJwtConfiguration: RefreshJwtConfiguration,
-    private val eventPublisher: EventPublisher,
+    private val meetingEventConsumer: MeetingEventConsumer,
     private val clock: Clock
 ) {
 
@@ -39,7 +39,7 @@ class UserApplicationService(
         userSettingsRepository.deleteById(userId)
         userRepository.deleteById(userId)
 
-        eventPublisher.publish(UserDeletedEvent(userId))
+        meetingEventConsumer.onUserDeleted(UserDeletedEvent(userId))
         return true
     }
 

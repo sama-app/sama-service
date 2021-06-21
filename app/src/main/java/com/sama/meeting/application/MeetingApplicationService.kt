@@ -1,13 +1,13 @@
 package com.sama.meeting.application
 
+import com.sama.calendar.application.BlockEventConsumer
 import com.sama.calendar.domain.BlockRepository
 import com.sama.common.ApplicationService
 import com.sama.common.findByIdOrThrow
 import com.sama.common.toMinutes
-import com.sama.events.EventPublisher
 import com.sama.meeting.domain.*
-import com.sama.meeting.domain.aggregates.MeetingIntentEntity
 import com.sama.meeting.domain.aggregates.MeetingEntity
+import com.sama.meeting.domain.aggregates.MeetingIntentEntity
 import com.sama.meeting.domain.repositories.MeetingCodeGenerator
 import com.sama.meeting.domain.repositories.MeetingIntentRepository
 import com.sama.meeting.domain.repositories.MeetingRepository
@@ -30,7 +30,7 @@ class MeetingApplicationService(
     private val meetingInvitationService: MeetingInvitationService,
     private val meetingCodeGenerator: MeetingCodeGenerator,
     private val blockRepository: BlockRepository,
-    private val eventPublisher: EventPublisher,
+    private val blockEventConsumer: BlockEventConsumer,
     private val clock: Clock
 ) {
 
@@ -149,7 +149,8 @@ class MeetingApplicationService(
             .confirm(command.slot.toValueObject(), meetingRecipient)
             .getOrThrow()
 
-        eventPublisher.publish(MeetingConfirmedEvent(confirmedMeeting))
+        // "manual" event publishing
+        blockEventConsumer.onMeetingConfirmed(MeetingConfirmedEvent(confirmedMeeting))
 
         meetingEntity.applyChanges(confirmedMeeting).also { meetingRepository.save(it) }
         return true
