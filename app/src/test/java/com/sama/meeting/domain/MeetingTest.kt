@@ -14,7 +14,6 @@ import java.time.LocalTime
 import java.time.ZoneId.systemDefault
 import java.time.ZonedDateTime
 import kotlin.test.assertEquals
-import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
 class MeetingTest {
@@ -46,10 +45,10 @@ class MeetingTest {
         .map { (duration, success) ->
             dynamicTest("meeting with duration '${duration.toMinutes()}min' allowed: $success") {
                 if (success) {
-                    MeetingIntent(1L, 10L, null, duration, systemDefault(), emptyList())
+                    MeetingIntent(1L, 10L, duration, systemDefault(), emptyList())
                 } else {
                     assertThrows(InvalidDurationException::class.java) {
-                        MeetingIntent(1L, 10L, null, duration, systemDefault(), emptyList())
+                        MeetingIntent(1L, 10L, duration, systemDefault(), emptyList())
                     }
                 }
             }
@@ -66,10 +65,10 @@ class MeetingTest {
             dynamicTest("suggesting a slot of ${slotDuration.toMinutes()}min allowed: $success") {
                 val slot = MeetingSlot(_9am, _9am.plus(slotDuration))
                 if (success) {
-                    MeetingIntent(1L, 10L, null, ofHours(1), systemDefault(), listOf(slot))
+                    MeetingIntent(1L, 10L, ofHours(1), systemDefault(), listOf(slot))
                 } else {
                     assertThrows(InvalidMeetingSlotException::class.java) {
-                        MeetingIntent(1L, 10L, null, ofHours(1), systemDefault(), listOf(slot))
+                        MeetingIntent(1L, 10L, ofHours(1), systemDefault(), listOf(slot))
                     }
                 }
             }
@@ -95,7 +94,6 @@ class MeetingTest {
             val initiatedMeeting = MeetingIntent(
                 meetingIntentId,
                 initiatorId,
-                null,
                 ofHours(1),
                 systemDefault(),
                 listOf(suggestedSlotID1, suggestedSlotID2),
@@ -117,8 +115,7 @@ class MeetingTest {
     ).map { (proposedSlots, expected) ->
 
         val initiatedMeeting = MeetingIntent(
-            1L, initiatorId, null, ofHours(1), systemDefault(),
-            listOf(proposedSlotID1.copy(), proposedSlotID2.copy())
+            1L, initiatorId, ofHours(1), systemDefault(), listOf(proposedSlotID1.copy(), proposedSlotID2.copy())
         )
         val meetingCode = "meet-me-kei"
 

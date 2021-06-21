@@ -11,7 +11,6 @@ import java.time.ZoneId
 data class MeetingIntent(
     val meetingIntentId: MeetingIntentId,
     val initiatorId: UserId,
-    val recipientId: UserId?,
     val duration: Duration,
     val timezone: ZoneId,
     val suggestedSlots: List<MeetingSlot>,
@@ -24,7 +23,6 @@ data class MeetingIntent(
             return kotlin.runCatching {
                 MeetingIntent(
                     meetingIntentEntity.id!!, meetingIntentEntity.initiatorId!!,
-                    meetingIntentEntity.recipientId,
                     Duration.ofMinutes(meetingIntentEntity.durationMinutes!!),
                     meetingIntentEntity.timezone!!,
                     meetingIntentEntity.suggestedSlots
