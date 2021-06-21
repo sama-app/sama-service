@@ -26,7 +26,6 @@ class MeetingIntentPersistenceIT: BasePersistenceIT<MeetingIntentRepository>() {
         val meetingIntent = MeetingIntent(
             meetingIntentId,
             1L,
-            null,
             Duration.ofMinutes(60),
             ZoneId.of("Europe/Rome"),
             listOf(

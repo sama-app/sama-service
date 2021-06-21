@@ -50,7 +50,6 @@ class MeetingApplicationService(
         val meeting = MeetingIntent(
             meetingId,
             userId,
-            null,
             command.durationMinutes.toMinutes(),
             command.timeZone,
             suggestedSlots
