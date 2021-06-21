@@ -3,15 +3,14 @@ package com.sama.meeting.domain
 import com.sama.calendar.domain.Block
 import com.sama.common.ValueObject
 import java.time.Duration
-import java.time.Period
 import java.time.ZonedDateTime
 import javax.persistence.Embeddable
 
 @Embeddable
 @ValueObject
 data class MeetingSlot(
-    val startTime: ZonedDateTime,
-    val endTime: ZonedDateTime
+    val startDateTime: ZonedDateTime,
+    val endDateTime: ZonedDateTime
 ) {
 
     fun isRange(meetingDuration: Duration): Boolean {
@@ -19,7 +18,7 @@ data class MeetingSlot(
     }
 
     fun duration(): Duration {
-        return Duration.between(startTime, endTime)
+        return Duration.between(startDateTime, endDateTime)
     }
 
     fun expandBy(duration: Duration, interval: Duration): List<ZonedDateTime> {
@@ -30,29 +29,29 @@ data class MeetingSlot(
 
         val slotCount = overtime.dividedBy(interval)
         if (slotCount == 0L) {
-            return listOf(startTime)
+            return listOf(startDateTime)
         }
 
         val intervalMinutes = interval.toMinutes()
         return 0L.until(slotCount)
-            .map { startTime.plusMinutes(intervalMinutes * it) }
+            .map { startDateTime.plusMinutes(intervalMinutes * it) }
     }
 
     fun overlaps(block: Block): Boolean {
-        return startTime.isBefore(block.endDateTime) && block.startDateTime.isEqual(endTime)
+        return startDateTime.isBefore(block.endDateTime) && block.startDateTime.isEqual(endDateTime)
     }
 
     override fun equals(other: Any?): Boolean {
         if (other == null || other !is MeetingSlot) {
             return false
         }
-        return this.startTime.isEqual(other.startTime)
-                && this.endTime.isEqual(other.endTime)
+        return this.startDateTime.isEqual(other.startDateTime)
+                && this.endDateTime.isEqual(other.endDateTime)
     }
 
     override fun hashCode(): Int {
-        var result = startTime.hashCode()
-        result = 31 * result + endTime.hashCode()
+        var result = startDateTime.hashCode()
+        result = 31 * result + endDateTime.hashCode()
         return result
     }
 }

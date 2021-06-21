@@ -31,8 +31,8 @@ class MeetingIntentEntity {
                 MeetingSuggestedSlotEntity(
                     null,
                     meetingIntent.meetingIntentId,
-                    it.startTime,
-                    it.endTime,
+                    it.startDateTime,
+                    it.endDateTime,
                     Instant.now()
                 )
             }

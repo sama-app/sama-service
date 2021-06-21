@@ -43,7 +43,7 @@ class MeetingApplicationService(
             else -> {
                 val request = command.toSlotSuggestionRequest()
                 slotSuggestionService.suggestSlots(userId, request).suggestions
-                    .map { MeetingSlot(it.startTime, it.endTime) }
+                    .map { MeetingSlot(it.startDateTime, it.endDateTime) }
             }
         }
 

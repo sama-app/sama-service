@@ -71,8 +71,8 @@ data class ProposedMeeting(
     val slotInterval = Duration.ofMinutes(15)
 
     fun proposedSlotsRange(): Pair<ZonedDateTime, ZonedDateTime> {
-        val start = proposedSlots.minOf { it.startTime }
-        val end = proposedSlots.maxOf { it.endTime }
+        val start = proposedSlots.minOf { it.startDateTime }
+        val end = proposedSlots.maxOf { it.endDateTime }
         return start to end
     }
 
@@ -91,7 +91,7 @@ data class ProposedMeeting(
         val now = ZonedDateTime.now(clock)
         return expandedSlots()
             .filter { slot ->
-                slot.startTime.isAfter(now) && !exclusions.any { slot.overlaps(it) }
+                slot.startDateTime.isAfter(now) && !exclusions.any { slot.overlaps(it) }
             }
     }
 
