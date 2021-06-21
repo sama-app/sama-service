@@ -61,7 +61,7 @@ jobs:
           terraform_wrapper: false
 
       - name: Init Terraform
-        run: make terraform-init
+        run: make dev-terraform-init
 
       - name: Validate Terraform
         run: make terraform-validate

@@ -20,18 +20,24 @@ terraform-init:
 terraform-validate:
 	terraform -chdir=terraform fmt -check
 
+dev-terraform-init: terraform-init
+	@terraform -chdir=terraform workspace new dev ||:
+
 dev-current-deployment:
+	@terraform -chdir=terraform workspace select dev > /dev/null
 	@terraform -chdir=terraform show -json | \
 	jq -r '.values.root_module.resources[] | select (.type == "aws_lb_listener_rule") | .values.action[].forward[].target_group[] | select (.weight == 100) | .arn' | \
 	grep -o -P '(?<=sama-service-).*(?=-tg-dev)'
 
 dev-deploy-green:
+	@terraform -chdir=terraform workspace select dev
 	terraform -chdir=terraform apply -auto-approve \
 		-var 'enable_green_env=true' \
 		-var 'enable_blue_env=false' \
 		-var 'traffic_distribution=green'
 
 dev-deploy-blue:
+	@terraform -chdir=terraform workspace select dev
 	terraform -chdir=terraform apply -auto-approve \
 		-var 'enable_green_env=false' \
 		-var 'enable_blue_env=true' \

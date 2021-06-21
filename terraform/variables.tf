@@ -1,39 +1,11 @@
-###################
-### Environment ###
-###################
+locals {
+  region = "eu-central-1"
 
-variable "environment" {
-  type = string
-}
+  env = yamldecode(file("./env/${terraform.workspace}/env.yaml"))
 
-variable "vpc_id" {
-  type = string
-}
-
-variable "public_subnets" {
-  type = list(string)
-}
-
-variable "lb_arn" {
-  type = string
-}
-
-variable "lb_listener_arn" {
-  type = string
-}
-
-variable "key_name" {
-  type    = string
-  default = "sama-dev"
-}
-
-variable "secret_manager_secret_arn" {
-  type = string
-}
-
-variable "cloudwatch-logs-bucket-name" {
-  type    = string
-  default = "cloudwatch-logs-sama"
+  tags = {
+    Environment = terraform.workspace
+  }
 }
 
 ##################

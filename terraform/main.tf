@@ -1,11 +1,3 @@
-locals {
-  region = "eu-central-1"
-
-  tags = {
-    Environment = var.environment
-  }
-}
-
 provider "aws" {
   profile = "default"
   region  = local.region
@@ -16,10 +8,10 @@ provider "aws" {
 ####################
 
 resource "aws_lb_target_group" "sama_service_green" {
-  name                 = "sama-service-green-tg-${var.environment}"
+  name                 = "sama-service-green-tg-${terraform.workspace}"
   protocol             = "HTTP"
   port                 = 3000
-  vpc_id               = var.vpc_id
+  vpc_id               = local.env.vpc_id
   deregistration_delay = 30
   target_type          = "instance"
 
@@ -39,10 +31,10 @@ resource "aws_lb_target_group" "sama_service_green" {
 }
 
 resource "aws_lb_target_group" "sama_service_blue" {
-  name                 = "sama-service-blue-tg-${var.environment}"
+  name                 = "sama-service-blue-tg-${terraform.workspace}"
   protocol             = "HTTP"
   port                 = 3000
-  vpc_id               = var.vpc_id
+  vpc_id               = local.env.vpc_id
   deregistration_delay = 30
   target_type          = "instance"
 
@@ -61,7 +53,7 @@ resource "aws_lb_target_group" "sama_service_blue" {
 
 
 resource "aws_lb_listener_rule" "sama-service" {
-  listener_arn = var.lb_listener_arn
+  listener_arn = local.env.lb_listener_arn
 
   action {
     type = "forward"
@@ -94,12 +86,12 @@ resource "aws_lb_listener_rule" "sama-service" {
 ############
 
 resource "aws_autoscaling_group" "green" {
-  name = "sama-service-asg-green-${var.environment}"
+  name = "sama-service-asg-green-${terraform.workspace}"
 
   desired_capacity    = var.enable_green_env ? var.green_instance_count : 0
   min_size            = 0
   max_size            = 4
-  vpc_zone_identifier = var.public_subnets
+  vpc_zone_identifier = local.env.public_subnets
   target_group_arns = [
   aws_lb_target_group.sama_service_green.arn]
 
@@ -113,18 +105,18 @@ resource "aws_autoscaling_group" "green" {
 
   tag {
     key                 = "Environment"
-    value               = var.environment
+    value               = terraform.workspace
     propagate_at_launch = true
   }
 }
 
 resource "aws_autoscaling_group" "blue" {
-  name = "sama-service-asg-blue-${var.environment}"
+  name = "sama-service-asg-blue-${terraform.workspace}"
 
   desired_capacity    = var.enable_blue_env ? var.blue_instance_count : 0
   min_size            = 0
   max_size            = 4
-  vpc_zone_identifier = var.public_subnets
+  vpc_zone_identifier = local.env.public_subnets
   target_group_arns = [
   aws_lb_target_group.sama_service_blue.arn]
 
@@ -138,16 +130,16 @@ resource "aws_autoscaling_group" "blue" {
 
   tag {
     key                 = "Environment"
-    value               = var.environment
+    value               = terraform.workspace
     propagate_at_launch = true
   }
 }
 
 resource "aws_launch_template" "sama_service" {
-  name                   = "sama-service-lt-${var.environment}"
+  name                   = "sama-service-lt-${terraform.workspace}"
   image_id               = var.ami_id
   instance_type          = "t2.micro"
-  key_name               = var.key_name
+  key_name               = local.env.key_name
   update_default_version = true
 
   instance_initiated_shutdown_behavior = "terminate"
@@ -175,8 +167,8 @@ resource "aws_launch_template" "sama_service" {
     resource_type = "instance"
 
     tags = {
-      Environment = var.environment
-      Name        = "sama-service-${var.environment}"
+      Environment = terraform.workspace
+      Name        = "sama-service-${terraform.workspace}"
     }
   }
 
@@ -186,9 +178,9 @@ resource "aws_launch_template" "sama_service" {
 module "asg_sg" {
   source = "terraform-aws-modules/security-group/aws"
 
-  name        = "sama-service-asg-sg-${var.environment}"
+  name        = "sama-service-asg-sg-${terraform.workspace}"
   description = "Security group for ASGs"
-  vpc_id      = var.vpc_id
+  vpc_id      = local.env.vpc_id
 
   ingress_with_cidr_blocks = [
     {
@@ -228,12 +220,12 @@ module "asg_sg" {
 
 
 resource "aws_iam_instance_profile" "sama_service_asg" {
-  name = "sama-service-asg-instance-profile-${var.environment}"
+  name = "sama-service-asg-instance-profile-${terraform.workspace}"
   role = aws_iam_role.sama_service_asg.name
 }
 
 resource "aws_iam_role" "sama_service_asg" {
-  name = "sama-service-asg-role-${var.environment}"
+  name = "sama-service-asg-role-${terraform.workspace}"
   path = "/"
 
   managed_policy_arns = [
@@ -282,7 +274,7 @@ resource "aws_iam_policy" "cloudwatch_logs" {
           "s3:GetObject"
         ],
         Resource : [
-          "arn:aws:s3:::${var.cloudwatch-logs-bucket-name}/*"
+          "arn:aws:s3:::${local.env.cloudwatch_logs_bucket_name}/*"
         ]
       },
       {
@@ -295,7 +287,7 @@ resource "aws_iam_policy" "cloudwatch_logs" {
           "secretsmanager:ListSecrets"
         ],
         Resource : [
-          var.secret_manager_secret_arn
+          local.env.secret_manager_secret_arn
         ]
       }
     ]
