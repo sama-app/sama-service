@@ -2,6 +2,7 @@ package com.sama.slotsuggestion.domain
 
 import com.sama.users.domain.WorkingHours
 import java.time.Duration
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import kotlin.math.ceil
@@ -47,7 +48,7 @@ fun pastBlock(block: Block?): Vector {
 }
 
 /**
- * @return a day [Vector] that weight down slots outside the working hours
+ * @return a day [Vector] that weights down slots outside the working hours
  */
 fun workingHours(workingHours: WorkingHours?): Vector {
     if (workingHours == null) {
@@ -64,7 +65,7 @@ fun workingHours(workingHours: WorkingHours?): Vector {
 }
 
 /**
- * @return a day [Vector] that weight down slots for a block time span
+ * @return a day [Vector] that weights down slots for a block time span
  */
 fun futureBlock(block: Block?): Vector {
     if (block == null) {
@@ -78,18 +79,15 @@ fun futureBlock(block: Block?): Vector {
 /**
  * @return a multi-day [Vector] that weights down slots that are outside the given date time range
  */
-fun searchBoundary(from: LocalDateTime, to: LocalDateTime): Vector {
-    val startDate = from.toLocalDate()
-    val endDate = to.toLocalDate()
-
+fun searchBoundary(startDate: LocalDate, endDate: LocalDate, searchFrom: LocalDateTime, searchTo: LocalDateTime): Vector {
     return startDate.datesUntil(endDate).asSequence()
         .map { date ->
             when {
                 date.isEqual(startDate) -> {
-                    cliff(-100.0, 0.0, vectorSize, timeToIndex(from.toLocalTime()), vectorSize)
+                    cliff(-100.0, 0.0, vectorSize, timeToIndex(searchFrom.toLocalTime()), vectorSize)
                 }
                 date.isEqual(endDate) -> {
-                    cliff(0.0, -100.0, vectorSize, 0, timeToIndex(to.toLocalTime()))
+                    cliff(0.0, -100.0, vectorSize, 0, timeToIndex(searchTo.toLocalTime()))
                 }
                 else -> {
                     zeroes()
@@ -97,4 +95,16 @@ fun searchBoundary(from: LocalDateTime, to: LocalDateTime): Vector {
             }
         }
         .reduce { acc, vector -> acc.plus(vector) }
+}
+
+/**
+ * @return a day [Vector] that weights down previously suggested slots
+ */
+fun suggestedSlot(slot: SlotSuggestion?): Vector {
+    if (slot == null) {
+        return zeroes(vectorSize)
+    }
+    val startTimeIndex = timeToIndex(slot.startDateTime.toLocalTime())
+    val endTimeIndex = timeToIndex(slot.endDateTime.toLocalTime())
+    return linearSlope(0.0, -100.0, vectorSize, startTimeIndex, endTimeIndex, -4 to 0)
 }

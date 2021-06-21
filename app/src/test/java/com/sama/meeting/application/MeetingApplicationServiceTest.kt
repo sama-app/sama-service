@@ -10,10 +10,10 @@ import com.sama.meeting.domain.aggregates.MeetingProposedSlotEntity
 import com.sama.meeting.domain.repositories.MeetingCodeGenerator
 import com.sama.meeting.domain.repositories.MeetingIntentRepository
 import com.sama.meeting.domain.repositories.MeetingRepository
-import com.sama.slotsuggestion.application.SlotSuggestion
 import com.sama.slotsuggestion.application.SlotSuggestionRequest
 import com.sama.slotsuggestion.application.SlotSuggestionResponse
 import com.sama.slotsuggestion.application.SlotSuggestionService
+import com.sama.slotsuggestion.domain.SlotSuggestion
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.Mock

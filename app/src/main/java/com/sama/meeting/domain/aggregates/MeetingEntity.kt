@@ -27,8 +27,8 @@ class MeetingEntity {
                 MeetingProposedSlotEntity(
                     null,
                     proposedMeeting.meetingId,
-                    it.startTime,
-                    it.endTime,
+                    it.startDateTime,
+                    it.endDateTime,
                     Instant.now()
                 )
             }
@@ -74,8 +74,8 @@ class MeetingEntity {
 
     @Embedded
     @AttributeOverrides(
-        AttributeOverride(name = "startTime", column = Column(name = "confirmed_slot_start_date_time")),
-        AttributeOverride(name = "endTime", column = Column(name = "confirmed_slot_end_date_time"))
+        AttributeOverride(name = "startDateTime", column = Column(name = "confirmed_slot_start_date_time")),
+        AttributeOverride(name = "endDateTime", column = Column(name = "confirmed_slot_end_date_time"))
     )
     var confirmedSlot: MeetingSlot? = null
 

@@ -9,7 +9,7 @@ class InvalidDurationException(meetingIntentId: MeetingIntentId, duration: Durat
     DomainValidationException("MeetingIntent#$meetingIntentId: Unsupported duration '${duration.toMinutes()} min'")
 
 class InvalidMeetingSlotException(meetingIntentId: MeetingIntentId, slot: MeetingSlot) :
-    DomainValidationException("MeetingIntent#$meetingIntentId: Invalid slot '${slot.startTime} - ${slot.endTime}'")
+    DomainValidationException("MeetingIntent#$meetingIntentId: Invalid slot '${slot.startDateTime} - ${slot.endDateTime}'")
 
 class InvalidMeetingProposalException(meetingIntentId: MeetingIntentId, message: String) :
     DomainValidationException("MeetingIntent#$meetingIntentId cannot be proposed: $message")
@@ -24,4 +24,4 @@ class InvalidMeetingStatusException(meetingId: MeetingId, status: MeetingStatus)
     DomainIntegrityException("invalid_status", "Meeting#$meetingId: Invalid status: $status")
 
 class MeetingSlotUnavailableException(meetingId: MeetingId, slot: MeetingSlot):
-    DomainInvalidActionException("slot_unavailable", "Meeting#$meetingId: Slot unavailable: '${slot.startTime} - ${slot.endTime}'")
+    DomainInvalidActionException("slot_unavailable", "Meeting#$meetingId: Slot unavailable: '${slot.startDateTime} - ${slot.endDateTime}'")

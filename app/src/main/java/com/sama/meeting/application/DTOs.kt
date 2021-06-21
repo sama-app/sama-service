@@ -1,7 +1,6 @@
 package com.sama.meeting.application
 
 import com.sama.meeting.domain.MeetingCode
-import com.sama.meeting.domain.MeetingIntentId
 import com.sama.meeting.domain.MeetingId
 import com.sama.meeting.domain.MeetingSlot
 import com.sama.meeting.domain.aggregates.MeetingIntentEntity
@@ -32,7 +31,7 @@ fun MeetingSuggestedSlotEntity.toDTO(): MeetingSlotDTO {
 }
 
 fun MeetingSlot.toDTO(): MeetingSlotDTO {
-    return MeetingSlotDTO(this.startTime, this.endTime)
+    return MeetingSlotDTO(this.startDateTime, this.endDateTime)
 }
 
 data class MeetingSlotDTO(

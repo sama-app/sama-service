@@ -10,7 +10,7 @@ class BlockEventConsumer(private val blockApplicationService: BlockApplicationSe
         val meeting = event.confirmedMeeting
         blockApplicationService.createBlock(
             meeting.initiatorId,
-            CreateBlockCommand(meeting.slot.startTime, meeting.slot.endTime, meeting.meetingRecipient.email!!)
+            CreateBlockCommand(meeting.slot.startDateTime, meeting.slot.endDateTime, meeting.meetingRecipient.email!!)
         )
     }
 }
