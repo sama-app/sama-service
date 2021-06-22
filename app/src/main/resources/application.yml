@@ -47,6 +47,12 @@ management:
       exposure:
         include: "*"
 
+sentry:
+  dsn: https://b8c06b0aa478447bbdc330ad9fef42f1@o877832.ingest.sentry.io/5828928
+  environment: local
+  traces-sample-rate: 0.0
+  debug: true
+
 springdoc:
   api-docs:
     path: /api/docs
