@@ -79,7 +79,6 @@ class MeetingEntity {
     )
     var confirmedSlot: MeetingSlot? = null
 
-    @CreatedDate
     var confirmedAt: Instant? = null
 
     @CreatedDate
