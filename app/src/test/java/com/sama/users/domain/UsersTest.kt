@@ -22,7 +22,7 @@ class UsersTest {
     @Test
     fun `user registration with Google credentials`() {
         val credential = GoogleCredential("access", "refresh", 0)
-        UserRegistration(1L, "balys@yoursama.com", false, credential)
+        UserRegistration(1L, "balys@meetsama.com", false, credential)
     }
 
     @Test
@@ -37,7 +37,7 @@ class UsersTest {
     fun `user registration with existing email throws`() {
         assertThrows(UserAlreadyExistsException::class.java) {
             val credential = GoogleCredential("access", "refresh", 0)
-            UserRegistration(1L, "balys@yoursama.com", true, credential)
+            UserRegistration(1L, "balys@meetsama.com", true, credential)
         }
     }
 
@@ -66,7 +66,7 @@ class UsersTest {
 
     @Test
     fun `issue jwt for inactive user throws`() {
-        val userJwtIssuer = UserJwtIssuer(1L, "balys@yoursama.com", false)
+        val userJwtIssuer = UserJwtIssuer(1L, "balys@meetsama.com", false)
 
         val actual = userJwtIssuer.issue(jwtId, jwtConfiguration, fixedClock)
         actual.assertThrows(InactiveUserException::class.java)

@@ -104,7 +104,7 @@ class MeetingPersistenceIT : BasePersistenceIT<MeetingRepository>() {
 
         val confirmedMeeting = ConfirmedMeeting(
             meetingId, 1L, Duration.ofMinutes(60),
-            MeetingRecipient(2L, "test@yoursama.com"),
+            MeetingRecipient(2L, "test@meetsama.com"),
             MeetingSlot(
                 ZonedDateTime.now(clock).plusHours(3),
                 ZonedDateTime.now(clock).plusHours(4)

@@ -19,7 +19,7 @@ sama:
   meeting:
     url:
       scheme: https
-      host: app.yoursama.com
+      host: app.meetsama.com.smtest.it
 
 sentry:
   dsn: https://b8c06b0aa478447bbdc330ad9fef42f1@o877832.ingest.sentry.io/5828928

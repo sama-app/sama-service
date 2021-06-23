@@ -131,7 +131,7 @@ class MeetingApplicationServiceTest(
         val meetingId = 1L
         val meetingIntentId = 11L
         val meetingCode = "some-code"
-        val meetingUrl = "https://yoursama.com/some-code"
+        val meetingUrl = "https://meetsama.com/some-code"
         val shareableMessage = "message to share"
         val proposedSlot = MeetingSlotDTO(
             ZonedDateTime.now(clock),
@@ -281,7 +281,7 @@ class MeetingApplicationServiceTest(
                         this.id = meetingId
                         this.code = meetingCode
                         this.meetingIntentId = meetingIntentId
-                        this.meetingRecipient = MeetingRecipient(null, "test@yoursama.com")
+                        this.meetingRecipient = MeetingRecipient(null, "test@meetsama.com")
                         this.proposedSlots.add(
                             MeetingProposedSlotEntity(
                                 1L,
@@ -309,7 +309,7 @@ class MeetingApplicationServiceTest(
             ZonedDateTime.now(clock).plusHours(3),
             ZonedDateTime.now(clock).plusHours(4)
         )
-        val recipientEmail = "test@yoursama.com"
+        val recipientEmail = "test@meetsama.com"
         val command = ConfirmMeetingCommand(slot, recipientEmail)
 
         // setup
@@ -370,7 +370,7 @@ class MeetingApplicationServiceTest(
             ZonedDateTime.now(clock).plusHours(3),
             ZonedDateTime.now(clock).plusHours(4)
         )
-        val recipientEmail = "test@yoursama.com"
+        val recipientEmail = "test@meetsama.com"
         val command = ConfirmMeetingCommand(slot, recipientEmail)
 
         // setup
@@ -418,7 +418,7 @@ class MeetingApplicationServiceTest(
             ZonedDateTime.now(clock).plusHours(3),
             ZonedDateTime.now(clock).plusHours(4)
         )
-        val recipientEmail = "test@yoursama.com"
+        val recipientEmail = "test@meetsama.com"
         val command = ConfirmMeetingCommand(slot, recipientEmail)
 
         whenever(meetingIntentRepository.findById(eq(meetingIntentId)))
