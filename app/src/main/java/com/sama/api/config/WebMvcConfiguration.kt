@@ -22,13 +22,14 @@ import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.context.request.WebRequest
-import org.springframework.web.filter.CommonsRequestLoggingFilter
 import org.springframework.web.method.support.HandlerMethodArgumentResolver
 import org.springframework.web.servlet.config.annotation.EnableWebMvc
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler
 import java.time.zone.ZoneRulesException
+import java.util.function.Predicate
+import java.util.regex.Pattern
 
 
 @Configuration
@@ -38,16 +39,18 @@ class WebMvcConfiguration(
     private val userIdAttributeResolver: UserIdAttributeResolver
 ) : WebMvcConfigurer {
     private val headerBlacklist = listOf("authorization", "cookie")
+    private val urlBlacklist = Pattern.compile("/__mon/*")
 
     @Bean
-    fun logFilter(): CommonsRequestLoggingFilter {
-        val filter = CommonsRequestLoggingFilter()
+    fun logFilter(): RequestLoggingFilter {
+        val filter = RequestLoggingFilter()
         filter.setIncludeQueryString(true)
         filter.setIncludeClientInfo(true)
         filter.setIncludePayload(true)
         filter.setMaxPayloadLength(10000)
         filter.setIncludeHeaders(true)
-        filter.setHeaderPredicate { s: String -> !headerBlacklist.contains(s.lowercase()) }
+        filter.urlExclusionPredicate = Predicate { url: String -> urlBlacklist.matcher(url).find() }
+        filter.setHeaderPredicate { header: String -> !headerBlacklist.contains(header.lowercase()) }
         return filter
     }
 

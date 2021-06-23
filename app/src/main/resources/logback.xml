@@ -36,12 +36,6 @@
         <appender-ref ref="Console"/>
     </root>
 
-    <!-- LOG web requests at DEBUG level -->
-    <logger name="org.springframework.web.filter.CommonsRequestLoggingFilter" level="debug">
-        <appender-ref ref="RollingFile"/>
-        <appender-ref ref="Console"/>
-    </logger>
-
     <!-- LOG app "com.sama*" at INFO level -->
     <logger name="com.sama" level="info" additivity="false">
         <appender-ref ref="RollingFile"/>
