@@ -1,14 +1,18 @@
 #!/bin/sh
 
-curl https://s3.amazonaws.com/aws-cloudwatch/downloads/latest/awslogs-agent-setup.py -O
-chmod +x ./awslogs-agent-setup.py
-./awslogs-agent-setup.py -n -r eu-central-1 -c s3://cloudwatch-logs-sama/awslogs.conf
+ENV=dev
+IMAGE_NAME=216862985054.dkr.ecr.eu-central-1.amazonaws.com/sama-service
+VERSION=latest
+INSTANCE_ID=$(ec2metadata --instance-id)
 
 eval "$(aws ecr get-login --region eu-central-1 --no-include-email)"
-docker volume create sama-service-logs
 docker run -d \
       --name sama-service \
-      -e X_JAVA_OPTS="-Dspring.profiles.active=dev" \
+      -e X_JAVA_OPTS="-Dspring.profiles.active=$ENV" \
       -p 3000:3000 \
-      -v sama-service-logs:/var/log/sama/sama-service \
-      216862985054.dkr.ecr.eu-central-1.amazonaws.com/sama-service:latest
+      --log-driver=awslogs \
+      --log-opt awslogs-group=$ENV \
+      --log-opt awslogs-stream=sama-service-$VERSION-"$INSTANCE_ID" \
+      --log-opt awslogs-create-group=true \
+      --log-opt awslogs-datetime-format='%Y-%m-%d %H:%M:%S%L' \
+      $IMAGE_NAME:$VERSION
