@@ -79,6 +79,11 @@ resource "aws_lb_listener_rule" "sama-service" {
       values = ["/api/*"]
     }
   }
+  condition {
+    host_header {
+      values = ["meetsama.com.smtest.it"]
+    }
+  }
 }
 
 ############
