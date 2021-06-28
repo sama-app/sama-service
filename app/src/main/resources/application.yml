@@ -3,8 +3,8 @@ server:
   servlet:
     context-path: /
   error:
-    include-message: always  # TODO: remove for prod
-    include-stacktrace: always # TODO: remove for prod
+    include-message: always
+    include-stacktrace: always
 
 spring:
   main:
@@ -47,12 +47,6 @@ management:
       exposure:
         include: "*"
 
-sentry:
-  dsn: https://b8c06b0aa478447bbdc330ad9fef42f1@o877832.ingest.sentry.io/5828928
-  environment: local
-  traces-sample-rate: 0.0
-  debug: true
-
 springdoc:
   api-docs:
     path: /api/docs
@@ -93,3 +87,9 @@ integration:
     credentials: "dummy-value-this-is-loaded-from-AWS-SM"
   firebase:
     credentials: "dummy-value-this-is-loaded-from-AWS-SM"
+
+sentry:
+  dsn: https://b8c06b0aa478447bbdc330ad9fef42f1@o877832.ingest.sentry.io/5828928
+  environment: local
+  traces-sample-rate: 0.0
+  debug: true

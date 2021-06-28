@@ -1,34 +1,41 @@
+server:
+  error:
+    include-message: never
+    include-stacktrace: never
+
 spring:
   datasource:
-    host: sama-dev.cp9s2aovpufd.eu-central-1.rds.amazonaws.com
+    host: TBD
     port: 5432
     database-name: sama
     username: sama
     password: "dummy-value-this-is-loaded-from-AWS-SM"
+  jpa:
+    show-sql: false
 
 sama:
   auth.jwt:
     access:
       signing-secret: "dummy-value-this-is-loaded-from-AWS-SM"
       expiration-sec: 86400 # 1 day
-      key-id: sama-access-dev
+      key-id: sama-access-prod
     refresh:
       signing-secret: "dummy-value-this-is-loaded-from-AWS-SM"
       expiration-sec: 31536000 # 365 days
-      key-id: sama-refresh-dev
+      key-id: sama-refresh-prod
   meeting:
     url:
       scheme: https
-      host: app.meetsama.com.smtest.it
+      host: app.meetsama.com
 
 integration:
   google:
-    client-id: 690866307711-8nm12p73mo585k5njoaqepjupgm31im3.apps.googleusercontent.com
+    client-id: 706689065341-qouatnct20253qe10ti6k265qh6p7vm0.apps.googleusercontent.com
     credentials: "dummy-value-this-is-loaded-from-AWS-SM"
   firebase:
     credentials: "dummy-value-this-is-loaded-from-AWS-SM"
 
 sentry:
-  environment: dev
+  environment: prod
   debug: false
   traces-sample-rate: 0.3

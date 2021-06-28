@@ -81,7 +81,7 @@ resource "aws_lb_listener_rule" "sama-service" {
   }
   condition {
     host_header {
-      values = ["meetsama.com.smtest.it"]
+      values = [local.env.service_domain]
     }
   }
 }
@@ -96,7 +96,7 @@ resource "aws_autoscaling_group" "green" {
   desired_capacity    = var.enable_green_env ? var.green_instance_count : 0
   min_size            = 0
   max_size            = 4
-  vpc_zone_identifier = local.env.public_subnets
+  vpc_zone_identifier = local.env.subnets
   target_group_arns = [
   aws_lb_target_group.sama_service_green.arn]
 
@@ -121,7 +121,7 @@ resource "aws_autoscaling_group" "blue" {
   desired_capacity    = var.enable_blue_env ? var.blue_instance_count : 0
   min_size            = 0
   max_size            = 4
-  vpc_zone_identifier = local.env.public_subnets
+  vpc_zone_identifier = local.env.subnets
   target_group_arns = [
   aws_lb_target_group.sama_service_blue.arn]
 
@@ -154,7 +154,7 @@ resource "aws_launch_template" "sama_service" {
   }
 
   network_interfaces {
-    associate_public_ip_address = true
+    associate_public_ip_address = local.env.publicly_accessible
     security_groups = [
     module.asg_sg.security_group_id]
   }
@@ -177,7 +177,7 @@ resource "aws_launch_template" "sama_service" {
     }
   }
 
-  user_data = filebase64("${path.module}/scripts/deploy.sh")
+  user_data = filebase64("${path.module}/scripts/deploy_${terraform.workspace}.sh")
 }
 
 module "asg_sg" {
@@ -193,21 +193,21 @@ module "asg_sg" {
       to_port     = 3000
       protocol    = "TCP"
       description = "application port"
-      cidr_blocks = "10.0.0.0/16"
+      cidr_blocks = local.env.vpc_cidr_block
     },
     {
       from_port   = 9100
       to_port     = 9100
       protocol    = "TCP"
       description = "node exporter port"
-      cidr_blocks = "10.0.0.0/16"
+      cidr_blocks = local.env.vpc_cidr_block
     },
     {
       from_port   = 22
       to_port     = 22
       protocol    = "TCP"
       description = "SSH"
-      cidr_blocks = "0.0.0.0/0"
+      cidr_blocks = local.env.vpc_cidr_block
     }
   ]
 
@@ -235,7 +235,7 @@ resource "aws_iam_role" "sama_service_asg" {
 
   managed_policy_arns = [
     "arn:aws:iam::aws:policy/service-role/AWSAppRunnerServicePolicyForECRAccess",
-    aws_iam_policy.cloudwatch_logs.arn
+    aws_iam_policy.sama_service_asg.arn
   ]
 
   assume_role_policy = jsonencode({
@@ -255,8 +255,8 @@ resource "aws_iam_role" "sama_service_asg" {
   tags = local.tags
 }
 
-resource "aws_iam_policy" "cloudwatch_logs" {
-  name = "CloudwatchLogWriterForEC2"
+resource "aws_iam_policy" "sama_service_asg" {
+  name = "sama-service-iam-policy-${terraform.workspace}"
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -271,15 +271,6 @@ resource "aws_iam_policy" "cloudwatch_logs" {
         ],
         Resource : [
           "arn:aws:logs:*:*:*"
-        ]
-      },
-      {
-        Effect : "Allow",
-        Action : [
-          "s3:GetObject"
-        ],
-        Resource : [
-          "arn:aws:s3:::${local.env.cloudwatch_logs_bucket_name}/*"
         ]
       },
       {
