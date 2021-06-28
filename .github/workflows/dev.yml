@@ -70,10 +70,13 @@ jobs:
         id: current_deployment
         run: echo ::set-output name=COLOUR::$(make dev-current-deployment)
 
-      - name: Deploy Green
-        run: make dev-deploy-green
+      - name: Deploy
+        run: make dev-deploy
+
+      - name: Undeploy Blue
+        run: make dev-destroy-blue
         if: steps.current_deployment.outputs.COLOUR == 'blue'
 
-      - name: Deploy Blue
-        run: make dev-deploy-blue
+      - name: Undeploy Green
+        run: make dev-destroy-green
         if: steps.current_deployment.outputs.COLOUR == 'green'

@@ -51,6 +51,10 @@ locals {
       blue  = 0
       green = 100
     }
+    split = {
+      blue  = 50
+      green = 50
+    }
   }
 }
 

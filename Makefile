@@ -29,14 +29,21 @@ dev-current-deployment:
 	jq -r '.values.root_module.resources[] | select (.type == "aws_lb_listener_rule") | .values.action[].forward[].target_group[] | select (.weight == 100) | .arn' | \
 	grep -o -P '(?<=sama-service-).*(?=-tg-dev)'
 
-dev-deploy-green:
+dev-deploy:
+	@terraform -chdir=terraform workspace select dev
+	terraform -chdir=terraform apply -auto-approve \
+		-var 'enable_green_env=true' \
+		-var 'enable_blue_env=true' \
+		-var 'traffic_distribution=split'
+
+dev-destroy-blue:
 	@terraform -chdir=terraform workspace select dev
 	terraform -chdir=terraform apply -auto-approve \
 		-var 'enable_green_env=true' \
 		-var 'enable_blue_env=false' \
 		-var 'traffic_distribution=green'
 
-dev-deploy-blue:
+dev-destroy-green:
 	@terraform -chdir=terraform workspace select dev
 	terraform -chdir=terraform apply -auto-approve \
 		-var 'enable_green_env=false' \

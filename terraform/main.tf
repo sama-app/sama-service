@@ -55,6 +55,9 @@ resource "aws_lb_target_group" "sama_service_blue" {
 resource "aws_lb_listener_rule" "sama-service" {
   listener_arn = local.env.lb_listener_arn
 
+  # Ensure ASGs are in place before target groups switch traffic
+  depends_on = [aws_autoscaling_group.blue, aws_autoscaling_group.green]
+
   action {
     type = "forward"
 
@@ -93,9 +96,11 @@ resource "aws_lb_listener_rule" "sama-service" {
 resource "aws_autoscaling_group" "green" {
   name = "sama-service-asg-green-${terraform.workspace}"
 
-  desired_capacity    = var.enable_green_env ? var.green_instance_count : 0
-  min_size            = 0
-  max_size            = 4
+  desired_capacity      = var.enable_green_env ? var.green_instance_count : 0
+  wait_for_elb_capacity = var.enable_green_env ? var.green_instance_count : 0
+  min_size              = 0
+  max_size              = 4
+
   vpc_zone_identifier = local.env.subnets
   target_group_arns = [
   aws_lb_target_group.sama_service_green.arn]
@@ -118,9 +123,11 @@ resource "aws_autoscaling_group" "green" {
 resource "aws_autoscaling_group" "blue" {
   name = "sama-service-asg-blue-${terraform.workspace}"
 
-  desired_capacity    = var.enable_blue_env ? var.blue_instance_count : 0
-  min_size            = 0
-  max_size            = 4
+  desired_capacity      = var.enable_blue_env ? var.blue_instance_count : 0
+  wait_for_elb_capacity = var.enable_blue_env ? var.blue_instance_count : 0
+  min_size              = 0
+  max_size              = 4
+
   vpc_zone_identifier = local.env.subnets
   target_group_arns = [
   aws_lb_target_group.sama_service_blue.arn]
