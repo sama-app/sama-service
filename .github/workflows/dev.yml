@@ -71,7 +71,7 @@ jobs:
         run: echo ::set-output name=COLOUR::$(make current-deployment ENV=dev)
 
       - name: Deploy
-        run: make deploy
+        run: make deploy ENV=dev
 
       - name: Undeploy Blue
         run: make destroy-blue ENV=dev
