@@ -33,11 +33,11 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
-      - name: Build
-        run: make container
-
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build
+        run: make container
 
       - name: Upload to ECR
         run: make upload-to-ecr VERSION=production
