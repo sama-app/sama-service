@@ -10,8 +10,8 @@ container: build
 	docker build -t sama-service .
 
 upload-to-ecr:
-	docker tag sama-service:latest 216862985054.dkr.ecr.eu-central-1.amazonaws.com/sama-service:latest
-	docker push 216862985054.dkr.ecr.eu-central-1.amazonaws.com/sama-service:latest
+	docker tag sama-service:latest 216862985054.dkr.ecr.eu-central-1.amazonaws.com/sama-service:$(VERSION)
+	docker push 216862985054.dkr.ecr.eu-central-1.amazonaws.com/sama-service:$(VERSION)
 
 # Deployment
 terraform-init: terraform-init

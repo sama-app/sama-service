@@ -1,13 +1,14 @@
-name: dev
+name: prod
 
 on:
-  push:
-    branches: [ master ]
+  release:
+    types:
+      - published
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    if: "!contains(github.event.head_commit.message, '[ci skip]')"
 
     steps:
       - name: Configure AWS credentials
@@ -39,7 +40,7 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v1
 
       - name: Upload to ECR
-        run: make upload-to-ecr VERSION=latest
+        run: make upload-to-ecr VERSION=production
 
   deploy:
     needs: build
@@ -61,22 +62,14 @@ jobs:
           terraform_wrapper: false
 
       - name: Init Terraform
-        run: make terraform-init ENV=dev
-
-      - name: Validate Terraform
-        run: make terraform-validate
+        run: make terraform-init ENV=prod
 
       - name: Get Current Deployment Colour
         id: current_deployment
-        run: echo ::set-output name=COLOUR::$(make current-deployment ENV=dev)
+        run: echo ::set-output name=COLOUR::$(make current-deployment ENV=prod)
+
+      - name: Print currrent deployment
+        run: echo "Current deployment is ${{ steps.current_deployment.outputs.COLOUR }}"
 
       - name: Deploy
-        run: make deploy ENV=dev
-
-      - name: Undeploy Blue
-        run: make destroy-blue ENV=dev
-        if: steps.current_deployment.outputs.COLOUR == 'blue'
-
-      - name: Undeploy Green
-        run: make destroy-green ENV=dev
-        if: steps.current_deployment.outputs.COLOUR == 'green'
+        run: make deploy ENV=prod

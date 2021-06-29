@@ -1,8 +1,8 @@
 #!/bin/sh
 
 ENV=prod
+VERSION=production
 IMAGE_NAME=216862985054.dkr.ecr.eu-central-1.amazonaws.com/sama-service
-VERSION=latest
 INSTANCE_ID=$(ec2metadata --instance-id)
 
 eval "$(aws ecr get-login --region eu-central-1 --no-include-email)"
