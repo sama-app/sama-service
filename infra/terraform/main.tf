@@ -214,7 +214,7 @@ module "asg_sg" {
       to_port     = 22
       protocol    = "TCP"
       description = "SSH"
-      cidr_blocks = local.env.vpc_cidr_block
+      cidr_blocks = "0.0.0.0/0" # TODO: Restrict for extra security
     }
   ]
 
