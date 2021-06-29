@@ -7,6 +7,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[ci skip]')"
 
     steps:
       - name: Configure AWS credentials
@@ -42,7 +43,6 @@ jobs:
 
   deploy:
     needs: build
-
     runs-on: ubuntu-latest
 
     steps:
@@ -61,22 +61,22 @@ jobs:
           terraform_wrapper: false
 
       - name: Init Terraform
-        run: make dev-terraform-init
+        run: make terraform-init ENV=dev
 
       - name: Validate Terraform
         run: make terraform-validate
 
       - name: Get Current Deployment Colour
         id: current_deployment
-        run: echo ::set-output name=COLOUR::$(make dev-current-deployment)
+        run: echo ::set-output name=COLOUR::$(make current-deployment ENV=dev)
 
       - name: Deploy
-        run: make dev-deploy
+        run: make deploy
 
       - name: Undeploy Blue
-        run: make dev-destroy-blue
+        run: make destroy-blue ENV=dev
         if: steps.current_deployment.outputs.COLOUR == 'blue'
 
       - name: Undeploy Green
-        run: make dev-destroy-green
+        run: make destroy-green ENV=dev
         if: steps.current_deployment.outputs.COLOUR == 'green'
