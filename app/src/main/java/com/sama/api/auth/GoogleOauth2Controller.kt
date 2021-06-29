@@ -58,11 +58,11 @@ class GoogleOauth2Controller(
 
                 when {
                     currentDevice.isMobile || currentDevice.isTablet -> {
-                        redirectView.url = "yoursama://auth/success"
+                        redirectView.url = "meetsama://auth/success"
                     }
 
                     currentDevice.isNormal -> {
-                        redirectView.url = "yoursama://auth/success"
+                        redirectView.url = "meetsama://auth/success"
 //                        val genericUrl = GenericUrl(request.requestURL.toString())
 //                        genericUrl.rawPath = "/api/auth/success"
 //                        genericUrl.scheme = if (genericUrl.host != "localhost") "https" else "http"
@@ -79,11 +79,11 @@ class GoogleOauth2Controller(
 
                 when {
                     currentDevice.isMobile || currentDevice.isTablet -> {
-                        redirectView.url = "yoursama://auth/error"
+                        redirectView.url = "meetsama://auth/error"
                     }
 
                     currentDevice.isNormal -> {
-                        redirectView.url = "yoursama://auth/error"
+                        redirectView.url = "meetsama://auth/error"
 //                        val genericUrl = GenericUrl(request.requestURL.toString())
 //                        genericUrl.rawPath = "/api/auth/error"
 //                        genericUrl.scheme = if (genericUrl.host != "localhost") "https" else "http"

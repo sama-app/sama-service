@@ -80,7 +80,7 @@ class GoogleOauth2ControllerTest(
             .andExpect(status().isFound)
             .andExpect(
                 redirectedUrl(
-                    "yoursama://auth/success" +
+                    "meetsama://auth/success" +
                             "?accessToken=${accessToken}" +
                             "&refreshToken=${refreshToken}"
                 )
@@ -101,7 +101,7 @@ class GoogleOauth2ControllerTest(
             .andExpect(status().isFound)
             .andExpect(
                 redirectedUrl(
-                    "yoursama://auth/success" +
+                    "meetsama://auth/success" +
                             "?accessToken=${accessToken}" +
                             "&refreshToken=${refreshToken}"
                 )
@@ -123,7 +123,7 @@ class GoogleOauth2ControllerTest(
             .andExpect(status().isFound)
             .andExpect(
                 redirectedUrl(
-                    "yoursama://auth/error?error=${error}"
+                    "meetsama://auth/error?error=${error}"
                 )
             )
     }
@@ -140,7 +140,7 @@ class GoogleOauth2ControllerTest(
             .andExpect(status().isFound)
             .andExpect(
                 redirectedUrl(
-                    "yoursama://auth/error?error=${error}"
+                    "meetsama://auth/error?error=${error}"
                 )
             )
     }
