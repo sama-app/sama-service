@@ -15,7 +15,7 @@ spring:
     host: localhost
     port: 5433
     database-name: sama
-    username: postgres
+    username: sama
     password: password
     driver-class-name: org.postgresql.Driver
     url: jdbc:postgresql://${spring.datasource.host}:${spring.datasource.port}/${spring.datasource.database-name}
