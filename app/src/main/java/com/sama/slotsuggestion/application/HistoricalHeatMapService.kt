@@ -5,7 +5,7 @@ import com.sama.common.ApplicationService
 import com.sama.common.findByIdOrThrow
 import com.sama.slotsuggestion.configuration.HeatMapConfiguration
 import com.sama.slotsuggestion.domain.Block
-import com.sama.slotsuggestion.domain.HistoricalHeapMap
+import com.sama.slotsuggestion.domain.HistoricalHeatMap
 import com.sama.slotsuggestion.domain.HistoricalHeatMapGenerator
 import com.sama.users.domain.UserId
 import com.sama.users.domain.UserSettingsRepository
@@ -22,7 +22,7 @@ class HistoricalHeatMapService(
 ) {
 
     @Cacheable("historical-heat-map")
-    fun find(userId: UserId): HistoricalHeapMap {
+    fun find(userId: UserId): HistoricalHeatMap {
         val userSettings = userSettingsRepository.findByIdOrThrow(userId)
 
         val pastBlocksByDate = blockRepository.findAll(
