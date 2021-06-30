@@ -1,7 +1,7 @@
 #!/bin/sh
 
 ENV=dev
-VERSION=production
+VERSION=latest
 IMAGE_NAME=216862985054.dkr.ecr.eu-central-1.amazonaws.com/sama-service
 INSTANCE_ID=$(ec2metadata --instance-id)
 
