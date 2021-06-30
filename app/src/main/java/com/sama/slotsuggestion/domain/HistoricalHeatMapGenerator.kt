@@ -2,21 +2,19 @@ package com.sama.slotsuggestion.domain
 
 import com.sama.common.DomainEntity
 import com.sama.common.DomainService
-import com.sama.users.domain.WorkingHours
 import java.time.DayOfWeek
 import java.time.DayOfWeek.SATURDAY
 import java.time.DayOfWeek.SUNDAY
 import java.time.LocalDate
-import kotlin.streams.asSequence
 
 @JvmInline
 @DomainEntity
-value class HistoricalHeapMap(val value: Map<DayOfWeek, Vector>)
+value class HistoricalHeatMap(val value: Map<DayOfWeek, Vector>)
 
 @DomainService
 data class HistoricalHeatMapGenerator(val pastBlocks: Map<LocalDate, List<Block>>) {
 
-    fun generate(): HistoricalHeapMap {
+    fun generate(): HistoricalHeatMap {
         val workdays = zeroes()
         val weekends = zeroes()
 
@@ -34,7 +32,7 @@ data class HistoricalHeatMapGenerator(val pastBlocks: Map<LocalDate, List<Block>
                     it to weekends.copyOf()
                 }
             }
-            .let { HistoricalHeapMap(it) }
+            .let { HistoricalHeatMap(it) }
     }
 }
 

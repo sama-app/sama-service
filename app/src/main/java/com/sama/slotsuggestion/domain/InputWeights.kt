@@ -61,7 +61,7 @@ fun workingHours(workingHours: WorkingHours?): Vector {
     val startTimeIndex = timeToIndex(workingHours.startTime)
     val endTimeIndex = timeToIndex(workingHours.endTime)
 
-    return linearSlope(-10.0, 0.0, vectorSize, startTimeIndex, endTimeIndex, -1 to 2)
+    return linearCurve(-10.0, 0.0, vectorSize, startTimeIndex, endTimeIndex, -1 to 2)
 }
 
 /**
@@ -77,9 +77,26 @@ fun futureBlock(block: Block?): Vector {
 }
 
 /**
+ * @return a day [Vector] that weights down previously suggested slots
+ */
+fun suggestedSlot(slot: SlotSuggestion?): Vector {
+    if (slot == null) {
+        return zeroes(vectorSize)
+    }
+    val startTimeIndex = timeToIndex(slot.startDateTime.toLocalTime())
+    val endTimeIndex = timeToIndex(slot.endDateTime.toLocalTime())
+    return linearCurve(0.0, -100.0, vectorSize, startTimeIndex, endTimeIndex, -4 to 0)
+}
+
+/**
  * @return a multi-day [Vector] that weights down slots that are outside the given date time range
  */
-fun searchBoundary(startDate: LocalDate, endDate: LocalDate, searchFrom: LocalDateTime, searchTo: LocalDateTime): Vector {
+fun searchBoundary(
+    startDate: LocalDate,
+    endDate: LocalDate,
+    searchFrom: LocalDateTime,
+    searchTo: LocalDateTime
+): Vector {
     return startDate.datesUntil(endDate).asSequence()
         .map { date ->
             when {
@@ -98,13 +115,19 @@ fun searchBoundary(startDate: LocalDate, endDate: LocalDate, searchFrom: LocalDa
 }
 
 /**
- * @return a day [Vector] that weights down previously suggested slots
+ * @return a multi-day [Vector] that weights down slots that are in the future
  */
-fun suggestedSlot(slot: SlotSuggestion?): Vector {
-    if (slot == null) {
-        return zeroes(vectorSize)
-    }
-    val startTimeIndex = timeToIndex(slot.startDateTime.toLocalTime())
-    val endTimeIndex = timeToIndex(slot.endDateTime.toLocalTime())
-    return linearSlope(0.0, -100.0, vectorSize, startTimeIndex, endTimeIndex, -4 to 0)
+fun recency(startDate: LocalDate, endDate: LocalDate): Vector {
+    val days = startDate.until(endDate).days
+    val multiDayVectorSize = days * vectorSize
+    val vector = curve(
+        -1.0,
+        0.0,
+        multiDayVectorSize,
+        0,
+        vectorSize,
+        0 to 0, { x -> x },
+        -multiDayVectorSize + vectorSize to 0, { x -> x }
+    )
+    return vector
 }

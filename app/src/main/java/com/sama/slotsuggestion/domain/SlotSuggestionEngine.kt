@@ -28,11 +28,14 @@ data class SlotSuggestionEngine(private val futureHeatMap: FutureHeatMap) {
         count: Int
     ): List<SlotSuggestion> {
         val durationLength = ceil(duration.toMinutes().toDouble() / intervalMinutes).toInt()
-        val multiDayMasks = listOf(searchBoundary(startDate, endDate, startDateTime, endDateTime))
+        val multiDayWeights = listOf(
+            searchBoundary(startDate, endDate, startDateTime, endDateTime),
+            recency(startDate, endDate)
+        )
 
         val suggestions = mutableListOf<SlotSuggestion>()
         do {
-            val rankedVector = rankedVector(multiDayMasks, durationLength, suggestions)
+            val rankedVector = rankedVector(multiDayWeights, durationLength, suggestions)
             // take the best suggestion
             val bestSuggestion = rankedVector.first()
                 .let {
@@ -47,12 +50,12 @@ data class SlotSuggestionEngine(private val futureHeatMap: FutureHeatMap) {
     }
 
     private fun rankedVector(
-        multiDayMasks: List<Vector>,
+        multiDayWeights: List<Vector>,
         durationSlotCount: Int,
         suggestions: List<SlotSuggestion>
     ): List<Pair<Int, Double>> {
-        // create masks for currently suggested slots
-        val suggestionMasks = suggestions
+        // create weights for currently suggested slots
+        val suggestionWeightsByDate = suggestions
             .groupBy { it.startDateTime.toLocalDate() }
             .mapValues { entry ->
                 entry.value
@@ -60,19 +63,19 @@ data class SlotSuggestionEngine(private val futureHeatMap: FutureHeatMap) {
                     .reduce { acc, vector -> acc.add(vector) }
             }
 
-        // Create unranked vector with all masks applied
+        // Create unranked vector with all weights applied
         val fullHeatMap = startDate.datesUntil(endDate).asSequence()
-            // Apply masks for currently suggested slots to exclude
+            // Apply weights for currently suggested slots to exclude
             // overlaps and allow for better suggestion logic
             .map { date ->
-                val suggestionMask = suggestionMasks[date] ?: zeroes()
+                val suggestionWeights = suggestionWeightsByDate[date] ?: zeroes()
                 val dayVector = futureHeatMap.value[date]!! // note: this is mutable!
-                suggestionMask.add(dayVector)
+                suggestionWeights.add(dayVector)
             }
             // Convert all days into one long vector
             .reduce { acc, vector -> acc.plus(vector) }
-            // Apply multi-day masks
-            .add(multiDayMasks)
+            // Apply multi-day weights
+            .add(multiDayWeights)
 
         // Compute ranked vector
         val rankedVector = fullHeatMap

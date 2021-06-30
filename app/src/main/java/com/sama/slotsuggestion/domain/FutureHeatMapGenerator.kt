@@ -13,7 +13,7 @@ value class FutureHeatMap(val value: Map<LocalDate, Vector>)
 
 @DomainService
 data class FutureHeatMapGenerator(
-    val historicalHeatMap: HistoricalHeapMap,
+    val historicalHeatMap: HistoricalHeatMap,
     val workingHours: Map<DayOfWeek, WorkingHours>,
     val futureBlocks: Map<LocalDate, List<Block>>,
     val daysInFuture: Long
@@ -25,20 +25,20 @@ data class FutureHeatMapGenerator(
 
         return startDate.datesUntil(endDate).asSequence()
             .associateWith { date ->
-                // Create masks
-                val workingHoursMask = workingHours(workingHours[date.dayOfWeek])
+                // Create weights
+                val workingHoursWeights = workingHours(workingHours[date.dayOfWeek])
 
-                val blockMasks = futureBlocks[date]
+                val futureBlockWeights = futureBlocks[date]
                     ?.map { futureBlock(it) }
                     ?: emptyList()
 
-                val historicalDataMask = historicalHeatMap.value[date.dayOfWeek]!!
+                val historicalDataWeights = historicalHeatMap.value[date.dayOfWeek]!!
 
-                // Apply masks
+                // Apply weights
                 zeroes()
-                    .add(historicalDataMask)
-                    .add(workingHoursMask)
-                    .add(blockMasks)
+                    .add(historicalDataWeights)
+                    .add(workingHoursWeights)
+                    .add(futureBlockWeights)
             }
             .let { FutureHeatMap(it) }
     }
