@@ -2,4 +2,8 @@ package com.sama.slotsuggestion.domain
 
 import java.time.ZonedDateTime
 
-data class Block(val startDateTime: ZonedDateTime, val endDateTime: ZonedDateTime)
+data class Block(
+    val startDateTime: ZonedDateTime,
+    val endDateTime: ZonedDateTime,
+    val hasRecipients: Boolean
+)

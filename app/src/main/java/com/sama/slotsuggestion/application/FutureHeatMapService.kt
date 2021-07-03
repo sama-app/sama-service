@@ -30,7 +30,7 @@ class FutureHeatMapService(
             LocalDate.now().atStartOfDay(userSettings.timezone),
             LocalDate.now().atStartOfDay(userSettings.timezone).plusDays(heatMapConfiguration.futureDays)
         )
-            .map { Block(it.startDateTime, it.endDateTime) }
+            .map { Block(it.startDateTime, it.endDateTime, it.recipientEmail != null) }
             .groupBy { it.startDateTime.toLocalDate() }
 
         return FutureHeatMapGenerator(

@@ -35,7 +35,7 @@ fun indexToDurationOffset(index: Int): Duration {
 }
 
 /**
- * @return a day [Vector] that increases the value of slots for a block time span
+ * @return a day [Vector] that handles the value of slots for a block time span in the past
  */
 fun pastBlock(block: Block?): Vector {
     if (block == null) {
@@ -44,7 +44,11 @@ fun pastBlock(block: Block?): Vector {
     val startTimeIndex = timeToIndex(block.startDateTime.toLocalTime())
     val endTimeIndex = timeToIndex(block.endDateTime.toLocalTime())
 
-    return cliff(0.0, 1.0, vectorSize, startTimeIndex, endTimeIndex)
+    return if (block.hasRecipients) {
+        cliff(0.0, 0.1, vectorSize, startTimeIndex, endTimeIndex)
+    } else {
+        cliff(0.0, -0.05, vectorSize, startTimeIndex, endTimeIndex)
+    }
 }
 
 /**
