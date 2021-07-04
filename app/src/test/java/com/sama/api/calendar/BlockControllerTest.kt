@@ -57,8 +57,8 @@ class BlockControllerTest(
         {
             "blocks": [
                 {
-                    "startDateTime": "2021-01-01T12:15:00+01:00",
-                    "endDateTime": "2021-01-01T12:30:00+01:00",
+                    "startDateTime": "2021-01-01T11:15:00Z",
+                    "endDateTime": "2021-01-01T11:30:00Z",
                     "allDay": false,
                     "title": "test"
                 }
