@@ -1,28 +1,19 @@
 package com.sama.meeting.domain
 
-import com.sama.AppTestConfiguration
-import com.sama.PersistenceConfiguration
 import com.sama.common.BasePersistenceIT
 import com.sama.common.findByIdOrThrow
 import com.sama.meeting.domain.aggregates.MeetingEntity
 import com.sama.meeting.domain.aggregates.MeetingIntentEntity
 import com.sama.meeting.domain.repositories.MeetingIntentRepository
 import com.sama.meeting.domain.repositories.MeetingRepository
-import liquibase.pro.packaged.it
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.test.context.DynamicPropertyRegistry
-import org.springframework.test.context.DynamicPropertySource
-import org.springframework.test.context.junit.jupiter.SpringExtension
-import org.springframework.transaction.annotation.Transactional
-import org.testcontainers.containers.PostgreSQLContainer
-import org.testcontainers.junit.jupiter.Container
-import org.testcontainers.junit.jupiter.Testcontainers
-import java.time.*
+import java.time.Duration
+import java.time.Instant
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import kotlin.test.assertNotEquals
 
 
@@ -144,5 +135,84 @@ class MeetingPersistenceIT : BasePersistenceIT<MeetingRepository>() {
 
         // verify
         assertThat(persisted!!.id).isEqualTo(meetingId)
+    }
+
+    @Test
+    fun `find ids for expiring`() {
+        val validMeetingId = 22L
+        val validMeeting = ProposedMeeting(
+            validMeetingId,
+            meetingIntentId,
+            1L,
+            Duration.ofMinutes(60),
+            listOf(
+                MeetingSlot(
+                    ZonedDateTime.now(clock).minusMinutes(30),
+                    ZonedDateTime.now(clock).plusMinutes(30)
+                ),
+                MeetingSlot(
+                    ZonedDateTime.now(clock).plusMinutes(1),
+                    ZonedDateTime.now(clock).plusMinutes(61)
+                )
+            ),
+            "meeting-code-1"
+        )
+
+        val expiringMeetingId = 21L
+        val expiringMeeting = ProposedMeeting(
+            expiringMeetingId,
+            meetingIntentId,
+            1L,
+            Duration.ofMinutes(60),
+            listOf(
+                MeetingSlot(
+                    ZonedDateTime.now(clock).minusHours(2),
+                    ZonedDateTime.now(clock).minusHours(1)
+                ),
+                MeetingSlot(
+                    ZonedDateTime.now(clock).minusMinutes(30),
+                    ZonedDateTime.now(clock).plusMinutes(30)
+                )
+            ),
+            "meeting-code-2"
+        )
+        underTest.saveAll(
+            listOf(
+                MeetingEntity.new(validMeeting),
+                MeetingEntity.new(expiringMeeting)
+            )
+        )
+
+        // act
+        val result = underTest.findAllIdsExpiring(ZonedDateTime.now(clock))
+
+        // verify
+        assertThat(result).containsExactly(expiringMeetingId)
+    }
+
+    @Test
+    fun `update status and code`() {
+        val expiringMeetingId = 21L
+        val expiringMeeting = ProposedMeeting(
+            expiringMeetingId,
+            meetingIntentId,
+            1L,
+            Duration.ofMinutes(60),
+            listOf(
+                MeetingSlot(
+                    ZonedDateTime.now(clock).minusHours(3),
+                    ZonedDateTime.now(clock).minusHours(4)
+                )
+            ),
+            "meeting-code"
+        )
+        underTest.save(MeetingEntity.new(expiringMeeting))
+
+        // act
+        underTest.updateStatus(MeetingStatus.EXPIRED, listOf(expiringMeetingId))
+
+        // verify
+        val result = underTest.findByIdOrThrow(expiringMeetingId)
+        assertThat(result.status!!).isEqualTo(MeetingStatus.EXPIRED)
     }
 }

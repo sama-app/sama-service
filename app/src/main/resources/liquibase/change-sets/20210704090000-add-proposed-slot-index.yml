@@ -1,0 +1,12 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-proposed-slot-index
+      author: balys
+      changes:
+        - createIndex:
+            schemaName: sama
+            tableName: meeting_proposed_slot
+            columns:
+              - column:
+                  name: start_date_time
+            indexName: IDX_start_date_time

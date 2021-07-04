@@ -459,4 +459,15 @@ class MeetingApplicationServiceTest(
             }
         }
     }
+
+    @Test
+    fun `expire meetings`() {
+        val expiringMeetingIds = listOf(21L, 22L)
+        whenever(meetingRepository.findAllIdsExpiring(any()))
+            .thenReturn(expiringMeetingIds)
+
+        underTest.expireMeetings()
+
+        verify(meetingRepository).updateStatus(eq(MeetingStatus.EXPIRED), eq(expiringMeetingIds))
+    }
 }

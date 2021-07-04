@@ -15,11 +15,13 @@ import com.sama.meeting.domain.repositories.findByCodeOrThrow
 import com.sama.slotsuggestion.application.SlotSuggestionRequest
 import com.sama.slotsuggestion.application.SlotSuggestionService
 import com.sama.users.domain.UserId
+import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Clock
 import java.time.LocalDateTime
+import java.time.ZonedDateTime
 
 @ApplicationService
 @Service
@@ -153,6 +155,15 @@ class MeetingApplicationService(
 
         meetingEntity.applyChanges(confirmedMeeting).also { meetingRepository.save(it) }
         return true
+    }
+
+    @Scheduled(cron = "0 0/15 * * * *")
+    fun expireMeetings() {
+        val expiringMeetingIds = meetingRepository.findAllIdsExpiring(ZonedDateTime.now())
+        if (expiringMeetingIds.isEmpty()) {
+            return
+        }
+        meetingRepository.updateStatus(MeetingStatus.EXPIRED, expiringMeetingIds)
     }
 }
 

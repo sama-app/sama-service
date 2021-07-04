@@ -9,6 +9,7 @@ import com.sama.users.domain.UserId
 import java.time.Clock
 import java.time.Duration
 import java.time.ZonedDateTime
+import kotlin.Result.Companion.failure
 import kotlin.Result.Companion.success
 
 sealed interface Meeting {
