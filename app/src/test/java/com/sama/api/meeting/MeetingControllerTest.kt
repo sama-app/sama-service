@@ -68,8 +68,8 @@ class MeetingControllerTes(
                 30,
                 listOf(
                     MeetingSlotDTO(
-                        ZonedDateTime.parse("2021-01-01T12:00:00+01:00"),
-                        ZonedDateTime.parse("2021-01-01T13:00:00+01:00"),
+                        ZonedDateTime.parse("2021-01-01T12:00:00Z"),
+                        ZonedDateTime.parse("2021-01-01T13:00:00Z"),
                     )
                 )
             )
@@ -94,8 +94,8 @@ class MeetingControllerTes(
                 },
                 "suggestedSlots":[
                     {
-                        "startDateTime": "2021-01-01T12:00:00+01:00",
-                        "endDateTime": "2021-01-01T13:00:00+01:00"
+                        "startDateTime": "2021-01-01T12:00:00Z",
+                        "endDateTime": "2021-01-01T13:00:00Z"
                     }
                 ]
             }
@@ -158,8 +158,8 @@ class MeetingControllerTes(
         val shareableMessage = "a nice message"
         val meetingUrl = "localhost:3000/code"
         val proposedSlot = MeetingSlotDTO(
-            ZonedDateTime.parse("2021-01-01T12:00:00+01:00"),
-            ZonedDateTime.parse("2021-01-01T13:00:00+01:00"),
+            ZonedDateTime.parse("2021-01-01T12:00:00Z"),
+            ZonedDateTime.parse("2021-01-01T13:00:00Z"),
         )
         whenever(
             meetingApplicationService.proposeMeeting(
@@ -180,8 +180,8 @@ class MeetingControllerTes(
         val requestBody = """
             {
                 "proposedSlots": [{
-                    "startDateTime": "2021-01-01T12:00:00+01:00",
-                    "endDateTime": "2021-01-01T13:00:00+01:00"
+                    "startDateTime": "2021-01-01T12:00:00Z",
+                    "endDateTime": "2021-01-01T13:00:00Z"
                 }]
             }
         """
@@ -192,8 +192,8 @@ class MeetingControllerTes(
                     "meetingId": $meetingId,
                     "meetingCode": "$meetingCode",
                     "proposedSlots": [{
-                        "startDateTime": "2021-01-01T12:00:00+01:00",
-                        "endDateTime": "2021-01-01T13:00:00+01:00"
+                        "startDateTime": "2021-01-01T12:00:00Z",
+                        "endDateTime": "2021-01-01T13:00:00Z"
                      }]
                 },
                 "meetingUrl": "$meetingUrl",
@@ -215,8 +215,8 @@ class MeetingControllerTes(
         val meetingCode = "code"
         val meetingId = 21L
         val proposedSlot = MeetingSlotDTO(
-            ZonedDateTime.parse("2021-01-01T12:00:00+01:00"),
-            ZonedDateTime.parse("2021-01-01T13:00:00+01:00"),
+            ZonedDateTime.parse("2021-01-01T12:00:00Z"),
+            ZonedDateTime.parse("2021-01-01T13:00:00Z"),
         )
         whenever(
             meetingApplicationService.loadMeetingProposalFromCode(eq(meetingCode))
@@ -227,8 +227,8 @@ class MeetingControllerTes(
                 "meetingId": $meetingId,
                 "meetingCode": "$meetingCode",
                 "proposedSlots": [{
-                    "startDateTime": "2021-01-01T12:00:00+01:00",
-                    "endDateTime": "2021-01-01T13:00:00+01:00"
+                    "startDateTime": "2021-01-01T12:00:00Z",
+                    "endDateTime": "2021-01-01T13:00:00Z"
                  }]
             }
         """
@@ -251,8 +251,8 @@ class MeetingControllerTes(
         val requestBody = """
             {
                 "slot": {
-                    "startDateTime": "2021-01-01T12:00:00+01:00",
-                    "endDateTime": "2021-01-01T13:00:00+01:00"
+                    "startDateTime": "2021-01-01T12:00:00Z",
+                    "endDateTime": "2021-01-01T13:00:00Z"
                 },
                 "recipientEmail": "$recipientEmail"
             }

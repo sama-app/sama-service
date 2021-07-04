@@ -1,7 +1,8 @@
 package com.sama.api.config
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.SerializationFeature
+import com.fasterxml.jackson.core.JsonGenerator
+import com.fasterxml.jackson.core.JsonParser
+import com.fasterxml.jackson.databind.*
 import com.sama.api.common.ApiError
 import com.sama.common.DomainIntegrityException
 import com.sama.common.DomainInvalidActionException
@@ -27,7 +28,11 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler
+import java.io.IOException
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import java.time.zone.ZoneRulesException
+import java.util.*
 import java.util.function.Predicate
 import java.util.regex.Pattern
 
@@ -57,6 +62,7 @@ class WebMvcConfiguration(
     fun jsonConverter(): MappingJackson2HttpMessageConverter {
         val objectMapper = ObjectMapper()
         objectMapper.findAndRegisterModules()
+        objectMapper.setTimeZone(TimeZone.getTimeZone(ZoneId.of("UTC")))
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS) // enable date time serialization to string
         return MappingJackson2HttpMessageConverter(objectMapper)
     }
