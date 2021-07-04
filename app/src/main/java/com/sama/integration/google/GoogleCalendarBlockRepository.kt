@@ -25,7 +25,7 @@ class GoogleCalendarBlockRepository(
     private val googleNetHttpTransport: HttpTransport,
     private val googleJacksonFactory: JacksonFactory
 ) : BlockRepository {
-
+    private val defaultCalendarTimeZone = ZoneId.of("UTC")
 
     // https://developers.google.com/calendar/v3/reference/events/list
     // https://developers.google.com/calendar/v3/reference/events#resource
@@ -36,12 +36,12 @@ class GoogleCalendarBlockRepository(
         val blocks = mutableListOf<Block>()
         do {
             val result = calendarService.list(startDateTime, endDateTime, nextPageToken).execute()
-            val defaultZoneId = ZoneId.of(result.timeZone ?: "UTC")
+            val calendarTimeZone = result.timeZone?.let { ZoneId.of(it) } ?: defaultCalendarTimeZone
             nextPageToken = result.nextPageToken
 
             blocks.addAll(result.items
                 .filter { it.status in listOf("confirmed", "tentative") }
-                .map { it.toBlock(defaultZoneId) }
+                .map { it.toBlock(calendarTimeZone) }
             )
 
         } while (nextPageToken != null)
@@ -114,10 +114,10 @@ class GoogleCalendarBlockRepository(
         return this.start.date != null
     }
 
-    private fun Event.toBlock(defaultZoneId: ZoneId): Block {
+    private fun Event.toBlock(calendarTimeZone: ZoneId): Block {
         return Block(
-            this.start.toZonedDateTime(defaultZoneId),
-            this.end.toZonedDateTime(defaultZoneId),
+            this.start.toZonedDateTime(calendarTimeZone),
+            this.end.toZonedDateTime(calendarTimeZone),
             this.isAllDay(),
             this.summary,
             if (this.attendees != null) {

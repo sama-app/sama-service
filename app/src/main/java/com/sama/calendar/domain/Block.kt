@@ -12,4 +12,6 @@ data class Block(
     val allDay: Boolean,
     val title: String?,
     val recipientEmail: String?
-)
+) {
+    fun multiDay() = !startDateTime.toLocalDate().isEqual(endDateTime.toLocalDate())
+}
