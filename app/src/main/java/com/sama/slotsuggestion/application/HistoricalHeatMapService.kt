@@ -30,7 +30,7 @@ class HistoricalHeatMapService(
             ZonedDateTime.now(userSettings.timezone!!).minusDays(heatMapConfiguration.historicalDays),
             ZonedDateTime.now(userSettings.timezone!!),
         )
-            .filter { !it.allDay }
+            .filter { !it.allDay && !it.multiDay() }
             .map { Block(it.startDateTime, it.endDateTime, it.recipientEmail != null) }
             .groupBy { it.startDateTime.toLocalDate() }
 
