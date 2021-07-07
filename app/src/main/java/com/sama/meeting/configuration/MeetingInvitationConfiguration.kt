@@ -32,4 +32,4 @@ class MeetingProposalMessageConfiguration {
     }
 }
 
-data class MeetingProposalMessageModel(val proposedSlots: List<MeetingSlot>, val meetingUrl: String)
+data class MeetingProposalMessageModel(val proposedSlots: List<String>, val meetingUrl: String)

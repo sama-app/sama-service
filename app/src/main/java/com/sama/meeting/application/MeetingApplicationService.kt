@@ -90,11 +90,12 @@ class MeetingApplicationService(
         val meetingCode = meetingCodeGenerator.generate()
         val proposedSlots = command.proposedSlots.map { it.toValueObject() }
 
-        val proposedMeeting = MeetingIntent.of(meetingEntity).getOrThrow()
+        val meetingIntent = MeetingIntent.of(meetingEntity).getOrThrow()
+        val proposedMeeting = meetingIntent
             .propose(meetingId, meetingCode, proposedSlots)
             .getOrThrow()
 
-        val meetingInvitation = meetingInvitationService.findForProposedMeeting(proposedMeeting)
+        val meetingInvitation = meetingInvitationService.findForProposedMeeting(proposedMeeting, meetingIntent.timezone)
 
         MeetingEntity.new(proposedMeeting).also { meetingRepository.save(it) }
 

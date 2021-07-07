@@ -151,7 +151,7 @@ class MeetingApplicationServiceTest(
             }))
         whenever(meetingRepository.nextIdentity()).thenReturn(meetingId)
         whenever(meetingCodeGenerator.generate()).thenReturn(meetingCode)
-        whenever(meetingInvitationService.findForProposedMeeting(any()))
+        whenever(meetingInvitationService.findForProposedMeeting(any(), any()))
             .thenReturn(MeetingInvitation(meetingUrl, shareableMessage))
 
         // act
