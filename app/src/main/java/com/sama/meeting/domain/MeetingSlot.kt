@@ -27,7 +27,7 @@ data class MeetingSlot(
             return emptyList()
         }
 
-        val slotCount = overtime.dividedBy(interval)
+        val slotCount = overtime.dividedBy(interval) + 1
         if (slotCount == 0L) {
             return listOf(startDateTime)
         }

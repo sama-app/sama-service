@@ -18,10 +18,14 @@ import kotlin.test.assertTrue
 
 class MeetingTest {
     private val validMeetingCode = "valid-meet-code"
-    private val initiatorId = 11L
+    private val meetingIntentId = 1L
+    private val meetingId = 11L
+    private val initiatorId = 21L
 
     private val _9am = ZonedDateTime.of(LocalDate.now(), LocalTime.of(9, 0), systemDefault())
+    private val _915am = _9am.plus(ofMinutes(15))
     private val _930am = _9am.plus(ofMinutes(30))
+    private val _945am = _9am.plus(ofMinutes(45))
     private val _10am = _9am.plus(ofHours(1))
     private val _11am = _9am.plus(ofHours(2))
     private val _12pm = _9am.plus(ofHours(3))
@@ -33,6 +37,10 @@ class MeetingTest {
     private val proposedSlotID2 = MeetingSlot(_10am, _11am)
     private val proposedSlotID3 = MeetingSlot(_11am, _12pm)
 
+    private val proposedMeetingID1 = ProposedMeeting(
+        meetingId, meetingIntentId, initiatorId, ofMinutes(30),
+        listOf(proposedSlotID1), validMeetingCode
+    )
 
     @TestFactory
     fun `initiate meeting with durations`() = listOf(
@@ -105,6 +113,23 @@ class MeetingTest {
                 val actual = proposedMeeting.assertDoesNotThrowOrNull()
                 assertEquals(expected, actual)
             }
+        }
+    }
+
+    @TestFactory
+    fun `expand meeting slots`() = listOf(
+        proposedMeetingID1.copy(proposedSlots = listOf(MeetingSlot(_9am, _10am))) to
+                listOf(
+                    MeetingSlot(_9am, _930am),
+                    MeetingSlot(_915am, _945am),
+                    MeetingSlot(_930am, _10am),
+                ),
+        proposedMeetingID1.copy(proposedSlots = listOf(MeetingSlot(_9am, _930am))) to
+                listOf(MeetingSlot(_9am, _930am)),
+    ).map { (proposedMeeting, expected) ->
+        dynamicTest("${proposedMeeting.proposedSlots} expanded") {
+            val actual = proposedMeeting.expandedSlots()
+            assertEquals(expected, actual)
         }
     }
 

@@ -79,7 +79,7 @@ data class ProposedMeeting(
 
     fun expandedSlots(): List<MeetingSlot> {
         return proposedSlots.flatMap { slot ->
-            if (!slot.isRange(duration)) {
+            if (slot.isRange(duration)) {
                 slot.expandBy(duration, slotInterval)
                     .map { MeetingSlot(it, it.plus(duration)) }
             } else {
