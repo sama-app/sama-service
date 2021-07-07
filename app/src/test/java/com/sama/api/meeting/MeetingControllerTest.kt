@@ -3,7 +3,12 @@ package com.sama.api.meeting
 import com.sama.api.ApiTestConfiguration
 import com.sama.api.config.WebMvcConfiguration
 import com.sama.meeting.application.*
+import com.sama.meeting.domain.InvalidMeetingStatusException
+import com.sama.meeting.domain.MeetingAlreadyConfirmedException
+import com.sama.meeting.domain.MeetingProposalExpiredException
+import com.sama.meeting.domain.MeetingStatus
 import org.junit.jupiter.api.DynamicTest
+import org.junit.jupiter.api.DynamicTest.dynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
 import org.junit.jupiter.api.extension.ExtendWith
@@ -138,7 +143,7 @@ class MeetingControllerTes(
         """
     )
         .mapIndexed { idx, requestBody ->
-            DynamicTest.dynamicTest("request#$idx") {
+            dynamicTest("request#$idx") {
                 mockMvc.perform(
                     post("/api/meeting/initiate")
                         .contentType(APPLICATION_JSON)
@@ -241,6 +246,54 @@ class MeetingControllerTes(
     }
 
     @Test
+    fun `meeting already confirmed`() {
+        whenever(meetingApplicationService.loadMeetingProposalFromCode(any()))
+            .thenThrow(MeetingAlreadyConfirmedException(1L))
+
+        val expectedResponse = """
+       {
+            "status": 410,
+            "reason": "already_confirmed"
+        }
+        """
+        mockMvc.perform(get("/api/meeting/by-code/VGsUTGno"))
+            .andExpect(status().isGone)
+            .andExpect(MockMvcResultMatchers.content().json(expectedResponse))
+    }
+
+    @Test
+    fun `meeting expired`() {
+        whenever(meetingApplicationService.loadMeetingProposalFromCode(any()))
+            .thenThrow(MeetingProposalExpiredException(1L))
+
+        val expectedResponse = """
+       {
+            "status": 410,
+            "reason": "proposal_expired"
+        }
+        """
+        mockMvc.perform(get("/api/meeting/by-code/VGsUTGno"))
+            .andExpect(status().isGone)
+            .andExpect(MockMvcResultMatchers.content().json(expectedResponse))
+    }
+
+    @Test
+    fun `meeting status invalid`() {
+        whenever(meetingApplicationService.loadMeetingProposalFromCode(any()))
+            .thenThrow(InvalidMeetingStatusException(1L, MeetingStatus.REJECTED))
+
+        val expectedResponse = """
+       {
+            "status": 410,
+            "reason": "invalid_status"
+        }
+        """
+        mockMvc.perform(get("/api/meeting/by-code/VGsUTGno"))
+            .andExpect(status().isGone)
+            .andExpect(MockMvcResultMatchers.content().json(expectedResponse))
+    }
+
+    @Test
     fun `confirm meeting`() {
         val meetingCode = "code"
         val recipientEmail = "lucky@sama.com"
@@ -277,7 +330,7 @@ class MeetingControllerTes(
             .contentType(APPLICATION_JSON) to BAD_REQUEST, // no payload
     )
         .mapIndexed { idx, (request, expectedStatus) ->
-            DynamicTest.dynamicTest("request#$idx returns $expectedStatus") {
+            dynamicTest("request#$idx returns $expectedStatus") {
                 mockMvc.perform(request)
                     .andExpect(status().isEqualTo(expectedStatus.value()))
             }

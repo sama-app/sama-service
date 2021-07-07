@@ -4,10 +4,7 @@ import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.databind.*
 import com.sama.api.common.ApiError
-import com.sama.common.DomainIntegrityException
-import com.sama.common.DomainInvalidActionException
-import com.sama.common.DomainValidationException
-import com.sama.common.NotFoundException
+import com.sama.common.*
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Import
@@ -103,6 +100,11 @@ class GlobalWebMvcExceptionHandler : ResponseEntityExceptionHandler() {
     @ResponseStatus(CONFLICT)
     fun handleDomainIntegrity(ex: DomainIntegrityException, request: WebRequest) =
         ResponseEntity(ApiError.create(CONFLICT, ex, request), HttpHeaders(), CONFLICT)
+
+    @ExceptionHandler(value = [DomainEntityStatusException::class])
+    @ResponseStatus(GONE)
+    fun handleDomainStatus(ex: DomainEntityStatusException, request: WebRequest) =
+        ResponseEntity(ApiError.create(GONE, ex, request), HttpHeaders(), GONE)
 
     @ExceptionHandler(value = [DomainInvalidActionException::class])
     @ResponseStatus(UNPROCESSABLE_ENTITY)
