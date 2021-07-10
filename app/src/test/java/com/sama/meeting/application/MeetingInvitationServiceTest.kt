@@ -42,7 +42,10 @@ class MeetingInvitationServiceTest {
     @Test
     fun `find for proposed meeting`() {
         val targetZoneId = ZoneId.of("Europe/Rome")
-        val _9am = ZonedDateTime.of(LocalDate.now(), LocalTime.of(9, 0), ZoneId.of("UTC"))
+        val _9am = ZonedDateTime.of(
+            LocalDate.of(2021, 7, 7),
+            LocalTime.of(9, 0), ZoneId.of("UTC")
+        )
         val _10am = _9am.plusHours(1)
         val _11am = _9am.plusHours(2)
 
