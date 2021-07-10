@@ -23,7 +23,7 @@ class BlockApplicationService(private val blockRepository: BlockRepository) {
 
 
     fun createBlock(userId: UserId, command: CreateBlockCommand) {
-        val block = Block(command.startDateTime, command.endDateTime, false, null, command.recipientEmail)
+        val block = Block(command.startDateTime, command.endDateTime, false, null, command.recipientEmail, 1,null)
         blockRepository.save(userId, block)
     }
 }
