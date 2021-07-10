@@ -28,7 +28,8 @@ class UserApplicationService(
         val userExistsByEmail = userRepository.existsByEmail(command.email)
         val userId = userRepository.nextIdentity()
 
-        val userRegistration = UserRegistration(userId, command.email, userExistsByEmail, command.googleCredential)
+        val userRegistration =
+            UserRegistration(userId, command.email, userExistsByEmail, command.fullName, command.googleCredential)
 
         UserEntity.new(userRegistration).also { userRepository.save(it) }
         return userId
@@ -49,6 +50,17 @@ class UserApplicationService(
 
         user.applyChanges(command.googleCredential).also { userRepository.save(it) }
         return user.id()!!
+    }
+
+    @Transactional
+    fun updateBasicDetails(userId: UserId, command: UpdateUserBasicDetailsCommand): Boolean {
+        val userEntity = userRepository.findByIdOrThrow(userId)
+
+        val basicDetails = BasicUserDetails.of(userEntity)
+            .rename(command.fullName)
+
+        userEntity.applyChanges(basicDetails).also { userRepository.save(it) }
+        return true
     }
 
     @Transactional

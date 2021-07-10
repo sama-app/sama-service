@@ -1,0 +1,12 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-user-name
+      author: balys
+      changes:
+        - addColumn:
+            schemaName: sama
+            tableName: user
+            columns:
+              - column:
+                  name: full_name
+                  type: VARCHAR

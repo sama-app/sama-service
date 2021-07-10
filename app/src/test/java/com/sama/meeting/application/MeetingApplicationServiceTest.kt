@@ -14,6 +14,8 @@ import com.sama.slotsuggestion.application.SlotSuggestionRequest
 import com.sama.slotsuggestion.application.SlotSuggestionResponse
 import com.sama.slotsuggestion.application.SlotSuggestionService
 import com.sama.slotsuggestion.domain.SlotSuggestion
+import com.sama.users.domain.UserEntity
+import com.sama.users.domain.UserRepository
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.Mock
@@ -37,6 +39,7 @@ class MeetingApplicationServiceTest(
     @Mock private val slotSuggestionService: SlotSuggestionService,
     @Mock private val meetingInvitationService: MeetingInvitationService,
     @Mock private val meetingCodeGenerator: MeetingCodeGenerator,
+    @Mock private val userRepository: UserRepository,
     @Mock private val blockRepository: BlockRepository,
     @Mock private val blockEventConsumer: BlockEventConsumer,
 ) {
@@ -52,6 +55,7 @@ class MeetingApplicationServiceTest(
             slotSuggestionService,
             meetingInvitationService,
             meetingCodeGenerator,
+            userRepository,
             blockRepository,
             blockEventConsumer,
             clock
@@ -93,7 +97,7 @@ class MeetingApplicationServiceTest(
         verify(meetingIntentRepository).save(any())
 
         val expectedDTO = MeetingIntentDTO(
-            meetingIntentId, userId, RecipientDTO(null, null), 30,
+            meetingIntentId, userId, RecipientDTO(null), 30,
             listOf(MeetingSlotDTO(ZonedDateTime.now(clock), ZonedDateTime.now(clock).plusMinutes(30)))
         )
         assertEquals(expectedDTO, meetingIntent)
@@ -118,7 +122,7 @@ class MeetingApplicationServiceTest(
         verify(meetingIntentRepository).save(any())
 
         val expectedDTO = MeetingIntentDTO(
-            meetingIntentId, userId, RecipientDTO(null, null), 30, emptyList()
+            meetingIntentId, userId, RecipientDTO(null), 30, emptyList()
         )
         assertEquals(expectedDTO, meetingIntent)
     }
@@ -127,7 +131,9 @@ class MeetingApplicationServiceTest(
     @Test
     fun `propose meeting`() {
         // input
-        val userId = 1L
+        val initiatorId = 1L
+        val initiatorFullName = "test"
+        val initiatorEmail = "test@meetsama.com"
         val meetingId = 1L
         val meetingIntentId = 11L
         val meetingCode = "some-code"
@@ -143,7 +149,7 @@ class MeetingApplicationServiceTest(
         whenever(meetingIntentRepository.findById(eq(meetingIntentId)))
             .thenReturn(of(MeetingIntentEntity().apply {
                 this.id = meetingIntentId
-                this.initiatorId = userId
+                this.initiatorId = initiatorId
                 this.recipientId = null
                 this.durationMinutes = 30
                 this.timezone = systemDefault()
@@ -153,16 +159,18 @@ class MeetingApplicationServiceTest(
         whenever(meetingCodeGenerator.generate()).thenReturn(meetingCode)
         whenever(meetingInvitationService.findForProposedMeeting(any(), any()))
             .thenReturn(MeetingInvitation(meetingUrl, shareableMessage))
+        whenever(userRepository.findById(initiatorId))
+            .thenReturn(of(UserEntity(initiatorEmail).apply { this.fullName = initiatorFullName }))
 
         // act
-        val meetingInvitation = underTest.proposeMeeting(userId, meetingIntentId, command)
+        val meetingInvitation = underTest.proposeMeeting(initiatorId, meetingIntentId, command)
 
         // verify
         verifyZeroInteractions(slotSuggestionService)
         verify(meetingRepository).save(any())
 
         val expectedDTO = MeetingInvitationDTO(
-            ProposedMeetingDTO(meetingId, listOf(proposedSlot), meetingCode),
+            ProposedMeetingDTO(listOf(proposedSlot), InitiatorDTO(initiatorFullName, initiatorEmail)),
             meetingUrl, shareableMessage
         )
         assertEquals(expectedDTO, meetingInvitation)
@@ -171,7 +179,9 @@ class MeetingApplicationServiceTest(
     @Test
     fun `propose meeting without intent`() {
         // input
-        val userId = 1L
+        val initiatorId = 1L
+        val initiatorFullName = "test"
+        val initiatorEmail = "test@meetsama.com"
         val meetingIntentId = 11L
         val proposedSlot = MeetingSlotDTO(
             ZonedDateTime.now(clock),
@@ -184,13 +194,15 @@ class MeetingApplicationServiceTest(
             .thenReturn(empty())
 
         // act
-        assertThrows<NotFoundException> { underTest.proposeMeeting(userId, meetingIntentId, command) }
+        assertThrows<NotFoundException> { underTest.proposeMeeting(initiatorId, meetingIntentId, command) }
     }
 
     @Test
     fun `load meeting proposal from code`() {
         // input
-        val userId = 1L
+        val initiatorId = 1L
+        val initiatorFullName = "test"
+        val initiatorEmail = "test@meetsama.com"
         val meetingId = 1L
         val meetingIntentId = 11L
         val meetingCode = "some-code"
@@ -218,21 +230,23 @@ class MeetingApplicationServiceTest(
         whenever(meetingIntentRepository.findById(eq(meetingIntentId)))
             .thenReturn(of(MeetingIntentEntity().apply {
                 this.id = meetingIntentId
-                this.initiatorId = userId
+                this.initiatorId = initiatorId
                 this.recipientId = null
                 this.durationMinutes = 60
                 this.timezone = systemDefault()
                 this.suggestedSlots = mutableListOf()
             }))
 
-        whenever(blockRepository.findAll(eq(userId), any(), any()))
+        whenever(userRepository.findById(initiatorId))
+            .thenReturn(of(UserEntity(initiatorEmail).apply { this.fullName = initiatorFullName }))
+        whenever(blockRepository.findAll(eq(initiatorId), any(), any()))
             .thenReturn(emptyList())
 
         // act
         val meetingInvitation = underTest.loadMeetingProposalFromCode(meetingCode)
 
         // verify
-        val expectedDTO = ProposedMeetingDTO(meetingId, listOf(proposedSlot), meetingCode)
+        val expectedDTO = ProposedMeetingDTO(listOf(proposedSlot), InitiatorDTO(initiatorFullName, initiatorEmail))
         assertEquals(expectedDTO, meetingInvitation)
     }
 

@@ -15,6 +15,7 @@ import com.sama.meeting.domain.repositories.findByCodeOrThrow
 import com.sama.slotsuggestion.application.SlotSuggestionRequest
 import com.sama.slotsuggestion.application.SlotSuggestionService
 import com.sama.users.domain.UserId
+import com.sama.users.domain.UserRepository
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
@@ -31,6 +32,7 @@ class MeetingApplicationService(
     private val slotSuggestionService: SlotSuggestionService,
     private val meetingInvitationService: MeetingInvitationService,
     private val meetingCodeGenerator: MeetingCodeGenerator,
+    private val userRepository: UserRepository,
     private val blockRepository: BlockRepository,
     private val blockEventConsumer: BlockEventConsumer,
     private val clock: Clock
@@ -96,14 +98,14 @@ class MeetingApplicationService(
             .getOrThrow()
 
         val meetingInvitation = meetingInvitationService.findForProposedMeeting(proposedMeeting, meetingIntent.timezone)
+        val initiatorEntity = userRepository.findByIdOrThrow(proposedMeeting.initiatorId)
 
         MeetingEntity.new(proposedMeeting).also { meetingRepository.save(it) }
 
         return MeetingInvitationDTO(
             ProposedMeetingDTO(
-                proposedMeeting.meetingId,
                 proposedMeeting.proposedSlots.map { it.toDTO() },
-                proposedMeeting.meetingCode,
+                initiatorEntity.toInitiatorDTO()
             ),
             meetingInvitation.url,
             meetingInvitation.message
@@ -127,10 +129,11 @@ class MeetingApplicationService(
         val blocks = blockRepository.findAll(proposedMeeting.initiatorId, start, end)
         val availableProposedSlots = proposedMeeting.availableProposedSlots(blocks, clock)
 
+        val initiatorEntity = userRepository.findByIdOrThrow(proposedMeeting.initiatorId)
+
         return ProposedMeetingDTO(
-            proposedMeeting.meetingId,
             availableProposedSlots.map { it.toDTO() },
-            meetingCode
+            initiatorEntity.toInitiatorDTO()
         )
     }
 

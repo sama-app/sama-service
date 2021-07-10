@@ -7,7 +7,6 @@ import com.sama.meeting.domain.InvalidMeetingStatusException
 import com.sama.meeting.domain.MeetingAlreadyConfirmedException
 import com.sama.meeting.domain.MeetingProposalExpiredException
 import com.sama.meeting.domain.MeetingStatus
-import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.DynamicTest.dynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
@@ -69,7 +68,7 @@ class MeetingControllerTes(
             MeetingIntentDTO(
                 11L,
                 userId,
-                RecipientDTO(null, null),
+                RecipientDTO(null),
                 30,
                 listOf(
                     MeetingSlotDTO(
@@ -94,7 +93,6 @@ class MeetingControllerTes(
                 "meetingIntentId": 11,
                 "initiatorId": 1,
                 "recipient": {
-                  "userId": null,
                   "email": null
                 },
                 "suggestedSlots":[
@@ -158,8 +156,8 @@ class MeetingControllerTes(
     @Test
     fun `propose meeting`() {
         val meetingIntentId = 11L
-        val meetingId = 21L
-        val meetingCode = "code"
+        val initiatorFullName = "test"
+        val initiatorEmail = "test@meetsama.com"
         val shareableMessage = "a nice message"
         val meetingUrl = "localhost:3000/code"
         val proposedSlot = MeetingSlotDTO(
@@ -173,9 +171,8 @@ class MeetingControllerTes(
         ).thenReturn(
             MeetingInvitationDTO(
                 ProposedMeetingDTO(
-                    meetingId,
                     listOf(proposedSlot),
-                    meetingCode
+                    InitiatorDTO(initiatorFullName, initiatorEmail)
                 ),
                 meetingUrl,
                 shareableMessage
@@ -194,12 +191,14 @@ class MeetingControllerTes(
         val expectedResponse = """
             {
                 "meeting": {
-                    "meetingId": $meetingId,
-                    "meetingCode": "$meetingCode",
                     "proposedSlots": [{
                         "startDateTime": "2021-01-01T12:00:00Z",
                         "endDateTime": "2021-01-01T13:00:00Z"
-                     }]
+                     }],
+                    "initiator": {
+                        "fullName": $initiatorFullName,
+                        "email": $initiatorEmail
+                    }
                 },
                 "meetingUrl": "$meetingUrl",
                 "shareableMessage": "$shareableMessage"
@@ -218,23 +217,24 @@ class MeetingControllerTes(
     @Test
     fun `load meeting proposal`() {
         val meetingCode = "code"
-        val meetingId = 21L
         val proposedSlot = MeetingSlotDTO(
             ZonedDateTime.parse("2021-01-01T12:00:00Z"),
             ZonedDateTime.parse("2021-01-01T13:00:00Z"),
         )
         whenever(
             meetingApplicationService.loadMeetingProposalFromCode(eq(meetingCode))
-        ).thenReturn(ProposedMeetingDTO(meetingId, listOf(proposedSlot), meetingCode))
+        ).thenReturn(ProposedMeetingDTO( listOf(proposedSlot), InitiatorDTO("test", "test@meetsama.com")))
 
         val expectedResponse = """
             {
-                "meetingId": $meetingId,
-                "meetingCode": "$meetingCode",
                 "proposedSlots": [{
                     "startDateTime": "2021-01-01T12:00:00Z",
                     "endDateTime": "2021-01-01T13:00:00Z"
-                 }]
+                 }],
+                "initiator": {
+                    "fullName": "test",
+                    "email": "test@meetsama.com"
+                }
             }
         """
         mockMvc.perform(

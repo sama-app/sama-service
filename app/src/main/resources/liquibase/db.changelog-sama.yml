@@ -11,3 +11,5 @@ databaseChangeLog:
       file: classpath*:liquibase/change-sets/20210521210000-add-meeting.yml
   - include:
       file: classpath*:liquibase/change-sets/20210704090000-add-proposed-slot-index.yml
+  - include:
+      file: classpath*:liquibase/change-sets/20210710090000-add-user-name.yml

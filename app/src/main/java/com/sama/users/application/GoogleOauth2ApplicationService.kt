@@ -2,18 +2,18 @@ package com.sama.users.application
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow
 import com.sama.common.ApplicationService
+import com.sama.integration.google.GoogleUserRepository
 import com.sama.users.domain.GoogleCredential
 import com.sama.users.domain.UserAlreadyExistsException
-import liquibase.pro.packaged.it
 import org.apache.commons.logging.LogFactory
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 
 @ApplicationService
 @Service
 class GoogleOauth2ApplicationService(
     private val userApplicationService: UserApplicationService,
     private val googleAuthorizationCodeFlow: GoogleAuthorizationCodeFlow,
+    private val googleUserRepository: GoogleUserRepository
 ) {
     private val logger = LogFactory.getLog(javaClass)
 
@@ -44,15 +44,19 @@ class GoogleOauth2ApplicationService(
                 .setRedirectUri(redirectUri)
                 .execute()
         }.map {
-            val email = it.parseIdToken().payload.email
+            val parseIdToken = it.parseIdToken()
+            val email = parseIdToken.payload.email
             VerifiedGoogleOauth2Token(email, GoogleCredential(it.accessToken, it.refreshToken, it.expiresInSeconds))
         }.getOrThrow()
 
+        // Step #2: Fetch extended user details
+        val userDetails = googleUserRepository.findUsingToken(verifiedToken.credential.accessToken)
 
-        // Step #2: Register a user with settings or refresh credentials
+        // Step #3: Register a user with
+        // settings or refresh credentials
         val userId = kotlin.runCatching {
             val userId = userApplicationService.registerUser(
-                RegisterUserCommand(verifiedToken.email, verifiedToken.credential)
+                RegisterUserCommand(verifiedToken.email, userDetails.fullName, verifiedToken.credential)
             )
             userApplicationService.createUserSettings(userId)
             userId
@@ -60,15 +64,22 @@ class GoogleOauth2ApplicationService(
             if (it !is UserAlreadyExistsException) {
                 throw it
             }
-            userApplicationService.refreshCredentials(
+            val userId = userApplicationService.refreshCredentials(
                 RefreshCredentialsCommand(
                     verifiedToken.email,
                     verifiedToken.credential
                 )
             )
+
+            userApplicationService.updateBasicDetails(
+                userId,
+                UpdateUserBasicDetailsCommand(userDetails.fullName)
+            )
+
+            userId
         }.getOrThrow()
 
-        // Step #3: Issue authentication tokens
+        // Step #4: Issue SAMA authentication tokens
         val (accessToken, refreshToken) = userApplicationService.issueTokens(userId)
         return GoogleOauth2Success(accessToken, refreshToken)
     }
