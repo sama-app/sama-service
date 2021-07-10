@@ -1,5 +1,6 @@
 package com.sama.slotsuggestion.domain
 
+import com.sama.calendar.domain.Recurrence
 import com.sama.users.domain.WorkingHours
 import java.time.Duration
 import java.time.LocalDate
@@ -44,11 +45,15 @@ fun pastBlock(block: Block?): Vector {
     val startTimeIndex = timeToIndex(block.startDateTime.toLocalTime())
     val endTimeIndex = timeToIndex(block.endDateTime.toLocalTime())
 
-    return if (block.hasRecipients) {
-        cliff(0.0, 0.1, vectorSize, startTimeIndex, endTimeIndex)
+    val weight = if (block.hasRecipients) {
+        // there's a meeting with a person, we should add weight
+        0.25
     } else {
-        cliff(0.0, -0.05, vectorSize, startTimeIndex, endTimeIndex)
-    }
+        // if it's a self-blocked time, we count as we DON'T want meetings for the time
+        -0.25
+    } / block.recurrenceCount
+
+    return cliff(0.0, weight, vectorSize, startTimeIndex, endTimeIndex)
 }
 
 /**
@@ -126,7 +131,7 @@ fun recency(startDate: LocalDate, endDate: LocalDate): Vector {
     val multiDayVectorSize = days * vectorSize
     val vector = curve(
         -1.0,
-        0.0,
+        0.5,
         multiDayVectorSize,
         0,
         vectorSize,

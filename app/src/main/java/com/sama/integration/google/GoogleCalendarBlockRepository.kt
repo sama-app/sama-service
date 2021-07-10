@@ -11,7 +11,13 @@ import com.google.api.services.calendar.model.EventDateTime
 import com.sama.SamaApplication
 import com.sama.calendar.domain.Block
 import com.sama.calendar.domain.BlockRepository
+import com.sama.calendar.domain.Recurrence
 import com.sama.users.domain.UserId
+import liquibase.pro.packaged.it
+import org.dmfs.rfc5545.recur.Freq
+import org.dmfs.rfc5545.recur.RecurrenceRule
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import java.time.Instant
 import java.time.LocalDateTime.ofInstant
@@ -25,6 +31,8 @@ class GoogleCalendarBlockRepository(
     private val googleNetHttpTransport: HttpTransport,
     private val googleJacksonFactory: JacksonFactory
 ) : BlockRepository {
+    private var logger: Logger = LoggerFactory.getLogger(this::class.java)
+
     private val defaultCalendarTimeZone = ZoneId.of("UTC")
 
     // https://developers.google.com/calendar/v3/reference/events/list
@@ -32,19 +40,29 @@ class GoogleCalendarBlockRepository(
     override fun findAll(userId: UserId, startDateTime: ZonedDateTime, endDateTime: ZonedDateTime): List<Block> {
         val calendarService = calendarServiceForUser(userId)
 
+        val calendarEvents = mutableListOf<Event>()
+        var calendarTimeZone: ZoneId
         var nextPageToken: String? = null
-        val blocks = mutableListOf<Block>()
         do {
             val result = calendarService.list(startDateTime, endDateTime, nextPageToken).execute()
-            val calendarTimeZone = result.timeZone?.let { ZoneId.of(it) } ?: defaultCalendarTimeZone
+            calendarTimeZone = result.timeZone?.let { ZoneId.of(it) } ?: defaultCalendarTimeZone
             nextPageToken = result.nextPageToken
 
-            blocks.addAll(result.items
-                .filter { it.status in listOf("confirmed", "tentative") }
-                .map { it.toBlock(calendarTimeZone) }
-            )
-
+            calendarEvents.addAll(result.items
+                .filter { it.status in listOf("confirmed", "tentative") })
         } while (nextPageToken != null)
+
+
+        val recurrenceRulesByEventID = calendarService.recurrenceEventsFor(calendarEvents)
+        val recurringEventCounts = calendarEvents.filter { it.recurringEventId != null }
+            .groupingBy { it.recurringEventId }
+            .eachCount()
+
+
+        val blocks = mutableListOf<Block>()
+        blocks.addAll(calendarEvents
+            .map { it.toBlock(calendarTimeZone, recurringEventCounts, recurrenceRulesByEventID) }
+        )
 
         return blocks
     }
@@ -70,7 +88,7 @@ class GoogleCalendarBlockRepository(
             .insert("primary", event)
             .setSendNotifications(true)
             .execute()
-        return inserted.toBlock(timeZone)
+        return inserted.toBlock(timeZone, emptyMap(), emptyMap())
     }
 
     private fun calendarServiceForUser(userId: Long): Calendar {
@@ -114,17 +132,64 @@ class GoogleCalendarBlockRepository(
         return this.start.date != null
     }
 
-    private fun Event.toBlock(calendarTimeZone: ZoneId): Block {
+    private fun Event.toBlock(
+        calendarTimeZone: ZoneId,
+        recurrenceCounts: Map<String, Int>,
+        recurringEvents: Map<String, RecurrenceRule?>
+    ): Block {
         return Block(
             this.start.toZonedDateTime(calendarTimeZone),
             this.end.toZonedDateTime(calendarTimeZone),
             this.isAllDay(),
             this.summary,
+
             if (this.attendees != null) {
                 this.attendees.firstOrNull()?.email
             } else {
                 null
+            },
+
+            if (this.recurringEventId != null && recurringEventId in recurrenceCounts) {
+                recurrenceCounts[recurringEventId]!!
+            } else {
+                1
+            },
+
+            if (this.recurringEventId != null && recurringEventId in recurringEvents) {
+                recurringEvents[recurringEventId]
+                    ?.takeIf { it.freq in listOf(Freq.DAILY, Freq.WEEKLY, Freq.MONTHLY, Freq.YEARLY) }
+                    ?.let {
+                        com.sama.calendar.domain.RecurrenceRule(
+                            Recurrence.valueOf(it.freq.name),
+                            it.interval
+                        )
+                    }
+            } else {
+                null
             }
         )
+    }
+
+    private fun Calendar.recurrenceEventsFor(calendarEvents: List<Event>): Map<String, RecurrenceRule?> {
+        val recurringEventIDs = calendarEvents
+            .filter { it.recurringEventId != null }
+            .map { it.recurringEventId }
+            .toSet()
+        return recurringEventIDs
+            .map { this.events().get("primary", it).execute() }
+            .filter { event -> event.recurrence.any { "RRULE:" in it } }
+            .associate { event ->
+                val eventId = event.id
+                event
+                    .runCatching {
+                        val recurrenceRule = event.recurrence
+                            .filter { "RRULE:" in it }
+                            .map { RecurrenceRule(it.replace("RRULE:", "")) }
+                            .first()
+                        eventId to recurrenceRule
+                    }
+                    .onFailure { logger.error(String.format("Could not process RRULE: %s", event.recurrence), it) }
+                    .getOrDefault(eventId to null)
+            }
     }
 }
