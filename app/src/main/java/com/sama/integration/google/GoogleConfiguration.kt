@@ -6,17 +6,11 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport
 import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.json.jackson2.JacksonFactory
-import com.google.api.services.calendar.CalendarScopes
-import com.google.api.services.oauth2.Oauth2Scopes
-import com.sama.SamaApplication
 import com.sama.users.domain.UserRepository
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Conditional
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
-import java.io.FileNotFoundException
-import java.io.InputStreamReader
 import java.io.StringReader
 
 

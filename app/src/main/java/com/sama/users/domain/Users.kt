@@ -14,6 +14,7 @@ data class UserRegistration(
     val userId: UserId,
     val email: String,
     val emailExists: Boolean,
+    val fullName: String?,
     val credential: GoogleCredential
 ) {
     init {

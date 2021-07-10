@@ -29,6 +29,7 @@ class UserEntity(email: String) {
         fun new(userRegistration: UserRegistration): UserEntity {
             val user = UserEntity(userRegistration.email)
             user.id = userRegistration.userId
+            user.fullName = userRegistration.fullName
             user.googleCredential = userRegistration.credential.copy(updatedAt = Instant.now())
             return user
         }
@@ -39,6 +40,9 @@ class UserEntity(email: String) {
 
     @Column(nullable = false)
     var email: String = email
+
+    @Column
+    var fullName: String? = null
 
     @Column(nullable = false)
     var active: Boolean? = null
@@ -84,5 +88,10 @@ fun UserEntity.applyChanges(user: UserDeviceRegistrations): UserEntity {
 
 fun UserEntity.applyChanges(googleCredential: GoogleCredential): UserEntity {
     this.googleCredential = googleCredential.copy(updatedAt = Instant.now())
+    return this
+}
+
+fun UserEntity.applyChanges(userDetails: BasicUserDetails): UserEntity {
+    this.fullName = userDetails.fullName
     return this
 }
