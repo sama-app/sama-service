@@ -10,6 +10,7 @@ data class Block(
     val endDateTime: ZonedDateTime,
     val allDay: Boolean,
     val title: String?,
+    val description: String?,
     val recipientEmail: String?,
     val recurrenceCount: Int,
     val recurrenceRule: RecurrenceRule?

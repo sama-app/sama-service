@@ -3,14 +3,23 @@ package com.sama.calendar.application
 import com.sama.calendar.domain.Block
 import com.sama.calendar.domain.BlockRepository
 import com.sama.common.ApplicationService
+import com.sama.common.findByIdOrThrow
 import com.sama.users.domain.UserId
+import com.sama.users.domain.UserRepository
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import org.springframework.web.util.UriComponentsBuilder
 import java.time.LocalDate
 import java.time.ZoneId
 
 @ApplicationService
 @Service
-class BlockApplicationService(private val blockRepository: BlockRepository) {
+class BlockApplicationService(
+    private val blockRepository: BlockRepository,
+    private val userRepository: UserRepository,
+    @Value("\${sama.meeting.url.scheme}") private val samaScheme: String,
+    @Value("\${sama.meeting.url.host}") private val samaHost: String
+) {
 
     fun fetchBlocks(userId: UserId, startDate: LocalDate, endDate: LocalDate, timezone: ZoneId) =
         blockRepository.findAll(
@@ -23,7 +32,23 @@ class BlockApplicationService(private val blockRepository: BlockRepository) {
 
 
     fun createBlock(userId: UserId, command: CreateBlockCommand) {
-        val block = Block(command.startDateTime, command.endDateTime, false, null, command.recipientEmail, 1,null)
+        val initiatorName = userRepository.findByIdOrThrow(userId).fullName
+        val samaUri = UriComponentsBuilder.newInstance()
+            .scheme(samaScheme)
+            .host(samaHost)
+            .build().toUriString()
+
+        val block = Block(
+            command.startDateTime,
+            command.endDateTime,
+            false,
+            // TODO: use Moustache templates
+            initiatorName?.let { "Meeting with $it" },
+            "Time for this meeting was created via <a href=$samaUri>Sama app</a>",
+            command.recipientEmail,
+            1,
+            null
+        )
         blockRepository.save(userId, block)
     }
 }
