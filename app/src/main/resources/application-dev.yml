@@ -7,6 +7,8 @@ spring:
     password: "dummy-value-this-is-loaded-from-AWS-SM"
 
 sama:
+  api.cors:
+    permit-all: true
   auth.jwt:
     access:
       signing-secret: "dummy-value-this-is-loaded-from-AWS-SM"

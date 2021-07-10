@@ -54,6 +54,8 @@ springdoc:
     path: /api/swagger-ui.html
 
 sama:
+  api.cors:
+      permit-all: true
   auth.jwt:
     access:
       signing-secret: dummy-access-secret-for-development

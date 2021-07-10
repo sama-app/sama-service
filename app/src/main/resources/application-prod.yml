@@ -20,6 +20,8 @@ springdoc:
     enabled: false
 
 sama:
+  api.cors:
+    permit-all: false
   auth.jwt:
     access:
       signing-secret: "dummy-value-this-is-loaded-from-AWS-SM"

@@ -1,10 +1,10 @@
 package com.sama.api.config
 
-import com.fasterxml.jackson.core.JsonGenerator
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.databind.*
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.SerializationFeature
 import com.sama.api.common.ApiError
 import com.sama.common.*
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Import
@@ -21,13 +21,12 @@ import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.context.request.WebRequest
 import org.springframework.web.method.support.HandlerMethodArgumentResolver
+import org.springframework.web.servlet.config.annotation.CorsRegistry
 import org.springframework.web.servlet.config.annotation.EnableWebMvc
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler
-import java.io.IOException
 import java.time.ZoneId
-import java.time.ZonedDateTime
 import java.time.zone.ZoneRulesException
 import java.util.*
 import java.util.function.Predicate
@@ -38,7 +37,8 @@ import java.util.regex.Pattern
 @Import(WebSecurityConfiguration::class, GlobalWebMvcExceptionHandler::class)
 @EnableWebMvc
 class WebMvcConfiguration(
-    private val userIdAttributeResolver: UserIdAttributeResolver
+    private val userIdAttributeResolver: UserIdAttributeResolver,
+    @Value("\${sama.api.cors.permit-all}") private val corsPermitAll: Boolean
 ) : WebMvcConfigurer {
     private val headerBlacklist = listOf("authorization", "cookie")
     private val urlBlacklist = Pattern.compile("/__mon/*")
@@ -62,6 +62,12 @@ class WebMvcConfiguration(
         objectMapper.setTimeZone(TimeZone.getTimeZone(ZoneId.of("UTC")))
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS) // enable date time serialization to string
         return MappingJackson2HttpMessageConverter(objectMapper)
+    }
+
+    override fun addCorsMappings(registry: CorsRegistry) {
+        if (corsPermitAll) {
+            registry.addMapping("/**").allowedMethods("*")
+        }
     }
 
     override fun configureMessageConverters(converters: MutableList<HttpMessageConverter<*>>) {
