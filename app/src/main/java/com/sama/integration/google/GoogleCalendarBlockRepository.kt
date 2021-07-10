@@ -79,9 +79,13 @@ class GoogleCalendarBlockRepository(
             end = EventDateTime()
                 .setDateTime(block.endDateTime.toGoogleCalendarDateTime())
                 .setTimeZone(timeZone.id)
-            attendees = listOf(EventAttendee().apply {
-                email = block.recipientEmail
-            })
+            attendees = listOf(
+                EventAttendee().apply {
+                    email = block.recipientEmail
+                },
+            )
+            summary = block.title
+            description = block.description
         }
 
         val inserted = calendarService.events()
@@ -142,7 +146,7 @@ class GoogleCalendarBlockRepository(
             this.end.toZonedDateTime(calendarTimeZone),
             this.isAllDay(),
             this.summary,
-
+            this.description,
             if (this.attendees != null) {
                 this.attendees.firstOrNull()?.email
             } else {
