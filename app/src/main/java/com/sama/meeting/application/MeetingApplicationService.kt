@@ -162,6 +162,7 @@ class MeetingApplicationService(
     }
 
     @Scheduled(cron = "0 0/15 * * * *")
+    @Transactional
     fun expireMeetings() {
         val expiringMeetingIds = meetingRepository.findAllIdsExpiring(ZonedDateTime.now())
         if (expiringMeetingIds.isEmpty()) {
