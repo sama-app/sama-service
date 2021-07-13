@@ -87,7 +87,8 @@ fun UserEntity.applyChanges(user: UserDeviceRegistrations): UserEntity {
 }
 
 fun UserEntity.applyChanges(googleCredential: GoogleCredential): UserEntity {
-    this.googleCredential = googleCredential.copy(updatedAt = Instant.now())
+    this.googleCredential = this.googleCredential?.merge(googleCredential)
+        ?: googleCredential.copy(updatedAt = Instant.now())
     return this
 }
 

@@ -22,11 +22,11 @@ data class GoogleCredential(
     var updatedAt: Instant? = null
 ) {
 
-    fun merge(credential: GoogleCredential): GoogleCredential {
-        return if (credential.refreshToken == null) {
-            credential.copy(updatedAt = Instant.now())
+    fun merge(newCredential: GoogleCredential): GoogleCredential {
+        return if (newCredential.refreshToken == null) {
+            newCredential.copy(refreshToken = refreshToken, updatedAt = Instant.now())
         } else {
-            credential.copy(refreshToken = refreshToken, updatedAt = Instant.now())
+            newCredential.copy(updatedAt = Instant.now())
         }
     }
 }
