@@ -39,7 +39,8 @@ data class SlotSuggestionEngine(private val futureHeatMap: FutureHeatMap) {
             // take the best suggestion
             val bestSuggestion = rankedVector.first()
                 .let {
-                    val start = startDate.atStartOfDay(timezone).plus(indexToDurationOffset(it.first))
+                    val start = startDate.atStartOfDay(initiatorTimeZone)
+                        .plus(indexToDurationOffset(it.first))
                     val end = start.plus(duration)
                     SlotSuggestion(start, end, it.second)
                 }
