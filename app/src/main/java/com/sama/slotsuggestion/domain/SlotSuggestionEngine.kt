@@ -16,7 +16,10 @@ data class SlotSuggestion(
 )
 
 @DomainService
-data class SlotSuggestionEngine(private val futureHeatMap: FutureHeatMap) {
+data class SlotSuggestionEngine(
+    private val futureHeatMap: FutureHeatMap,
+    private val initiatorTimeZone: ZoneId
+) {
     private val startDate = futureHeatMap.value.keys.minOrNull()!!
     private val endDate = futureHeatMap.value.keys.maxOrNull()!!
 
@@ -30,6 +33,7 @@ data class SlotSuggestionEngine(private val futureHeatMap: FutureHeatMap) {
         val durationLength = ceil(duration.toMinutes().toDouble() / intervalMinutes).toInt()
         val multiDayWeights = listOf(
             searchBoundary(startDate, endDate, startDateTime, endDateTime),
+            recipientTimeZone(startDate, endDate, initiatorTimeZone, timezone),
             recency(startDate, endDate)
         )
 

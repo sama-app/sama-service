@@ -1,6 +1,7 @@
 package com.sama.slotsuggestion.domain
 
 import com.sama.common.mapIndexed
+import java.util.*
 import kotlin.math.abs
 import kotlin.math.exp
 
@@ -203,6 +204,17 @@ fun Vector.normalize(): Vector {
         return this
     }
     return scalarDivide(maxValue)
+}
+
+fun Vector.rotate(n: Int): Vector {
+    check(n < size) { "Cannot rotate by more than the Vector size" }
+    if (n == 0) {
+        return this
+    }
+
+    return toMutableList()
+        .also { Collections.rotate(it, n) }
+        .toDoubleArray()
 }
 
 fun Vector.zipMultiplying(slotSize: Int): Vector {

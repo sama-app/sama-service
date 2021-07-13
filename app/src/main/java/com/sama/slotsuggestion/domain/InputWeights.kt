@@ -2,10 +2,7 @@ package com.sama.slotsuggestion.domain
 
 import com.sama.calendar.domain.Recurrence
 import com.sama.users.domain.WorkingHours
-import java.time.Duration
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.LocalTime
+import java.time.*
 import kotlin.math.ceil
 import kotlin.streams.asSequence
 
@@ -28,11 +25,12 @@ fun timeToIndex(time: LocalTime): Int {
     return ceil((time.hour * 60 + time.minute).toDouble() / intervalMinutes).toInt()
 }
 
-/**
- * @return a [Duration]
- */
 fun indexToDurationOffset(index: Int): Duration {
     return Duration.ofMinutes((index * intervalMinutes).toLong())
+}
+
+fun minutesToSlotOffset(minutes: Int): Int {
+    return ceil(minutes.toDouble() / intervalMinutes).toInt()
 }
 
 /**
@@ -139,4 +137,35 @@ fun recency(startDate: LocalDate, endDate: LocalDate): Vector {
         -multiDayVectorSize + vectorSize to 0, { x -> x }
     )
     return vector
+}
+
+/**
+ * @return a multi-day [Vector] that weights down slots that conflict with the requestTimeZone
+ * assuming a reasonable 8:00 - 20:00 "working hours" of the recipient
+ */
+fun recipientTimeZone(
+    startDate: LocalDate,
+    endDate: LocalDate,
+    userTimeZone: ZoneId,
+    requestTimeZone: ZoneId
+): Vector {
+    val dayCount = startDate.datesUntil(endDate).count().toInt()
+
+    val now = LocalDateTime.now()
+    val userOffsetSeconds = userTimeZone.rules.getOffset(now).totalSeconds
+    val requestOffsetSeconds = requestTimeZone.rules.getOffset(now).totalSeconds
+    if (userOffsetSeconds == requestOffsetSeconds) {
+        return zeroes(vectorSize * dayCount)
+    }
+
+    val startTimeIndex = timeToIndex(LocalTime.of(8, 0))
+    val endTimeIndex = timeToIndex(LocalTime.of(20, 0))
+
+    val offsetMinutes = (userOffsetSeconds - requestOffsetSeconds) / 60
+    val slotOffset = minutesToSlotOffset(offsetMinutes)
+
+    return startDate.datesUntil(endDate).asSequence()
+        .map { linearCurve(-3.0, 0.0, vectorSize, startTimeIndex, endTimeIndex, -1 to 2) }
+        .reduce { acc, vector -> acc.plus(vector) }
+        .rotate(slotOffset)
 }
