@@ -1,6 +1,7 @@
 package com.sama.integration.google
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow
+import com.google.api.client.googleapis.json.GoogleJsonResponseException
 import com.google.api.client.http.HttpTransport
 import com.google.api.client.json.jackson2.JacksonFactory
 import com.google.api.client.util.DateTime
@@ -13,7 +14,6 @@ import com.sama.calendar.domain.Block
 import com.sama.calendar.domain.BlockRepository
 import com.sama.calendar.domain.Recurrence
 import com.sama.users.domain.UserId
-import liquibase.pro.packaged.it
 import org.dmfs.rfc5545.recur.Freq
 import org.dmfs.rfc5545.recur.RecurrenceRule
 import org.slf4j.Logger
@@ -180,7 +180,18 @@ class GoogleCalendarBlockRepository(
             .map { it.recurringEventId }
             .toSet()
         return recurringEventIDs
-            .map { this.events().get("primary", it).execute() }
+            .mapNotNull {
+                try {
+                    this.events().get("primary", it).execute()
+                } catch (e: GoogleJsonResponseException) {
+                    // The original recurring event might have been deleted but the single
+                    // event still refers to it; ignore such cases.
+                    if (e.statusCode != 404) {
+                        logger.error("Could not fetch Google Calendar Event: %s".format(it), e)
+                    }
+                    null
+                }
+            }
             .filter { event -> event.recurrence.any { "RRULE:" in it } }
             .associate { event ->
                 val eventId = event.id
@@ -192,7 +203,7 @@ class GoogleCalendarBlockRepository(
                             .first()
                         eventId to recurrenceRule
                     }
-                    .onFailure { logger.error(String.format("Could not process RRULE: %s", event.recurrence), it) }
+                    .onFailure { logger.error("Could not process RRULE: %s".format(event.recurrence), it) }
                     .getOrDefault(eventId to null)
             }
     }
