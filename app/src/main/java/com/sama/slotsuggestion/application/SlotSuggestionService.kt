@@ -19,8 +19,7 @@ class SlotSuggestionService(
 
         val suggestions = SlotSuggestionEngine(futureHeatMap, calendarTimeZone)
             .suggest(
-                request.startDateTime,
-                request.endDateTime,
+                request.suggestionDayCount,
                 request.timezone,
                 request.slotDuration,
                 request.suggestionCount

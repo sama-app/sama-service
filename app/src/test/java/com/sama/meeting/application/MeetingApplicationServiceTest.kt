@@ -89,8 +89,7 @@ class MeetingApplicationServiceTest(
             ofMinutes(30),
             systemDefault(),
             1,
-            LocalDateTime.now(clock),
-            LocalDateTime.now(clock).plusDays(1)
+            1
         )
         verify(slotSuggestionService).suggestSlots(eq(userId), eq(expectedSlotSuggestionRequest))
 

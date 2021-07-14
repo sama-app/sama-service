@@ -3,7 +3,6 @@ package com.sama.slotsuggestion.domain
 import com.sama.common.DomainService
 import com.sama.common.mapValues
 import java.time.Duration
-import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import kotlin.math.ceil
@@ -24,15 +23,14 @@ data class SlotSuggestionEngine(
     private val endDate = futureHeatMap.value.keys.maxOrNull()!!
 
     fun suggest(
-        startDateTime: LocalDateTime,
-        endDateTime: LocalDateTime,
+        suggestionDayCount: Int,
         timezone: ZoneId,
         duration: Duration,
         count: Int
     ): List<SlotSuggestion> {
         val durationLength = ceil(duration.toMinutes().toDouble() / intervalMinutes).toInt()
         val multiDayWeights = listOf(
-            searchBoundary(startDate, endDate, startDateTime, endDateTime),
+            searchBoundary(startDate, endDate, suggestionDayCount, initiatorTimeZone),
             recipientTimeZone(startDate, endDate, initiatorTimeZone, timezone),
             recency(startDate, endDate)
         )

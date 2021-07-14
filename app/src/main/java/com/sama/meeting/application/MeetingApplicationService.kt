@@ -21,7 +21,6 @@ import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Clock
-import java.time.LocalDateTime
 import java.time.ZonedDateTime
 
 @ApplicationService
@@ -68,8 +67,7 @@ class MeetingApplicationService(
             durationMinutes.toMinutes(),
             timeZone,
             suggestionSlotCount,
-            LocalDateTime.now(clock),
-            LocalDateTime.now(clock).plusDays(suggestionDayCount.toLong())
+            suggestionDayCount,
         )
     }
 
