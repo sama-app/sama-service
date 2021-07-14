@@ -28,6 +28,10 @@ data class SlotSuggestionEngine(
         duration: Duration,
         count: Int
     ): List<SlotSuggestion> {
+        if (count == 0) {
+            return emptyList()
+        }
+
         val durationLength = ceil(duration.toMinutes().toDouble() / intervalMinutes).toInt()
         val multiDayWeights = listOf(
             searchBoundary(startDate, endDate, suggestionDayCount, initiatorTimeZone),

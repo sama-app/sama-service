@@ -12,6 +12,7 @@ import org.springframework.data.jpa.convert.threeten.Jsr310JpaConverters
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZonedDateTime
+import java.util.*
 import javax.persistence.*
 
 @AggregateRoot
@@ -24,6 +25,7 @@ class MeetingIntentEntity {
         fun new(meetingIntent: MeetingIntent): MeetingIntentEntity {
             val meetingEntity = MeetingIntentEntity()
             meetingEntity.id = meetingIntent.meetingIntentId
+            meetingEntity.code = UUID.randomUUID()
             meetingEntity.initiatorId = meetingIntent.initiatorId
             meetingEntity.durationMinutes = meetingIntent.duration.toMinutes()
             meetingEntity.timezone = meetingIntent.timezone
@@ -45,6 +47,9 @@ class MeetingIntentEntity {
 
     @Id
     var id: MeetingIntentId? = null
+
+    @Column(nullable = false)
+    var code: UUID? = null
 
     @Column(nullable = false)
     var initiatorId: UserId? = null

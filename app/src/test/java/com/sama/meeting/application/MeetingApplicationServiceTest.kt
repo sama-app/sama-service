@@ -18,6 +18,7 @@ import com.sama.users.domain.UserEntity
 import com.sama.users.domain.UserRepository
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.extension.ExtendWith
+import org.mockito.ArgumentCaptor
 import org.mockito.Mock
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.*
@@ -27,6 +28,7 @@ import java.time.Instant.ofEpochSecond
 import java.time.LocalDateTime
 import java.time.ZoneId.systemDefault
 import java.time.ZonedDateTime
+import java.util.*
 import java.util.Optional.empty
 import java.util.Optional.of
 import kotlin.test.assertEquals
@@ -67,7 +69,8 @@ class MeetingApplicationServiceTest(
         // input
         val userId = 1L
         val meetingIntentId = 11L
-        val command = InitiateMeetingCommand(30, systemDefault(), 1, 1)
+        val durationMinutes: Long = 30
+        val command = InitiateMeetingCommand(durationMinutes, systemDefault(), 1, 1)
 
         // setup
         whenever(meetingIntentRepository.nextIdentity())
@@ -75,7 +78,7 @@ class MeetingApplicationServiceTest(
 
         val slotSuggestion = SlotSuggestion(
             ZonedDateTime.now(clock),
-            ZonedDateTime.now(clock).plusMinutes(30),
+            ZonedDateTime.now(clock).plusMinutes(durationMinutes),
             1.0
         )
         whenever(slotSuggestionService.suggestSlots(eq(userId), any()))
@@ -86,46 +89,24 @@ class MeetingApplicationServiceTest(
 
         // verify
         val expectedSlotSuggestionRequest = SlotSuggestionRequest(
-            ofMinutes(30),
+            ofMinutes(durationMinutes),
             systemDefault(),
             1,
             1
         )
         verify(slotSuggestionService).suggestSlots(eq(userId), eq(expectedSlotSuggestionRequest))
 
-        verify(meetingIntentRepository).save(any())
+        val captor = ArgumentCaptor.forClass(MeetingIntentEntity::class.java)
+        verify(meetingIntentRepository).save(captor.capture())
 
         val expectedDTO = MeetingIntentDTO(
-            meetingIntentId, userId, RecipientDTO(null), 30,
-            listOf(MeetingSlotDTO(ZonedDateTime.now(clock), ZonedDateTime.now(clock).plusMinutes(30)))
+            meetingIntentId,
+            captor.value.code!!,
+            durationMinutes,
+            listOf(MeetingSlotDTO(ZonedDateTime.now(clock), ZonedDateTime.now(clock).plusMinutes(durationMinutes)))
         )
         assertEquals(expectedDTO, meetingIntent)
     }
-
-    @Test
-    fun `initiate meeting without slot suggestions`() {
-        // input
-        val userId = 1L
-        val meetingIntentId = 11L
-        val command = InitiateMeetingCommand(30, systemDefault(), 0, 1)
-
-        // setup
-        whenever(meetingIntentRepository.nextIdentity())
-            .thenReturn(meetingIntentId)
-
-        // act
-        val meetingIntent = underTest.initiateMeeting(userId, command)
-
-        // verify
-        verifyZeroInteractions(slotSuggestionService)
-        verify(meetingIntentRepository).save(any())
-
-        val expectedDTO = MeetingIntentDTO(
-            meetingIntentId, userId, RecipientDTO(null), 30, emptyList()
-        )
-        assertEquals(expectedDTO, meetingIntent)
-    }
-
 
     @Test
     fun `propose meeting`() {

@@ -1,10 +1,7 @@
 package com.sama.api.meeting
 
 import com.sama.api.config.AuthUserId
-import com.sama.meeting.application.ConfirmMeetingCommand
-import com.sama.meeting.application.InitiateMeetingCommand
-import com.sama.meeting.application.MeetingApplicationService
-import com.sama.meeting.application.ProposeMeetingCommand
+import com.sama.meeting.application.*
 import com.sama.meeting.domain.MeetingCode
 import com.sama.meeting.domain.MeetingIntentId
 import com.sama.users.domain.UserId
@@ -30,7 +27,7 @@ class MeetingController(
         consumes = [APPLICATION_JSON_VALUE],
         produces = [APPLICATION_JSON_VALUE],
     )
-    fun initiateMeeting(@AuthUserId userId: UserId,  @RequestBody @Valid command: InitiateMeetingCommand) =
+    fun initiateMeeting(@AuthUserId userId: UserId, @RequestBody @Valid command: InitiateMeetingCommand) =
         meetingApplicationService.initiateMeeting(userId, command)
 
     @Operation(
@@ -39,13 +36,28 @@ class MeetingController(
     )
     @PostMapping(
         "/api/meeting/{meetingIntentId}/propose",
-        consumes = [APPLICATION_JSON_VALUE]
+        consumes = [APPLICATION_JSON_VALUE],
+        produces = [APPLICATION_JSON_VALUE]
     )
     fun proposeMeeting(
         @AuthUserId userId: UserId,
         @PathVariable meetingIntentId: MeetingIntentId,
         @RequestBody command: ProposeMeetingCommand
     ) = meetingApplicationService.proposeMeeting(userId, meetingIntentId, command)
+
+    @Operation(
+        summary = "Propose a meeting with a slot selection",
+        security = [SecurityRequirement(name = "user-auth")]
+    )
+    @PostMapping(
+        "/api/meeting/propose",
+        consumes = [APPLICATION_JSON_VALUE],
+        produces = [APPLICATION_JSON_VALUE]
+    )
+    fun proposeMeetingV2(
+        @AuthUserId userId: UserId,
+        @RequestBody command: ProposeMeetingCommandV2
+    ) = meetingApplicationService.proposeMeeting(userId, command)
 
 
     @Operation(summary = "Retrieve meeting proposal details using a shared meeting code")

@@ -1,0 +1,36 @@
+databaseChangeLog:
+  - property:
+      name: uuid_function
+      value: uuid_generate_v4()
+      dbms: postgresql
+
+  - changeSet:
+      id: add-uuid-extension
+      author: balys
+      changes:
+        - sql:
+            sql: CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+  - changeSet:
+      id: add-meeting-intent-public-id
+      author: balys
+      changes:
+        - addColumn:
+            schemaName: sama
+            tableName: meeting_intent
+            columns:
+              - column:
+                  name: code
+                  type: UUID
+                  defaultValueComputed: ${uuid_function}
+                constraints:
+                  nullable: false
+        - createIndex:
+            schemaName: sama
+            tableName: meeting_intent
+            columns:
+              - column:
+                  name: code
+            indexName: IDX_code
+
+

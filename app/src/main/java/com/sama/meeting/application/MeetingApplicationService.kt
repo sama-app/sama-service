@@ -41,16 +41,11 @@ class MeetingApplicationService(
     fun initiateMeeting(userId: UserId, command: InitiateMeetingCommand): MeetingIntentDTO {
         val meetingId = meetingIntentRepository.nextIdentity()
 
-        val suggestedSlots = when (command.suggestionSlotCount) {
-            0 -> emptyList()
-            else -> {
-                val request = command.toSlotSuggestionRequest()
-                slotSuggestionService.suggestSlots(userId, request).suggestions
-                    .map { MeetingSlot(it.startDateTime, it.endDateTime) }
-            }
-        }
+        val request = command.toSlotSuggestionRequest()
+        val suggestedSlots = slotSuggestionService.suggestSlots(userId, request).suggestions
+            .map { MeetingSlot(it.startDateTime, it.endDateTime) }
 
-        val meeting = MeetingIntent(
+        val meetingIntent = MeetingIntent(
             meetingId,
             userId,
             command.durationMinutes.toMinutes(),
@@ -58,8 +53,8 @@ class MeetingApplicationService(
             suggestedSlots
         )
 
-        val meetingEntity = MeetingIntentEntity.new(meeting).also { meetingIntentRepository.save(it) }
-        return meetingEntity.toDTO()
+        val entity = MeetingIntentEntity.new(meetingIntent).also { meetingIntentRepository.save(it) }
+        return entity.toDTO()
     }
 
     private fun InitiateMeetingCommand.toSlotSuggestionRequest(): SlotSuggestionRequest {
@@ -71,10 +66,12 @@ class MeetingApplicationService(
         )
     }
 
-    @Transactional(readOnly = true)
-    fun findMeetingIntent(userId: UserId, meetingIntentId: MeetingIntentId): MeetingIntentDTO {
-        val meetingEntity = meetingIntentRepository.findByIdOrThrow(meetingIntentId)
-        return meetingEntity.toDTO()
+    @Transactional
+    @PreAuthorize("@auth.hasAccessByCode(#userId, #command.meetingIntentCode)")
+    fun proposeMeeting(userId: UserId, command: ProposeMeetingCommandV2): MeetingInvitationDTO {
+        val meetingIntentEntity = meetingIntentRepository.findByCodeOrThrow(command.meetingIntentCode)
+        val proposedSlots = command.proposedSlots.map { it.toValueObject() }
+        return proposeMeeting(meetingIntentEntity, proposedSlots)
     }
 
     @Transactional
@@ -84,13 +81,20 @@ class MeetingApplicationService(
         meetingIntentId: MeetingIntentId,
         command: ProposeMeetingCommand
     ): MeetingInvitationDTO {
-        val meetingEntity = meetingIntentRepository.findByIdOrThrow(meetingIntentId)
+        val meetingIntentEntity = meetingIntentRepository.findByIdOrThrow(meetingIntentId)
+        val proposedSlots = command.proposedSlots.map { it.toValueObject() }
+        return proposeMeeting(meetingIntentEntity, proposedSlots)
+    }
+
+    private fun proposeMeeting(
+        meetingIntentEntity: MeetingIntentEntity,
+        proposedSlots: List<MeetingSlot>
+    ): MeetingInvitationDTO {
         val meetingId = meetingRepository.nextIdentity()
 
         val meetingCode = meetingCodeGenerator.generate()
-        val proposedSlots = command.proposedSlots.map { it.toValueObject() }
 
-        val meetingIntent = MeetingIntent.of(meetingEntity).getOrThrow()
+        val meetingIntent = MeetingIntent.of(meetingIntentEntity).getOrThrow()
         val proposedMeeting = meetingIntent
             .propose(meetingId, meetingCode, proposedSlots)
             .getOrThrow()
