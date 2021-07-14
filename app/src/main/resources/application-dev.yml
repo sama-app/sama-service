@@ -21,7 +21,9 @@ sama:
   meeting:
     url:
       scheme: https
-      host: app.meetsama.com.smtest.it
+      host: web.meetsama.com.smtest.it
+  landing:
+    url: https://meetsama.com.smtest.it
 
 integration:
   google:
