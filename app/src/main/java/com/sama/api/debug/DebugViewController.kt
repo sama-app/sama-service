@@ -3,27 +3,25 @@ package com.sama.api.debug
 import com.google.api.client.http.GenericUrl
 import com.sama.api.config.AuthUserId
 import com.sama.common.mapIndexed
-import com.sama.slotsuggestion.application.*
-import com.sama.slotsuggestion.domain.FutureHeatMapGenerator
+import com.sama.slotsuggestion.application.FutureHeatMapService
+import com.sama.slotsuggestion.application.SlotSuggestionRequest
+import com.sama.slotsuggestion.application.SlotSuggestionResponse
+import com.sama.slotsuggestion.application.SlotSuggestionService
 import com.sama.slotsuggestion.domain.sigmoid
 import com.sama.users.application.GoogleOauth2ApplicationService
 import com.sama.users.application.GoogleOauth2Failure
 import com.sama.users.application.GoogleOauth2Success
 import com.sama.users.domain.UserId
-import liquibase.pro.packaged.it
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
-import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.servlet.ModelAndView
 import org.springframework.web.servlet.view.RedirectView
 import java.time.Duration
-import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneId
-import java.util.*
 import javax.servlet.http.Cookie
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
@@ -100,8 +98,7 @@ class DebugViewController(
                 Duration.ofMinutes(30),
                 ZoneId.systemDefault(),
                 10,
-                LocalDateTime.now(),
-                LocalDateTime.now().plusDays(14)
+                14
             )
         )
     }

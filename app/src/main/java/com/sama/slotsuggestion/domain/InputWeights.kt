@@ -1,6 +1,5 @@
 package com.sama.slotsuggestion.domain
 
-import com.sama.calendar.domain.Recurrence
 import com.sama.users.domain.WorkingHours
 import java.time.*
 import kotlin.math.ceil
@@ -101,17 +100,19 @@ fun suggestedSlot(slot: SlotSuggestion?): Vector {
 fun searchBoundary(
     startDate: LocalDate,
     endDate: LocalDate,
-    searchFrom: LocalDateTime,
-    searchTo: LocalDateTime
+    suggestionDayCount: Int,
+    initiatorTimeZone: ZoneId
 ): Vector {
     return startDate.datesUntil(endDate).asSequence()
         .map { date ->
             when {
                 date.isEqual(startDate) -> {
-                    cliff(-100.0, 0.0, vectorSize, timeToIndex(searchFrom.toLocalTime()), vectorSize)
+                    val startTime = LocalDateTime.now(initiatorTimeZone).toLocalTime()
+                    cliff(-100.0, 0.0, vectorSize, timeToIndex(startTime), vectorSize)
                 }
                 date.isEqual(endDate) -> {
-                    cliff(0.0, -100.0, vectorSize, 0, timeToIndex(searchTo.toLocalTime()))
+                    val endTime = LocalDateTime.now(initiatorTimeZone).plusDays(suggestionDayCount.toLong()).toLocalTime()
+                    cliff(0.0, -100.0, vectorSize, 0, timeToIndex(endTime))
                 }
                 else -> {
                     zeroes()
