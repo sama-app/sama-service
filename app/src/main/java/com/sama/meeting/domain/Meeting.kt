@@ -99,7 +99,7 @@ data class ProposedMeeting(
     fun confirm(slot: MeetingSlot, recipient: MeetingRecipient): Result<ConfirmedMeeting> {
         return kotlin.runCatching {
             val confirmedSlot = expandedSlots().find { it == slot }
-                ?: throw MeetingSlotUnavailableException(meetingId, slot)
+                ?: throw MeetingSlotUnavailableException(meetingCode, slot)
 
             ConfirmedMeeting(meetingId, initiatorId, duration, recipient, confirmedSlot)
         }

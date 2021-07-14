@@ -34,7 +34,7 @@ data class MeetingIntent(
 
     init {
         if (duration < minimumDuration) {
-            throw InvalidDurationException(meetingIntentId, duration)
+            throw InvalidDurationException(duration)
         }
         validateSlots(suggestedSlots)
     }
@@ -45,7 +45,7 @@ data class MeetingIntent(
         proposedSlots: List<MeetingSlot>
     ): Result<ProposedMeeting> {
         if (proposedSlots.isEmpty()) {
-            return Result.failure(InvalidMeetingProposalException(meetingIntentId, "No slots proposed"))
+            return Result.failure(InvalidMeetingProposalException("No slots proposed"))
         }
 
         kotlin.runCatching { validateSlots(proposedSlots) }
@@ -64,11 +64,9 @@ data class MeetingIntent(
     }
 
     private fun validateSlots(slots: List<MeetingSlot>) {
-        // TODO: validate duplicates
-
         slots.firstOrNull { it.duration() < duration }
             ?.run {
-                throw InvalidMeetingSlotException(meetingIntentId, this)
+                throw InvalidMeetingSlotException(this)
             }
     }
 }

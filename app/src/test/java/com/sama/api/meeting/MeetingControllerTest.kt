@@ -5,7 +5,6 @@ import com.sama.api.config.WebMvcConfiguration
 import com.sama.meeting.application.*
 import com.sama.meeting.domain.InvalidMeetingStatusException
 import com.sama.meeting.domain.MeetingAlreadyConfirmedException
-import com.sama.meeting.domain.MeetingProposalExpiredException
 import com.sama.meeting.domain.MeetingStatus
 import org.junit.jupiter.api.DynamicTest.dynamicTest
 import org.junit.jupiter.api.Test
@@ -309,7 +308,7 @@ class MeetingControllerTest(
     @Test
     fun `meeting already confirmed`() {
         whenever(meetingApplicationService.loadMeetingProposalFromCode(any()))
-            .thenThrow(MeetingAlreadyConfirmedException(1L))
+            .thenThrow(MeetingAlreadyConfirmedException("VGsUTGno"))
 
         val expectedResponse = """
        {
@@ -323,25 +322,9 @@ class MeetingControllerTest(
     }
 
     @Test
-    fun `meeting expired`() {
-        whenever(meetingApplicationService.loadMeetingProposalFromCode(any()))
-            .thenThrow(MeetingProposalExpiredException(1L))
-
-        val expectedResponse = """
-       {
-            "status": 410,
-            "reason": "proposal_expired"
-        }
-        """
-        mockMvc.perform(get("/api/meeting/by-code/VGsUTGno"))
-            .andExpect(status().isGone)
-            .andExpect(MockMvcResultMatchers.content().json(expectedResponse))
-    }
-
-    @Test
     fun `meeting status invalid`() {
         whenever(meetingApplicationService.loadMeetingProposalFromCode(any()))
-            .thenThrow(InvalidMeetingStatusException(1L, MeetingStatus.REJECTED))
+            .thenThrow(InvalidMeetingStatusException("VGsUTGno", MeetingStatus.REJECTED))
 
         val expectedResponse = """
        {
