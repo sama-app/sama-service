@@ -29,6 +29,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.result.isEqualTo
 import java.time.ZoneId
 import java.time.ZonedDateTime
+import java.util.*
 
 @ExtendWith(SpringExtension::class)
 @SpringBootTest(
@@ -39,7 +40,7 @@ import java.time.ZonedDateTime
     ]
 )
 @AutoConfigureMockMvc
-class MeetingControllerTes(
+class MeetingControllerTest(
     @Autowired val mockMvc: MockMvc
 ) {
     @MockBean
@@ -58,6 +59,7 @@ class MeetingControllerTes(
         val timeZone = ZoneId.of("Europe/Rome")
         val slotSuggestionCount = 3
         val suggestionDayCount = 21
+        val code = UUID.randomUUID()
 
         whenever(
             meetingApplicationService.initiateMeeting(
@@ -67,9 +69,8 @@ class MeetingControllerTes(
         ).thenReturn(
             MeetingIntentDTO(
                 11L,
-                userId,
-                RecipientDTO(null),
-                30,
+                code,
+                durationMinutes,
                 listOf(
                     MeetingSlotDTO(
                         ZonedDateTime.parse("2021-01-01T12:00:00Z"),
@@ -91,10 +92,8 @@ class MeetingControllerTes(
         val expectedResponse = """
             {
                 "meetingIntentId": 11,
-                "initiatorId": 1,
-                "recipient": {
-                  "email": null
-                },
+                "meetingIntentCode": "$code",
+                "durationMinutes": $durationMinutes,
                 "suggestedSlots":[
                     {
                         "startDateTime": "2021-01-01T12:00:00Z",
@@ -213,6 +212,68 @@ class MeetingControllerTes(
             .andExpect(status().isOk)
             .andExpect(MockMvcResultMatchers.content().json(expectedResponse))
     }
+
+    @Test
+    fun `propose meeting v2`() {
+        val initiatorFullName = "test"
+        val initiatorEmail = "test@meetsama.com"
+        val shareableMessage = "a nice message"
+        val meetingUrl = "localhost:3000/code"
+        val proposedSlot = MeetingSlotDTO(
+            ZonedDateTime.parse("2021-01-01T12:00:00Z"),
+            ZonedDateTime.parse("2021-01-01T13:00:00Z"),
+        )
+        whenever(
+            meetingApplicationService.proposeMeeting(
+                eq(userId), any()
+            )
+        ).thenReturn(
+            MeetingInvitationDTO(
+                ProposedMeetingDTO(
+                    listOf(proposedSlot),
+                    InitiatorDTO(initiatorFullName, initiatorEmail)
+                ),
+                meetingUrl,
+                shareableMessage
+            )
+        )
+
+        val requestBody = """
+            {
+                "meetingIntentCode": "af29ad13-206b-4cbd-a7df-3042377421fb",
+                "proposedSlots": [{
+                    "startDateTime": "2021-01-01T12:00:00Z",
+                    "endDateTime": "2021-01-01T13:00:00Z"
+                }]
+            }
+        """
+
+        val expectedResponse = """
+            {
+                "meeting": {
+                    "proposedSlots": [{
+                        "startDateTime": "2021-01-01T12:00:00Z",
+                        "endDateTime": "2021-01-01T13:00:00Z"
+                     }],
+                    "initiator": {
+                        "fullName": $initiatorFullName,
+                        "email": $initiatorEmail
+                    }
+                },
+                "meetingUrl": "$meetingUrl",
+                "shareableMessage": "$shareableMessage"
+            }
+        """
+        mockMvc.perform(
+            post("/api/meeting/propose")
+                .contentType(APPLICATION_JSON)
+                .header("Authorization", "Bearer $jwt")
+                .content(requestBody)
+        )
+            .andExpect(status().isOk)
+            .andExpect(MockMvcResultMatchers.content().json(expectedResponse))
+    }
+
 
     @Test
     fun `load meeting proposal`() {
