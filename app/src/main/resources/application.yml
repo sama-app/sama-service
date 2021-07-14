@@ -71,6 +71,8 @@ sama:
       code-length: 8
       scheme: http
       host: localhost:3000
+  landing:
+    url: http://localhost:8080
 
   slotsuggestion:
     heatmap:

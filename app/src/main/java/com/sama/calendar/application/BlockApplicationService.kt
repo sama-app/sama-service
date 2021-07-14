@@ -17,8 +17,7 @@ import java.time.ZoneId
 class BlockApplicationService(
     private val blockRepository: BlockRepository,
     private val userRepository: UserRepository,
-    @Value("\${sama.meeting.url.scheme}") private val samaScheme: String,
-    @Value("\${sama.meeting.url.host}") private val samaHost: String
+    @Value("\${sama.landing.url}") private val samaWebUrl: String,
 ) {
 
     fun fetchBlocks(userId: UserId, startDate: LocalDate, endDate: LocalDate, timezone: ZoneId) =
@@ -33,10 +32,6 @@ class BlockApplicationService(
 
     fun createBlock(userId: UserId, command: CreateBlockCommand) {
         val initiatorName = userRepository.findByIdOrThrow(userId).fullName
-        val samaUri = UriComponentsBuilder.newInstance()
-            .scheme(samaScheme)
-            .host(samaHost)
-            .build().toUriString()
 
         val block = Block(
             command.startDateTime,
@@ -44,7 +39,7 @@ class BlockApplicationService(
             false,
             // TODO: use Moustache templates
             initiatorName?.let { "Meeting with $it" },
-            "Time for this meeting was created via <a href=$samaUri>Sama app</a>",
+            "Time for this meeting was created via <a href=$samaWebUrl>Sama app</a>",
             command.recipientEmail,
             1,
             null
