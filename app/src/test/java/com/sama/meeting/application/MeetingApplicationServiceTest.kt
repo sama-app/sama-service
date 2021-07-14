@@ -265,7 +265,7 @@ class MeetingApplicationServiceTest(
 
         return listOf(
             MeetingStatus.CONFIRMED to MeetingAlreadyConfirmedException::class,
-            MeetingStatus.EXPIRED to MeetingProposalExpiredException::class,
+            MeetingStatus.EXPIRED to NotFoundException::class,
             MeetingStatus.REJECTED to InvalidMeetingStatusException::class
         ).map { (status, expected) ->
             DynamicTest.dynamicTest("Meeting status $status throws $expected") {
@@ -427,7 +427,7 @@ class MeetingApplicationServiceTest(
 
         return listOf(
             MeetingStatus.CONFIRMED to MeetingAlreadyConfirmedException::class,
-            MeetingStatus.EXPIRED to MeetingProposalExpiredException::class,
+            MeetingStatus.EXPIRED to NotFoundException::class,
             MeetingStatus.REJECTED to InvalidMeetingStatusException::class
         ).map { (status, expected) ->
             DynamicTest.dynamicTest("Meeting status $status throws $expected") {

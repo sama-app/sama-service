@@ -3,6 +3,7 @@ package com.sama.meeting.application
 import com.sama.calendar.application.BlockEventConsumer
 import com.sama.calendar.domain.BlockRepository
 import com.sama.common.ApplicationService
+import com.sama.common.NotFoundException
 import com.sama.common.findByIdOrThrow
 import com.sama.common.toMinutes
 import com.sama.meeting.domain.*
@@ -122,9 +123,9 @@ class MeetingApplicationService(
 
         val proposedMeeting = when (val meeting = meetingFrom(intentEntity, meetingEntity).getOrThrow()) {
             is ProposedMeeting -> meeting
-            is ConfirmedMeeting -> throw MeetingAlreadyConfirmedException(meeting.meetingId)
-            is ExpiredMeeting -> throw  MeetingProposalExpiredException(meeting.meetingId)
-            else -> throw InvalidMeetingStatusException(meeting.meetingId, meeting.status)
+            is ConfirmedMeeting -> throw MeetingAlreadyConfirmedException(meetingCode)
+            is ExpiredMeeting -> throw NotFoundException(ProposedMeeting::class, meetingCode)
+            else -> throw InvalidMeetingStatusException(meetingCode, meeting.status)
         }
 
         val (start, end) = proposedMeeting.proposedSlotsRange()
@@ -146,9 +147,9 @@ class MeetingApplicationService(
 
         val proposedMeeting = when (val meeting = meetingFrom(intentEntity, meetingEntity).getOrThrow()) {
             is ProposedMeeting -> meeting
-            is ConfirmedMeeting -> throw MeetingAlreadyConfirmedException(meeting.meetingId)
-            is ExpiredMeeting -> throw  MeetingProposalExpiredException(meeting.meetingId)
-            else -> throw InvalidMeetingStatusException(meeting.meetingId, meeting.status)
+            is ConfirmedMeeting -> throw MeetingAlreadyConfirmedException(meetingCode)
+            is ExpiredMeeting -> throw NotFoundException(ProposedMeeting::class, meetingCode)
+            else -> throw InvalidMeetingStatusException(meetingCode, meeting.status)
         }
 
         val meetingRecipient = command.recipientEmail.let { MeetingRecipient.fromEmail(it) }
