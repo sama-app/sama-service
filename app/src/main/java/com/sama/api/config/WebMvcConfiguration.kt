@@ -38,7 +38,7 @@ import java.util.regex.Pattern
 @EnableWebMvc
 class WebMvcConfiguration(
     private val userIdAttributeResolver: UserIdAttributeResolver,
-    @Value("\${sama.api.cors.permit-all}") private val corsPermitAll: Boolean
+    @Value("\${sama.api.cors.allowed-origins}") private val corsAllowedOrigins: List<String>
 ) : WebMvcConfigurer {
     private val headerBlacklist = listOf("authorization", "cookie")
     private val urlBlacklist = Pattern.compile("/__mon/*")
@@ -65,9 +65,12 @@ class WebMvcConfiguration(
     }
 
     override fun addCorsMappings(registry: CorsRegistry) {
-        if (corsPermitAll) {
-            registry.addMapping("/**").allowedMethods("*")
+        if (corsAllowedOrigins.isEmpty()) {
+            return
         }
+        registry.addMapping("/**")
+            .allowedOriginPatterns(*corsAllowedOrigins.toTypedArray())
+            .allowedMethods("*")
     }
 
     override fun configureMessageConverters(converters: MutableList<HttpMessageConverter<*>>) {

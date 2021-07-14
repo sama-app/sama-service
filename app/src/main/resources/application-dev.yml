@@ -8,7 +8,9 @@ spring:
 
 sama:
   api.cors:
-    permit-all: true
+    allowed-origins: |
+      http://localhost:8080,
+      https://web.meetsama.com.smtest.it
   auth.jwt:
     access:
       signing-secret: "dummy-value-this-is-loaded-from-AWS-SM"

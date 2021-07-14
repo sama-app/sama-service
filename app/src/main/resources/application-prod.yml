@@ -21,7 +21,8 @@ springdoc:
 
 sama:
   api.cors:
-    permit-all: false
+    allowed-origins: |
+      https://web.meetsama.com
   auth.jwt:
     access:
       signing-secret: "dummy-value-this-is-loaded-from-AWS-SM"

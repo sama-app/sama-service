@@ -55,7 +55,8 @@ springdoc:
 
 sama:
   api.cors:
-      permit-all: true
+      allowed-origins: |
+        *
   auth.jwt:
     access:
       signing-secret: dummy-access-secret-for-development
