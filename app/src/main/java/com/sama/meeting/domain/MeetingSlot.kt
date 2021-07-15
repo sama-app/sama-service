@@ -38,7 +38,7 @@ data class MeetingSlot(
     }
 
     fun overlaps(block: Block): Boolean {
-        return startDateTime.isBefore(block.endDateTime) && block.startDateTime.isEqual(endDateTime)
+        return startDateTime.isBefore(block.endDateTime) && endDateTime.isAfter(block.startDateTime)
     }
 
     override fun equals(other: Any?): Boolean {
