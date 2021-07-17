@@ -13,7 +13,7 @@ spring:
     default: local
   datasource:
     host: localhost
-    port: 5433
+    port: 5432
     database-name: sama
     username: sama
     password: password

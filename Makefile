@@ -48,15 +48,6 @@ destroy-green:
 		-var 'enable_blue_env=true' \
 		-var 'traffic_distribution=blue'
 
-
-# Local development
-container-run:
-	docker run -d \
-          --name sama-service \
-          -p 3000:3000 \
-          -v /var/log/sama/sama-service:/var/log/sama/sama-service \
-          sama-service:latest
-
 purge-db:
 	mvn liquibase:rollback -Dliquibase.rollbackCount=9999 -pl app
 

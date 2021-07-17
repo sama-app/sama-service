@@ -4,8 +4,21 @@ services:
     container_name: sama-db
     image: postgres:13-alpine
     ports:
-      - "5433:5432"
+      - "5432:5432"
     environment:
       POSTGRES_DB: sama
       POSTGRES_USER: sama
       POSTGRES_PASSWORD: password
+
+  sama-service:
+    container_name: sama-service
+    image: sama-service:latest
+    ports:
+      - "3000:3000"
+    environment:
+      X_JAVA_OPTS: |
+        -Dspring.datasource.host=sama-db
+        -Dspring.profiles.active=local
+    volumes:
+      - /var/log/sama/sama-service:/var/log/sama/sama-service
+      - $HOME/.aws/credentials:/home/sama/.aws/credentials:ro
