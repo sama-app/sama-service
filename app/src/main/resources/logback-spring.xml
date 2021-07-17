@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <springProperty scope="context" name="env" source="spring.profiles.active"/>
+
+    <appender name="ColouredConsole"
+              class="ch.qos.logback.core.ConsoleAppender">
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <Pattern>
+                %d{"yyyy-MM-dd HH:mm:ss.SSS"} %highlight(%-5level) [%blue(%t)] %yellow(%C{1.}): %msg%n%throwable
+            </Pattern>
+        </layout>
+    </appender>
+
+    <appender name="Console"
+              class="ch.qos.logback.core.ConsoleAppender">
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <Pattern>
+                %d{"yyyy-MM-dd HH:mm:ss.SSS"} %-5level [%t] %C{1.}: %msg%n%throwable
+            </Pattern>
+        </layout>
+    </appender>
+
+    <appender name="ConsoleJson" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder"/>
+    </appender>
+
+    <springProfile name="dev,prod">
+        <root level="info">
+            <appender-ref ref="ConsoleJson"/>
+        </root>
+        <logger name="com.sama" level="info" additivity="false">
+            <appender-ref ref="ConsoleJson"/>
+        </logger>
+    </springProfile>
+
+    <springProfile name="local">
+        <root level="info">
+            <appender-ref ref="ConsoleJson"/>
+        </root>
+        <logger name="com.sama" level="info" additivity="false">
+            <appender-ref ref="ConsoleJson"/>
+        </logger>
+    </springProfile>
+</configuration>
