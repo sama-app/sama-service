@@ -14,7 +14,7 @@ locals {
 
 variable "ami_id" {
   type    = string
-  default = "ami-0b93d9e35bfc492f9"
+  default = "ami-00b6106073860d6ac"
 }
 
 variable "enable_green_env" {
