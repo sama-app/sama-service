@@ -4,13 +4,13 @@ import com.sama.meeting.domain.MeetingConfirmedEvent
 import org.springframework.stereotype.Component
 
 @Component
-class BlockEventConsumer(private val blockApplicationService: BlockApplicationService) {
+class CalendarEventConsumer(private val eventApplicationService: EventApplicationService) {
 
     fun onMeetingConfirmed(event: MeetingConfirmedEvent) {
         val meeting = event.confirmedMeeting
-        blockApplicationService.createBlock(
+        eventApplicationService.createBlock(
             meeting.initiatorId,
-            CreateBlockCommand(meeting.slot.startDateTime, meeting.slot.endDateTime, meeting.meetingRecipient.email!!)
+            CreateEventCommand(meeting.slot.startDateTime, meeting.slot.endDateTime, meeting.meetingRecipient.email!!)
         )
     }
 }

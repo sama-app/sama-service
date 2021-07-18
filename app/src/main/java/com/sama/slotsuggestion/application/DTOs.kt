@@ -7,7 +7,7 @@ import java.time.ZoneId
 
 data class SlotSuggestionRequest(
     val slotDuration: Duration,
-    val timezone: ZoneId,
+    val recipientTimezone: ZoneId,
     val suggestionCount: Int,
     val suggestionDayCount: Int,
 )

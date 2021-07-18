@@ -5,8 +5,8 @@ import java.util.*
 import kotlin.math.abs
 import kotlin.math.exp
 
-typealias Vector = DoubleArray
 
+typealias Vector = DoubleArray
 
 fun line(vectorSize: Int, value: Double): Vector {
     return DoubleArray(vectorSize) { value }
@@ -124,12 +124,10 @@ fun curve(
     val startCurveLength = abs(startCurveRange.first) + startCurveRange.second.toDouble()
     val startCurveStart = start + startCurveRange.first
     val startCurveEnd = start + startCurveRange.second
-    check(startCurveStart >= 0 && startCurveEnd <= vectorSize) { "Invalid start curve range" }
 
     val endCurveLength = abs(endCurveRange.first) + endCurveRange.second.toDouble()
     val endCurveStart = end - endCurveRange.second
     val endCurveEnd = end - endCurveRange.first
-    check(endCurveStart >= 0 && endCurveEnd <= vectorSize) { "Invalid end curve range" }
 
     val valueRange = outsideValue - insideValue
     return ones(vectorSize)

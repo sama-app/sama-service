@@ -13,6 +13,9 @@ spring:
   jpa:
     show-sql: false
 
+logging.level:
+  org.springframework.jdbc.core: WARN
+
 springdoc:
   api-docs:
     enabled: false

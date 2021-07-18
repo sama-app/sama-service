@@ -1,7 +1,7 @@
 package com.sama.meeting.application
 
-import com.sama.calendar.application.BlockEventConsumer
-import com.sama.calendar.domain.BlockRepository
+import com.sama.calendar.application.CalendarEventConsumer
+import com.sama.calendar.domain.EventRepository
 import com.sama.common.NotFoundException
 import com.sama.meeting.domain.*
 import com.sama.meeting.domain.aggregates.MeetingEntity
@@ -25,10 +25,8 @@ import org.mockito.kotlin.*
 import java.time.Clock
 import java.time.Duration.ofMinutes
 import java.time.Instant.ofEpochSecond
-import java.time.LocalDateTime
 import java.time.ZoneId.systemDefault
 import java.time.ZonedDateTime
-import java.util.*
 import java.util.Optional.empty
 import java.util.Optional.of
 import kotlin.test.assertEquals
@@ -42,8 +40,8 @@ class MeetingApplicationServiceTest(
     @Mock private val meetingInvitationService: MeetingInvitationService,
     @Mock private val meetingCodeGenerator: MeetingCodeGenerator,
     @Mock private val userRepository: UserRepository,
-    @Mock private val blockRepository: BlockRepository,
-    @Mock private val blockEventConsumer: BlockEventConsumer,
+    @Mock private val eventRepository: EventRepository,
+    @Mock private val calendarEventConsumer: CalendarEventConsumer,
 ) {
     private val clock: Clock = Clock.fixed(ofEpochSecond(3600), systemDefault())
 
@@ -58,8 +56,8 @@ class MeetingApplicationServiceTest(
             meetingInvitationService,
             meetingCodeGenerator,
             userRepository,
-            blockRepository,
-            blockEventConsumer,
+            eventRepository,
+            calendarEventConsumer,
             clock
         )
     }
@@ -219,7 +217,7 @@ class MeetingApplicationServiceTest(
 
         whenever(userRepository.findById(initiatorId))
             .thenReturn(of(UserEntity(initiatorEmail).apply { this.fullName = initiatorFullName }))
-        whenever(blockRepository.findAll(eq(initiatorId), any(), any()))
+        whenever(eventRepository.findAll(eq(initiatorId), any(), any()))
             .thenReturn(emptyList())
 
         // act
@@ -348,7 +346,7 @@ class MeetingApplicationServiceTest(
                 slot.toValueObject()
             )
         )
-        verify(blockEventConsumer).onMeetingConfirmed(eq(expectedEvent))
+        verify(calendarEventConsumer).onMeetingConfirmed(eq(expectedEvent))
 
         assertEquals(true, result)
     }

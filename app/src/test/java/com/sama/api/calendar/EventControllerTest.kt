@@ -2,9 +2,9 @@ package com.sama.api.calendar
 
 import com.sama.api.ApiTestConfiguration
 import com.sama.api.config.WebMvcConfiguration
-import com.sama.calendar.application.BlockApplicationService
-import com.sama.calendar.application.BlockDTO
-import com.sama.calendar.application.FetchBlocksDTO
+import com.sama.calendar.application.EventApplicationService
+import com.sama.calendar.application.EventDTO
+import com.sama.calendar.application.FetchEventsDTO
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.kotlin.eq
@@ -23,17 +23,17 @@ import java.time.*
 @ExtendWith(SpringExtension::class)
 @SpringBootTest(
     classes = [
-        BlockController::class,
+        EventController::class,
         WebMvcConfiguration::class,
         ApiTestConfiguration::class
     ]
 )
 @AutoConfigureMockMvc
-class BlockControllerTest(
+class EventControllerTest(
     @Autowired val mockMvc: MockMvc
 ) {
     @MockBean
-    lateinit var blockApplicationService: BlockApplicationService
+    lateinit var eventApplicationService: EventApplicationService
 
     private val userId: Long = 1
     private val jwt = "eyJraWQiOiJkdW1teS1hY2Nlc3Mta2V5LWlkLWZvci1kZXZlbG9wbWVudCIsInR5cCI6IkpXVCIsImFsZyI6IkhTMjU2" +
@@ -50,12 +50,21 @@ class BlockControllerTest(
 
         val startDateTime = ZonedDateTime.of(startDate, LocalTime.of(12, 15), zoneId)
         val endDateTime = ZonedDateTime.of(startDate, LocalTime.of(12, 30), zoneId)
-        whenever(blockApplicationService.fetchBlocks(eq(userId), eq(startDate), eq(endDate), eq(zoneId)))
-            .thenReturn(FetchBlocksDTO(listOf(BlockDTO(startDateTime, endDateTime, false, "test"))))
+        val eventDTO = EventDTO(startDateTime, endDateTime, false, "test")
+        whenever(eventApplicationService.fetchBlocks(eq(userId), eq(startDate), eq(endDate), eq(zoneId)))
+            .thenReturn(FetchEventsDTO(listOf(eventDTO), listOf(eventDTO)))
 
         val expectedJson = """
         {
             "blocks": [
+                {
+                    "startDateTime": "2021-01-01T11:15:00Z",
+                    "endDateTime": "2021-01-01T11:30:00Z",
+                    "allDay": false,
+                    "title": "test"
+                }
+            ],
+            "events": [
                 {
                     "startDateTime": "2021-01-01T11:15:00Z",
                     "endDateTime": "2021-01-01T11:30:00Z",
@@ -83,12 +92,14 @@ class BlockControllerTest(
         val endDate = LocalDate.of(2021, 1, 2)
         val zoneId = ZoneId.of("Europe/Rome")
 
-        whenever(blockApplicationService.fetchBlocks(eq(userId), eq(startDate), eq(endDate), eq(zoneId)))
-            .thenReturn(FetchBlocksDTO(emptyList()))
+        whenever(eventApplicationService.fetchBlocks(eq(userId), eq(startDate), eq(endDate), eq(zoneId)))
+            .thenReturn(FetchEventsDTO(emptyList(), emptyList()))
 
         val expectedJson = """
         {
             "blocks": [
+            ],
+            "events": [
             ]
         }
         """
