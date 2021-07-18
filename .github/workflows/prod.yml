@@ -73,3 +73,11 @@ jobs:
 
       - name: Deploy
         run: make deploy ENV=prod
+
+      - name: Undeploy Blue
+        run: make destroy-blue ENV=prod
+        if: steps.current_deployment.outputs.COLOUR == 'blue'
+
+      - name: Undeploy Green
+        run: make destroy-green ENV=prod
+        if: steps.current_deployment.outputs.COLOUR == 'green'
