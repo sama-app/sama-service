@@ -96,8 +96,8 @@ resource "aws_lb_listener_rule" "sama-service" {
 resource "aws_autoscaling_group" "green" {
   name = "sama-service-asg-green-${terraform.workspace}"
 
-  desired_capacity      = var.enable_green_env ? var.green_instance_count : 0
-  wait_for_elb_capacity = var.enable_green_env ? var.green_instance_count : 0
+  desired_capacity      = var.enable_green_env ? local.env.instance_count : 0
+  wait_for_elb_capacity = var.enable_green_env ? local.env.instance_count : 0
   min_size              = 0
   max_size              = 4
 
@@ -123,8 +123,8 @@ resource "aws_autoscaling_group" "green" {
 resource "aws_autoscaling_group" "blue" {
   name = "sama-service-asg-blue-${terraform.workspace}"
 
-  desired_capacity      = var.enable_blue_env ? var.blue_instance_count : 0
-  wait_for_elb_capacity = var.enable_blue_env ? var.blue_instance_count : 0
+  desired_capacity      = var.enable_blue_env ? local.env.instance_count : 0
+  wait_for_elb_capacity = var.enable_blue_env ? local.env.instance_count : 0
   min_size              = 0
   max_size              = 4
 
@@ -150,7 +150,7 @@ resource "aws_autoscaling_group" "blue" {
 resource "aws_launch_template" "sama_service" {
   name                   = "sama-service-lt-${terraform.workspace}"
   image_id               = var.ami_id
-  instance_type          = "t2.micro"
+  instance_type          = local.env.instance_type
   key_name               = local.env.key_name
   update_default_version = true
 
