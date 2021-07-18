@@ -1,6 +1,6 @@
 package com.sama.meeting.domain
 
-import com.sama.calendar.domain.Block
+import com.sama.calendar.domain.Event
 import com.sama.common.DomainEntity
 import com.sama.common.Factory
 import com.sama.meeting.domain.aggregates.MeetingIntentEntity
@@ -9,7 +9,6 @@ import com.sama.users.domain.UserId
 import java.time.Clock
 import java.time.Duration
 import java.time.ZonedDateTime
-import kotlin.Result.Companion.failure
 import kotlin.Result.Companion.success
 
 sealed interface Meeting {
@@ -88,7 +87,7 @@ data class ProposedMeeting(
         }
     }
 
-    fun availableProposedSlots(exclusions: Collection<Block>, clock: Clock): List<MeetingSlot> {
+    fun availableProposedSlots(exclusions: Collection<Event>, clock: Clock): List<MeetingSlot> {
         val now = ZonedDateTime.now(clock)
         return expandedSlots()
             .filter { slot ->

@@ -1,8 +1,8 @@
 package com.sama.api.calendar
 
 import com.sama.api.config.AuthUserId
-import com.sama.calendar.application.BlockApplicationService
-import com.sama.calendar.application.FetchBlocksDTO
+import com.sama.calendar.application.EventApplicationService
+import com.sama.calendar.application.FetchEventsDTO
 import com.sama.users.domain.UserId
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
@@ -20,8 +20,8 @@ import java.time.ZoneId
 
 @Tag(name = "calendar")
 @RestController
-class BlockController(
-    private val blockApplicationService: BlockApplicationService
+class EventController(
+    private val eventApplicationService: EventApplicationService
 ) {
 
     @Operation(
@@ -29,19 +29,19 @@ class BlockController(
         security = [SecurityRequirement(name = "user-auth")]
     )
     @GetMapping(
-        "/api/calendar/blocks",
+        value = ["/api/calendar/blocks", "/api/calendar/events"],
         produces = [MediaType.APPLICATION_JSON_VALUE]
     )
-    fun fetchBlocks(
+    fun fetchEvents(
         @AuthUserId userId: UserId,
         @RequestParam @DateTimeFormat(iso = DATE) startDate: LocalDate,
         @RequestParam @DateTimeFormat(iso = DATE) endDate: LocalDate,
         @RequestParam timezone: ZoneId,
-    ): FetchBlocksDTO {
+    ): FetchEventsDTO {
         if (endDate.isBefore(startDate)) {
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "'endDate' must be after 'startDate'")
         }
 
-        return blockApplicationService.fetchBlocks(userId, startDate, endDate, timezone)
+        return eventApplicationService.fetchBlocks(userId, startDate, endDate, timezone)
     }
 }

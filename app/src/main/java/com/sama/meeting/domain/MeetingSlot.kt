@@ -1,6 +1,6 @@
 package com.sama.meeting.domain
 
-import com.sama.calendar.domain.Block
+import com.sama.calendar.domain.Event
 import com.sama.common.ValueObject
 import java.time.Duration
 import java.time.ZonedDateTime
@@ -37,8 +37,8 @@ data class MeetingSlot(
             .map { startDateTime.plusMinutes(intervalMinutes * it) }
     }
 
-    fun overlaps(block: Block): Boolean {
-        return startDateTime.isBefore(block.endDateTime) && endDateTime.isAfter(block.startDateTime)
+    fun overlaps(event: Event): Boolean {
+        return startDateTime.isBefore(event.endDateTime) && endDateTime.isAfter(event.startDateTime)
     }
 
     override fun equals(other: Any?): Boolean {

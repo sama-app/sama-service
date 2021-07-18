@@ -36,10 +36,10 @@
 
     <springProfile name="local">
         <root level="info">
-            <appender-ref ref="ConsoleJson"/>
+            <appender-ref ref="ColouredConsole"/>
         </root>
         <logger name="com.sama" level="info" additivity="false">
-            <appender-ref ref="ConsoleJson"/>
+            <appender-ref ref="ColouredConsole"/>
         </logger>
     </springProfile>
 </configuration>

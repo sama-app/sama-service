@@ -3,10 +3,11 @@ package com.sama.api.debug
 import com.google.api.client.http.GenericUrl
 import com.sama.api.config.AuthUserId
 import com.sama.common.mapIndexed
-import com.sama.slotsuggestion.application.FutureHeatMapService
+import com.sama.slotsuggestion.application.HeatMapService
 import com.sama.slotsuggestion.application.SlotSuggestionRequest
 import com.sama.slotsuggestion.application.SlotSuggestionResponse
 import com.sama.slotsuggestion.application.SlotSuggestionService
+import com.sama.slotsuggestion.domain.WeightContext
 import com.sama.slotsuggestion.domain.sigmoid
 import com.sama.users.application.GoogleOauth2ApplicationService
 import com.sama.users.application.GoogleOauth2Failure
@@ -30,7 +31,8 @@ import kotlin.math.round
 @RestController
 class DebugViewController(
     private val googleOauth2ApplicationService: GoogleOauth2ApplicationService,
-    private val futureHeatMapService: FutureHeatMapService,
+    private val heatMapService: HeatMapService,
+    private val weightContext: WeightContext,
     private val slotSuggestionService: SlotSuggestionService
 ) {
 
@@ -65,7 +67,8 @@ class DebugViewController(
 
     @GetMapping("/api/__debug/user/heatmap")
     fun renderUserHeapMap(@AuthUserId userId: UserId, model: MutableMap<String, Any>): ModelAndView {
-        val heatMap = futureHeatMapService.find(userId).value
+        val heatMap = heatMapService.generate(userId, 21, ZoneId.systemDefault())
+            .dayVectors()
             .mapValues { it.value.mapIndexed { _, value -> sigmoid(value) } }
             .toSortedMap()
 
@@ -82,7 +85,7 @@ class DebugViewController(
         }
 
         for (i in transposed.indices) {
-            val time = LocalTime.MIDNIGHT.plusMinutes(i * 15L)
+            val time = LocalTime.MIDNIGHT.plusMinutes(i * weightContext.intervalMinutes.toLong())
             transposed[i] =
                 (mutableListOf(Pair("${time.hour}:${time.minute}", "#FFFFFF")) + transposed[i]).toMutableList()
         }
@@ -95,10 +98,10 @@ class DebugViewController(
     fun getTopSuggestions(@AuthUserId userId: UserId): SlotSuggestionResponse {
         return slotSuggestionService.suggestSlots(
             userId, SlotSuggestionRequest(
-                Duration.ofMinutes(30),
+                Duration.ofMinutes(60),
                 ZoneId.systemDefault(),
                 10,
-                14
+                21
             )
         )
     }

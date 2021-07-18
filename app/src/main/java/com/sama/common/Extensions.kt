@@ -3,7 +3,9 @@ package com.sama.common
 import liquibase.pro.packaged.T
 import org.springframework.data.repository.CrudRepository
 import java.time.Duration
+import java.time.LocalDate
 import java.util.*
+import kotlin.streams.asSequence
 
 fun <T : Any> Optional<T>.toNullable(): T? = this.orElse(null)
 
@@ -49,3 +51,7 @@ fun DoubleArray.mapIndexed(transform: (Int, Double) -> Double): DoubleArray {
 
 
 fun Long.toMinutes(): Duration = Duration.ofMinutes(this)
+
+fun LocalDate.datesUtil(endDate: LocalDate): Sequence<LocalDate> {
+    return this.datesUntil(endDate).asSequence()
+}

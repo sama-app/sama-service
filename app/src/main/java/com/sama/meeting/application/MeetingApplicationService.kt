@@ -1,7 +1,7 @@
 package com.sama.meeting.application
 
-import com.sama.calendar.application.BlockEventConsumer
-import com.sama.calendar.domain.BlockRepository
+import com.sama.calendar.application.CalendarEventConsumer
+import com.sama.calendar.domain.EventRepository
 import com.sama.common.ApplicationService
 import com.sama.common.NotFoundException
 import com.sama.common.findByIdOrThrow
@@ -33,8 +33,8 @@ class MeetingApplicationService(
     private val meetingInvitationService: MeetingInvitationService,
     private val meetingCodeGenerator: MeetingCodeGenerator,
     private val userRepository: UserRepository,
-    private val blockRepository: BlockRepository,
-    private val blockEventConsumer: BlockEventConsumer,
+    private val eventRepository: EventRepository,
+    private val calendarEventConsumer: CalendarEventConsumer,
     private val clock: Clock
 ) {
 
@@ -129,7 +129,7 @@ class MeetingApplicationService(
         }
 
         val (start, end) = proposedMeeting.proposedSlotsRange()
-        val blocks = blockRepository.findAll(proposedMeeting.initiatorId, start, end)
+        val blocks = eventRepository.findAll(proposedMeeting.initiatorId, start, end)
         val availableProposedSlots = proposedMeeting.availableProposedSlots(blocks, clock)
 
         val initiatorEntity = userRepository.findByIdOrThrow(proposedMeeting.initiatorId)
@@ -158,7 +158,7 @@ class MeetingApplicationService(
             .getOrThrow()
 
         // "manual" event publishing
-        blockEventConsumer.onMeetingConfirmed(MeetingConfirmedEvent(confirmedMeeting))
+        calendarEventConsumer.onMeetingConfirmed(MeetingConfirmedEvent(confirmedMeeting))
 
         meetingEntity.applyChanges(confirmedMeeting).also { meetingRepository.save(it) }
         return true

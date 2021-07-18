@@ -1,26 +1,18 @@
 package com.sama.slotsuggestion.application
 
 import com.sama.common.ApplicationService
-import com.sama.common.findByIdOrThrow
 import com.sama.slotsuggestion.domain.*
 import com.sama.users.domain.UserId
-import com.sama.users.domain.UserSettingsRepository
 import org.springframework.stereotype.Service
 
 @ApplicationService
 @Service
-class SlotSuggestionService(
-    private val futureHeatMapService: FutureHeatMapService,
-    private val userSettingsRepository: UserSettingsRepository
-) {
+class SlotSuggestionService(private val heatMapService: HeatMapService) {
     fun suggestSlots(userId: UserId, request: SlotSuggestionRequest): SlotSuggestionResponse {
-        val futureHeatMap = futureHeatMapService.find(userId)
-        val calendarTimeZone = userSettingsRepository.findByIdOrThrow(userId).timezone!!
+        val heatMap = heatMapService.generate(userId, request.suggestionDayCount, request.recipientTimezone)
 
-        val suggestions = SlotSuggestionEngine(futureHeatMap, calendarTimeZone)
+        val suggestions = SlotSuggestionEngine(heatMap)
             .suggest(
-                request.suggestionDayCount,
-                request.timezone,
                 request.slotDuration,
                 request.suggestionCount
             )
