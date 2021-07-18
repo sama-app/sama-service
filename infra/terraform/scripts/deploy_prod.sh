@@ -10,3 +10,4 @@ docker run -d \
       -e X_JAVA_OPTS="-Dspring.profiles.active=$ENV" \
       -p 3000:3000 \
       $IMAGE_NAME:$VERSION
+asd
