@@ -46,11 +46,11 @@ value class FutureBlockWeigher(private val block: Block?) : Weigher {
         // Prefer meetings close to an existing one
         val startTimeIndex = weightContext.timeToIndex(startTime)
         if (startTimeIndex >= 1) {
-            weight[startTimeIndex - 1] += 0.5
+            weight[startTimeIndex - 1] += 0.1
         }
         val endTimeIndex = weightContext.timeToIndex(endTime)
         if (endTimeIndex <= weight.size - 1) {
-            weight[endTimeIndex] += 0.5
+            weight[endTimeIndex] += 0.1
         }
 
         return weight
