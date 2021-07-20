@@ -1,5 +1,6 @@
 package com.sama.slotsuggestion.domain
 
+import java.time.Duration
 import java.time.LocalTime
 import java.time.ZonedDateTime
 import kotlin.streams.asSequence
@@ -16,6 +17,8 @@ data class Block(
      * @return true if this [Block] spans multiple days
      */
     fun multiDay() = !startDateTime.toLocalDate().isEqual(endDateTime.toLocalDate())
+
+    fun zeroDuration() = Duration.between(startDateTime, endDateTime) == Duration.ZERO
 
     /**
      * Splits this [Block] into multiple [Block]s such that each block is within a single [java.time.LocalDate]. If
