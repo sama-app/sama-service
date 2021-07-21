@@ -151,7 +151,7 @@ data class RecipientTimeZoneWeigher(
             val offsetMinutes = (userOffsetSeconds - requestOffsetSeconds) / 60
             val slotOffset = weightContext.minutesToSlotOffset(offsetMinutes)
 
-            return (0..weightContext.days)
+            return (0 until weightContext.days)
                 .map { weightContext.linearCurve(startTime, endTime, -3.0, 0.0, -1 to 2) }
                 .reduce { acc, vector -> acc.plus(vector) }
                 .rotate(slotOffset)
