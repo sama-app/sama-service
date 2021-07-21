@@ -4,6 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.sama.api.common.ApiError
 import com.sama.common.*
+import com.sama.integration.google.GoogleInsufficientPermissionsException
+import com.sama.integration.google.GoogleInvalidCredentialsException
+import com.sama.users.domain.InactiveUserException
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -16,6 +19,8 @@ import org.springframework.http.converter.HttpMessageConverter
 import org.springframework.http.converter.StringHttpMessageConverter
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter
 import org.springframework.mobile.device.DeviceResolverHandlerInterceptor
+import org.springframework.security.authentication.InsufficientAuthenticationException
+import org.springframework.security.core.AuthenticationException
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.ResponseStatus
@@ -90,11 +95,6 @@ class WebMvcConfiguration(
 @ControllerAdvice
 class GlobalWebMvcExceptionHandler : ResponseEntityExceptionHandler() {
 
-    @ExceptionHandler(value = [NotFoundException::class])
-    @ResponseStatus(NOT_FOUND)
-    fun handleNotFound(ex: NotFoundException, request: WebRequest) =
-        ResponseEntity(ApiError.create(NOT_FOUND, ex, request), HttpHeaders(), NOT_FOUND)
-
     @ExceptionHandler(value = [ZoneRulesException::class, IllegalArgumentException::class])
     @ResponseStatus(BAD_REQUEST)
     fun handleBadRequest(ex: Exception, request: WebRequest) =
@@ -104,6 +104,21 @@ class GlobalWebMvcExceptionHandler : ResponseEntityExceptionHandler() {
     @ResponseStatus(BAD_REQUEST)
     fun handleDomainValidation(ex: DomainValidationException, request: WebRequest) =
         ResponseEntity(ApiError.create(BAD_REQUEST, ex, request), HttpHeaders(), BAD_REQUEST)
+
+    @ExceptionHandler(value = [InactiveUserException::class])
+    @ResponseStatus(UNAUTHORIZED)
+    fun handleUnauthorized(ex: java.lang.Exception, request: WebRequest) =
+        ResponseEntity(ApiError.create(UNAUTHORIZED, ex, request), HttpHeaders(), UNAUTHORIZED)
+
+    @ExceptionHandler(value = [GoogleInvalidCredentialsException::class, GoogleInsufficientPermissionsException::class, AuthenticationException::class])
+    @ResponseStatus(FORBIDDEN)
+    fun handleForbidden(ex: java.lang.Exception, request: WebRequest) =
+        ResponseEntity(ApiError.create(FORBIDDEN, ex, request), HttpHeaders(), FORBIDDEN)
+
+    @ExceptionHandler(value = [NotFoundException::class])
+    @ResponseStatus(NOT_FOUND)
+    fun handleNotFound(ex: NotFoundException, request: WebRequest) =
+        ResponseEntity(ApiError.create(NOT_FOUND, ex, request), HttpHeaders(), NOT_FOUND)
 
     @ExceptionHandler(value = [DomainIntegrityException::class])
     @ResponseStatus(CONFLICT)
