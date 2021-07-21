@@ -118,7 +118,7 @@ fun curve(
 ): Vector {
     check(startCurveRange.first <= 0 && startCurveRange.second >= 0) { "Invalid curve range" }
     check(endCurveRange.first <= 0 && endCurveRange.second >= 0) { "Invalid curve range" }
-    check(end > start) { "End index must be greater than the start index" }
+    check(end >= start) { "End index must be greater or equal to the start index" }
     check(end <= vectorSize) { "End index must be smaller than the vector size" }
 
     val startCurveLength = abs(startCurveRange.first) + startCurveRange.second.toDouble()
