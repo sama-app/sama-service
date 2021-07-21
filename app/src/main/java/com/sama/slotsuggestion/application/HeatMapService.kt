@@ -30,7 +30,7 @@ class HeatMapService(
             .flatMap { block -> block.splitByDate() }
             .groupBy { it.startDateTime.toLocalDate() }
 
-        return HeatMapGenerator(heatMapConfiguration.futureDays, weightContext)
+        return HeatMapGenerator(today.toLocalDate(), futureBlockEndDate.toLocalDate(), weightContext)
             .generate(
                 pastBlocksByDate,
                 futureBlocksByDate,

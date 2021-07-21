@@ -34,10 +34,7 @@ data class HeatMap(
 }
 
 @DomainService
-data class HeatMapGenerator(val daysInFuture: Long, val weightContext: WeightContext) {
-    private val startDate = LocalDate.now()
-    private val endDate = LocalDate.now().plusDays(daysInFuture)
-
+data class HeatMapGenerator(val startDate: LocalDate, val endDate: LocalDate, val weightContext: WeightContext) {
     fun generate(
         pastBlocks: Map<LocalDate, List<Block>>,
         futureBlocks: Map<LocalDate, List<Block>>,
