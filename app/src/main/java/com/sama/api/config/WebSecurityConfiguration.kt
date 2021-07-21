@@ -2,6 +2,7 @@ package com.sama.api.config
 
 import com.sama.api.config.security.JwtAuthorizationFilter
 import com.sama.users.domain.JwtConfiguration
+import org.apache.commons.logging.LogFactory
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -11,15 +12,19 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter
 import org.springframework.security.config.http.SessionCreationPolicy.STATELESS
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
+import org.springframework.web.servlet.HandlerExceptionResolver
 import java.time.Clock
+import javax.servlet.http.HttpServletResponse
 
 
 @Configuration
 @EnableWebSecurity
 class WebSecurityConfiguration(
     @Qualifier("accessJwtConfiguration") private val accessJwtConfiguration: JwtConfiguration,
+    private val handlerExceptionResolver: HandlerExceptionResolver,
     private val clock: Clock
 ) : WebSecurityConfigurerAdapter() {
+    private val logger = LogFactory.getLog(WebSecurityConfigurerAdapter::class.java)
 
     @Bean
     fun jwtAuthorizationFilter(): JwtAuthorizationFilter {
@@ -46,7 +51,16 @@ class WebSecurityConfiguration(
             .antMatchers(HttpMethod.GET, "/__mon/**").permitAll()
             // All other requests require authentication
             .anyRequest().authenticated()
-            .and()
+            // Catch Spring Security exceptions and convert them using GlobalWebMvcExceptionHandler
+            .and().exceptionHandling {
+                it.authenticationEntryPoint { request, response, authException ->
+                    val result = handlerExceptionResolver.resolveException(request, response, null, authException)
+                    if (result == null) {
+                        logger.warn("Unhandled auth exception", authException)
+                        response.sendError(HttpServletResponse.SC_FORBIDDEN, "unhandled_message")
+                    }
+                }
+            }
             // Setup JWT authorization filter
             .addFilterBefore(jwtAuthorizationFilter(), UsernamePasswordAuthenticationFilter::class.java)
     }

@@ -42,6 +42,10 @@ class GoogleCredentialJPADataStore internal constructor(
     }
 
     override fun set(id: String, c: StoredCredential): DataStore<StoredCredential> {
+        if (!c.isUsable()) {
+            throw GoogleInvalidCredentialsException(id.toLong())
+        }
+
         val user = userRepository.findByIdOrThrow(id.toLong())
 
         val newCredentials = GoogleCredential(c.accessToken, c.refreshToken, c.expirationTimeMilliseconds)
@@ -68,5 +72,11 @@ class GoogleCredentialJPADataStore internal constructor(
         credential.refreshToken = gc.refreshToken
         credential.expirationTimeMilliseconds = gc.expirationTimeMs
         credential
+    }
+
+    private fun StoredCredential.isUsable(): Boolean {
+        // access token sent as null when credentials are invalidated or permissions
+        // are removed
+        return accessToken != null
     }
 }

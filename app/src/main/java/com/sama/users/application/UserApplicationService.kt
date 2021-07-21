@@ -101,6 +101,7 @@ class UserApplicationService(
 
     fun refreshToken(command: RefreshTokenCommand): JwtPairDTO {
         val refreshToken = Jwt.verified(command.refreshToken, refreshJwtConfiguration, clock)
+            .onFailure { throw InvalidRefreshTokenException() }
             .getOrThrow()
 
         val user = userRepository.findByEmailOrThrow(refreshToken.userEmail())

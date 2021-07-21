@@ -1,6 +1,7 @@
 package com.sama.integration.google
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow
+import com.google.api.client.googleapis.json.GoogleJsonResponseException
 import com.google.api.client.http.HttpTransport
 import com.google.api.client.json.jackson2.JacksonFactory
 import com.google.api.services.calendar.Calendar
@@ -13,6 +14,7 @@ import com.sama.slotsuggestion.domain.Block
 import com.sama.slotsuggestion.domain.BlockRepository
 import com.sama.slotsuggestion.domain.Recurrence
 import com.sama.users.domain.UserId
+import liquibase.pro.packaged.it
 import org.dmfs.rfc5545.recur.Freq
 import org.dmfs.rfc5545.recur.RecurrenceRule
 import org.springframework.stereotype.Component
@@ -29,38 +31,45 @@ class GoogleCalendarEventRepository(
     // https://developers.google.com/calendar/api/v3/reference/events/insert
     // https://developers.google.com/calendar/api/v3/reference/events/insert#request-body
     override fun save(userId: UserId, event: Event): Event {
-        val calendarService = calendarServiceForUser(userId)
-        val timeZone = event.startDateTime.zone
-        val googleCalendarEvent = GoogleCalendarEvent().apply {
-            start = EventDateTime()
-                .setDateTime(event.startDateTime.toGoogleCalendarDateTime())
-                .setTimeZone(timeZone.id)
-            end = EventDateTime()
-                .setDateTime(event.endDateTime.toGoogleCalendarDateTime())
-                .setTimeZone(timeZone.id)
-            attendees = listOf(
-                EventAttendee().apply {
-                    email = event.recipientEmail
-                },
-            )
-            summary = event.title
-            description = event.description
-        }
+        return kotlin.runCatching {
+            val calendarService = calendarServiceForUser(userId)
+            val timeZone = event.startDateTime.zone
+            val googleCalendarEvent = GoogleCalendarEvent().apply {
+                start = EventDateTime()
+                    .setDateTime(event.startDateTime.toGoogleCalendarDateTime())
+                    .setTimeZone(timeZone.id)
+                end = EventDateTime()
+                    .setDateTime(event.endDateTime.toGoogleCalendarDateTime())
+                    .setTimeZone(timeZone.id)
+                attendees = listOf(
+                    EventAttendee().apply {
+                        email = event.recipientEmail
+                    },
+                )
+                summary = event.title
+                description = event.description
+            }
 
-        val inserted = calendarService.events()
-            .insert("primary", googleCalendarEvent)
-            .setSendNotifications(true)
-            .execute()
-        return inserted.toEvent(timeZone)
+            val inserted = calendarService.events()
+                .insert("primary", googleCalendarEvent)
+                .setSendNotifications(true)
+                .execute()
+            inserted.toEvent(timeZone)
+        }
+            .onFailure(handleGoogleExceptions(userId))
+            .getOrThrow()
     }
 
     // https://developers.google.com/calendar/v3/reference/events/list
     // https://developers.google.com/calendar/v3/reference/events#resource
     override fun findAll(userId: UserId, startDateTime: ZonedDateTime, endDateTime: ZonedDateTime): List<Event> {
-        val calendarService = calendarServiceForUser(userId)
-        val (calendarEvents, calendarTimeZone) = calendarService.listAll(startDateTime, endDateTime)
-
-        return calendarEvents.map { it.toEvent(calendarTimeZone) }
+        return kotlin.runCatching {
+            val calendarService = calendarServiceForUser(userId)
+            val (calendarEvents, calendarTimeZone) = calendarService.listAll(startDateTime, endDateTime)
+            calendarEvents.map { it.toEvent(calendarTimeZone) }
+        }
+            .onFailure(handleGoogleExceptions(userId))
+            .getOrThrow()
     }
 
     private fun GoogleCalendarEvent.toEvent(calendarTimeZone: ZoneId): Event {
@@ -83,15 +92,20 @@ class GoogleCalendarEventRepository(
         startDateTime: ZonedDateTime,
         endDateTime: ZonedDateTime
     ): Collection<Block> {
-        val calendarService = calendarServiceForUser(userId)
-        val (calendarEvents, calendarTimeZone) = calendarService.listAll(startDateTime, endDateTime)
+        return kotlin.runCatching {
+            val calendarService = calendarServiceForUser(userId)
 
-        val recurrenceRulesByEventID = calendarService.recurrenceEventsFor(calendarEvents)
-        val recurringEventCounts = calendarEvents.filter { it.recurringEventId != null }
-            .groupingBy { it.recurringEventId }
-            .eachCount()
+            val (calendarEvents, calendarTimeZone) = calendarService.listAll(startDateTime, endDateTime)
+            val recurrenceRulesByEventID = calendarService.recurrenceEventsFor(calendarEvents)
+            val recurringEventCounts = calendarEvents.filter { it.recurringEventId != null }
+                .groupingBy { it.recurringEventId }
+                .eachCount()
 
-        return calendarEvents.map { it.toBlock(calendarTimeZone, recurringEventCounts, recurrenceRulesByEventID) }
+            calendarEvents
+                .map { it.toBlock(calendarTimeZone, recurringEventCounts, recurrenceRulesByEventID) }
+        }
+            .onFailure(handleGoogleExceptions(userId))
+            .getOrThrow()
     }
 
     private fun GoogleCalendarEvent.toBlock(
@@ -133,4 +147,13 @@ class GoogleCalendarEventRepository(
             .build()
     }
 
+    private fun handleGoogleExceptions(userId: UserId): (exception: Throwable) -> Unit = {
+        if (it is GoogleJsonResponseException) {
+            when (it.statusCode) {
+                403 -> throw GoogleInsufficientPermissionsException(userId, it)
+                else -> throw GoogleUnhandledException(it)
+            }
+        }
+        throw it
+    }
 }
