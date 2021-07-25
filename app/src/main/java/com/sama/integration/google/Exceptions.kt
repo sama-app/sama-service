@@ -11,7 +11,7 @@ class GoogleInvalidCredentialsException(val userId: UserId) :
 }
 
 class GoogleInsufficientPermissionsException(val userId: UserId, originalEx: GoogleJsonResponseException) :
-    RuntimeException("User#${userId} has insufficient permissions to access Google Calendar: ${originalEx.message}"),
+    RuntimeException("User#${userId} has insufficient permissions to access Google APIs: ${originalEx.message}"),
     HasReason {
     override val reason: String = "google_insufficient_permissions"
 }

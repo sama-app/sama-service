@@ -75,7 +75,7 @@ class GoogleOauth2Controller(
 
             is GoogleOauth2Failure -> {
                 val redirectView = RedirectView()
-                redirectView.attributesMap["error"] = result.error
+                redirectView.attributesMap["reason"] = result.error
 
                 when {
                     currentDevice.isMobile || currentDevice.isTablet -> {

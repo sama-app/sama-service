@@ -105,5 +105,5 @@ sealed class GoogleOauth2Response
 data class GoogleOauth2Success(val accessToken: String, val refreshToken: String) : GoogleOauth2Response()
 data class GoogleOauth2Failure(val error: String) : GoogleOauth2Response()
 
-class MissingScopesException(val msg: String = "missing-scopes") :
+class MissingScopesException(val msg: String = "google_insufficient_permissions") :
     RuntimeException("User did not grant all required scopes")

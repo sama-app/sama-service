@@ -123,7 +123,7 @@ class GoogleOauth2ControllerTest(
             .andExpect(status().isFound)
             .andExpect(
                 redirectedUrl(
-                    "meetsama://auth/error?error=${error}"
+                    "meetsama://auth/error?reason=${error}"
                 )
             )
     }
@@ -140,7 +140,7 @@ class GoogleOauth2ControllerTest(
             .andExpect(status().isFound)
             .andExpect(
                 redirectedUrl(
-                    "meetsama://auth/error?error=${error}"
+                    "meetsama://auth/error?reason=${error}"
                 )
             )
     }
