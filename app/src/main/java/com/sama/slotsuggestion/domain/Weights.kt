@@ -167,12 +167,12 @@ class RecencyWeigher : Weigher {
         return try {
             val vector = curve(
                 -1.0,
-                0.5,
+                0.0,
                 weightContext.multiDayVectorSize,
-                0,
                 weightContext.singleDayVectorSize,
-                0 to 0, { x -> x },
-                -weightContext.multiDayVectorSize + weightContext.singleDayVectorSize to 0, { x -> x }
+                weightContext.singleDayVectorSize * 6,
+                -weightContext.singleDayVectorSize to 0, { x -> x },
+                -weightContext.multiDayVectorSize + weightContext.singleDayVectorSize * 6 to 0, { x -> x }
             )
             vector
         } catch (e: Exception) {
