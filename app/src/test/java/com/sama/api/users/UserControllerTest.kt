@@ -13,7 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.mock.mockito.MockBean
-import org.springframework.http.HttpStatus.FORBIDDEN
+import org.springframework.http.HttpStatus.UNAUTHORIZED
 import org.springframework.http.MediaType.APPLICATION_JSON
 import org.springframework.test.context.junit.jupiter.SpringExtension
 import org.springframework.test.web.servlet.MockMvc
@@ -196,11 +196,11 @@ class UserControllerTest(
 
     @TestFactory
     fun `endpoint authorization without jwt`() = listOf(
-        post("/api/user/me/update-working-hours") to FORBIDDEN,
-        get("/api/user/me/settings") to FORBIDDEN,
-        post("/api/user/me/unregister-device") to FORBIDDEN,
-        post("/api/user/me/register-device") to FORBIDDEN,
-        post("/api/user/me/delete") to FORBIDDEN
+        post("/api/user/me/update-working-hours") to UNAUTHORIZED,
+        get("/api/user/me/settings") to UNAUTHORIZED,
+        post("/api/user/me/unregister-device") to UNAUTHORIZED,
+        post("/api/user/me/register-device") to UNAUTHORIZED,
+        post("/api/user/me/delete") to UNAUTHORIZED
     )
         .mapIndexed { idx, (request, expectedStatus) ->
             DynamicTest.dynamicTest("request#$idx returns $expectedStatus") {

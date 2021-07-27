@@ -61,27 +61,27 @@ internal class AuthorizationFiltersTest(
     }
 
     @Test
-    fun `missing access token returns 403`() {
+    fun `missing access token returns 401`() {
         mockMvc.perform(get("/test-endpoint"))
-            .andExpect(MockMvcResultMatchers.status().isForbidden)
+            .andExpect(MockMvcResultMatchers.status().isUnauthorized)
     }
 
     @Test
-    fun `authorization with invalid header returns 403`() {
+    fun `authorization with invalid header returns 401`() {
         mockMvc.perform(
             get("/test-endpoint")
                 .header("Authorization", "Invalid $validJwt")
         )
-            .andExpect(MockMvcResultMatchers.status().isForbidden)
+            .andExpect(MockMvcResultMatchers.status().isUnauthorized)
     }
 
     @Test
-    fun `authorization with expired jwt returns 403`() {
+    fun `authorization with expired jwt returns 401`() {
         mockMvc.perform(
             get("/test-endpoint")
                 .header("Authorization", "Bearer $expiredJwt")
         )
-            .andExpect(MockMvcResultMatchers.status().isForbidden)
+            .andExpect(MockMvcResultMatchers.status().isUnauthorized)
     }
 
     @Test
@@ -94,12 +94,12 @@ internal class AuthorizationFiltersTest(
     }
 
     @Test
-    fun `authorization with expired cookie jwt returns 403`() {
+    fun `authorization with expired cookie jwt returns 401`() {
         mockMvc.perform(
             get("/test-endpoint")
                 .cookie(Cookie( "sama.access", expiredJwt))
         )
-            .andExpect(MockMvcResultMatchers.status().isForbidden)
+            .andExpect(MockMvcResultMatchers.status().isUnauthorized)
     }
 }
 

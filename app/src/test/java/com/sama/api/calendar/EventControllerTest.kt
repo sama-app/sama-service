@@ -159,6 +159,6 @@ class EventControllerTest(
                 .queryParam("endDate", "2021-01-02")
                 .queryParam("timezone", "Europe/Rome")
         )
-            .andExpect(status().isForbidden)
+            .andExpect(status().isUnauthorized)
     }
 }

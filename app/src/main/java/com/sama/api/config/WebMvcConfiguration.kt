@@ -105,12 +105,12 @@ class GlobalWebMvcExceptionHandler : ResponseEntityExceptionHandler() {
     fun handleDomainValidation(ex: DomainValidationException, request: WebRequest) =
         handleExceptionInternal(ex, null, HttpHeaders(), BAD_REQUEST, request)
 
-    @ExceptionHandler(value = [InactiveUserException::class])
+    @ExceptionHandler(value = [InactiveUserException::class, AuthenticationException::class])
     @ResponseStatus(UNAUTHORIZED)
     fun handleUnauthorized(ex: java.lang.Exception, request: WebRequest) =
         handleExceptionInternal(ex, null, HttpHeaders(), UNAUTHORIZED, request)
 
-    @ExceptionHandler(value = [GoogleInvalidCredentialsException::class, GoogleInsufficientPermissionsException::class, AuthenticationException::class])
+    @ExceptionHandler(value = [GoogleInvalidCredentialsException::class, GoogleInsufficientPermissionsException::class])
     @ResponseStatus(FORBIDDEN)
     fun handleForbidden(ex: java.lang.Exception, request: WebRequest) =
         handleExceptionInternal(ex, null, HttpHeaders(), FORBIDDEN, request)
