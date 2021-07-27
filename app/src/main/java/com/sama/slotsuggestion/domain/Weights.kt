@@ -2,6 +2,7 @@ package com.sama.slotsuggestion.domain
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.lang.Integer.min
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -199,7 +200,17 @@ class SuggestedSlotWeigher(
             return (0 until weightContext.days)
                 .map {
                     if (it == daySinceStart) {
-                        weightContext.linearCurve(startTime, endTime, 0.0, -10.0, -4 to 0)
+                        val start = weightContext.timeToIndex(startTime)
+                        val end = weightContext.timeToIndex(endTime)
+                        curve(
+                            0.0,
+                            -10.0,
+                            weightContext.singleDayVectorSize,
+                            start, end,
+                            -start to 0, { x -> x},
+                            -weightContext.singleDayVectorSize + end to 0, { x -> x}
+                        )
+
                     } else {
                         weightContext.zeroes()
                     }
