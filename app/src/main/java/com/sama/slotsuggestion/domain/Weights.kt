@@ -14,8 +14,7 @@ interface Weigher {
     fun weigh(weightContext: WeightContext): Vector
 }
 
-@JvmInline
-value class PastBlockWeigher(private val block: Block?) : Weigher {
+class PastBlockWeigher(private val block: Block?) : Weigher {
     override fun weigh(weightContext: WeightContext): Vector {
         try {
             if (block == null || block.multiDay() || block.allDay || block.zeroDuration()) {
@@ -41,8 +40,7 @@ value class PastBlockWeigher(private val block: Block?) : Weigher {
     }
 }
 
-@JvmInline
-value class FutureBlockWeigher(private val block: Block?) : Weigher {
+class FutureBlockWeigher(private val block: Block?) : Weigher {
     override fun weigh(weightContext: WeightContext): Vector {
         try {
             if (block == null || block.zeroDuration()) {
@@ -51,7 +49,7 @@ value class FutureBlockWeigher(private val block: Block?) : Weigher {
             val startTime = block.startDateTime.toLocalTime()
             val endTime = block.endDateTime.toLocalTime()
 
-            val weight = weightContext.cliff(startTime, endTime, 0.0, -100.0)
+            val weight = weightContext.cliff(startTime, endTime, 0.0, -1000.0)
 
             // Prefer meetings close to an existing one
             val startTimeIndex = weightContext.timeToIndex(startTime)
@@ -71,8 +69,7 @@ value class FutureBlockWeigher(private val block: Block?) : Weigher {
     }
 }
 
-@JvmInline
-value class WorkingHoursWeigher(private val wh: WorkingHours?) : Weigher {
+class WorkingHoursWeigher(private val wh: WorkingHours?) : Weigher {
     override fun weigh(weightContext: WeightContext): Vector {
         try {
             if (wh == null) {
@@ -82,7 +79,7 @@ value class WorkingHoursWeigher(private val wh: WorkingHours?) : Weigher {
                 return weightContext.zeroes()
             }
 
-            return weightContext.linearCurve(wh.startTime, wh.endTime, -5.0, 0.0, -4 to 0)
+            return weightContext.linearCurve(wh.startTime, wh.endTime, -10.0, 0.0, -4 to 0)
         } catch (e: Exception) {
             logger.error("working-hours weigh error", e)
             return weightContext.zeroes()
@@ -90,7 +87,7 @@ value class WorkingHoursWeigher(private val wh: WorkingHours?) : Weigher {
     }
 }
 
-data class SearchBoundaryWeigher(
+class SearchBoundaryWeigher(
     private val searchStartDate: LocalDate,
     private val suggestionDayCount: Int,
     private val initiatorTimeZone: ZoneId
@@ -104,7 +101,7 @@ data class SearchBoundaryWeigher(
                     when {
                         date.isEqual(searchStartDate) -> {
                             val startTime = LocalDateTime.now(initiatorTimeZone).toLocalTime()
-                            weightContext.cliff(startTime, LocalTime.MAX, -100.0, 0.0)
+                            weightContext.cliff(startTime, LocalTime.MAX, -1000.0, 0.0)
                         }
                         date.isBefore(searchEndDate) -> {
                             weightContext.zeroes()
@@ -112,7 +109,7 @@ data class SearchBoundaryWeigher(
                         date.isEqual(searchEndDate) -> {
                             val endTime = LocalDateTime.now(initiatorTimeZone)
                                 .plusDays(suggestionDayCount.toLong()).toLocalTime()
-                            weightContext.cliff(LocalTime.MIDNIGHT, endTime, 0.0, -100.0)
+                            weightContext.cliff(LocalTime.MIDNIGHT, endTime, 0.0, -1000.0)
                         }
                         else -> {
                             weightContext.line(-100.0)
@@ -132,7 +129,7 @@ data class SearchBoundaryWeigher(
  * @return a multi-day [Vector] that weights down slots that conflict with the requestTimeZone
  * assuming a reasonable 8:00 - 20:00 "working hours" of the recipient
  */
-data class RecipientTimeZoneWeigher(
+class RecipientTimeZoneWeigher(
     private val initiatorTimeZone: ZoneId,
     private val requestTimeZone: ZoneId
 ) : Weigher {
@@ -188,7 +185,7 @@ class RecencyWeigher : Weigher {
 /**
  * @return a multi-day [Vector] that weights down the suggested slot.
  */
-data class SuggestedSlotWeigher(
+class SuggestedSlotWeigher(
     private val ss: SlotSuggestion,
     private val startDate: LocalDate
 ) : Weigher {
