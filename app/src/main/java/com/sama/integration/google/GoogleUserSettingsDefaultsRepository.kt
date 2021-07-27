@@ -7,7 +7,6 @@ import com.google.api.services.calendar.Calendar
 import com.sama.SamaApplication
 import com.sama.users.domain.UserSettingsDefaults
 import com.sama.users.domain.UserSettingsDefaultsRepository
-import liquibase.pro.packaged.it
 import org.apache.commons.lang3.LocaleUtils
 import org.springframework.stereotype.Component
 import java.time.ZoneId

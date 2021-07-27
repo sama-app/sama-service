@@ -57,7 +57,7 @@ class WebSecurityConfiguration(
                     val result = handlerExceptionResolver.resolveException(request, response, null, authException)
                     if (result == null) {
                         logger.warn("Unhandled auth exception", authException)
-                        response.sendError(HttpServletResponse.SC_FORBIDDEN, "unhandled_message")
+                        response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "unhandled_message")
                     }
                 }
             }

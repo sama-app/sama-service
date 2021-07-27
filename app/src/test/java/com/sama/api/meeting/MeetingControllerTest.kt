@@ -294,8 +294,8 @@ class MeetingControllerTest(
 
     @TestFactory
     fun `endpoint authorization without jwt`() = listOf(
-        post("/api/meeting/initiate") to FORBIDDEN,
-        post("/api/meeting/1/propose") to FORBIDDEN,
+        post("/api/meeting/initiate") to UNAUTHORIZED,
+        post("/api/meeting/1/propose") to UNAUTHORIZED,
         get("/api/meeting/by-code/some-code") to OK,
         post("/api/meeting/by-code/some-code/confirm")
             .contentType(APPLICATION_JSON) to BAD_REQUEST, // no payload

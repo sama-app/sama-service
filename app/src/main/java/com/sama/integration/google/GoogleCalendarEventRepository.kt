@@ -14,7 +14,6 @@ import com.sama.slotsuggestion.domain.Block
 import com.sama.slotsuggestion.domain.BlockRepository
 import com.sama.slotsuggestion.domain.Recurrence
 import com.sama.users.domain.UserId
-import liquibase.pro.packaged.it
 import org.dmfs.rfc5545.recur.Freq
 import org.dmfs.rfc5545.recur.RecurrenceRule
 import org.springframework.stereotype.Component

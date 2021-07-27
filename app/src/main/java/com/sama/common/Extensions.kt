@@ -1,6 +1,5 @@
 package com.sama.common
 
-import liquibase.pro.packaged.T
 import org.springframework.data.repository.CrudRepository
 import java.time.Duration
 import java.time.LocalDate
