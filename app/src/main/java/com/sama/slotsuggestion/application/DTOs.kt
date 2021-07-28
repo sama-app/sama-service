@@ -9,7 +9,6 @@ data class SlotSuggestionRequest(
     val slotDuration: Duration,
     val recipientTimezone: ZoneId,
     val suggestionCount: Int,
-    val suggestionDayCount: Int,
 )
 
 data class SlotSuggestionResponse(

@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service
 @Service
 class SlotSuggestionService(private val heatMapService: HeatMapService) {
     fun suggestSlots(userId: UserId, request: SlotSuggestionRequest): SlotSuggestionResponse {
-        val heatMap = heatMapService.generate(userId, request.suggestionDayCount, request.recipientTimezone)
+        val heatMap = heatMapService.generate(userId, request.recipientTimezone)
 
         val suggestions = SlotSuggestionEngine(heatMap)
             .suggest(

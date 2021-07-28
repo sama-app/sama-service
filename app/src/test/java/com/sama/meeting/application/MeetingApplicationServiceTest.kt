@@ -71,7 +71,7 @@ class MeetingApplicationServiceTest(
         val userId = 1L
         val meetingIntentId = 11L
         val durationMinutes: Long = 30
-        val command = InitiateMeetingCommand(durationMinutes, systemDefault(), 1, 1)
+        val command = InitiateMeetingCommand(durationMinutes, systemDefault(), 1)
 
         // setup
         whenever(meetingIntentRepository.nextIdentity())
@@ -92,7 +92,6 @@ class MeetingApplicationServiceTest(
         val expectedSlotSuggestionRequest = SlotSuggestionRequest(
             ofMinutes(durationMinutes),
             systemDefault(),
-            1,
             1
         )
         verify(slotSuggestionService).suggestSlots(eq(userId), eq(expectedSlotSuggestionRequest))

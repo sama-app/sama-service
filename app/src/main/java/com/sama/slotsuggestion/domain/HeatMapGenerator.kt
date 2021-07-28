@@ -40,8 +40,7 @@ data class HeatMapGenerator(val startDate: LocalDate, val endDate: LocalDate, va
         futureBlocks: Map<LocalDate, List<Block>>,
         workingHours: Map<DayOfWeek, WorkingHours>,
         initiatorTimeZone: ZoneId,
-        recipientTimeZone: ZoneId,
-        searchDayCount: Int
+        recipientTimeZone: ZoneId
     ): HeatMap {
         val (workdays, weekends) = pastBlocksWeights(pastBlocks)
 
@@ -64,7 +63,7 @@ data class HeatMapGenerator(val startDate: LocalDate, val endDate: LocalDate, va
             .reduce { acc, vector -> acc.plus(vector) }
 
         val finalWeights = baseWeights
-            .add(SearchBoundaryWeigher(startDate, searchDayCount, initiatorTimeZone).weigh(weightContext))
+            .add(SearchBoundaryWeigher(startDate, weightContext.days, initiatorTimeZone).weigh(weightContext))
             .add(RecipientTimeZoneWeigher(initiatorTimeZone, recipientTimeZone).weigh(weightContext))
             .add(RecencyWeigher().weigh(weightContext))
 
