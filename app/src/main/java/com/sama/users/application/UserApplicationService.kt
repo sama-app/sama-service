@@ -2,7 +2,6 @@ package com.sama.users.application
 
 import com.sama.common.ApplicationService
 import com.sama.common.findByIdOrThrow
-import com.sama.meeting.application.MeetingEventConsumer
 import com.sama.users.configuration.AccessJwtConfiguration
 import com.sama.users.configuration.RefreshJwtConfiguration
 import com.sama.users.domain.*
@@ -19,7 +18,6 @@ class UserApplicationService(
     private val userSettingsDefaultsRepository: UserSettingsDefaultsRepository,
     private val accessJwtConfiguration: AccessJwtConfiguration,
     private val refreshJwtConfiguration: RefreshJwtConfiguration,
-    private val meetingEventConsumer: MeetingEventConsumer,
     private val clock: Clock
 ) {
 
@@ -35,12 +33,23 @@ class UserApplicationService(
         return userId
     }
 
+    @Transactional(readOnly = true)
+    fun findUser(userId: UserId): UserDTO {
+        val userEntity = userRepository.findByIdOrThrow(userId)
+        return userEntity.let { entity ->
+            UserDTO(
+                entity.id()!!,
+                entity.email,
+                entity.fullName,
+                entity.active!!
+            )
+        }
+    }
+
     @Transactional
     fun deleteUser(userId: UserId): Boolean {
         userSettingsRepository.deleteById(userId)
         userRepository.deleteById(userId)
-
-        meetingEventConsumer.onUserDeleted(UserDeletedEvent(userId))
         return true
     }
 
@@ -61,6 +70,23 @@ class UserApplicationService(
 
         userEntity.applyChanges(basicDetails).also { userRepository.save(it) }
         return true
+    }
+
+
+    @Transactional
+    fun findUserDeviceRegistrations(userId: UserId): UserDeviceRegistrationsDTO {
+        val userEntity = userRepository.findByIdOrThrow(userId)
+        return UserDeviceRegistrations.of(userEntity)
+            .let {
+                UserDeviceRegistrationsDTO(
+                    userId,
+                    if (it.deviceId != null && it.firebaseRegistrationToken != null) {
+                        FirebaseDeviceRegistrationDTO(it.deviceId, it.firebaseRegistrationToken)
+                    } else {
+                        null
+                    }
+                )
+            }
     }
 
     @Transactional
@@ -123,7 +149,8 @@ class UserApplicationService(
         return true
     }
 
-    fun getUserSettings(userId: UserId): UserSettingsDTO {
+    @Transactional(readOnly = true)
+    fun findUserSettings(userId: UserId): UserSettingsDTO {
         val userSettings = userSettingsRepository.findByIdOrThrow(userId)
         return userSettings.let {
             UserSettingsDTO(

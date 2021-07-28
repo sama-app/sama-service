@@ -6,6 +6,7 @@ import com.sama.common.ApplicationService
 import com.sama.common.NotFoundException
 import com.sama.common.findByIdOrThrow
 import com.sama.common.toMinutes
+import com.sama.comms.application.CommsEventConsumer
 import com.sama.meeting.domain.*
 import com.sama.meeting.domain.aggregates.MeetingEntity
 import com.sama.meeting.domain.aggregates.MeetingIntentEntity
@@ -35,6 +36,7 @@ class MeetingApplicationService(
     private val userRepository: UserRepository,
     private val eventRepository: EventRepository,
     private val calendarEventConsumer: CalendarEventConsumer,
+    private val commsEventConsumer: CommsEventConsumer,
     private val clock: Clock
 ) {
 
@@ -157,10 +159,13 @@ class MeetingApplicationService(
             .confirm(command.slot.toValueObject(), meetingRecipient)
             .getOrThrow()
 
-        // "manual" event publishing
-        calendarEventConsumer.onMeetingConfirmed(MeetingConfirmedEvent(confirmedMeeting))
-
         meetingEntity.applyChanges(confirmedMeeting).also { meetingRepository.save(it) }
+
+        // "manual" event publishing
+        val event = MeetingConfirmedEvent(confirmedMeeting)
+        calendarEventConsumer.onMeetingConfirmed(event)
+        commsEventConsumer.onMeetingConfirmed(event)
+
         return true
     }
 

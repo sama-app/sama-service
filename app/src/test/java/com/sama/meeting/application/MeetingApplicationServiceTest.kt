@@ -3,6 +3,7 @@ package com.sama.meeting.application
 import com.sama.calendar.application.CalendarEventConsumer
 import com.sama.calendar.domain.EventRepository
 import com.sama.common.NotFoundException
+import com.sama.comms.application.CommsEventConsumer
 import com.sama.meeting.domain.*
 import com.sama.meeting.domain.aggregates.MeetingEntity
 import com.sama.meeting.domain.aggregates.MeetingIntentEntity
@@ -42,6 +43,7 @@ class MeetingApplicationServiceTest(
     @Mock private val userRepository: UserRepository,
     @Mock private val eventRepository: EventRepository,
     @Mock private val calendarEventConsumer: CalendarEventConsumer,
+    @Mock private val commsEventConsumer: CommsEventConsumer,
 ) {
     private val clock: Clock = Clock.fixed(ofEpochSecond(3600), systemDefault())
 
@@ -58,6 +60,7 @@ class MeetingApplicationServiceTest(
             userRepository,
             eventRepository,
             calendarEventConsumer,
+            commsEventConsumer,
             clock
         )
     }
@@ -158,8 +161,6 @@ class MeetingApplicationServiceTest(
     fun `propose meeting without intent`() {
         // input
         val initiatorId = 1L
-        val initiatorFullName = "test"
-        val initiatorEmail = "test@meetsama.com"
         val meetingIntentId = 11L
         val proposedSlot = MeetingSlotDTO(
             ZonedDateTime.now(clock),
@@ -347,6 +348,7 @@ class MeetingApplicationServiceTest(
             )
         )
         verify(calendarEventConsumer).onMeetingConfirmed(eq(expectedEvent))
+        verify(commsEventConsumer).onMeetingConfirmed(eq(expectedEvent))
 
         assertEquals(true, result)
     }
@@ -397,6 +399,9 @@ class MeetingApplicationServiceTest(
 
         // act
         assertThrows<NotFoundException> { underTest.confirmMeeting(meetingCode, command) }
+
+        verifyZeroInteractions(calendarEventConsumer)
+        verifyZeroInteractions(commsEventConsumer)
     }
 
     @TestFactory

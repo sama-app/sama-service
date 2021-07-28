@@ -19,6 +19,9 @@ interface UserRepository : JpaRepository<UserEntity, UserId> {
 
     @Query("select u.id from UserEntity u where email = ?1")
     fun findIdByEmail(email: String): UserId?
+
+    @Query("select u.firebaseCredential from UserEntity u where id = ?1")
+    fun findFirebaseCredential(userId: UserId): FirebaseCredential?
 }
 
 fun UserRepository.findByEmailOrThrow(email: String) = findByEmail(email)

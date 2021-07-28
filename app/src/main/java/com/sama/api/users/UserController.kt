@@ -61,7 +61,7 @@ class UserController(
         produces = [APPLICATION_JSON_VALUE]
     )
     fun getSettings(@AuthUserId userId: UserId): UserSettingsDTO =
-        userApplicationService.getUserSettings(userId)
+        userApplicationService.findUserSettings(userId)
 
     @Operation(
         summary = "Update user working hours",
