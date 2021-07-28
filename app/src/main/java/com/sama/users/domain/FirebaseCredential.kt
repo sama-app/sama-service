@@ -13,7 +13,7 @@ data class FirebaseCredential(
     val deviceId: UUID,
 
     @Column(name = "firebase_registration_token", table = "user_firebase_credential")
-    val registrationToken: String?,
+    val registrationToken: String,
 
     @Column(name = "updated_at", table = "user_firebase_credential")
     val updatedAt: Instant

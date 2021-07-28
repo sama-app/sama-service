@@ -13,9 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.mock.mockito.MockBean
-import org.springframework.http.HttpStatus
 import org.springframework.http.HttpStatus.FORBIDDEN
-import org.springframework.http.MediaType
 import org.springframework.http.MediaType.APPLICATION_JSON
 import org.springframework.test.context.junit.jupiter.SpringExtension
 import org.springframework.test.web.servlet.MockMvc
@@ -119,7 +117,7 @@ class UserControllerTest(
 
     @Test
     fun `get settings`() {
-        whenever(userApplicationService.getUserSettings(eq(userId)))
+        whenever(userApplicationService.findUserSettings(eq(userId)))
             .thenReturn(
                 UserSettingsDTO(
                     Locale.ENGLISH,
