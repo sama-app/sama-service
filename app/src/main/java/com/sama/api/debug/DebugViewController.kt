@@ -67,7 +67,7 @@ class DebugViewController(
 
     @GetMapping("/api/__debug/user/heatmap")
     fun renderUserHeapMap(@AuthUserId userId: UserId, model: MutableMap<String, Any>): ModelAndView {
-        val heatMap = heatMapService.generate(userId, 21, ZoneId.systemDefault())
+        val heatMap = heatMapService.generate(userId, ZoneId.systemDefault())
             .dayVectors()
             .mapValues { it.value.mapIndexed { _, value -> sigmoid(value) } }
             .toSortedMap()
@@ -100,8 +100,7 @@ class DebugViewController(
             userId, SlotSuggestionRequest(
                 Duration.ofMinutes(60),
                 ZoneId.systemDefault(),
-                10,
-                21
+                10
             )
         )
     }

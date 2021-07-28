@@ -16,7 +16,7 @@ class HeatMapService(
     private val heatMapConfiguration: HeatMapConfiguration,
     private val weightContext: WeightContext
 ) {
-    fun generate(initiatorId: UserId, searchDayCount: Int, recipientTimezone: ZoneId): HeatMap {
+    fun generate(initiatorId: UserId, recipientTimezone: ZoneId): HeatMap {
         val user = userRepository.findById(initiatorId)
         val today = LocalDate.now(user.timeZone).atStartOfDay(user.timeZone)
 
@@ -36,8 +36,7 @@ class HeatMapService(
                 futureBlocksByDate,
                 user.workingHours,
                 user.timeZone,
-                recipientTimezone,
-                searchDayCount
+                recipientTimezone
             )
     }
 }

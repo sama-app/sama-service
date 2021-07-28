@@ -64,8 +64,7 @@ class MeetingApplicationService(
         return SlotSuggestionRequest(
             durationMinutes.toMinutes(),
             timeZone,
-            suggestionSlotCount,
-            suggestionDayCount,
+            suggestionSlotCount
         )
     }
 

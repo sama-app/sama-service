@@ -30,21 +30,20 @@ data class SlotSuggestionEngine(
         val suggestions = mutableListOf<SlotSuggestion>()
         do {
             // take the best suggestion
-            val (index, rank) = heatMap.copyOf()
+            val (index, score) = heatMap.copyOf()
                 // Apply sigmoid
                 .mapValues { sigmoid(it) }
                 // Create ranking for each slot of the specified duration
                 .zipMultiplying(searchSlotCount)
-                // Sort by rank
+                // Sort by score
                 .mapIndexed { index, value -> index to value }
                 .maxByOrNull { it.second }!!
-
 
             val start = startDate.atStartOfDay(baseHeatMap.timeZone)
                 .plus(weightContext.indexToDurationOffset(index))
             val end = start.plus(duration)
 
-            val bestSlot = SlotSuggestion(start, end, rank)
+            val bestSlot = SlotSuggestion(start, end, score)
             suggestions.add(bestSlot)
 
             // update heatmap to not suggest the same slot again

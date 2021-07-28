@@ -57,13 +57,12 @@ class MeetingControllerTest(
         val durationMinutes = 30L
         val timeZone = ZoneId.of("Europe/Rome")
         val slotSuggestionCount = 3
-        val suggestionDayCount = 21
         val code = UUID.randomUUID()
 
         whenever(
             meetingApplicationService.initiateMeeting(
                 eq(userId),
-                eq(InitiateMeetingCommand(durationMinutes, timeZone, slotSuggestionCount, suggestionDayCount))
+                eq(InitiateMeetingCommand(durationMinutes, timeZone, slotSuggestionCount))
             )
         ).thenReturn(
             MeetingIntentDTO(
@@ -83,8 +82,7 @@ class MeetingControllerTest(
             {
                 "durationMinutes": $durationMinutes,
                 "timeZone": "${timeZone.id}",
-                "suggestionSlotCount": $slotSuggestionCount,
-                "suggestionDayCount": $suggestionDayCount
+                "suggestionSlotCount": $slotSuggestionCount
             }
         """
 
@@ -117,24 +115,14 @@ class MeetingControllerTest(
             {
                 "durationMinutes": 14,
                 "timeZone": "Europe/Rome",
-                "suggestionSlotCount": 3,
-                "suggestionDayCount": 21
+                "suggestionSlotCount": 3
             }
         """,
         """
             {
                 "durationMinutes": 30,
                 "timeZone": "Europe/Rome",
-                "suggestionSlotCount": -1,
-                "suggestionDayCount": 21
-            }
-        """,
-        """
-            {
-                "durationMinutes": 30,
-                "timeZone": "Europe/Rome",
-                "suggestionSlotCount": 1,
-                "suggestionDayCount": -1
+                "suggestionSlotCount": -1
             }
         """
     )
