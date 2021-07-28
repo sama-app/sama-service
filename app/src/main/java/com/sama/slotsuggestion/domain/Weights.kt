@@ -107,11 +107,6 @@ class SearchBoundaryWeigher(
                         date.isBefore(searchEndDate) -> {
                             weightContext.zeroes()
                         }
-                        date.isEqual(searchEndDate) -> {
-                            val endTime = LocalDateTime.now(initiatorTimeZone)
-                                .plusDays(suggestionDayCount.toLong()).toLocalTime()
-                            weightContext.cliff(LocalTime.MIDNIGHT, endTime, 0.0, -1000.0)
-                        }
                         else -> {
                             weightContext.line(-100.0)
                         }
@@ -200,17 +195,7 @@ class SuggestedSlotWeigher(
             return (0 until weightContext.days)
                 .map {
                     if (it == daySinceStart) {
-                        val start = weightContext.timeToIndex(startTime)
-                        val end = weightContext.timeToIndex(endTime)
-                        curve(
-                            0.0,
-                            -10.0,
-                            weightContext.singleDayVectorSize,
-                            start, end,
-                            -start to 0, { x -> x},
-                            -weightContext.singleDayVectorSize + end to 0, { x -> x}
-                        )
-
+                        weightContext.linearCurve(startTime, endTime, 0.0, -50.0, -16 to 0)
                     } else {
                         weightContext.zeroes()
                     }
