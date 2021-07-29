@@ -30,7 +30,7 @@ class PastBlockWeigher(private val block: Block?) : Weigher {
                 0.05
             } else {
                 // if it's a self-blocked time, we count as we DON'T want meetings for the time
-                -0.1
+                -0.05
             } / block.recurrenceCount
 
             return weightContext.cliff(startTime, endTime, 0.0, weight)
@@ -165,10 +165,10 @@ class RecencyWeigher : Weigher {
                 -1.0,
                 0.0,
                 weightContext.multiDayVectorSize,
-                weightContext.singleDayVectorSize,
-                weightContext.singleDayVectorSize * 6,
-                -weightContext.singleDayVectorSize to 0, { x -> x },
-                -weightContext.multiDayVectorSize + weightContext.singleDayVectorSize * 6 to 0, { x -> x }
+                0,
+                weightContext.singleDayVectorSize * 4,
+                0 to 0, { x -> x },
+                -weightContext.multiDayVectorSize + weightContext.singleDayVectorSize * 4 to 0, { x -> x }
             )
             vector
         } catch (e: Exception) {
