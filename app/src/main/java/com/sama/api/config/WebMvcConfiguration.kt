@@ -98,46 +98,51 @@ class GlobalWebMvcExceptionHandler : ResponseEntityExceptionHandler() {
     @ExceptionHandler(value = [ZoneRulesException::class, IllegalArgumentException::class])
     @ResponseStatus(BAD_REQUEST)
     fun handleBadRequest(ex: Exception, request: WebRequest) =
-        ResponseEntity(ApiError.create(BAD_REQUEST, ex, request), HttpHeaders(), BAD_REQUEST)
+        handleExceptionInternal(ex, null, HttpHeaders(), BAD_REQUEST, request)
 
     @ExceptionHandler(value = [DomainValidationException::class])
     @ResponseStatus(BAD_REQUEST)
     fun handleDomainValidation(ex: DomainValidationException, request: WebRequest) =
-        ResponseEntity(ApiError.create(BAD_REQUEST, ex, request), HttpHeaders(), BAD_REQUEST)
+        handleExceptionInternal(ex, null, HttpHeaders(), BAD_REQUEST, request)
 
     @ExceptionHandler(value = [InactiveUserException::class])
     @ResponseStatus(UNAUTHORIZED)
     fun handleUnauthorized(ex: java.lang.Exception, request: WebRequest) =
-        ResponseEntity(ApiError.create(UNAUTHORIZED, ex, request), HttpHeaders(), UNAUTHORIZED)
+        handleExceptionInternal(ex, null, HttpHeaders(), UNAUTHORIZED, request)
 
     @ExceptionHandler(value = [GoogleInvalidCredentialsException::class, GoogleInsufficientPermissionsException::class, AuthenticationException::class])
     @ResponseStatus(FORBIDDEN)
     fun handleForbidden(ex: java.lang.Exception, request: WebRequest) =
-        ResponseEntity(ApiError.create(FORBIDDEN, ex, request), HttpHeaders(), FORBIDDEN)
+        handleExceptionInternal(ex, null, HttpHeaders(), FORBIDDEN, request)
 
     @ExceptionHandler(value = [NotFoundException::class])
     @ResponseStatus(NOT_FOUND)
     fun handleNotFound(ex: NotFoundException, request: WebRequest) =
-        ResponseEntity(ApiError.create(NOT_FOUND, ex, request), HttpHeaders(), NOT_FOUND)
+        handleExceptionInternal(ex, null,HttpHeaders(), NOT_FOUND, request)
 
     @ExceptionHandler(value = [DomainIntegrityException::class])
     @ResponseStatus(CONFLICT)
     fun handleDomainIntegrity(ex: DomainIntegrityException, request: WebRequest) =
-        ResponseEntity(ApiError.create(CONFLICT, ex, request), HttpHeaders(), CONFLICT)
+        handleExceptionInternal(ex, null, HttpHeaders(), CONFLICT, request)
 
     @ExceptionHandler(value = [DomainEntityStatusException::class])
     @ResponseStatus(GONE)
     fun handleDomainStatus(ex: DomainEntityStatusException, request: WebRequest) =
-        ResponseEntity(ApiError.create(GONE, ex, request), HttpHeaders(), GONE)
+        handleExceptionInternal(ex, null, HttpHeaders(), GONE, request)
 
     @ExceptionHandler(value = [DomainInvalidActionException::class])
     @ResponseStatus(UNPROCESSABLE_ENTITY)
     fun handleDomainInvalidAction(ex: DomainInvalidActionException, request: WebRequest) =
-        ResponseEntity(ApiError.create(UNPROCESSABLE_ENTITY, ex, request), HttpHeaders(), UNPROCESSABLE_ENTITY)
+        handleExceptionInternal(ex, null,HttpHeaders(), UNPROCESSABLE_ENTITY, request)
 
     override fun handleExceptionInternal(
         ex: Exception, body: Any?, headers: HttpHeaders, status: HttpStatus, request: WebRequest
-    ): ResponseEntity<Any> = super.handleExceptionInternal(
-        ex, body ?: ApiError.create(status, ex, request), headers, status, request
-    )
+    ): ResponseEntity<Any> {
+        val apiError = ApiError.create(status, ex, request)
+        logger.info("Response [code=${apiError.status}, reason=${apiError.reason}, message=${apiError.message}]")
+
+        return super.handleExceptionInternal(
+            ex, body ?: apiError, headers, status, request
+        )
+    }
 }
