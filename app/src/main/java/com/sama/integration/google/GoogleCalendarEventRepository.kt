@@ -150,6 +150,7 @@ class GoogleCalendarEventRepository(
     private fun handleGoogleExceptions(userId: UserId): (exception: Throwable) -> Unit = {
         if (it is GoogleJsonResponseException) {
             when (it.statusCode) {
+                401 -> throw GoogleInvalidCredentialsException(userId, it)
                 403 -> throw GoogleInsufficientPermissionsException(userId, it)
                 else -> throw GoogleUnhandledException(it)
             }

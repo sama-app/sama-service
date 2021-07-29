@@ -47,7 +47,7 @@ class GoogleCredentialJPADataStore internal constructor(
     override fun set(id: String, c: StoredCredential): DataStore<StoredCredential> {
         if (!c.isUsable()) {
             logger.warn("User#$id received invalid Google Credentials")
-            throw GoogleInvalidCredentialsException(id.toLong())
+            throw GoogleInvalidCredentialsException(id.toLong(), null)
         }
 
         val user = userRepository.findByIdOrThrow(id.toLong())
