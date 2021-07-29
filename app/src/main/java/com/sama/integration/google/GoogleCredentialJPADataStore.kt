@@ -8,6 +8,8 @@ import com.sama.users.domain.GoogleCredential
 import com.sama.users.domain.UserEntity
 import com.sama.users.domain.UserRepository
 import com.sama.users.domain.applyChanges
+import org.apache.commons.logging.LogFactory
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter
 import java.util.function.Function
 import java.util.stream.Collectors
 
@@ -16,6 +18,7 @@ class GoogleCredentialJPADataStore internal constructor(
     private val userRepository: UserRepository,
     dataStoreFactory: GoogleCredentialJPADataStoreFactory
 ) : AbstractDataStore<StoredCredential>(dataStoreFactory, dataStoreId), DataStore<StoredCredential> {
+    private val logger = LogFactory.getLog(GoogleCredentialJPADataStore::class.java)
 
     override fun keySet(): Set<String> {
         return userRepository.findAllIds()
@@ -43,6 +46,7 @@ class GoogleCredentialJPADataStore internal constructor(
 
     override fun set(id: String, c: StoredCredential): DataStore<StoredCredential> {
         if (!c.isUsable()) {
+            logger.warn("User#$id received invalid Google Credentials")
             throw GoogleInvalidCredentialsException(id.toLong())
         }
 
