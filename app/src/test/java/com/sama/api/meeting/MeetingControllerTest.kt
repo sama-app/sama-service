@@ -141,67 +141,6 @@ class MeetingControllerTest(
 
     @Test
     fun `propose meeting`() {
-        val meetingIntentId = 11L
-        val initiatorFullName = "test"
-        val initiatorEmail = "test@meetsama.com"
-        val shareableMessage = "a nice message"
-        val meetingUrl = "localhost:3000/code"
-        val proposedSlot = MeetingSlotDTO(
-            ZonedDateTime.parse("2021-01-01T12:00:00Z"),
-            ZonedDateTime.parse("2021-01-01T13:00:00Z"),
-        )
-        whenever(
-            meetingApplicationService.proposeMeeting(
-                eq(userId), eq(meetingIntentId), any()
-            )
-        ).thenReturn(
-            MeetingInvitationDTO(
-                ProposedMeetingDTO(
-                    listOf(proposedSlot),
-                    InitiatorDTO(initiatorFullName, initiatorEmail)
-                ),
-                meetingUrl,
-                shareableMessage
-            )
-        )
-
-        val requestBody = """
-            {
-                "proposedSlots": [{
-                    "startDateTime": "2021-01-01T12:00:00Z",
-                    "endDateTime": "2021-01-01T13:00:00Z"
-                }]
-            }
-        """
-
-        val expectedResponse = """
-            {
-                "meeting": {
-                    "proposedSlots": [{
-                        "startDateTime": "2021-01-01T12:00:00Z",
-                        "endDateTime": "2021-01-01T13:00:00Z"
-                     }],
-                    "initiator": {
-                        "fullName": $initiatorFullName,
-                        "email": $initiatorEmail
-                    }
-                },
-                "meetingUrl": "$meetingUrl",
-                "shareableMessage": "$shareableMessage"
-            }
-        """
-        mockMvc.perform(
-            post("/api/meeting/$meetingIntentId/propose")
-                .contentType(APPLICATION_JSON)
-                .header("Authorization", "Bearer $jwt")
-                .content(requestBody)
-        )
-            .andExpect(status().isOk)
-            .andExpect(MockMvcResultMatchers.content().json(expectedResponse))
-    }
-
-    @Test
-    fun `propose meeting v2`() {
         val initiatorFullName = "test"
         val initiatorEmail = "test@meetsama.com"
         val shareableMessage = "a nice message"

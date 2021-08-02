@@ -11,6 +11,7 @@ import com.sama.meeting.domain.aggregates.MeetingProposedSlotEntity
 import com.sama.meeting.domain.repositories.MeetingCodeGenerator
 import com.sama.meeting.domain.repositories.MeetingIntentRepository
 import com.sama.meeting.domain.repositories.MeetingRepository
+import com.sama.meeting.domain.repositories.findByCodeOrThrow
 import com.sama.slotsuggestion.application.SlotSuggestionRequest
 import com.sama.slotsuggestion.application.SlotSuggestionResponse
 import com.sama.slotsuggestion.application.SlotSuggestionService
@@ -28,6 +29,7 @@ import java.time.Duration.ofMinutes
 import java.time.Instant.ofEpochSecond
 import java.time.ZoneId.systemDefault
 import java.time.ZonedDateTime
+import java.util.*
 import java.util.Optional.empty
 import java.util.Optional.of
 import kotlin.test.assertEquals
@@ -116,6 +118,7 @@ class MeetingApplicationServiceTest(
         val initiatorEmail = "test@meetsama.com"
         val meetingId = 1L
         val meetingIntentId = 11L
+        val meetingIntentCode = UUID.randomUUID()
         val meetingCode = "some-code"
         val meetingUrl = "https://meetsama.com/some-code"
         val shareableMessage = "message to share"
@@ -123,18 +126,18 @@ class MeetingApplicationServiceTest(
             ZonedDateTime.now(clock),
             ZonedDateTime.now(clock).plusMinutes(30)
         )
-        val command = ProposeMeetingCommand(listOf(proposedSlot))
+        val command = ProposeMeetingCommand(meetingIntentCode, listOf(proposedSlot))
 
         // setup
-        whenever(meetingIntentRepository.findById(eq(meetingIntentId)))
-            .thenReturn(of(MeetingIntentEntity().apply {
+        whenever(meetingIntentRepository.findByCode(eq(meetingIntentCode)))
+            .thenReturn(MeetingIntentEntity().apply {
                 this.id = meetingIntentId
                 this.initiatorId = initiatorId
                 this.recipientId = null
                 this.durationMinutes = 30
                 this.timezone = systemDefault()
                 this.suggestedSlots = mutableListOf()
-            }))
+            })
         whenever(meetingRepository.nextIdentity()).thenReturn(meetingId)
         whenever(meetingCodeGenerator.generate()).thenReturn(meetingCode)
         whenever(meetingInvitationService.findForProposedMeeting(any(), any()))
@@ -143,7 +146,7 @@ class MeetingApplicationServiceTest(
             .thenReturn(of(UserEntity(initiatorEmail).apply { this.fullName = initiatorFullName }))
 
         // act
-        val meetingInvitation = underTest.proposeMeeting(initiatorId, meetingIntentId, command)
+        val meetingInvitation = underTest.proposeMeeting(initiatorId, command)
 
         // verify
         verifyZeroInteractions(slotSuggestionService)
@@ -154,25 +157,6 @@ class MeetingApplicationServiceTest(
             meetingUrl, shareableMessage
         )
         assertEquals(expectedDTO, meetingInvitation)
-    }
-
-    @Test
-    fun `propose meeting without intent`() {
-        // input
-        val initiatorId = 1L
-        val meetingIntentId = 11L
-        val proposedSlot = MeetingSlotDTO(
-            ZonedDateTime.now(clock),
-            ZonedDateTime.now(clock).plusMinutes(30)
-        )
-        val command = ProposeMeetingCommand(listOf(proposedSlot))
-
-        // setup
-        whenever(meetingIntentRepository.findById(eq(meetingIntentId)))
-            .thenReturn(empty())
-
-        // act
-        assertThrows<NotFoundException> { underTest.proposeMeeting(initiatorId, meetingIntentId, command) }
     }
 
     @Test
