@@ -22,11 +22,13 @@ class HeatMapService(
 
         val pastBlockStartDate = today.minusDays(heatMapConfiguration.historicalDays)
         val pastBlocksByDate = blockRepository.findAllBlocksCached(initiatorId, pastBlockStartDate, today)
+            .map { it.atTimeZone(user.timeZone) }
             .groupBy { it.startDateTime.toLocalDate() }
 
 
         val futureBlockEndDate = today.plusDays(heatMapConfiguration.futureDays)
         val futureBlocksByDate = blockRepository.findAllBlocks(initiatorId, today, futureBlockEndDate)
+            .map { it.atTimeZone(user.timeZone) }
             .flatMap { block -> block.splitByDate() }
             .groupBy { it.startDateTime.toLocalDate() }
 

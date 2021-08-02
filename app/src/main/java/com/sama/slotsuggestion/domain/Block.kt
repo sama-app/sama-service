@@ -2,6 +2,7 @@ package com.sama.slotsuggestion.domain
 
 import java.time.Duration
 import java.time.LocalTime
+import java.time.ZoneId
 import java.time.ZonedDateTime
 import kotlin.streams.asSequence
 
@@ -13,6 +14,18 @@ data class Block(
     val recurrenceCount: Int,
     val recurrenceRule: RecurrenceRule?
 ) {
+
+    /**
+     * @return a copy of this [Block] with start and end times adjusted to the provided
+     * timeZone
+     */
+    fun atTimeZone(timeZone: ZoneId): Block {
+        return copy(
+            startDateTime = startDateTime.withZoneSameInstant(timeZone),
+            endDateTime = endDateTime.withZoneSameInstant(timeZone)
+        )
+    }
+
     /**
      * @return true if this [Block] spans multiple days
      */
