@@ -66,7 +66,6 @@ class MeetingControllerTest(
             )
         ).thenReturn(
             MeetingIntentDTO(
-                11L,
                 code,
                 durationMinutes,
                 listOf(
@@ -88,7 +87,6 @@ class MeetingControllerTest(
 
         val expectedResponse = """
             {
-                "meetingIntentId": 11,
                 "meetingIntentCode": "$code",
                 "durationMinutes": $durationMinutes,
                 "suggestedSlots":[

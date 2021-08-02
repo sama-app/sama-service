@@ -10,7 +10,6 @@ import java.time.ZonedDateTime
 
 fun MeetingIntentEntity.toDTO(): MeetingIntentDTO {
     return MeetingIntentDTO(
-        this.id!!,
         this.code!!,
         this.durationMinutes!!,
         this.suggestedSlots.map { it.toDTO() }
@@ -18,7 +17,6 @@ fun MeetingIntentEntity.toDTO(): MeetingIntentDTO {
 }
 
 data class MeetingIntentDTO(
-    val meetingIntentId: MeetingIntentId,
     val meetingIntentCode: MeetingIntentCode,
     val durationMinutes: Long,
     val suggestedSlots: List<MeetingSlotDTO>,

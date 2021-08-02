@@ -102,7 +102,6 @@ class MeetingApplicationServiceTest(
         verify(meetingIntentRepository).save(captor.capture())
 
         val expectedDTO = MeetingIntentDTO(
-            meetingIntentId,
             captor.value.code!!,
             durationMinutes,
             listOf(MeetingSlotDTO(ZonedDateTime.now(clock), ZonedDateTime.now(clock).plusMinutes(durationMinutes)))
