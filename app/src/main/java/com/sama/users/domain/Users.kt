@@ -5,6 +5,7 @@ import com.auth0.jwt.algorithms.Algorithm
 import com.sama.common.DomainEntity
 import com.sama.common.DomainService
 import com.sama.common.Factory
+import org.apache.commons.validator.routines.EmailValidator
 import java.time.Clock
 import java.util.*
 import kotlin.Result.Companion.success
@@ -18,7 +19,7 @@ data class UserRegistration(
     val credential: GoogleCredential
 ) {
     init {
-        if ('@' !in email) { // todo proper
+        if (EmailValidator.getInstance().isValid(email).not()) {
             throw InvalidEmailException(email)
         }
 
