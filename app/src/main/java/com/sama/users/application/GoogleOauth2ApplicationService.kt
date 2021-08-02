@@ -2,7 +2,6 @@ package com.sama.users.application
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow
 import com.sama.common.ApplicationService
-import com.sama.integration.google.GoogleInsufficientPermissionsException
 import com.sama.integration.google.GoogleUserRepository
 import com.sama.users.domain.GoogleCredential
 import com.sama.users.domain.UserAlreadyExistsException
@@ -33,12 +32,15 @@ class GoogleOauth2ApplicationService(
             code != null -> try {
                 processGoogleOauth2AuthCode(redirectUri, code)
             } catch (e: MissingScopesException) {
-                GoogleOauth2Failure(e.msg)
+                GoogleOauth2Failure("google_insufficient_permissions")
             } catch (e: Exception) {
-                logger.warn("oauth2-callback-error: $e.message")
+                logger.warn("oauth2-callback-exception: $e.message")
                 GoogleOauth2Failure("internal")
             }
-            error != null -> GoogleOauth2Failure(error)
+            error != null -> {
+                logger.warn("oauth2-callback-error-callback: $error")
+                GoogleOauth2Failure("google_insufficient_permissions")
+            }
             else -> GoogleOauth2Failure("sama-invalid-oauth-callback")
         }
     }
@@ -105,5 +107,5 @@ sealed class GoogleOauth2Response
 data class GoogleOauth2Success(val accessToken: String, val refreshToken: String) : GoogleOauth2Response()
 data class GoogleOauth2Failure(val error: String) : GoogleOauth2Response()
 
-class MissingScopesException(val msg: String = "google_insufficient_permissions") :
+class MissingScopesException :
     RuntimeException("User did not grant all required scopes")
