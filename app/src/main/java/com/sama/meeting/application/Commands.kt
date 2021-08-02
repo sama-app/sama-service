@@ -14,6 +14,5 @@ data class InitiateMeetingCommand(
     val suggestionSlotCount: Int,
 )
 
-data class ProposeMeetingCommand(val proposedSlots: List<MeetingSlotDTO>)
-data class ProposeMeetingCommandV2(val meetingIntentCode: MeetingIntentCode, val proposedSlots: List<MeetingSlotDTO>)
+data class ProposeMeetingCommand(val meetingIntentCode: MeetingIntentCode, val proposedSlots: List<MeetingSlotDTO>)
 data class ConfirmMeetingCommand(val slot: MeetingSlotDTO, val recipientEmail: String)
