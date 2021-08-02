@@ -5,8 +5,7 @@ import com.google.api.client.googleapis.json.GoogleJsonResponseException
 import com.google.api.client.http.HttpTransport
 import com.google.api.client.json.jackson2.JacksonFactory
 import com.google.api.services.calendar.Calendar
-import com.google.api.services.calendar.model.EventAttendee
-import com.google.api.services.calendar.model.EventDateTime
+import com.google.api.services.calendar.model.*
 import com.sama.SamaApplication
 import com.sama.calendar.domain.Event
 import com.sama.calendar.domain.EventRepository
@@ -19,6 +18,7 @@ import org.dmfs.rfc5545.recur.RecurrenceRule
 import org.springframework.stereotype.Component
 import java.time.ZoneId
 import java.time.ZonedDateTime
+import java.util.*
 
 @Component
 class GoogleCalendarEventRepository(
@@ -47,11 +47,21 @@ class GoogleCalendarEventRepository(
                 )
                 summary = event.title
                 description = event.description
+                conferenceData = ConferenceData().apply {
+                    createRequest = CreateConferenceRequest().apply {
+                        requestId = UUID.randomUUID().toString()
+                        conferenceSolutionKey = ConferenceSolutionKey().apply {
+                            type = "hangoutsMeet"
+                        }
+
+                    }
+                }
             }
 
             val inserted = calendarService.events()
                 .insert("primary", googleCalendarEvent)
                 .setSendNotifications(true)
+                .setConferenceDataVersion(1)
                 .execute()
             inserted.toEvent(timeZone)
         }
