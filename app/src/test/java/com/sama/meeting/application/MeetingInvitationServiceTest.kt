@@ -65,8 +65,8 @@ class MeetingInvitationServiceTest {
         // verify
         val expectedUrl = "$scheme://$host/$meetingCode"
         val expectedMessage = """
-            * Jul 7 11:00 AM - 11:15 AM (CET)
-            * Jul 7 12:00 PM - 1:00 PM (CET)
+            * Jul 7 11:00 AM - 11:15 AM (GMT+2)
+            * Jul 7 12:00 PM - 1:00 PM (GMT+2)
 
             Pick here $expectedUrl
         """.trimIndent()
