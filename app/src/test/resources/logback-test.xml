@@ -17,4 +17,7 @@
     <root level="info">
         <appender-ref ref="Console"/>
     </root>
+
+    <logger level="debug" name="org.hibernate.SQL"/>
+
 </configuration>

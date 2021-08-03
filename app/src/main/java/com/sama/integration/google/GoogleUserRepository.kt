@@ -19,12 +19,12 @@ class GoogleUserRepository(
 
     fun findUsingToken(accessToken: String): BasicUserDetails {
         val result = oauth2Service(accessToken).userinfo().get().execute()
-        return result.let { BasicUserDetails(it.email, it.name) }
+        return result.let { BasicUserDetails(null, it.email, it.name) }
     }
 
     fun find(userId: UserId): BasicUserDetails {
         val result = oauth2ServiceForUser(userId).userinfo().get().execute()
-        return result.let { BasicUserDetails(it.email, it.name) }
+        return result.let { BasicUserDetails(userId, it.email, it.name) }
     }
 
     private fun oauth2ServiceForUser(userId: Long): Oauth2 {

@@ -25,7 +25,8 @@ class StringNotificationRenderer : NotificationRenderer {
 
         return Notification(
             title = "$attendeeEmail confirmed a meeting",
-            body = "Meet on $date on $time in your time zone"
+            body = "Meet on $date on $time in your time zone",
+            additionalData = emptyMap()
         )
 
     }

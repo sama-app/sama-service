@@ -142,7 +142,7 @@ class MeetingApplicationServiceTest(
         whenever(meetingInvitationService.findForProposedMeeting(any(), any()))
             .thenReturn(MeetingInvitation(meetingUrl, shareableMessage))
         whenever(userRepository.findById(initiatorId))
-            .thenReturn(of(UserEntity(initiatorEmail).apply { this.fullName = initiatorFullName }))
+            .thenReturn(of(UserEntity(initiatorId, initiatorEmail).apply { this.fullName = initiatorFullName }))
 
         // act
         val meetingInvitation = underTest.proposeMeeting(initiatorId, command)
@@ -199,7 +199,7 @@ class MeetingApplicationServiceTest(
             }))
 
         whenever(userRepository.findById(initiatorId))
-            .thenReturn(of(UserEntity(initiatorEmail).apply { this.fullName = initiatorFullName }))
+            .thenReturn(of(UserEntity(initiatorId, initiatorEmail).apply { this.fullName = initiatorFullName }))
         whenever(eventRepository.findAll(eq(initiatorId), any(), any()))
             .thenReturn(emptyList())
 

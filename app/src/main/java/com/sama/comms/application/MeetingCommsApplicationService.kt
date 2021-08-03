@@ -4,6 +4,7 @@ import com.sama.common.ApplicationService
 import com.sama.comms.domain.CommsUserRepository
 import com.sama.comms.domain.NotificationRenderer
 import com.sama.comms.domain.NotificationSender
+import com.sama.users.domain.UserId
 import org.springframework.stereotype.Service
 
 @ApplicationService
