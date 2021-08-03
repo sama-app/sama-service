@@ -33,19 +33,6 @@ class UserApplicationService(
         return userId
     }
 
-    @Transactional(readOnly = true)
-    fun findUser(userId: UserId): UserDTO {
-        val userEntity = userRepository.findByIdOrThrow(userId)
-        return userEntity.let { entity ->
-            UserDTO(
-                entity.id()!!,
-                entity.email,
-                entity.fullName,
-                entity.active!!
-            )
-        }
-    }
-
     @Transactional
     fun deleteUser(userId: UserId): Boolean {
         userSettingsRepository.deleteById(userId)

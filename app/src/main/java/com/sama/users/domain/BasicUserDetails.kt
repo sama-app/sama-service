@@ -1,10 +1,9 @@
 package com.sama.users.domain
 
-import com.sama.common.DomainEntity
 import com.sama.common.Factory
 
-@DomainEntity
 data class BasicUserDetails(
+    val id: UserId?,
     val email: String,
     val fullName: String?
 ) {
@@ -13,6 +12,7 @@ data class BasicUserDetails(
     companion object {
         fun of(user: UserEntity): BasicUserDetails {
             return BasicUserDetails(
+                user.id,
                 user.email,
                 user.fullName
             )

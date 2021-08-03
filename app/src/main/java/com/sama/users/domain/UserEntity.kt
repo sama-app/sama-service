@@ -22,13 +22,12 @@ import javax.persistence.*
         )
     ]
 )
-class UserEntity(email: String) {
+class UserEntity(id: UserId, email: String) {
 
     @Factory
     companion object {
         fun new(userRegistration: UserRegistration): UserEntity {
-            val user = UserEntity(userRegistration.email)
-            user.id = userRegistration.userId
+            val user = UserEntity(userRegistration.userId, userRegistration.email)
             user.fullName = userRegistration.fullName
             user.googleCredential = userRegistration.credential.copy(updatedAt = Instant.now())
             return user
@@ -36,7 +35,7 @@ class UserEntity(email: String) {
     }
 
     @Id
-    private var id: UserId? = null
+    var id: UserId = id
 
     @Column(nullable = false)
     var email: String = email

@@ -29,7 +29,8 @@ class StringNotificationRendererTest {
         assertThat(actual).isEqualTo(
             Notification(
                 "attendee@meetsama.com confirmed a meeting",
-                "Meet on Jun 1 on 8:00 AM in your time zone"
+                "Meet on Jun 1 on 8:00 AM in your time zone",
+                emptyMap()
             )
         )
     }
@@ -51,7 +52,8 @@ class StringNotificationRendererTest {
         assertThat(actual).isEqualTo(
             Notification(
                 "attendee@meetsama.com confirmed a meeting",
-                "Meet on Jun 1 on 6:00 PM in your time zone"
+                "Meet on Jun 1 on 6:00 PM in your time zone",
+                emptyMap()
             )
         )
     }

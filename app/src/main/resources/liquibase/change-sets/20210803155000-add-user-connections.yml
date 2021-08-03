@@ -1,0 +1,24 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-user-connection-tables
+      author: balys
+      changes:
+        - addColumn:
+            schemaName: sama
+            tableName: meeting_intent
+            columns:
+              - column:
+                  name: code
+                  type: UUID
+                  defaultValueComputed: ${uuid_function}
+                constraints:
+                  nullable: false
+        - createIndex:
+            schemaName: sama
+            tableName: meeting_intent
+            columns:
+              - column:
+                  name: code
+            indexName: IDX_code
+
+

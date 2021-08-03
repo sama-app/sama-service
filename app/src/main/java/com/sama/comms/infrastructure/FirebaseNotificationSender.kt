@@ -9,7 +9,6 @@ import com.sama.users.domain.UserId
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
-import java.lang.RuntimeException
 
 @Component
 class FirebaseNotificationSender(private val userApplicationService: UserApplicationService) : NotificationSender {
@@ -28,6 +27,7 @@ class FirebaseNotificationSender(private val userApplicationService: UserApplica
                         .setBody(notification.body)
                         .build()
                 )
+                .putAllData(notification.additionalData)
                 .setToken(token)
                 .build()
 
