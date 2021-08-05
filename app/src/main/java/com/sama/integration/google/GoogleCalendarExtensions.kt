@@ -2,21 +2,17 @@ package com.sama.integration.google
 
 import com.google.api.client.googleapis.json.GoogleJsonResponseException
 import com.google.api.services.calendar.Calendar
-import com.google.api.services.calendar.model.EventDateTime
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import org.dmfs.rfc5545.recur.RecurrenceRule
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.time.Instant
-import java.time.LocalDateTime
-import java.time.ZoneId
-import java.time.ZonedDateTime
-import java.util.*
 
 private var logger: Logger = LoggerFactory.getLogger(Calendar::class.java)
 private val defaultCalendarTimeZone = ZoneId.of("UTC")
 
 
-fun Calendar.list(
+private fun Calendar.findEventsPage(
     startDateTime: ZonedDateTime,
     endDateTime: ZonedDateTime,
     nextPageToken: String?
@@ -32,7 +28,7 @@ fun Calendar.list(
 }
 
 
-fun Calendar.listAll(
+fun Calendar.findAllEvents(
     startDateTime: ZonedDateTime,
     endDateTime: ZonedDateTime
 ): Pair<MutableList<GoogleCalendarEvent>, ZoneId> {
@@ -40,7 +36,7 @@ fun Calendar.listAll(
     var calendarTimeZone: ZoneId
     var nextPageToken: String? = null
     do {
-        val result = this.list(startDateTime, endDateTime, nextPageToken).execute()
+        val result = this.findEventsPage(startDateTime, endDateTime, nextPageToken).execute()
         calendarTimeZone = result.timeZone?.let { ZoneId.of(it) } ?: defaultCalendarTimeZone
         nextPageToken = result.nextPageToken
 
@@ -51,12 +47,12 @@ fun Calendar.listAll(
     return Pair(calendarEvents, calendarTimeZone)
 }
 
-fun Calendar.recurrenceEventsFor(calendarEvents: List<GoogleCalendarEvent>): Map<String, RecurrenceRule?> {
+fun Calendar.recurrenceRulesFor(calendarEvents: List<GoogleCalendarEvent>): Map<String, RecurrenceRule?> {
     val recurringEventIDs = calendarEvents
-        .filter { it.recurringEventId != null }
-        .map { it.recurringEventId }
+        .mapNotNull { it.recurringEventId }
         .toSet()
-    return recurringEventIDs
+
+    val recurringEvents = recurringEventIDs
         .mapNotNull {
             try {
                 this.events().get("primary", it).execute()
@@ -70,17 +66,18 @@ fun Calendar.recurrenceEventsFor(calendarEvents: List<GoogleCalendarEvent>): Map
             }
         }
         .filter { event -> event.recurrence.any { "RRULE:" in it } }
+
+    return recurringEvents
         .associate { event ->
-            val eventId = event.id
-            event
-                .runCatching {
-                    val recurrenceRule = event.recurrence
-                        .filter { "RRULE:" in it }
-                        .map { RecurrenceRule(it.replace("RRULE:", "")) }
-                        .first()
-                    eventId to recurrenceRule
-                }
-                .onFailure { logger.error("Could not process RRULE: %s".format(event.recurrence), it) }
-                .getOrDefault(eventId to null)
+            try {
+                val recurrenceRule = event.recurrence
+                    .filter { "RRULE:" in it }
+                    .map { RecurrenceRule(it.replace("RRULE:", "")) }
+                    .first()
+                event.id to recurrenceRule
+            } catch (e: Exception) {
+                logger.error("Could not process RRULE: %s".format(event.recurrence), e)
+                event.id to null
+            }
         }
 }

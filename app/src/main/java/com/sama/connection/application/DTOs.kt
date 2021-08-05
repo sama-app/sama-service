@@ -1,14 +1,21 @@
 package com.sama.connection.application
 
-import com.sama.users.domain.BasicUserDetails
+import com.sama.connection.domain.ConnectionRequestId
 
 data class UserConnectionsDTO(
-    val connectedUsers: List<UserConnectionDTO>,
-    val discoveredUsers: List<UserConnectionDTO>
+    val connectedUsers: List<UserDTO>,
+    val discoveredUsers: List<UserDTO>
 )
 
-data class UserConnectionDTO(val email: String, val fullName: String?)
+data class UserDTO(val email: String, val fullName: String?)
 
-fun BasicUserDetails.toUserConnectionDTO(): UserConnectionDTO {
-    return UserConnectionDTO(this.email, this.fullName)
-}
+data class ConnectionRequestsDTO(
+    val initiatedConnectionRequests: List<ConnectionRequestDTO>,
+    val pendingConnectionRequests: List<ConnectionRequestDTO>
+)
+
+data class ConnectionRequestDTO(
+    val connectionRequestId: ConnectionRequestId,
+    val initiator: UserDTO,
+    val recipient: UserDTO
+)

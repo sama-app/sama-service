@@ -26,14 +26,14 @@ class JdbcCommsUserRepository(private val namedParameterJdbcTemplate: NamedParam
 
         return namedParameterJdbcTemplate.queryForObject(
             """
-                        SELECT timezone, email FROM sama.user u 
-                        JOIN sama.user_settings us ON u.id = us.user_id  
-                        WHERE u.id = :user_id
-                    """.trimMargin(),
+                SELECT timezone, email FROM sama.user u 
+                JOIN sama.user_settings us ON u.id = us.user_id  
+                WHERE u.id = :user_id
+            """.trimMargin(),
             namedParameters
         )
         { rs, _ ->
             CommsUser(userId, ZoneId.of(rs.getString("timezone")), rs.getString("email"))
-        } ?: throw NotFoundException(User::class, userId)
+        } ?: throw NotFoundException(CommsUser::class, userId)
     }
 }

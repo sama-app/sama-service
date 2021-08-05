@@ -1,24 +1,219 @@
 databaseChangeLog:
   - changeSet:
-      id: add-user-connection-tables
+      id: add-discovered-user
       author: balys
       changes:
-        - addColumn:
+        - createTable:
             schemaName: sama
-            tableName: meeting_intent
+            tableName: user_discovered_user
             columns:
               - column:
-                  name: code
-                  type: UUID
-                  defaultValueComputed: ${uuid_function}
-                constraints:
-                  nullable: false
+                  name: id
+                  type: SERIAL
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: PK_user_discovered_user_id
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: discovered_user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+
+        - addForeignKeyConstraint:
+            baseTableSchemaName: sama
+            baseTableName: user_discovered_user
+            baseColumnNames: user_id
+            constraintName: FK_user_discovered_user_user_id
+            referencedTableSchemaName: sama
+            referencedTableName: user
+            referencedColumnNames: id
+            validate: true
+            onDelete: CASCADE
+
+        - addForeignKeyConstraint:
+            baseTableSchemaName: sama
+            baseTableName: user_discovered_user
+            baseColumnNames: discovered_user_id
+            constraintName: FK_user_discovered_user_discovered_user_id
+            referencedTableSchemaName: sama
+            referencedTableName: user
+            referencedColumnNames: id
+            validate: true
+            onDelete: CASCADE
+
         - createIndex:
             schemaName: sama
-            tableName: meeting_intent
+            tableName: user_discovered_user
             columns:
               - column:
-                  name: code
-            indexName: IDX_code
+                  name: user_id
+            indexName: IDX_user_id
 
+  - changeSet:
+      id: add-connection-request
+      author: balys
+      changes:
+        - createTable:
+            schemaName: sama
+            tableName: user_connection_request
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: PK_user_connection_request_id
+              - column:
+                  name: initiator_user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: recipient_user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: VARCHAR
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
 
+        - addForeignKeyConstraint:
+            baseTableSchemaName: sama
+            baseTableName: user_connection_request
+            baseColumnNames: initiator_user_id
+            constraintName: FK_user_connection_request_initiator_user_id
+            referencedTableSchemaName: sama
+            referencedTableName: user
+            referencedColumnNames: id
+            validate: true
+            onDelete: CASCADE
+
+        - addForeignKeyConstraint:
+            baseTableSchemaName: sama
+            baseTableName: user_connection_request
+            baseColumnNames: recipient_user_id
+            constraintName: FK_user_connection_request_recipient_user_id
+            referencedTableSchemaName: sama
+            referencedTableName: user
+            referencedColumnNames: id
+            validate: true
+            onDelete: CASCADE
+
+        - createIndex:
+            schemaName: sama
+            tableName: user_connection_request
+            columns:
+              - column:
+                  name: initiator_user_id
+            indexName: IDX_initiator_user_id
+
+        - createIndex:
+            schemaName: sama
+            tableName: user_connection_request
+            columns:
+              - column:
+                  name: recipient_user_id
+            indexName: IDX_recipient_user_id
+
+  - changeSet:
+      id: add-user-connections
+      author: balys
+      changes:
+        - createTable:
+            schemaName: sama
+            tableName: user_connection
+            columns:
+              - column:
+                  name: id
+                  type: SERIAL
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: PK_user_connection_id
+              - column:
+                  name: l_user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: r_user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+
+        - addForeignKeyConstraint:
+            baseTableSchemaName: sama
+            baseTableName: user_connection
+            baseColumnNames: l_user_id
+            constraintName: FK_user_connection_l_user_id
+            referencedTableSchemaName: sama
+            referencedTableName: user
+            referencedColumnNames: id
+            validate: true
+            onDelete: CASCADE
+
+        - addForeignKeyConstraint:
+            baseTableSchemaName: sama
+            baseTableName: user_connection
+            baseColumnNames: r_user_id
+            constraintName: FK_user_connection_r_user_id
+            referencedTableSchemaName: sama
+            referencedTableName: user
+            referencedColumnNames: id
+            validate: true
+            onDelete: CASCADE
+
+        - createIndex:
+            schemaName: sama
+            tableName: user_connection
+            columns:
+              - column:
+                  name: l_user_id
+            indexName: IDX_l_user_id
+
+        - createIndex:
+            schemaName: sama
+            tableName: user_connection
+            columns:
+              - column:
+                  name: r_user_id
+            indexName: IDX_r_user_id
+
+        - addUniqueConstraint:
+            schemaName: sama
+            tableName: user_connection
+            columnNames: l_user_id, r_user_id
+            constraintName: UQ_user_connection_user_ids

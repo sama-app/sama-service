@@ -1,37 +1,32 @@
 package com.sama.integration.google
 
-import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow
-import com.google.api.client.googleapis.json.GoogleJsonResponseException
-import com.google.api.client.http.HttpTransport
-import com.google.api.client.json.jackson2.JacksonFactory
-import com.google.api.services.calendar.Calendar
-import com.google.api.services.calendar.model.*
-import com.sama.SamaApplication
+import com.google.api.services.calendar.model.ConferenceData
+import com.google.api.services.calendar.model.ConferenceSolutionKey
+import com.google.api.services.calendar.model.CreateConferenceRequest
+import com.google.api.services.calendar.model.EventAttendee
+import com.google.api.services.calendar.model.EventDateTime
 import com.sama.calendar.domain.Event
 import com.sama.calendar.domain.EventRepository
 import com.sama.slotsuggestion.domain.Block
 import com.sama.slotsuggestion.domain.BlockRepository
 import com.sama.slotsuggestion.domain.Recurrence
 import com.sama.users.domain.UserId
+import java.time.ZoneId
+import java.time.ZonedDateTime
+import java.util.UUID
 import org.dmfs.rfc5545.recur.Freq
 import org.dmfs.rfc5545.recur.RecurrenceRule
 import org.springframework.stereotype.Component
-import java.time.ZoneId
-import java.time.ZonedDateTime
-import java.util.*
 
 @Component
-class GoogleCalendarEventRepository(
-    private val googleAuthorizationCodeFlow: GoogleAuthorizationCodeFlow,
-    private val googleNetHttpTransport: HttpTransport,
-    private val googleJacksonFactory: JacksonFactory
-) : EventRepository, BlockRepository {
+class GoogleCalendarEventRepository(private val googleServiceFactory: GoogleServiceFactory) : EventRepository,
+    BlockRepository {
 
     // https://developers.google.com/calendar/api/v3/reference/events/insert
     // https://developers.google.com/calendar/api/v3/reference/events/insert#request-body
     override fun save(userId: UserId, event: Event): Event {
-        return kotlin.runCatching {
-            val calendarService = calendarServiceForUser(userId)
+        return try {
+            val calendarService = googleServiceFactory.calendarService(userId)
             val timeZone = event.startDateTime.zone
             val googleCalendarEvent = GoogleCalendarEvent().apply {
                 start = EventDateTime()
@@ -64,21 +59,21 @@ class GoogleCalendarEventRepository(
                 .setConferenceDataVersion(1)
                 .execute()
             inserted.toEvent(timeZone)
+        } catch (e: Exception) {
+            throw translatedGoogleException(e)
         }
-            .onFailure(handleGoogleExceptions(userId))
-            .getOrThrow()
     }
 
     // https://developers.google.com/calendar/v3/reference/events/list
     // https://developers.google.com/calendar/v3/reference/events#resource
     override fun findAll(userId: UserId, startDateTime: ZonedDateTime, endDateTime: ZonedDateTime): List<Event> {
-        return kotlin.runCatching {
-            val calendarService = calendarServiceForUser(userId)
-            val (calendarEvents, calendarTimeZone) = calendarService.listAll(startDateTime, endDateTime)
+        return try {
+            val calendarService = googleServiceFactory.calendarService(userId)
+            val (calendarEvents, calendarTimeZone) = calendarService.findAllEvents(startDateTime, endDateTime)
             calendarEvents.map { it.toEvent(calendarTimeZone) }
+        } catch (e: Exception) {
+            throw translatedGoogleException(e)
         }
-            .onFailure(handleGoogleExceptions(userId))
-            .getOrThrow()
     }
 
     private fun GoogleCalendarEvent.toEvent(calendarTimeZone: ZoneId): Event {
@@ -101,20 +96,21 @@ class GoogleCalendarEventRepository(
         startDateTime: ZonedDateTime,
         endDateTime: ZonedDateTime
     ): Collection<Block> {
-        return kotlin.runCatching {
-            val calendarService = calendarServiceForUser(userId)
+        return try {
+            val calendarService = googleServiceFactory.calendarService(userId)
 
-            val (calendarEvents, calendarTimeZone) = calendarService.listAll(startDateTime, endDateTime)
-            val recurrenceRulesByEventID = calendarService.recurrenceEventsFor(calendarEvents)
-            val recurringEventCounts = calendarEvents.filter { it.recurringEventId != null }
+            val (calendarEvents, calendarTimeZone) = calendarService.findAllEvents(startDateTime, endDateTime)
+            val recurrenceRulesByEventID = calendarService.recurrenceRulesFor(calendarEvents)
+            val recurringEventCounts = calendarEvents
+                .filter { it.recurringEventId != null }
                 .groupingBy { it.recurringEventId }
                 .eachCount()
 
             calendarEvents
                 .map { it.toBlock(calendarTimeZone, recurringEventCounts, recurrenceRulesByEventID) }
+        } catch (e: Exception) {
+            throw translatedGoogleException(e)
         }
-            .onFailure(handleGoogleExceptions(userId))
-            .getOrThrow()
     }
 
     private fun GoogleCalendarEvent.toBlock(
@@ -122,48 +118,30 @@ class GoogleCalendarEventRepository(
         recurrenceCounts: Map<String, Int>,
         recurringEvents: Map<String, RecurrenceRule?>
     ): Block {
+        val hasRecipients = this.attendees != null && this.attendees.size > 0
+
+        val recurrenceCount = recurringEventId
+            ?.let { recurrenceCounts[it] }
+            ?: 1
+
+        val recurrenceRule = recurringEventId
+            ?.let { recurringEvents[it] }
+            ?.takeIf { it.freq in listOf(Freq.DAILY, Freq.WEEKLY, Freq.MONTHLY, Freq.YEARLY) }
+            ?.let {
+                com.sama.slotsuggestion.domain.RecurrenceRule(
+                    Recurrence.valueOf(it.freq.name),
+                    it.interval
+                )
+            }
+
         return Block(
             this.start.toZonedDateTime(calendarTimeZone),
             this.end.toZonedDateTime(calendarTimeZone),
             this.isAllDay(),
-            this.attendees != null && this.attendees.size > 0,
-
-            if (this.recurringEventId != null && recurringEventId in recurrenceCounts) {
-                recurrenceCounts[recurringEventId]!!
-            } else {
-                1
-            },
-
-            if (this.recurringEventId != null && recurringEventId in recurringEvents) {
-                recurringEvents[recurringEventId]
-                    ?.takeIf { it.freq in listOf(Freq.DAILY, Freq.WEEKLY, Freq.MONTHLY, Freq.YEARLY) }
-                    ?.let {
-                        com.sama.slotsuggestion.domain.RecurrenceRule(
-                            Recurrence.valueOf(it.freq.name),
-                            it.interval
-                        )
-                    }
-            } else {
-                null
-            }
+            hasRecipients,
+            recurrenceCount,
+            recurrenceRule
         )
     }
 
-    private fun calendarServiceForUser(userId: Long): Calendar {
-        val credential = googleAuthorizationCodeFlow.loadCredential(userId.toString())
-        return Calendar.Builder(googleNetHttpTransport, googleJacksonFactory, credential)
-            .setApplicationName(SamaApplication::class.simpleName)
-            .build()
-    }
-
-    private fun handleGoogleExceptions(userId: UserId): (exception: Throwable) -> Unit = {
-        if (it is GoogleJsonResponseException) {
-            when (it.statusCode) {
-                401 -> throw GoogleInvalidCredentialsException(it)
-                403 -> throw GoogleInsufficientPermissionsException(it)
-                else -> throw GoogleUnhandledException(it)
-            }
-        }
-        throw it
-    }
 }
