@@ -1,111 +1,102 @@
 package com.sama.connection.application
 
 import com.sama.common.ApplicationService
-import com.sama.connection.domain.CalendarContactFinder
+import com.sama.connection.domain.ConnectionRequest
 import com.sama.connection.domain.ConnectionRequestId
 import com.sama.connection.domain.ConnectionRequestRepository
-import com.sama.connection.domain.UserConnectionsRepository
+import com.sama.connection.domain.DiscoveredUserListRepository
+import com.sama.connection.domain.UserConnection
+import com.sama.connection.domain.UserConnectionRepository
 import com.sama.users.domain.UserId
 import com.sama.users.domain.UserRepository
 import com.sama.users.domain.findIdByEmailOrThrow
-import java.time.Clock
-import java.time.Instant
-import java.time.LocalDate
-import java.time.Year
-import java.time.ZonedDateTime
-import liquibase.pro.packaged.it
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @ApplicationService
 @Service
 class UserConnectionApplicationService(
-    private val calendarContactFinder: CalendarContactFinder,
     private val userRepository: UserRepository,
-    private val userConnectionsRepository: UserConnectionsRepository,
     private val connectionRequestRepository: ConnectionRequestRepository,
-    private val clock: Clock
+    private val userConnectionRepository: UserConnectionRepository,
+    private val discoveredUserListRepository: DiscoveredUserListRepository,
+    private val userConnectionViews: UserConnectionViews,
 ) {
-    private var logger: Logger = LoggerFactory.getLogger(UserConnectionApplicationService::class.java)
 
     @Transactional(readOnly = true)
     fun findUserConnections(userId: UserId): UserConnectionsDTO {
-        val userConnections = userConnectionsRepository.findByIdOrThrow(userId)
+        val discoveredUsers = discoveredUserListRepository.findById(userId).discoveredUsers
+        val connectedUsers = userConnectionRepository.findConnectedUserIds(userId)
+        return userConnectionViews.renderUserConnections(discoveredUsers, connectedUsers)
+    }
 
-        val userIdToBasicDetails = userRepository.findBasicDetailsById(userConnections.allUserIds())
-            .associateBy { it.id }
-
-        return UserConnectionsDTO(
-            userConnections.connectedUsers.mapNotNull { connectionUserId ->
-                userIdToBasicDetails[connectionUserId]?.toUserConnectionDTO()
-            },
-            userConnections.discoveredUsers.mapNotNull { connectionUserId ->
-                userIdToBasicDetails[connectionUserId]?.toUserConnectionDTO()
-            },
-        )
+    @Transactional(readOnly = true)
+    fun findConnectionRequests(userId: UserId): ConnectionRequestsDTO {
+        val initiatedConnectionRequests = connectionRequestRepository.findPendingByInitiatorId(userId)
+        val pendingConnectionRequests = connectionRequestRepository.findPendingByRecipientId(userId)
+        return userConnectionViews.renderConnectionRequests(initiatedConnectionRequests, pendingConnectionRequests)
     }
 
     @Transactional
-    fun createConnectionRequest(initiatorId: UserId, command: CreateConnectionRequestCommand) {
+    fun createConnectionRequest(initiatorId: UserId, command: CreateConnectionRequestCommand): ConnectionRequestDTO {
         val recipientId = userRepository.findIdByEmailOrThrow(command.recipientEmail)
-        if (connectionRequestRepository.existsPendingByUserIds(initiatorId, recipientId)) {
-            return
+
+        val connectionRequest = connectionRequestRepository.findPendingByUserIds(initiatorId, recipientId)
+        if (connectionRequest != null) {
+            return userConnectionViews.renderConnectionRequest(connectionRequest)
         }
-        val userConnections = userConnectionsRepository.findByIdOrThrow(initiatorId)
 
-        val (updatedUserConnections, connectionRequest) = userConnections.createConnectionRequest(recipientId)
+        val connectedUserIds = userConnectionRepository.findConnectedUserIds(initiatorId)
 
-        if (userConnections != updatedUserConnections) {
-            userConnectionsRepository.save(updatedUserConnections)
-        }
-        connectionRequestRepository.save(connectionRequest)
+        val newConnectionRequest = ConnectionRequest.new(initiatorId, recipientId, connectedUserIds)
+        connectionRequestRepository.save(newConnectionRequest)
 
+        // TODO: send comms
+        return userConnectionViews.renderConnectionRequest(newConnectionRequest)
+    }
+
+
+    @Transactional
+    @PreAuthorize("@auth.hasRecipientAccess(#userId, #connectionRequestId)")
+    fun approveConnectionRequest(userId: UserId, connectionRequestId: ConnectionRequestId) {
+        val connectionRequest = connectionRequestRepository.findByIdOrThrow(connectionRequestId)
+
+        val (approvedRequest, userConnection) = connectionRequest.approve()
+
+        userConnectionRepository.save(userConnection)
+        connectionRequestRepository.save(approvedRequest)
         // TODO: send comms
     }
 
-    // TODO: Verify the user is the recipient
-    fun approveConnectionRequest(userId: UserId, connectionRequestId: ConnectionRequestId) {
-        val connectionRequest = connectionRequestRepository.findByIdOrThrow(connectionRequestId)
-        val userConnections = userConnectionsRepository.findByIdOrThrow(connectionRequest.initiatorId)
-
-        val (updatedUserConnections, updatedConnectionRequest) = userConnections.approve(connectionRequest)
-
-        connectionRequestRepository.save(updatedConnectionRequest)
-        if (userConnections != updatedUserConnections) {
-            userConnectionsRepository.save(userConnections)
-            // TODO: send comms
-        }
-    }
-
-    // TODO: Verify the user is the recipient
+    @Transactional
+    @PreAuthorize("@auth.hasRecipientAccess(#userId, #connectionRequestId)")
     fun rejectConnectionRequest(userId: UserId, connectionRequestId: ConnectionRequestId) {
-        val connectionRequest = connectionRequestRepository.findByIdOrThrow(connectionRequestId)
-        val userConnections = userConnectionsRepository.findByIdOrThrow(connectionRequest.initiatorId)
-
-        val (_, updatedConnectionRequest) = userConnections.reject(connectionRequest)
-
-        if (connectionRequest != updatedConnectionRequest) {
-            connectionRequestRepository.save(updatedConnectionRequest)
-            // TODO: send comms?
-        }
+        val rejectedRequest = connectionRequestRepository.findByIdOrThrow(connectionRequestId)
+            .reject()
+        connectionRequestRepository.save(rejectedRequest)
+        // TODO: send comms?
     }
 
-    fun discoverUsers(userId: UserId): Set<UserId> {
-        // TODO check permissions
-
-        val currentDateTime = ZonedDateTime.now(clock)
-        val lastScanDateTime = currentDateTime.minusYears(1)
-        val scannedContactEmails = calendarContactFinder.scanForContacts(userId, lastScanDateTime, currentDateTime)
-            .map { it.email }.toSet()
-        val discoveredUserIds = userRepository.findIdsByEmail(scannedContactEmails)
-
-        val userConnections = userConnectionsRepository.findByIdOrThrow(userId)
-            .addDiscoveredUsers(discoveredUserIds)
-
-        userConnectionsRepository.save(userConnections)
-
-        return discoveredUserIds
+    @Transactional
+    fun removeUserConnection(userId: UserId, command: RemoveUserConnectionCommand) {
+        val recipientId = userRepository.findIdByEmailOrThrow(command.recipientEmail)
+        userConnectionRepository.delete(UserConnection(userId, recipientId))
     }
+
+    // TODO: Not implemented
+//    fun discoverUsers(userId: UserId): Set<UserId> {
+//        val currentDateTime = ZonedDateTime.now(clock)
+//        val lastScanDateTime = currentDateTime.minusYears(1)
+//        val scannedContactEmails = calendarContactFinder.scanForContacts(userId, lastScanDateTime, currentDateTime)
+//            .map { it.email }.toSet()
+//        val discoveredUserIds = userRepository.findIdsByEmail(scannedContactEmails)
+//
+//        val discoveredUserList = discoveredUserListRepository.findById(userId)
+//            .addDiscoveredUsers(discoveredUserIds)
+//
+//        discoveredUserListRepository.save(discoveredUserList)
+//
+//        return discoveredUserList.discoveredUsers
+//    }
 }

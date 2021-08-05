@@ -5,6 +5,17 @@ import com.sama.common.HasReason
 import com.sama.users.domain.UserId
 
 
+fun translatedGoogleException(ex: Throwable): Throwable {
+    if (ex is GoogleJsonResponseException) {
+        return when (ex.statusCode) {
+            401 -> GoogleInvalidCredentialsException(ex)
+            403 -> GoogleInsufficientPermissionsException(ex)
+            else -> GoogleUnhandledException(ex)
+        }
+    }
+    return ex
+}
+
 class GoogleInvalidCredentialsException(originalEx: Exception?) :
     RuntimeException("User Google credentials invalid", originalEx), HasReason {
     override val reason: String = "google_invalid_credentials"
