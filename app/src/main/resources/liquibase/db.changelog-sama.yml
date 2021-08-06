@@ -19,3 +19,5 @@ databaseChangeLog:
       file: classpath*:liquibase/change-sets/20210803155000-add-user-connections.yml
   - include:
       file: classpath*:liquibase/change-sets/20210805155000-add-public-user-id.yml
+  - include:
+      file: classpath*:liquibase/change-sets/20210806151000-move-to-bigint-pks.yml
