@@ -25,14 +25,14 @@ class UsersTest {
     @Test
     fun `user registration with Google credentials`() {
         val credential = GoogleCredential("access", "refresh", 0)
-        UserRegistration(1L, UUID.randomUUID(), "balys@meetsama.com", false, "Balys Val", credential)
+        UserRegistration("balys@meetsama.com", false, "Balys Val", credential)
     }
 
     @Test
     fun `user registration with invalid email throws`() {
         assertThrows(InvalidEmailException::class.java) {
             val credential = GoogleCredential("access", "refresh", 0)
-            UserRegistration(1L,  UUID.randomUUID(), "invalid-email.com", false, "Balys Val", credential)
+            UserRegistration("invalid-email.com", false, "Balys Val", credential)
         }
     }
 
@@ -40,7 +40,7 @@ class UsersTest {
     fun `user registration with existing email throws`() {
         assertThrows(UserAlreadyExistsException::class.java) {
             val credential = GoogleCredential("access", "refresh", 0)
-            UserRegistration(1L,  UUID.randomUUID(), "balys@meetsama.com", true, "Balys Val", credential)
+            UserRegistration("balys@meetsama.com", true, "Balys Val", credential)
         }
     }
 

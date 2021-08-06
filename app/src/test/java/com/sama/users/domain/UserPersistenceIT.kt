@@ -8,9 +8,14 @@ import org.junit.jupiter.api.Test
 class UserPersistenceIT : BasePersistenceIT<UserRepository>() {
 
     @Test
-    fun `next identity`() {
-        val one = underTest.nextIdentity()
-        val two = underTest.nextIdentity()
-        assertNotEquals(one, two)
+    fun save() {
+        val email = "test@meetsama.com"
+        val fullName = "Test"
+        val userEntity = underTest.save(UserEntity(email).also { it.fullName = fullName })
+
+        assertThat(userEntity.id).isNotNull()
+        assertThat(userEntity.publicId).isNotNull()
+        assertThat(userEntity.email).isEqualTo(email)
+        assertThat(userEntity.fullName).isEqualTo(fullName)
     }
 }

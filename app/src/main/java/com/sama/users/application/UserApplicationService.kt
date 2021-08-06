@@ -24,14 +24,12 @@ class UserApplicationService(
     @Transactional
     fun registerUser(command: RegisterUserCommand): UserId {
         val userExistsByEmail = userRepository.existsByEmail(command.email)
-        val userId = userRepository.nextIdentity()
-        val userPublicId = userRepository.nextPublicId()
 
         val userRegistration =
-            UserRegistration(userId, userPublicId, command.email, userExistsByEmail, command.fullName, command.googleCredential)
+            UserRegistration(command.email, userExistsByEmail, command.fullName, command.googleCredential)
 
-        UserEntity.new(userRegistration).also { userRepository.save(it) }
-        return userId
+        val userEntity = UserEntity.new(userRegistration).also { userRepository.save(it) }
+        return userEntity.id!!
     }
 
     @Transactional
@@ -46,7 +44,7 @@ class UserApplicationService(
         val user = userRepository.findByEmailOrThrow(command.email)
 
         user.applyChanges(command.googleCredential).also { userRepository.save(it) }
-        return user.id
+        return user.id!!
     }
 
     @Transactional
