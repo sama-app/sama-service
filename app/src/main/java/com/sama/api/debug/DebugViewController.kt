@@ -2,6 +2,9 @@ package com.sama.api.debug
 
 import com.google.api.client.http.GenericUrl
 import com.sama.api.config.AuthUserId
+import com.sama.auth.application.GoogleOauth2ApplicationService
+import com.sama.auth.application.GoogleSignFailureDTO
+import com.sama.auth.application.GoogleSignSuccessDTO
 import com.sama.common.mapIndexed
 import com.sama.slotsuggestion.application.HeatMapService
 import com.sama.slotsuggestion.application.SlotSuggestionRequest
@@ -9,17 +12,7 @@ import com.sama.slotsuggestion.application.SlotSuggestionResponse
 import com.sama.slotsuggestion.application.SlotSuggestionService
 import com.sama.slotsuggestion.domain.WeightContext
 import com.sama.slotsuggestion.domain.sigmoid
-import com.sama.users.application.GoogleOauth2ApplicationService
-import com.sama.users.application.GoogleOauth2Failure
-import com.sama.users.application.GoogleOauth2Success
 import com.sama.users.domain.UserId
-import org.springframework.http.HttpStatus
-import org.springframework.http.MediaType
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.RequestParam
-import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.servlet.ModelAndView
-import org.springframework.web.servlet.view.RedirectView
 import java.time.Duration
 import java.time.LocalTime
 import java.time.ZoneId
@@ -27,6 +20,13 @@ import javax.servlet.http.Cookie
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 import kotlin.math.round
+import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.servlet.ModelAndView
+import org.springframework.web.servlet.view.RedirectView
 
 @RestController
 class DebugViewController(
@@ -38,7 +38,7 @@ class DebugViewController(
 
     @GetMapping("/api/__debug/auth/google-authorize")
     fun googleAuthorize(request: HttpServletRequest): RedirectView {
-        val googleOAuth2Redirect = googleOauth2ApplicationService.beginGoogleOauth2(redirectUri(request))
+        val googleOAuth2Redirect = googleOauth2ApplicationService.beginGoogleWebOauth2(redirectUri(request))
         return RedirectView(googleOAuth2Redirect.authorizationUrl)
     }
 
@@ -51,9 +51,9 @@ class DebugViewController(
     ) {
         val redirectUri = redirectUri(request)
 
-        val result = googleOauth2ApplicationService.processGoogleOauth2(redirectUri, code, error)
+        val result = googleOauth2ApplicationService.processGoogleWebOauth2(redirectUri, code, error)
         when (result) {
-            is GoogleOauth2Success -> {
+            is GoogleSignSuccessDTO -> {
                 val cookie = Cookie("sama.access", result.accessToken)
                 cookie.secure = request.isSecure
                 cookie.maxAge = -1
@@ -61,7 +61,7 @@ class DebugViewController(
                 response.addCookie(cookie)
                 response.sendRedirect("/api/__debug/user/heatmap")
             }
-            is GoogleOauth2Failure -> response.status = HttpStatus.FORBIDDEN.value()
+            is GoogleSignFailureDTO -> response.status = HttpStatus.FORBIDDEN.value()
         }
     }
 
