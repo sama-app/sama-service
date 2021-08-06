@@ -1,0 +1,33 @@
+databaseChangeLog:
+  - property:
+      name: uuid_function_public
+      value: public.uuid_generate_v4()
+      dbms: postgresql
+
+  - changeSet:
+      id: move-uuid-extension
+      author: balys
+      changes:
+        sql: ALTER EXTENSION "uuid-ossp" SET SCHEMA public;
+
+  - changeSet:
+      id: add-public-user-id
+      author: balys
+      changes:
+        - addColumn:
+            schemaName: sama
+            tableName: user
+            columns:
+              - column:
+                  name: public_id
+                  type: UUID
+                  defaultValueComputed: ${uuid_function_public}
+                constraints:
+                  nullable: false
+        - createIndex:
+            schemaName: sama
+            tableName: user
+            columns:
+              - column:
+                  name: public_id
+            indexName: IDX_public_id

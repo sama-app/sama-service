@@ -4,6 +4,7 @@ import com.sama.common.BasePersistenceIT
 import com.sama.connection.domain.DiscoveredUserList
 import com.sama.users.domain.UserEntity
 import com.sama.users.domain.UserRepository
+import java.util.UUID
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -19,9 +20,9 @@ class JdbcDiscoveredUserListRepositoryTest : BasePersistenceIT<JdbcDiscoveredUse
 
     @BeforeEach
     fun setup() {
-        userRepository.save(UserEntity(1L, "one@meetsama.com").apply { fullName = "One" })
-        userRepository.save(UserEntity(2L, "two@meetsama.com").apply { fullName = "Two" })
-        userRepository.save(UserEntity(3L, "three@meetsama.com").apply { fullName = "Three" })
+        userRepository.save(UserEntity(1L, UUID.randomUUID(), "one@meetsama.com").apply { fullName = "One" })
+        userRepository.save(UserEntity(2L, UUID.randomUUID(), "two@meetsama.com").apply { fullName = "Two" })
+        userRepository.save(UserEntity(3L, UUID.randomUUID(), "three@meetsama.com").apply { fullName = "Three" })
         userRepository.flush()
     }
 

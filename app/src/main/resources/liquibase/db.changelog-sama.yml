@@ -17,3 +17,5 @@ databaseChangeLog:
       file: classpath*:liquibase/change-sets/20210713090000-add-meeting-intent-public-id.yml
   - include:
       file: classpath*:liquibase/change-sets/20210803155000-add-user-connections.yml
+  - include:
+      file: classpath*:liquibase/change-sets/20210805155000-add-public-user-id.yml

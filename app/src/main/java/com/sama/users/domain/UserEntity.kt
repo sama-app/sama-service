@@ -2,10 +2,17 @@ package com.sama.users.domain
 
 import com.sama.common.AggregateRoot
 import com.sama.common.Factory
+import java.time.Instant
+import javax.persistence.Column
+import javax.persistence.Embedded
+import javax.persistence.Entity
+import javax.persistence.Id
+import javax.persistence.PrimaryKeyJoinColumn
+import javax.persistence.SecondaryTable
+import javax.persistence.SecondaryTables
+import javax.persistence.Table
 import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.annotation.LastModifiedDate
-import java.time.Instant
-import javax.persistence.*
 
 @AggregateRoot
 @Entity
@@ -22,12 +29,12 @@ import javax.persistence.*
         )
     ]
 )
-class UserEntity(id: UserId, email: String) {
+class UserEntity(id: UserId, publicId: UserPublicId, email: String) {
 
     @Factory
     companion object {
         fun new(userRegistration: UserRegistration): UserEntity {
-            val user = UserEntity(userRegistration.userId, userRegistration.email)
+            val user = UserEntity(userRegistration.userId, userRegistration.publicId, userRegistration.email)
             user.fullName = userRegistration.fullName
             user.googleCredential = userRegistration.credential.copy(updatedAt = Instant.now())
             return user
@@ -36,6 +43,9 @@ class UserEntity(id: UserId, email: String) {
 
     @Id
     var id: UserId = id
+
+    @Column(nullable = false)
+    var publicId: UserPublicId = publicId
 
     @Column(nullable = false)
     var email: String = email
@@ -65,14 +75,6 @@ class UserEntity(id: UserId, email: String) {
         this.createdAt = Instant.now()
         this.updatedAt = Instant.now()
     }
-
-    fun id(): Long? {
-        return id
-    }
-
-    fun email(): String {
-        return email
-    }
 }
 
 
@@ -91,7 +93,7 @@ fun UserEntity.applyChanges(googleCredential: GoogleCredential): UserEntity {
     return this
 }
 
-fun UserEntity.applyChanges(userDetails: BasicUserDetails): UserEntity {
+fun UserEntity.applyChanges(userDetails: UserPublicDetails): UserEntity {
     this.fullName = userDetails.fullName
     return this
 }

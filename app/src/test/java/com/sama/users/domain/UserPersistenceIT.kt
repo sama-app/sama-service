@@ -13,18 +13,4 @@ class UserPersistenceIT : BasePersistenceIT<UserRepository>() {
         val two = underTest.nextIdentity()
         assertNotEquals(one, two)
     }
-
-
-    @Test
-    fun `find basic details by emails`() {
-        underTest.save(UserEntity(1L, "one@meetsama.com").apply { fullName = "One" })
-        underTest.save(UserEntity(2L, "two@meetsama.com").apply { fullName = "Two" })
-
-        val result = underTest.findBasicDetailsByEmail(setOf("one@meetsama.com", "two@meetsama.com", "three@meetsama.com"))
-
-        assertThat(result).containsExactly(
-            BasicUserDetails(1L, "one@meetsama.com", "One"),
-            BasicUserDetails(2L, "two@meetsama.com", "Two")
-        )
-    }
 }

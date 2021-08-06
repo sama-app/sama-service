@@ -1,5 +1,6 @@
 package com.sama.api.config
 
+import com.sama.api.config.security.UserPrincipal
 import com.sama.common.NotFoundException
 import com.sama.users.domain.UserEntity
 import com.sama.users.domain.UserId
@@ -31,8 +32,13 @@ class UserIdAttributeResolver(
         binderFactory: WebDataBinderFactory
     ): Long {
         val token = webRequest.userPrincipal as UsernamePasswordAuthenticationToken
-        val email = token.principal as String
-        return userRepository.findIdByEmail(email)
-            ?: throw NotFoundException(UserEntity::class, "email", email)
+        val userPrincipal = token.principal as UserPrincipal
+        if (userPrincipal.userId != null) {
+            return userRepository.findIdByPublicId(userPrincipal.userId)
+                ?: throw NotFoundException(UserEntity::class, "userId", userPrincipal.userId)
+        } else {
+            return userRepository.findIdByEmail(userPrincipal.email)
+                ?: throw NotFoundException(UserEntity::class, "email", userPrincipal.email)
+        }
     }
 }

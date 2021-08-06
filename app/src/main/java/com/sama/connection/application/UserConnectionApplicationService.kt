@@ -9,7 +9,7 @@ import com.sama.connection.domain.UserConnection
 import com.sama.connection.domain.UserConnectionRepository
 import com.sama.users.domain.UserId
 import com.sama.users.domain.UserRepository
-import com.sama.users.domain.findIdByEmailOrThrow
+import com.sama.users.domain.findIdByPublicIdOrThrow
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -40,7 +40,7 @@ class UserConnectionApplicationService(
 
     @Transactional
     fun createConnectionRequest(initiatorId: UserId, command: CreateConnectionRequestCommand): ConnectionRequestDTO {
-        val recipientId = userRepository.findIdByEmailOrThrow(command.recipientEmail)
+        val recipientId = userRepository.findIdByPublicIdOrThrow(command.recipientId)
 
         val connectionRequest = connectionRequestRepository.findPendingByUserIds(initiatorId, recipientId)
         if (connectionRequest != null) {
@@ -80,23 +80,7 @@ class UserConnectionApplicationService(
 
     @Transactional
     fun removeUserConnection(userId: UserId, command: RemoveUserConnectionCommand) {
-        val recipientId = userRepository.findIdByEmailOrThrow(command.recipientEmail)
+        val recipientId = userRepository.findIdByPublicIdOrThrow(command.userId)
         userConnectionRepository.delete(UserConnection(userId, recipientId))
     }
-
-    // TODO: Not implemented
-//    fun discoverUsers(userId: UserId): Set<UserId> {
-//        val currentDateTime = ZonedDateTime.now(clock)
-//        val lastScanDateTime = currentDateTime.minusYears(1)
-//        val scannedContactEmails = calendarContactFinder.scanForContacts(userId, lastScanDateTime, currentDateTime)
-//            .map { it.email }.toSet()
-//        val discoveredUserIds = userRepository.findIdsByEmail(scannedContactEmails)
-//
-//        val discoveredUserList = discoveredUserListRepository.findById(userId)
-//            .addDiscoveredUsers(discoveredUserIds)
-//
-//        discoveredUserListRepository.save(discoveredUserList)
-//
-//        return discoveredUserList.discoveredUsers
-//    }
 }

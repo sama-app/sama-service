@@ -1,8 +1,8 @@
 package com.sama.connection.application
 
 import com.sama.connection.domain.ConnectionRequest
-import com.sama.users.domain.BasicUserDetails
 import com.sama.users.domain.UserId
+import com.sama.users.domain.UserPublicDetails
 import com.sama.users.domain.UserRepository
 import org.springframework.stereotype.Component
 
@@ -11,15 +11,15 @@ class UserConnectionViews(private val userRepository: UserRepository) {
 
     fun renderUserConnections(discoveredUsers: Set<UserId>, connectedUsers: Collection<UserId>): UserConnectionsDTO {
         val allUserIds = discoveredUsers.plus(connectedUsers)
-        val userIdToBasicDetails = userRepository.findBasicDetailsById(allUserIds)
+        val userIdToPublicDetails = userRepository.findPublicDetailsById(allUserIds)
             .associateBy { it.id }
 
         return UserConnectionsDTO(
             connectedUsers.mapNotNull { connectionUserId ->
-                userIdToBasicDetails[connectionUserId]?.toUserDTO()
+                userIdToPublicDetails[connectionUserId]?.toUserDTO()
             },
             discoveredUsers.mapNotNull { connectionUserId ->
-                userIdToBasicDetails[connectionUserId]?.toUserDTO()
+                userIdToPublicDetails[connectionUserId]?.toUserDTO()
             },
         )
     }
@@ -40,7 +40,7 @@ class UserConnectionViews(private val userRepository: UserRepository) {
     }
 
     private fun ConnectionRequest.toDTO(): ConnectionRequestDTO {
-        val userDetails = userRepository.findBasicDetailsById(setOf(this.initiatorUserId, this.recipientUserId))
+        val userDetails = userRepository.findPublicDetailsById(setOf(this.initiatorUserId, this.recipientUserId))
             .associateBy { it.id }
 
         return ConnectionRequestDTO(
@@ -50,7 +50,7 @@ class UserConnectionViews(private val userRepository: UserRepository) {
         )
     }
 
-    private fun BasicUserDetails.toUserDTO(): UserDTO {
-        return UserDTO(this.email, this.fullName)
+    private fun UserPublicDetails.toUserDTO(): UserDTO {
+        return UserDTO(publicId!!, email, fullName)
     }
 }

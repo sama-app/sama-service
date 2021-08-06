@@ -115,6 +115,7 @@ class MeetingApplicationServiceTest(
         val initiatorId = 1L
         val initiatorFullName = "test"
         val initiatorEmail = "test@meetsama.com"
+        val initiatorPublicId = UUID.randomUUID()
         val meetingId = 1L
         val meetingIntentId = 11L
         val meetingIntentCode = UUID.randomUUID()
@@ -142,7 +143,7 @@ class MeetingApplicationServiceTest(
         whenever(meetingInvitationService.findForProposedMeeting(any(), any()))
             .thenReturn(MeetingInvitation(meetingUrl, shareableMessage))
         whenever(userRepository.findById(initiatorId))
-            .thenReturn(of(UserEntity(initiatorId, initiatorEmail).apply { this.fullName = initiatorFullName }))
+            .thenReturn(of(UserEntity(initiatorId, initiatorPublicId, initiatorEmail).apply { this.fullName = initiatorFullName }))
 
         // act
         val meetingInvitation = underTest.proposeMeeting(initiatorId, command)
@@ -162,6 +163,7 @@ class MeetingApplicationServiceTest(
     fun `load meeting proposal from code`() {
         // input
         val initiatorId = 1L
+        val initiatorPublicId = UUID.randomUUID()
         val initiatorFullName = "test"
         val initiatorEmail = "test@meetsama.com"
         val meetingId = 1L
@@ -199,7 +201,7 @@ class MeetingApplicationServiceTest(
             }))
 
         whenever(userRepository.findById(initiatorId))
-            .thenReturn(of(UserEntity(initiatorId, initiatorEmail).apply { this.fullName = initiatorFullName }))
+            .thenReturn(of(UserEntity(initiatorId, initiatorPublicId, initiatorEmail).apply { this.fullName = initiatorFullName }))
         whenever(eventRepository.findAll(eq(initiatorId), any(), any()))
             .thenReturn(emptyList())
 

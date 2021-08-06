@@ -7,7 +7,7 @@ import com.sama.integration.google.GoogleUserRepository
 import com.sama.users.application.GoogleOauth2Redirect
 import com.sama.users.application.RefreshCredentialsCommand
 import com.sama.users.application.RegisterUserCommand
-import com.sama.users.application.UpdateUserBasicDetailsCommand
+import com.sama.users.application.UpdateUserPublicDetailsCommand
 import com.sama.users.application.UserApplicationService
 import com.sama.users.domain.GoogleCredential
 import com.sama.users.domain.UserAlreadyExistsException
@@ -99,9 +99,9 @@ class GoogleOauth2ApplicationService(
                 )
             )
 
-            userApplicationService.updateBasicDetails(
+            userApplicationService.updatePublicDetails(
                 userId,
-                UpdateUserBasicDetailsCommand(userDetails.fullName)
+                UpdateUserPublicDetailsCommand(userDetails.fullName)
             )
 
             userId

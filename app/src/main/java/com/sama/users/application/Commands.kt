@@ -9,4 +9,4 @@ data class RegisterDeviceCommand(val deviceId: UUID, val firebaseRegistrationTok
 data class UnregisterDeviceCommand(val deviceId: UUID)
 data class RefreshTokenCommand(val refreshToken: String)
 data class UpdateWorkingHoursCommand(val workingHours: List<DayWorkingHoursDTO>)
-data class UpdateUserBasicDetailsCommand(val fullName: String?)
+data class UpdateUserPublicDetailsCommand(val fullName: String?)
