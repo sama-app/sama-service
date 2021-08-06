@@ -5,13 +5,13 @@ import com.sama.common.HasReason
 import com.sama.users.domain.UserId
 
 
-class GoogleInvalidCredentialsException(val userId: UserId, originalEx: Exception?) :
-    RuntimeException("User#${userId} Google credentials invalid", originalEx), HasReason {
+class GoogleInvalidCredentialsException(originalEx: Exception?) :
+    RuntimeException("User Google credentials invalid", originalEx), HasReason {
     override val reason: String = "google_invalid_credentials"
 }
 
-class GoogleInsufficientPermissionsException(val userId: UserId, originalEx: GoogleJsonResponseException) :
-    RuntimeException("User#${userId} has insufficient permissions to access Google APIs: ${originalEx.message}", originalEx),
+class GoogleInsufficientPermissionsException(originalEx: Exception) :
+    RuntimeException("Insufficient permissions to access Google APIs: ${originalEx.message}", originalEx),
     HasReason {
     override val reason: String = "google_insufficient_permissions"
 }

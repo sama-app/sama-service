@@ -1,14 +1,19 @@
-package com.sama.users.application
+package com.sama.auth.application
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow
 import com.sama.common.ApplicationService
+import com.sama.integration.google.GoogleInsufficientPermissionsException
 import com.sama.integration.google.GoogleUserRepository
+import com.sama.users.application.GoogleOauth2Redirect
+import com.sama.users.application.RefreshCredentialsCommand
+import com.sama.users.application.RegisterUserCommand
+import com.sama.users.application.UpdateUserBasicDetailsCommand
+import com.sama.users.application.UserApplicationService
 import com.sama.users.domain.GoogleCredential
 import com.sama.users.domain.UserAlreadyExistsException
 import org.apache.commons.logging.LogFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
-import java.lang.RuntimeException
 
 @ApplicationService
 @Service
@@ -20,36 +25,46 @@ class GoogleOauth2ApplicationService(
 ) {
     private val logger = LogFactory.getLog(javaClass)
 
-    fun beginGoogleOauth2(redirectUri: String): GoogleOauth2Redirect {
+    fun googleSignIn(command: GoogleSignInCommand): GoogleSignSuccessDTO {
+        try {
+            return processGoogleOauth2AuthCode(null, command.authCode)
+        } catch (ex: MissingScopesException) {
+            logger.warn("google sign-in missing scopes")
+            throw GoogleInsufficientPermissionsException(ex)
+        }
+    }
+
+    fun beginGoogleWebOauth2(redirectUri: String): GoogleOauth2Redirect {
         val authorizationUrl = googleAuthorizationCodeFlow.newAuthorizationUrl()
             .setRedirectUri(redirectUri)
         authorizationUrl.set("include_granted_scopes", true)
         return GoogleOauth2Redirect(authorizationUrl.build())
     }
 
-    fun processGoogleOauth2(redirectUri: String, code: String?, error: String?): GoogleOauth2Response {
+    fun processGoogleWebOauth2(redirectUri: String, code: String?, error: String?): GoogleOauth2Response {
         return when {
             code != null -> try {
                 processGoogleOauth2AuthCode(redirectUri, code)
             } catch (e: MissingScopesException) {
-                GoogleOauth2Failure("google_insufficient_permissions")
+                GoogleSignFailureDTO("google_insufficient_permissions")
             } catch (e: Exception) {
                 logger.warn("oauth2-callback-exception: $e.message")
-                GoogleOauth2Failure("internal")
+                GoogleSignFailureDTO("internal")
             }
             error != null -> {
                 logger.warn("oauth2-callback-error-callback: $error")
-                GoogleOauth2Failure("google_insufficient_permissions")
+                GoogleSignFailureDTO("google_insufficient_permissions")
             }
-            else -> GoogleOauth2Failure("sama-invalid-oauth-callback")
+            else -> GoogleSignFailureDTO("sama-invalid-oauth-callback")
         }
     }
 
-    private fun processGoogleOauth2AuthCode(redirectUri: String, authorizationCode: String): GoogleOauth2Success {
+    private fun processGoogleOauth2AuthCode(redirectUri: String?, authorizationCode: String): GoogleSignSuccessDTO {
         // Step #1: Verify Google Code and Scopes
         val verifiedToken = kotlin.runCatching {
-            googleAuthorizationCodeFlow.newTokenRequest(authorizationCode)
-                .setRedirectUri(redirectUri)
+            val tokenRequest = googleAuthorizationCodeFlow.newTokenRequest(authorizationCode)
+            tokenRequest
+                .setRedirectUri(redirectUri ?: "") // empty string for non-web applications
                 .execute()
         }.mapCatching {
             val acquiredScopes = it.scope.split(" ")
@@ -94,18 +109,6 @@ class GoogleOauth2ApplicationService(
 
         // Step #4: Issue SAMA authentication tokens
         val (accessToken, refreshToken) = userApplicationService.issueTokens(userId)
-        return GoogleOauth2Success(accessToken, refreshToken)
+        return GoogleSignSuccessDTO(accessToken, refreshToken)
     }
 }
-
-data class VerifiedGoogleOauth2Token(
-    val email: String,
-    val credential: GoogleCredential
-)
-
-sealed class GoogleOauth2Response
-data class GoogleOauth2Success(val accessToken: String, val refreshToken: String) : GoogleOauth2Response()
-data class GoogleOauth2Failure(val error: String) : GoogleOauth2Response()
-
-class MissingScopesException :
-    RuntimeException("User did not grant all required scopes")
