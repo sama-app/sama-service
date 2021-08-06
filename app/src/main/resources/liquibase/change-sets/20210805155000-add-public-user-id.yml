@@ -22,8 +22,8 @@ databaseChangeLog:
                   name: public_id
                   type: UUID
                   defaultValueComputed: ${uuid_function_public}
-                constraints:
-                  nullable: false
+                  constraints:
+                    nullable: false
         - createIndex:
             schemaName: sama
             tableName: user
