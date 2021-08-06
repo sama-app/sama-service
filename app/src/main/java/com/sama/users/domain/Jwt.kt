@@ -7,7 +7,8 @@ import com.auth0.jwt.exceptions.JWTVerificationException
 import com.auth0.jwt.interfaces.DecodedJWT
 import com.sama.common.ValueObject
 import java.time.Clock
-import java.util.*
+import java.util.Date
+import java.util.UUID
 import kotlin.Result.Companion.failure
 import kotlin.Result.Companion.success
 
@@ -45,6 +46,10 @@ data class Jwt(val token: String) {
 
     private fun decoded(): DecodedJWT {
         return JWT.decode(token)
+    }
+
+    fun userId(): UserPublicId? {
+        return decoded().getClaim(USER_ID_CLAIM)?.asString()?.let { UUID.fromString(it) }
     }
 
     fun userEmail(): String {

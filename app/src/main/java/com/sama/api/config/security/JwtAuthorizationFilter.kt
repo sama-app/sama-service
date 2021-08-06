@@ -2,6 +2,7 @@ package com.sama.api.config.security
 
 import com.sama.users.domain.Jwt
 import com.sama.users.domain.JwtConfiguration
+import com.sama.users.domain.UserPublicId
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.util.StringUtils
@@ -28,7 +29,8 @@ class JwtAuthorizationFilter(
         jwt?.let { token ->
             Jwt.verified(token, accessJwtConfiguration, clock)
                 .onSuccess {
-                    val auth = UsernamePasswordAuthenticationToken(it.userEmail(), null, null)
+                    val userPrincipal = UserPrincipal(it.userEmail(), it.userId())
+                    val auth = UsernamePasswordAuthenticationToken(userPrincipal, null, null)
                     SecurityContextHolder.getContext().authentication = auth
                 }
                 .onFailure { logger.info("jwt authentication error:", it) }
@@ -49,4 +51,6 @@ class JwtAuthorizationFilter(
         return request.cookies?.first { it.name == "sama.access" }?.value
     }
 }
+
+data class UserPrincipal(val email: String, val userId: UserPublicId?)
 

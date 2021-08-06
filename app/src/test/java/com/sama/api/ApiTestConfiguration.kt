@@ -10,8 +10,8 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import java.time.*
 
-const val jwtSigningSecret = "dummy-access-secret-for-development"
-const val jwtKeyId = "dummy-access-key-id-for-development"
+const val jwtSigningSecret = "secret"
+const val jwtKeyId = "key-id"
 
 @Configuration
 class ApiTestConfiguration {
@@ -31,6 +31,7 @@ class ApiTestConfiguration {
     @Bean
     fun fixedUserIdAttributeResolver(): UserIdAttributeResolver {
         var authUserRepository = mock(UserRepository::class.java)
+        whenever(authUserRepository.findIdByPublicId(any())).thenReturn(1)
         whenever(authUserRepository.findIdByEmail(any())).thenReturn(1)
         return UserIdAttributeResolver(authUserRepository)
     }

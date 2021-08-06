@@ -5,14 +5,16 @@ import com.auth0.jwt.algorithms.Algorithm
 import com.sama.common.DomainEntity
 import com.sama.common.DomainService
 import com.sama.common.Factory
-import org.apache.commons.validator.routines.EmailValidator
 import java.time.Clock
-import java.util.*
+import java.util.Date
+import java.util.UUID
 import kotlin.Result.Companion.success
+import org.apache.commons.validator.routines.EmailValidator
 
 @DomainEntity
 data class UserRegistration(
     val userId: UserId,
+    val publicId: UserPublicId,
     val email: String,
     val emailExists: Boolean,
     val fullName: String?,
@@ -36,7 +38,7 @@ data class UserDeviceRegistrations(val userId: UserId, val deviceId: UUID?, val 
     companion object {
         fun of(user: UserEntity): UserDeviceRegistrations {
             return UserDeviceRegistrations(
-                user.id()!!,
+                user.id,
                 user.firebaseCredential?.deviceId,
                 user.firebaseCredential?.registrationToken
             )
@@ -59,15 +61,18 @@ data class UserDeviceRegistrations(val userId: UserId, val deviceId: UUID?, val 
     }
 }
 
+const val USER_ID_CLAIM = "user_id"
+
 @DomainService
-data class UserJwtIssuer(val userId: UserId, val email: String, val active: Boolean) {
+data class UserJwtIssuer(val userId: UserId, val userPublicId: UserPublicId, val email: String, val active: Boolean) {
 
     @Factory
     companion object {
         fun of(user: UserEntity): UserJwtIssuer {
             return UserJwtIssuer(
-                user.id()!!,
-                user.email(),
+                user.id,
+                user.publicId,
+                user.email,
                 user.active!!
             )
         }
@@ -83,6 +88,7 @@ data class UserJwtIssuer(val userId: UserId, val email: String, val active: Bool
                 .withKeyId(jwtConfiguration.keyId)
                 .withJWTId(jwtId.toString())
                 .withSubject(email)
+                .withClaim(USER_ID_CLAIM, userPublicId.toString())
                 .withIssuedAt(Date.from(clock.instant()))
                 .withExpiresAt(Date.from(clock.instant().plusSeconds(jwtConfiguration.expirationSec)))
                 .sign(Algorithm.HMAC256(jwtConfiguration.signingSecret))

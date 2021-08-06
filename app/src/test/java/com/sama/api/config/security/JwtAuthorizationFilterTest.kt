@@ -6,6 +6,7 @@ import com.sama.api.ApiTestConfiguration
 import com.sama.api.jwtKeyId
 import com.sama.api.jwtSigningSecret
 import com.sama.api.config.WebMvcConfiguration
+import com.sama.users.domain.USER_ID_CLAIM
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
@@ -40,6 +41,7 @@ internal class AuthorizationFiltersTest(
     private val validJwt = JWT.create()
         .withKeyId(jwtKeyId)
         .withSubject("hermione@granger.hg")
+        .withClaim(USER_ID_CLAIM, UUID.randomUUID().toString())
         .withIssuedAt(Date.from(clock.instant()))
         .withExpiresAt(Date.from(clock.instant().plusSeconds(3600)))
         .sign(Algorithm.HMAC256(jwtSigningSecret))
@@ -47,6 +49,7 @@ internal class AuthorizationFiltersTest(
     private val expiredJwt = JWT.create()
         .withKeyId(jwtKeyId)
         .withSubject("hermione@granger.hg")
+        .withClaim(USER_ID_CLAIM, UUID.randomUUID().toString())
         .withIssuedAt(Date.from(clock.instant()))
         .withExpiresAt(Date.from(clock.instant().plusSeconds(-1)))
         .sign(Algorithm.HMAC256(jwtSigningSecret))

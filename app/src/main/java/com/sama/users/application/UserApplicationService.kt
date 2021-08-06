@@ -25,9 +25,10 @@ class UserApplicationService(
     fun registerUser(command: RegisterUserCommand): UserId {
         val userExistsByEmail = userRepository.existsByEmail(command.email)
         val userId = userRepository.nextIdentity()
+        val userPublicId = userRepository.nextPublicId()
 
         val userRegistration =
-            UserRegistration(userId, command.email, userExistsByEmail, command.fullName, command.googleCredential)
+            UserRegistration(userId, userPublicId, command.email, userExistsByEmail, command.fullName, command.googleCredential)
 
         UserEntity.new(userRegistration).also { userRepository.save(it) }
         return userId
@@ -45,17 +46,17 @@ class UserApplicationService(
         val user = userRepository.findByEmailOrThrow(command.email)
 
         user.applyChanges(command.googleCredential).also { userRepository.save(it) }
-        return user.id()!!
+        return user.id
     }
 
     @Transactional
-    fun updateBasicDetails(userId: UserId, command: UpdateUserBasicDetailsCommand): Boolean {
+    fun updatePublicDetails(userId: UserId, command: UpdateUserPublicDetailsCommand): Boolean {
         val userEntity = userRepository.findByIdOrThrow(userId)
 
-        val basicDetails = BasicUserDetails.of(userEntity)
+        val publicDetails = UserPublicDetails.of(userEntity)
             .rename(command.fullName)
 
-        userEntity.applyChanges(basicDetails).also { userRepository.save(it) }
+        userEntity.applyChanges(publicDetails).also { userRepository.save(it) }
         return true
     }
 
@@ -66,7 +67,6 @@ class UserApplicationService(
         return UserDeviceRegistrations.of(userEntity)
             .let {
                 UserDeviceRegistrationsDTO(
-                    userId,
                     if (it.deviceId != null && it.firebaseRegistrationToken != null) {
                         FirebaseDeviceRegistrationDTO(it.deviceId, it.firebaseRegistrationToken)
                     } else {
@@ -117,7 +117,11 @@ class UserApplicationService(
             .onFailure { throw InvalidRefreshTokenException() }
             .getOrThrow()
 
-        val user = userRepository.findByEmailOrThrow(refreshToken.userEmail())
+        val user = if (refreshToken.userId() != null) {
+            userRepository.findByPublicIdOrThrow(refreshToken.userId()!!)
+        } else {
+            userRepository.findByEmailOrThrow(refreshToken.userEmail())
+        }
 
         val accessToken = UserJwtIssuer.of(user)
             .issue(UUID.randomUUID(), accessJwtConfiguration, clock)

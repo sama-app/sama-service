@@ -2,9 +2,9 @@ package com.sama.connection.application
 
 import com.sama.AppTestConfiguration
 import com.sama.IntegrationOverrides
-import com.sama.connection.domain.CalendarContactFinder
 import com.sama.users.domain.UserEntity
 import com.sama.users.domain.UserRepository
+import java.util.UUID.fromString
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -13,7 +13,6 @@ import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.context.SecurityContextHolder
@@ -53,12 +52,15 @@ class UserConnectionApplicationServiceTest {
     @Autowired
     lateinit var underTest: UserConnectionApplicationService
 
-    @MockBean
-    lateinit var calendarContactFinder: CalendarContactFinder
-
     // test data
-    private val userOne = UserEntity(1L, "one@meetsama.com").apply { fullName = "One" }
-    private val userTwo = UserEntity(2L, "two@meetsama.com").apply { fullName = "Two" }
+    private val userOne =
+        UserEntity(1L, fromString("37f88284-f195-47e6-8f69-451395aa9db1"), "one@meetsama.com").apply {
+            fullName = "One"
+        }
+    private val userTwo =
+        UserEntity(2L, fromString("c718c4d6-2b52-4baf-9e4b-836bc450f47d"), "two@meetsama.com").apply {
+            fullName = "Two"
+        }
 
     @BeforeEach
     fun setupUsers() {
@@ -76,7 +78,7 @@ class UserConnectionApplicationServiceTest {
     @Test
     fun `connect two users via request`() {
         val connectionRequest =
-            underTest.createConnectionRequest(userOne.id, CreateConnectionRequestCommand(userTwo.email))
+            underTest.createConnectionRequest(userOne.id, CreateConnectionRequestCommand(userTwo.publicId))
 
         asUser(userTwo) {
             underTest.approveConnectionRequest(it.id, connectionRequest.connectionRequestId)
@@ -86,7 +88,7 @@ class UserConnectionApplicationServiceTest {
             val connections = underTest.findUserConnections(it.id)
             val connectionRequests = underTest.findConnectionRequests(it.id)
             assertThat(connections.connectedUsers)
-                .containsExactly(UserDTO("two@meetsama.com", "Two"))
+                .containsExactly(UserDTO(userTwo.publicId, "two@meetsama.com", "Two"))
             assertThat(connectionRequests.initiatedConnectionRequests).isEmpty()
         }
 
@@ -94,7 +96,7 @@ class UserConnectionApplicationServiceTest {
             val connections = underTest.findUserConnections(it.id)
             val connectionRequests = underTest.findConnectionRequests(it.id)
             assertThat(connections.connectedUsers)
-                .containsExactly(UserDTO("one@meetsama.com", "One"))
+                .containsExactly(UserDTO(userOne.publicId, "one@meetsama.com", "One"))
             assertThat(connectionRequests.pendingConnectionRequests).isEmpty()
         }
     }
@@ -103,7 +105,7 @@ class UserConnectionApplicationServiceTest {
     fun `cannot manipulate own connection request`() {
         asUser(userOne) {
             val connectionRequest =
-                underTest.createConnectionRequest(it.id, CreateConnectionRequestCommand(userTwo.email))
+                underTest.createConnectionRequest(it.id, CreateConnectionRequestCommand(userTwo.publicId))
 
             assertThrows<AccessDeniedException> {
                 underTest.approveConnectionRequest(it.id, connectionRequest.connectionRequestId)
@@ -118,7 +120,7 @@ class UserConnectionApplicationServiceTest {
     @Test
     fun `reject user connection request`() {
         val connectionRequest =
-            underTest.createConnectionRequest(userOne.id, CreateConnectionRequestCommand(userTwo.email))
+            underTest.createConnectionRequest(userOne.id, CreateConnectionRequestCommand(userTwo.publicId))
 
         asUser(userTwo) {
             underTest.rejectConnectionRequest(userTwo.id, connectionRequest.connectionRequestId)
@@ -138,14 +140,14 @@ class UserConnectionApplicationServiceTest {
     @Test
     fun `disconnect users after connection`() {
         val connectionRequest =
-            underTest.createConnectionRequest(userOne.id, CreateConnectionRequestCommand(userTwo.email))
+            underTest.createConnectionRequest(userOne.id, CreateConnectionRequestCommand(userTwo.publicId))
 
         asUser(userTwo) {
             underTest.approveConnectionRequest(userTwo.id, connectionRequest.connectionRequestId)
         }
 
         asUser(userOne) {
-            underTest.removeUserConnection(userOne.id, RemoveUserConnectionCommand(userTwo.email))
+            underTest.removeUserConnection(userOne.id, RemoveUserConnectionCommand(userTwo.publicId))
         }
 
         asUser(userOne) {
@@ -162,12 +164,12 @@ class UserConnectionApplicationServiceTest {
     @Test
     fun `list connection requests for two users`() {
         val connectionRequest =
-            underTest.createConnectionRequest(userOne.id, CreateConnectionRequestCommand(userTwo.email))
+            underTest.createConnectionRequest(userOne.id, CreateConnectionRequestCommand(userTwo.publicId))
 
         val connectionRequestDTO = ConnectionRequestDTO(
             connectionRequest.connectionRequestId,
-            initiator = UserDTO(userOne.email, userOne.fullName),
-            recipient = UserDTO(userTwo.email, userTwo.fullName)
+            initiator = UserDTO(userOne.publicId, userOne.email, userOne.fullName),
+            recipient = UserDTO(userTwo.publicId, userTwo.email, userTwo.fullName)
         )
 
         asUser(userOne) {

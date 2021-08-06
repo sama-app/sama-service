@@ -1,4 +1,6 @@
 package com.sama.connection.application
 
-data class CreateConnectionRequestCommand(val recipientEmail: String)
-data class RemoveUserConnectionCommand(val recipientEmail: String)
+import com.sama.users.domain.UserPublicId
+
+data class CreateConnectionRequestCommand(val recipientId: UserPublicId)
+data class RemoveUserConnectionCommand(val userId: UserPublicId)
