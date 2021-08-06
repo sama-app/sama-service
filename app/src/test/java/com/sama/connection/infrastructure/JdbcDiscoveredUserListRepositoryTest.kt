@@ -18,11 +18,15 @@ class JdbcDiscoveredUserListRepositoryTest : BasePersistenceIT<JdbcDiscoveredUse
     @Autowired
     lateinit var userRepository: UserRepository
 
+    private lateinit var userOne: UserEntity
+    private lateinit var userTwo: UserEntity
+    private lateinit var userThree: UserEntity
+
     @BeforeEach
     fun setup() {
-        userRepository.save(UserEntity(1L, UUID.randomUUID(), "one@meetsama.com").apply { fullName = "One" })
-        userRepository.save(UserEntity(2L, UUID.randomUUID(), "two@meetsama.com").apply { fullName = "Two" })
-        userRepository.save(UserEntity(3L, UUID.randomUUID(), "three@meetsama.com").apply { fullName = "Three" })
+        userOne = userRepository.save(UserEntity("one@meetsama.com").apply { fullName = "One" })
+        userTwo = userRepository.save(UserEntity("two@meetsama.com").apply { fullName = "Two" })
+        userThree = userRepository.save(UserEntity("three@meetsama.com").apply { fullName = "Three" })
         userRepository.flush()
     }
 
@@ -34,33 +38,33 @@ class JdbcDiscoveredUserListRepositoryTest : BasePersistenceIT<JdbcDiscoveredUse
 
     @Test
     fun `save user connections`() {
-        val expected = DiscoveredUserList(1L, setOf(2L, 3L))
+        val expected = DiscoveredUserList(userOne.id!!, setOf(userTwo.id!!, userThree.id!!))
         underTest.save(expected)
 
-        val actual = underTest.findById(1L)
+        val actual = underTest.findById(userOne.id!!)
 
         assertThat(actual).isEqualTo(expected)
     }
 
     @Test
     fun `save no user connections`() {
-        val expected = DiscoveredUserList(1L, emptySet())
+        val expected = DiscoveredUserList(userOne.id!!, emptySet())
         underTest.save(expected)
 
-        val actual = underTest.findById(1L)
+        val actual = underTest.findById(userOne.id!!)
 
         assertThat(actual).isEqualTo(expected)
     }
 
     @Test
     fun `remove user connections`() {
-        val initial = DiscoveredUserList(1L, setOf(2L, 3L))
+        val initial = DiscoveredUserList(userOne.id!!, setOf(userTwo.id!!, userThree.id!!))
         underTest.save(initial)
 
-        val expected = initial.copy(discoveredUsers = setOf(2L))
+        val expected = initial.copy(discoveredUsers = setOf(userTwo.id!!))
         underTest.save(expected)
 
-        val actual = underTest.findById(1L)
+        val actual = underTest.findById(userOne.id!!)
         assertThat(actual).isEqualTo(expected)
     }
 }

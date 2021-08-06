@@ -13,8 +13,6 @@ import org.apache.commons.validator.routines.EmailValidator
 
 @DomainEntity
 data class UserRegistration(
-    val userId: UserId,
-    val publicId: UserPublicId,
     val email: String,
     val emailExists: Boolean,
     val fullName: String?,
@@ -38,7 +36,7 @@ data class UserDeviceRegistrations(val userId: UserId, val deviceId: UUID?, val 
     companion object {
         fun of(user: UserEntity): UserDeviceRegistrations {
             return UserDeviceRegistrations(
-                user.id,
+                user.id!!,
                 user.firebaseCredential?.deviceId,
                 user.firebaseCredential?.registrationToken
             )
@@ -70,8 +68,8 @@ data class UserJwtIssuer(val userId: UserId, val userPublicId: UserPublicId, val
     companion object {
         fun of(user: UserEntity): UserJwtIssuer {
             return UserJwtIssuer(
-                user.id,
-                user.publicId,
+                user.id!!,
+                user.publicId!!,
                 user.email,
                 user.active!!
             )

@@ -18,11 +18,15 @@ class JdbcUserConnectionRepositoryTest : BasePersistenceIT<JdbcUserConnectionRep
     @Autowired
     lateinit var userRepository: UserRepository
 
+    private lateinit var userOne: UserEntity
+    private lateinit var userTwo: UserEntity
+    private lateinit var userThree: UserEntity
+
     @BeforeEach
     fun setup() {
-        userRepository.save(UserEntity(1L, UUID.randomUUID(), "one@meetsama.com").apply { fullName = "One" })
-        userRepository.save(UserEntity(2L, UUID.randomUUID(), "two@meetsama.com").apply { fullName = "Two" })
-        userRepository.save(UserEntity(3L, UUID.randomUUID(), "three@meetsama.com").apply { fullName = "Three" })
+        userOne = userRepository.save(UserEntity("one@meetsama.com").apply { fullName = "One" })
+        userTwo = userRepository.save(UserEntity("two@meetsama.com").apply { fullName = "Two" })
+        userThree = userRepository.save(UserEntity("three@meetsama.com").apply { fullName = "Three" })
         userRepository.flush()
     }
 
@@ -34,28 +38,28 @@ class JdbcUserConnectionRepositoryTest : BasePersistenceIT<JdbcUserConnectionRep
 
     @Test
     fun `save and find connected users`() {
-        val userConnection1 = UserConnection(1L, 2L)
-        val userConnection2 = UserConnection(3L, 1L)
+        val userConnection1 = UserConnection(userOne.id!!, userTwo.id!!)
+        val userConnection2 = UserConnection(userThree.id!!, userOne.id!!)
 
         underTest.save(userConnection1)
         underTest.save(userConnection2)
 
-        val connectedUserIds = underTest.findConnectedUserIds(1L)
+        val connectedUserIds = underTest.findConnectedUserIds(userOne.id!!)
 
-        assertThat(connectedUserIds).containsExactly(2L, 3L)
+        assertThat(connectedUserIds).containsExactly(userTwo.id!!, userThree.id!!)
     }
 
     @Test
     fun `delete user connection`() {
 
-        val userConnection1 = UserConnection(1L, 2L)
-        val userConnection2 = UserConnection(1L, 3L)
+        val userConnection1 = UserConnection(userOne.id!!, userTwo.id!!)
+        val userConnection2 = UserConnection(userOne.id!!, userThree.id!!)
 
         underTest.save(userConnection1)
         underTest.save(userConnection2)
         underTest.delete(userConnection1)
 
-        val connectedUserIds = underTest.findConnectedUserIds(1L)
-        assertThat(connectedUserIds).containsExactly(3L)
+        val connectedUserIds = underTest.findConnectedUserIds(userOne.id!!)
+        assertThat(connectedUserIds).containsExactly(userThree.id!!)
     }
 }
