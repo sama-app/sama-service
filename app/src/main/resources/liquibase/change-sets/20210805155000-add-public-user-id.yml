@@ -7,6 +7,7 @@ databaseChangeLog:
   - changeSet:
       id: move-uuid-extension
       author: balys
+      failOnError: false # live dbs have this applied manually
       changes:
         sql: ALTER EXTENSION "uuid-ossp" SET SCHEMA public;
 
