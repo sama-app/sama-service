@@ -141,7 +141,8 @@ class MeetingControllerTest(
         val initiatorFullName = "test"
         val initiatorEmail = "test@meetsama.com"
         val shareableMessage = "a nice message"
-        val meetingUrl = "localhost:3000/code"
+        val meetingCode = "code"
+        val meetingUrl = "localhost:3000/$meetingCode"
         val proposedSlot = MeetingSlotDTO(
             ZonedDateTime.parse("2021-01-01T12:00:00Z"),
             ZonedDateTime.parse("2021-01-01T13:00:00Z"),
@@ -156,6 +157,7 @@ class MeetingControllerTest(
                     listOf(proposedSlot),
                     InitiatorDTO(initiatorFullName, initiatorEmail)
                 ),
+                meetingCode,
                 meetingUrl,
                 shareableMessage
             )
@@ -183,6 +185,7 @@ class MeetingControllerTest(
                         "email": $initiatorEmail
                     }
                 },
+                "meetingCode": $meetingCode,
                 "meetingUrl": "$meetingUrl",
                 "shareableMessage": "$shareableMessage"
             }

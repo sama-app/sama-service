@@ -1,15 +1,26 @@
 package com.sama.meeting.application
 
 import com.sama.calendar.application.CalendarEventConsumer
-import com.sama.calendar.domain.EventRepository
+import com.sama.calendar.application.EventApplicationService
 import com.sama.common.ApplicationService
 import com.sama.common.NotFoundException
 import com.sama.common.findByIdOrThrow
 import com.sama.common.toMinutes
 import com.sama.comms.application.CommsEventConsumer
-import com.sama.meeting.domain.*
+import com.sama.meeting.domain.ConfirmedMeeting
+import com.sama.meeting.domain.ExpiredMeeting
+import com.sama.meeting.domain.InvalidMeetingStatusException
+import com.sama.meeting.domain.MeetingAlreadyConfirmedException
+import com.sama.meeting.domain.MeetingCode
+import com.sama.meeting.domain.MeetingConfirmedEvent
+import com.sama.meeting.domain.MeetingIntent
+import com.sama.meeting.domain.MeetingRecipient
+import com.sama.meeting.domain.MeetingSlot
+import com.sama.meeting.domain.MeetingStatus
+import com.sama.meeting.domain.ProposedMeeting
 import com.sama.meeting.domain.aggregates.MeetingEntity
 import com.sama.meeting.domain.aggregates.MeetingIntentEntity
+import com.sama.meeting.domain.meetingFrom
 import com.sama.meeting.domain.repositories.MeetingCodeGenerator
 import com.sama.meeting.domain.repositories.MeetingIntentRepository
 import com.sama.meeting.domain.repositories.MeetingRepository
@@ -18,12 +29,12 @@ import com.sama.slotsuggestion.application.SlotSuggestionRequest
 import com.sama.slotsuggestion.application.SlotSuggestionService
 import com.sama.users.domain.UserId
 import com.sama.users.domain.UserRepository
+import java.time.Clock
+import java.time.ZonedDateTime
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.time.Clock
-import java.time.ZonedDateTime
 
 @ApplicationService
 @Service
@@ -34,10 +45,10 @@ class MeetingApplicationService(
     private val meetingInvitationService: MeetingInvitationService,
     private val meetingCodeGenerator: MeetingCodeGenerator,
     private val userRepository: UserRepository,
-    private val eventRepository: EventRepository,
+    private val eventApplicationService: EventApplicationService,
     private val calendarEventConsumer: CalendarEventConsumer,
     private val commsEventConsumer: CommsEventConsumer,
-    private val clock: Clock
+    private val clock: Clock,
 ) {
 
     @Transactional
@@ -92,6 +103,7 @@ class MeetingApplicationService(
                 proposedMeeting.proposedSlots.map { it.toDTO() },
                 initiatorEntity.toInitiatorDTO()
             ),
+            meetingCode,
             meetingInvitation.url,
             meetingInvitation.message
         )
@@ -110,8 +122,9 @@ class MeetingApplicationService(
         }
 
         val (start, end) = proposedMeeting.proposedSlotsRange()
-        val blocks = eventRepository.findAll(proposedMeeting.initiatorId, start, end)
-        val availableProposedSlots = proposedMeeting.availableProposedSlots(blocks, clock)
+        val calendarEvents = eventApplicationService.fetchEvents(proposedMeeting.initiatorId,
+            start.toLocalDate(), end.toLocalDate(), start.zone)
+        val availableProposedSlots = proposedMeeting.availableProposedSlots(calendarEvents.events, clock)
 
         val initiatorEntity = userRepository.findByIdOrThrow(proposedMeeting.initiatorId)
 
@@ -151,7 +164,7 @@ class MeetingApplicationService(
     @Scheduled(cron = "0 0/15 * * * *")
     @Transactional
     fun expireMeetings() {
-        val expiringMeetingIds = meetingRepository.findAllIdsExpiring(ZonedDateTime.now())
+        val expiringMeetingIds = meetingRepository.findAllIdsExpiring(ZonedDateTime.now(clock))
         if (expiringMeetingIds.isEmpty()) {
             return
         }

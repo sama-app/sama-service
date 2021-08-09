@@ -1,9 +1,15 @@
-package com.sama.meeting.domain
+package com.sama.meeting.infrastructure
 
 import com.sama.common.BasePersistenceIT
 import com.sama.common.findByIdOrThrow
+import com.sama.meeting.domain.ConfirmedMeeting
+import com.sama.meeting.domain.MeetingRecipient
+import com.sama.meeting.domain.MeetingSlot
+import com.sama.meeting.domain.MeetingStatus
+import com.sama.meeting.domain.ProposedMeeting
 import com.sama.meeting.domain.aggregates.MeetingEntity
 import com.sama.meeting.domain.aggregates.MeetingIntentEntity
+import com.sama.meeting.domain.meetingFrom
 import com.sama.meeting.domain.repositories.MeetingIntentRepository
 import com.sama.meeting.domain.repositories.MeetingRepository
 import org.assertj.core.api.Assertions.assertThat
