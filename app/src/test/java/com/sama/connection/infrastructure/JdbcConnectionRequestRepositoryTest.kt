@@ -98,7 +98,7 @@ class JdbcConnectionRequestRepositoryTest : BasePersistenceIT<JdbcConnectionRequ
     }
 
     @Test
-    fun `update status`() {
+    fun update() {
         val id = UUID.randomUUID()
         val initial = ConnectionRequest(id, userOne.id!!, userTwo.id!!, PENDING)
         underTest.save(initial)

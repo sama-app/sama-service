@@ -1,7 +1,9 @@
-package com.sama.meeting.domain
+package com.sama.meeting.infrastructure
 
 import com.sama.common.BasePersistenceIT
 import com.sama.common.findByIdOrThrow
+import com.sama.meeting.domain.MeetingIntent
+import com.sama.meeting.domain.MeetingSlot
 import com.sama.meeting.domain.aggregates.MeetingIntentEntity
 import com.sama.meeting.domain.repositories.MeetingIntentRepository
 import com.sama.meeting.domain.repositories.findByCodeOrThrow

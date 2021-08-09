@@ -1,5 +1,6 @@
 package com.sama.meeting.domain
 
+import com.sama.calendar.application.EventDTO
 import com.sama.calendar.domain.Event
 import com.sama.common.DomainEntity
 import com.sama.common.Factory
@@ -87,7 +88,7 @@ data class ProposedMeeting(
         }
     }
 
-    fun availableProposedSlots(exclusions: Collection<Event>, clock: Clock): List<MeetingSlot> {
+    fun availableProposedSlots(exclusions: Collection<EventDTO>, clock: Clock): List<MeetingSlot> {
         val now = ZonedDateTime.now(clock)
         return expandedSlots()
             .filter { slot ->

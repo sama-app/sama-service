@@ -42,6 +42,6 @@ class EventController(
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "'endDate' must be after 'startDate'")
         }
 
-        return eventApplicationService.fetchBlocks(userId, startDate, endDate, timezone)
+        return eventApplicationService.fetchEvents(userId, startDate, endDate, timezone)
     }
 }

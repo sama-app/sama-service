@@ -1,5 +1,6 @@
 package com.sama.meeting.application
 
+import com.sama.meeting.domain.MeetingCode
 import com.sama.meeting.domain.MeetingIntentCode
 import com.sama.meeting.domain.MeetingIntentId
 import com.sama.meeting.domain.MeetingSlot
@@ -55,6 +56,7 @@ data class ProposedMeetingDTO(
 
 data class MeetingInvitationDTO(
     val meeting: ProposedMeetingDTO,
+    val meetingCode: MeetingCode,
     val meetingUrl: String,
     val shareableMessage: String
 )

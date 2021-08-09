@@ -19,7 +19,7 @@ class EventApplicationService(
     @Value("\${sama.landing.url}") private val samaWebUrl: String,
 ) {
 
-    fun fetchBlocks(userId: UserId, startDate: LocalDate, endDate: LocalDate, timezone: ZoneId) =
+    fun fetchEvents(userId: UserId, startDate: LocalDate, endDate: LocalDate, timezone: ZoneId) =
         eventRepository.findAll(
             userId,
             startDate.atStartOfDay(timezone),
@@ -29,7 +29,7 @@ class EventApplicationService(
             .let { FetchEventsDTO(it, it) }
 
 
-    fun createBlock(userId: UserId, command: CreateEventCommand) {
+    fun createEvent(userId: UserId, command: CreateEventCommand) {
         val initiatorName = userRepository.findByIdOrThrow(userId).fullName
 
         val block = Event(

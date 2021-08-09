@@ -50,7 +50,7 @@ class EventControllerTest(
         val startDateTime = ZonedDateTime.of(startDate, LocalTime.of(12, 15), zoneId)
         val endDateTime = ZonedDateTime.of(startDate, LocalTime.of(12, 30), zoneId)
         val eventDTO = EventDTO(startDateTime, endDateTime, false, "test")
-        whenever(eventApplicationService.fetchBlocks(eq(userId), eq(startDate), eq(endDate), eq(zoneId)))
+        whenever(eventApplicationService.fetchEvents(eq(userId), eq(startDate), eq(endDate), eq(zoneId)))
             .thenReturn(FetchEventsDTO(listOf(eventDTO), listOf(eventDTO)))
 
         val expectedJson = """
@@ -91,7 +91,7 @@ class EventControllerTest(
         val endDate = LocalDate.of(2021, 1, 2)
         val zoneId = ZoneId.of("Europe/Rome")
 
-        whenever(eventApplicationService.fetchBlocks(eq(userId), eq(startDate), eq(endDate), eq(zoneId)))
+        whenever(eventApplicationService.fetchEvents(eq(userId), eq(startDate), eq(endDate), eq(zoneId)))
             .thenReturn(FetchEventsDTO(emptyList(), emptyList()))
 
         val expectedJson = """

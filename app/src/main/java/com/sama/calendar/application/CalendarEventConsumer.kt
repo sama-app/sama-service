@@ -8,7 +8,7 @@ class CalendarEventConsumer(private val eventApplicationService: EventApplicatio
 
     fun onMeetingConfirmed(event: MeetingConfirmedEvent) {
         val meeting = event.confirmedMeeting
-        eventApplicationService.createBlock(
+        eventApplicationService.createEvent(
             meeting.initiatorId,
             CreateEventCommand(meeting.slot.startDateTime, meeting.slot.endDateTime, meeting.meetingRecipient.email!!)
         )

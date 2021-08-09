@@ -4,7 +4,6 @@ import com.sama.common.BasePersistenceIT
 import com.sama.connection.domain.DiscoveredUserList
 import com.sama.users.domain.UserEntity
 import com.sama.users.domain.UserRepository
-import java.util.UUID
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -24,9 +23,9 @@ class JdbcDiscoveredUserListRepositoryTest : BasePersistenceIT<JdbcDiscoveredUse
 
     @BeforeEach
     fun setup() {
-        userOne = userRepository.save(UserEntity("one@meetsama.com").apply { fullName = "One" })
-        userTwo = userRepository.save(UserEntity("two@meetsama.com").apply { fullName = "Two" })
-        userThree = userRepository.save(UserEntity("three@meetsama.com").apply { fullName = "Three" })
+        userOne = userRepository.save(UserEntity("one@meetsama.com"))
+        userTwo = userRepository.save(UserEntity("two@meetsama.com"))
+        userThree = userRepository.save(UserEntity("three@meetsama.com"))
         userRepository.flush()
     }
 
@@ -37,7 +36,7 @@ class JdbcDiscoveredUserListRepositoryTest : BasePersistenceIT<JdbcDiscoveredUse
     }
 
     @Test
-    fun `save user connections`() {
+    fun `save and find`() {
         val expected = DiscoveredUserList(userOne.id!!, setOf(userTwo.id!!, userThree.id!!))
         underTest.save(expected)
 
@@ -47,7 +46,7 @@ class JdbcDiscoveredUserListRepositoryTest : BasePersistenceIT<JdbcDiscoveredUse
     }
 
     @Test
-    fun `save no user connections`() {
+    fun `save empty list`() {
         val expected = DiscoveredUserList(userOne.id!!, emptySet())
         underTest.save(expected)
 
@@ -57,7 +56,7 @@ class JdbcDiscoveredUserListRepositoryTest : BasePersistenceIT<JdbcDiscoveredUse
     }
 
     @Test
-    fun `remove user connections`() {
+    fun `remove from list and find`() {
         val initial = DiscoveredUserList(userOne.id!!, setOf(userTwo.id!!, userThree.id!!))
         underTest.save(initial)
 
