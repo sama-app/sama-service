@@ -14,7 +14,6 @@ import com.sama.slotsuggestion.application.SlotSuggestionServiceV1
 import com.sama.slotsuggestion.application.SlotSuggestionServiceV2
 import com.sama.slotsuggestion.domain.v1.WeightContext
 import com.sama.slotsuggestion.domain.v1.sigmoid
-import com.sama.slotsuggestion.domain.v2.HeatMap
 import com.sama.users.domain.UserId
 import java.time.Duration
 import java.time.LocalTime
@@ -38,7 +37,7 @@ class DebugViewController(
     private val heatMapServiceV2: HeatMapServiceV2,
     private val weightContext: WeightContext,
     private val slotSuggestionService: SlotSuggestionServiceV1,
-    private val slotSuggestionServiceV2: SlotSuggestionServiceV2
+    private val slotSuggestionServiceV2: SlotSuggestionServiceV2,
 ) {
 
     @GetMapping("/api/__debug/auth/google-authorize")
@@ -52,7 +51,7 @@ class DebugViewController(
         request: HttpServletRequest,
         response: HttpServletResponse,
         @RequestParam(required = false) code: String?,
-        @RequestParam(required = false) error: String?
+        @RequestParam(required = false) error: String?,
     ) {
         val redirectUri = redirectUri(request)
 
@@ -68,12 +67,6 @@ class DebugViewController(
             }
             is GoogleSignFailureDTO -> response.status = HttpStatus.FORBIDDEN.value()
         }
-    }
-
-
-    @GetMapping("/api/__debug/user/heatmap2")
-    fun renderUserHeapMap(@AuthUserId userId: UserId): HeatMap {
-        return heatMapServiceV2.generate(userId, ZoneId.of("UTC"))
     }
 
     @GetMapping("/api/__debug/user/heatmap")
@@ -99,6 +92,43 @@ class DebugViewController(
             val time = LocalTime.MIDNIGHT.plusMinutes(i * weightContext.intervalMinutes.toLong())
             transposed[i] =
                 (mutableListOf(Pair("${time.hour}:${time.minute}", "#FFFFFF")) + transposed[i]).toMutableList()
+        }
+
+        model["vectors"] = transposed
+        return ModelAndView("heatmap", model)
+    }
+
+    data class Cell(val label: String, val colour: String, val hover: Set<Map.Entry<Any, Double>> = emptySet())
+
+    @GetMapping("/api/__debug/user/heatmap2")
+    fun renderUserHeapMap2(@AuthUserId userId: UserId, model: MutableMap<String, Any>): ModelAndView {
+        val heatMap = heatMapServiceV2.generate(userId, ZoneId.systemDefault())
+        val maxWeight = heatMap.slots.maxOf { it.totalWeight }
+
+        val slotsByDate = heatMap.slots
+            .groupBy { it.startDateTime.toLocalDate() }
+
+        model["headers"] = listOf(" ") + slotsByDate.keys.map { it.toString().substring(5) }
+
+        // TODO replace this poor implementation of Matrix transpose
+        val values = slotsByDate.values.toList()
+        val transposed = MutableList(values[0].size) { MutableList(values.size) { Cell("", "") } }
+        for (i in values.indices) {
+            for (j in values[0].indices) {
+                val weight = String.format("%.2f", values[i][j].totalWeight)
+                val sigmoid = sigmoid(x = values[i][j].totalWeight, k = -10 / maxWeight)
+                transposed[j][i] = Cell(
+                    weight,
+                    percentageToColour((sigmoid * 100).toInt()),
+                    values[i][j].influences.entries
+                )
+            }
+        }
+
+        for (i in transposed.indices) {
+            val time = LocalTime.MIDNIGHT.plusMinutes(i * weightContext.intervalMinutes.toLong())
+            transposed[i] =
+                (mutableListOf(Cell("${time.hour}:${time.minute}", "#FFFFFF")) + transposed[i]).toMutableList()
         }
 
         model["vectors"] = transposed

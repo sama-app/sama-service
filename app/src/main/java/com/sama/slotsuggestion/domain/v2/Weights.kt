@@ -136,7 +136,7 @@ class SearchBoundaryWeigher : Weigher {
 }
 
 class RecencyWeigher : Weigher {
-    private val weightIncrement = -0.03
+    private val weightIncrement = -0.01
 
     override fun weight(heatMap: HeatMap): HeatMap {
         val startDate = heatMap.startDate.plusDays(4)
