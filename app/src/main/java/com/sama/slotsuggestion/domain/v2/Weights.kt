@@ -1,5 +1,6 @@
 package com.sama.slotsuggestion.domain.v2
 
+import com.sama.meeting.application.MeetingSlotDTO
 import com.sama.slotsuggestion.domain.Block
 import com.sama.slotsuggestion.domain.v1.SlotSuggestion
 import com.sama.slotsuggestion.domain.WorkingHours
@@ -160,4 +161,19 @@ class SuggestedSlotWeigher(private val ss: SlotSuggestion) : Weigher {
             .modify { _, slot -> slot.addWeight("suggested slot: ${ss.startDateTime} - ${ss.endDateTime}", weight) }
             .save(heatMap)
     }
+}
+
+class FutureProposedSlotWeigher(private val ms: MeetingSlotDTO): Weigher {
+    private val weight = 5.0
+
+    override fun weight(heatMap: HeatMap): HeatMap {
+        return heatMap
+            .query {
+                from(ms.startDateTime, heatMap.userTimeZone)
+                to(ms.endDateTime, heatMap.userTimeZone)
+            }
+            .modify { _, slot -> slot.addWeight("proposed slot: ${ms.startDateTime} - ${ms.endDateTime}", weight) }
+            .save(heatMap)
+    }
+
 }

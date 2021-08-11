@@ -1,5 +1,6 @@
 package com.sama.slotsuggestion.domain.v2
 
+import com.sama.meeting.application.MeetingSlotDTO
 import com.sama.slotsuggestion.domain.Block
 import com.sama.slotsuggestion.domain.WorkingHours
 import java.time.DayOfWeek
@@ -29,6 +30,10 @@ data class HeatMapWeigherBuilder(
 
     fun recipientTimeZone(recipientTimeZone: ZoneId) {
         weighers.add(RecipientTimeZoneWeigher(recipientTimeZone))
+    }
+
+    fun futureProposedSlots(proposedSlots: Collection<MeetingSlotDTO>) {
+        weighers.addAll(proposedSlots.map { FutureProposedSlotWeigher(it) })
     }
 
     fun searchBoundary() {

@@ -144,6 +144,40 @@ class MeetingPersistenceIT : BasePersistenceIT<MeetingRepository>() {
     }
 
     @Test
+    fun `find future proposed slots`() {
+        val validMeetingId = 22L
+        val initiatorId = 1L
+
+        val expected = MeetingSlot(
+            ZonedDateTime.now(clock).plusDays(1).plusMinutes(1),
+            ZonedDateTime.now(clock).plusDays(1).plusMinutes(61)
+        )
+
+        val proposedMeeting = ProposedMeeting(
+            validMeetingId,
+            meetingIntentId,
+            initiatorId,
+            Duration.ofMinutes(60),
+            listOf(
+                MeetingSlot(
+                    ZonedDateTime.now(clock).minusMinutes(30),
+                    ZonedDateTime.now(clock).plusMinutes(30)
+                ),
+                expected
+            ),
+            "code"
+        )
+        underTest.save(MeetingEntity.new(proposedMeeting))
+
+        // act
+        val actual = underTest.findAllProposedSlots(initiatorId,
+            ZonedDateTime.now(clock).plusDays(1),
+            ZonedDateTime.now(clock).plusDays(2))
+
+        assertThat(actual).containsExactly(expected)
+    }
+
+    @Test
     fun `find ids for expiring`() {
         val validMeetingId = 22L
         val validMeeting = ProposedMeeting(
