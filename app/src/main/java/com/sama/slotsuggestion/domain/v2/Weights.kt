@@ -28,7 +28,12 @@ class PastBlockWeigher(private val inputBlock: Block) : Weigher {
             .query {
                 fromTime = block.startDateTime.toLocalTime()
                 toTime = block.endDateTime.toLocalTime()
-                if (block.startDateTime.dayOfWeek.isWorkday()) {
+                // recurring blocks affect days of weeks
+                if (block.isRecurring()) {
+                    dayOfWeek(block.startDateTime.dayOfWeek)
+                }
+                // regular meetings affect either workdays or weekends
+                else if (block.startDateTime.dayOfWeek.isWorkday()) {
                     workdays()
                 } else {
                     weekend()
@@ -41,7 +46,7 @@ class PastBlockWeigher(private val inputBlock: Block) : Weigher {
                 } else {
                     // if it's a self-blocked time, we count as we DON'T want meetings for the time
                     weightWithoutRecipients
-                } / block.recurrenceCount // count recurring events only once
+                }
 
                 slot.addWeight("past block: ${block.toDebugString()}", weight)
             }
