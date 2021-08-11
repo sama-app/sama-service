@@ -22,6 +22,7 @@ import javax.servlet.http.Cookie
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 import kotlin.math.round
+import liquibase.pro.packaged.it
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.GetMapping
@@ -63,7 +64,7 @@ class DebugViewController(
                 cookie.maxAge = -1
                 cookie.path = "/"
                 response.addCookie(cookie)
-                response.sendRedirect("/api/__debug/user/heatmap")
+                response.sendRedirect("/api/__debug/user/heatmap2")
             }
             is GoogleSignFailureDTO -> response.status = HttpStatus.FORBIDDEN.value()
         }
