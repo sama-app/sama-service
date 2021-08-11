@@ -28,8 +28,8 @@ inline fun slotQuery(query: SlotQuery.() -> Unit): SlotQuery {
 data class SlotQuery(
     var fromDateTime: LocalDateTime = LocalDateTime.MIN,
     var toDateTime: LocalDateTime = LocalDateTime.MAX,
-    var fromTime: LocalTime = LocalTime.MIN,
-    var toTime: LocalTime = LocalTime.MAX,
+    var fromTime: LocalTime = LocalTime.MIDNIGHT,
+    var toTime: LocalTime? = null, // null indicates MIDNIGHT of the next day
     var fromDate: LocalDate = LocalDate.MIN,
     var toDate: LocalDate = LocalDate.MAX,
     var daysOfWeek: Set<DayOfWeek>? = null,
@@ -54,14 +54,6 @@ data class SlotQuery(
     fun timeRange(startTime: LocalTime, endTime: LocalTime) {
         this.fromTime = startTime
         this.toTime = endTime
-    }
-
-    fun fromTime(zonedDateTime: ZonedDateTime, zoneId: ZoneId) {
-        fromTime = zonedDateTime.withZoneSameInstant(zoneId).toLocalTime()
-    }
-
-    fun toTime(zonedDateTime: ZonedDateTime, zoneId: ZoneId) {
-        toTime = zonedDateTime.withZoneSameInstant(zoneId).toLocalTime()
     }
 
     fun dayOfWeek(dayOfWeek: DayOfWeek) {
@@ -94,17 +86,15 @@ data class SlotQuery(
         }
         val startLocalTime = slot.startDateTime.toLocalTime()
         val endLocalTime = slot.endDateTime.toLocalTime()
-        if (fromTime.isBefore(toTime)) {
+        if (fromTime.isBefore(toTime ?: LocalTime.MAX)) {
             if (startLocalTime.isBefore(fromTime) ||
-                endLocalTime.isAfter(toTime) ||
-                endLocalDate.isAfter(startLocalDate)
+                (toTime != null && endLocalTime.isAfter(toTime)) ||
+                (toTime != null && !startLocalDate.isEqual(endLocalDate))
             ) {
                 return false
             }
         } else {
-            if (startLocalTime.isBefore(toTime) ||
-                endLocalTime.isAfter(fromTime)
-            ) {
+            if ((toTime != null && startLocalTime.isBefore(toTime)) || endLocalTime.isAfter(fromTime)) {
                 return false
             }
         }
