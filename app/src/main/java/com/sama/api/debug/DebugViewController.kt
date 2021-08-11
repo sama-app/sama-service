@@ -22,7 +22,6 @@ import javax.servlet.http.Cookie
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 import kotlin.math.round
-import liquibase.pro.packaged.it
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.GetMapping
@@ -106,6 +105,14 @@ class DebugViewController(
         val heatMap = heatMapServiceV2.generate(userId, ZoneId.systemDefault())
         val maxWeight = heatMap.slots.maxOf { it.totalWeight }
 
+        val suggestedSlots = slotSuggestionServiceV2.suggestSlots(
+            userId, SlotSuggestionRequest(
+                Duration.ofMinutes(60),
+                ZoneId.systemDefault(),
+                3
+            )
+        ).suggestions
+
         val slotsByDate = heatMap.slots
             .groupBy { it.startDateTime.toLocalDate() }
 
@@ -116,12 +123,24 @@ class DebugViewController(
         val transposed = MutableList(values[0].size) { MutableList(values.size) { Cell("", "") } }
         for (i in values.indices) {
             for (j in values[0].indices) {
-                val weight = String.format("%.2f", values[i][j].totalWeight)
-                val sigmoid = sigmoid(x = values[i][j].totalWeight, k = -10 / maxWeight)
+                val slot = values[i][j]
+
+                val isSuggested = suggestedSlots.find { ss ->
+                    ss.slots.find {
+                        it.startDateTime.isEqual(slot.startDateTime) && it.endDateTime.isEqual(slot.endDateTime)
+                    } != null
+                } != null
+
+                val weight = String.format("%.2f", slot.totalWeight)
+                val sigmoid = sigmoid(x = slot.totalWeight, k = -10 / maxWeight)
                 transposed[j][i] = Cell(
                     weight,
-                    percentageToColour((sigmoid * 100).toInt()),
-                    values[i][j].influences.entries
+                    if (isSuggested) {
+                        "#FFFFFF"
+                    } else {
+                        percentageToColour((sigmoid * 100).toInt())
+                    },
+                    slot.influences.entries
                 )
             }
         }
