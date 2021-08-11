@@ -1,4 +1,4 @@
-package com.sama.slotsuggestion.domain
+package com.sama.slotsuggestion.domain.v1
 
 import com.sama.common.mapIndexed
 import java.util.*
@@ -39,15 +39,9 @@ fun parabolicCurve(
     { x -> x * x }
 }
 
-fun sigmoidCurve(
-    outsideValue: Double, insideValue: Double, vectorSize: Int, start: Int, end: Int, curveRange: Pair<Int, Int>
-): Vector {
-    return curve(outsideValue, insideValue, vectorSize, start, end, curveRange)
-    { x -> 0.5 / sigmoid(1.0) * sigmoid(2 * x - 1) + 0.5 }
-}
 
-fun sigmoid(x: Double, sharpness: Double = 1.0): Double {
-    return 1 / (1 + exp(-x))
+fun sigmoid(x: Double, L: Double = 1.0, k: Double = -1.0): Double {
+    return L / (1 + exp(k * x))
 }
 
 /**

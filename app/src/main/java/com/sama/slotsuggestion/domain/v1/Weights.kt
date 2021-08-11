@@ -1,8 +1,9 @@
-package com.sama.slotsuggestion.domain
+package com.sama.slotsuggestion.domain.v1
 
+import com.sama.slotsuggestion.domain.Block
+import com.sama.slotsuggestion.domain.WorkingHours
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.lang.Integer.min
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -74,10 +75,7 @@ class WorkingHoursWeigher(private val wh: WorkingHours?) : Weigher {
     override fun weigh(weightContext: WeightContext): Vector {
         try {
             if (wh == null) {
-                return weightContext.line(-5.0)
-            }
-            if (wh.isAllDay()) {
-                return weightContext.zeroes()
+                return weightContext.line(-10.0)
             }
 
             return weightContext.linearCurve(wh.startTime, wh.endTime, -10.0, 0.0, -4 to 0)

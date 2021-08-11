@@ -6,12 +6,15 @@ import com.sama.auth.application.GoogleOauth2ApplicationService
 import com.sama.auth.application.GoogleSignFailureDTO
 import com.sama.auth.application.GoogleSignSuccessDTO
 import com.sama.common.mapIndexed
-import com.sama.slotsuggestion.application.HeatMapService
+import com.sama.slotsuggestion.application.HeatMapServiceV1
+import com.sama.slotsuggestion.application.HeatMapServiceV2
 import com.sama.slotsuggestion.application.SlotSuggestionRequest
 import com.sama.slotsuggestion.application.SlotSuggestionResponse
-import com.sama.slotsuggestion.application.SlotSuggestionService
-import com.sama.slotsuggestion.domain.WeightContext
-import com.sama.slotsuggestion.domain.sigmoid
+import com.sama.slotsuggestion.application.SlotSuggestionServiceV1
+import com.sama.slotsuggestion.application.SlotSuggestionServiceV2
+import com.sama.slotsuggestion.domain.v1.WeightContext
+import com.sama.slotsuggestion.domain.v1.sigmoid
+import com.sama.slotsuggestion.domain.v2.HeatMap
 import com.sama.users.domain.UserId
 import java.time.Duration
 import java.time.LocalTime
@@ -31,9 +34,11 @@ import org.springframework.web.servlet.view.RedirectView
 @RestController
 class DebugViewController(
     private val googleOauth2ApplicationService: GoogleOauth2ApplicationService,
-    private val heatMapService: HeatMapService,
+    private val heatMapService: HeatMapServiceV1,
+    private val heatMapServiceV2: HeatMapServiceV2,
     private val weightContext: WeightContext,
-    private val slotSuggestionService: SlotSuggestionService
+    private val slotSuggestionService: SlotSuggestionServiceV1,
+    private val slotSuggestionServiceV2: SlotSuggestionServiceV2
 ) {
 
     @GetMapping("/api/__debug/auth/google-authorize")
@@ -63,6 +68,12 @@ class DebugViewController(
             }
             is GoogleSignFailureDTO -> response.status = HttpStatus.FORBIDDEN.value()
         }
+    }
+
+
+    @GetMapping("/api/__debug/user/heatmap2")
+    fun renderUserHeapMap(@AuthUserId userId: UserId): HeatMap {
+        return heatMapServiceV2.generate(userId, ZoneId.of("UTC"))
     }
 
     @GetMapping("/api/__debug/user/heatmap")
@@ -97,6 +108,18 @@ class DebugViewController(
     @GetMapping("/api/__debug/user/suggestions", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getTopSuggestions(@AuthUserId userId: UserId): SlotSuggestionResponse {
         return slotSuggestionService.suggestSlots(
+            userId, SlotSuggestionRequest(
+                Duration.ofMinutes(60),
+                ZoneId.systemDefault(),
+                10
+            )
+        )
+    }
+
+
+    @GetMapping("/api/__debug/user/suggestions2", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun getTopSuggestions2(@AuthUserId userId: UserId): SlotSuggestionResponse {
+        return slotSuggestionServiceV2.suggestSlots(
             userId, SlotSuggestionRequest(
                 Duration.ofMinutes(60),
                 ZoneId.systemDefault(),

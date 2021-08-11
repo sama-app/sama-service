@@ -1,4 +1,4 @@
-package com.sama.slotsuggestion.domain
+package com.sama.slotsuggestion.domain.v1
 
 import java.time.Duration
 import java.time.LocalTime
