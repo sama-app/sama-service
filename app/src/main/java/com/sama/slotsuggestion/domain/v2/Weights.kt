@@ -13,19 +13,20 @@ interface Weigher {
     fun weight(heatMap: HeatMap): HeatMap
 }
 
-class PastBlockWeigher(private val block: Block) : Weigher {
+class PastBlockWeigher(private val inputBlock: Block) : Weigher {
     private val weightWithRecipient = 10.0
     private val weightWithoutRecipients = -10.0
 
     override fun weight(heatMap: HeatMap): HeatMap {
+        val block = inputBlock.atTimeZone(heatMap.userTimeZone)
         if (block.multiDay() || block.allDay || block.zeroDuration()) {
             return heatMap
         }
 
         return heatMap
             .query {
-                fromTime(block.startDateTime, heatMap.userTimeZone)
-                toTime(block.endDateTime, heatMap.userTimeZone)
+                fromTime = block.startDateTime.toLocalTime()
+                toTime = block.endDateTime.toLocalTime()
                 if (block.startDateTime.dayOfWeek.isWorkday()) {
                     workdays()
                 } else {
