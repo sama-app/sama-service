@@ -16,7 +16,7 @@ interface Weigher {
 
 class PastBlockWeigher(private val inputBlock: Block) : Weigher {
     private val weightWithRecipient = 10.0
-    private val weightWithoutRecipients = -10.0
+    private val weightWithoutRecipients = 5.0
 
     override fun weight(heatMap: HeatMap): HeatMap {
         val block = inputBlock.atTimeZone(heatMap.userTimeZone)
