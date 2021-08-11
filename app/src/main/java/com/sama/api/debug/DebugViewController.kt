@@ -12,6 +12,7 @@ import com.sama.slotsuggestion.application.SlotSuggestionRequest
 import com.sama.slotsuggestion.application.SlotSuggestionResponse
 import com.sama.slotsuggestion.application.SlotSuggestionServiceV1
 import com.sama.slotsuggestion.application.SlotSuggestionServiceV2
+import com.sama.slotsuggestion.domain.UserRepository
 import com.sama.slotsuggestion.domain.v1.WeightContext
 import com.sama.slotsuggestion.domain.v1.sigmoid
 import com.sama.users.domain.UserId
@@ -33,6 +34,7 @@ import org.springframework.web.servlet.view.RedirectView
 @RestController
 class DebugViewController(
     private val googleOauth2ApplicationService: GoogleOauth2ApplicationService,
+    private val userRepository: UserRepository,
     private val heatMapService: HeatMapServiceV1,
     private val heatMapServiceV2: HeatMapServiceV2,
     private val weightContext: WeightContext,
@@ -102,7 +104,8 @@ class DebugViewController(
 
     @GetMapping("/api/__debug/user/heatmap2")
     fun renderUserHeapMap2(@AuthUserId userId: UserId, model: MutableMap<String, Any>): ModelAndView {
-        val heatMap = heatMapServiceV2.generate(userId, ZoneId.systemDefault())
+        val user = userRepository.findById(userId)
+        val heatMap = heatMapServiceV2.generate(userId, user.timeZone)
         val maxWeight = heatMap.slots.maxOf { it.totalWeight }
 
         val suggestedSlots = slotSuggestionServiceV2.suggestSlots(
