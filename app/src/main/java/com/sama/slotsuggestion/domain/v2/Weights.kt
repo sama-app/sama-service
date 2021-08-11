@@ -130,7 +130,7 @@ class SearchBoundaryWeigher : Weigher {
     override fun weight(heatMap: HeatMap): HeatMap {
         val searchStartDateTime = ZonedDateTime.now(heatMap.userTimeZone)
         return heatMap
-            .query { to(searchStartDateTime, heatMap.userTimeZone) }
+            .query { to(searchStartDateTime.plusMinutes(heatMap.intervalMinutes), heatMap.userTimeZone) }
             .modify { _, slot -> slot.addWeight("search boundary", weight) }
             .save(heatMap)
     }
