@@ -1,11 +1,11 @@
 package com.sama.slotsuggestion.application
 
 import com.sama.common.ApplicationService
+import com.sama.meeting.application.MeetingApplicationService
 import com.sama.slotsuggestion.configuration.HeatMapConfiguration
 import com.sama.slotsuggestion.domain.BlockRepository
 import com.sama.slotsuggestion.domain.UserRepository
 import com.sama.slotsuggestion.domain.v2.HeatMap
-import com.sama.slotsuggestion.domain.v2.HeatMapWeigher
 import com.sama.slotsuggestion.domain.v2.weigher
 import com.sama.users.domain.UserId
 import java.time.LocalDate
@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service
 class HeatMapServiceV2(
     private val userRepository: UserRepository,
     private val blockRepository: BlockRepository,
+    private val meetingApplicationService: MeetingApplicationService,
     private val heatMapConfiguration: HeatMapConfiguration,
 ) {
     fun generate(initiatorId: UserId, recipientTimezone: ZoneId): HeatMap {
@@ -28,6 +29,8 @@ class HeatMapServiceV2(
 
         val futureBlockEndDate = today.plusDays(heatMapConfiguration.futureDays)
         val futureBlocks = blockRepository.findAllBlocks(initiatorId, today, futureBlockEndDate)
+
+        val futureProposedSlots = meetingApplicationService.findProposedSlots(initiatorId, today, futureBlockEndDate)
 
         val heatMap = HeatMap.create(
             user.userId,
@@ -41,6 +44,7 @@ class HeatMapServiceV2(
             searchBoundary()
             pastBlocks(pastBlocks)
             futureBlocks(futureBlocks)
+            futureProposedSlots(futureProposedSlots)
             workingHours(user.workingHours)
             recipientTimeZone(recipientTimezone)
             recency()

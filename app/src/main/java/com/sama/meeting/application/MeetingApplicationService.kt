@@ -161,6 +161,14 @@ class MeetingApplicationService(
         return true
     }
 
+    @Transactional(readOnly = true)
+    fun findProposedSlots(
+        userId: UserId, startDateTime: ZonedDateTime, endDateTime: ZonedDateTime,
+    ): List<MeetingSlotDTO> {
+        return meetingRepository.findAllProposedSlots(userId, startDateTime, endDateTime)
+            .map { it.toDTO() }
+    }
+
     @Scheduled(cron = "0 0/15 * * * *")
     @Transactional
     fun expireMeetings() {

@@ -3,8 +3,10 @@ package com.sama.meeting.domain.repositories
 import com.sama.common.NotFoundException
 import com.sama.meeting.domain.MeetingCode
 import com.sama.meeting.domain.MeetingId
+import com.sama.meeting.domain.MeetingSlot
 import com.sama.meeting.domain.MeetingStatus
 import com.sama.meeting.domain.aggregates.MeetingEntity
+import com.sama.users.domain.UserId
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
@@ -26,6 +28,16 @@ interface MeetingRepository : JpaRepository<MeetingEntity, MeetingId> {
                 "HAVING max(ps.startDateTime) < :expiryDateTime"
     )
     fun findAllIdsExpiring(@Param("expiryDateTime") expiryDateTime: ZonedDateTime): Collection<MeetingId>
+
+    @Query(
+        "SELECT new com.sama.meeting.domain.MeetingSlot(mps.startDateTime, mps.endDateTime) " +
+                "FROM MeetingEntity m JOIN MeetingIntentEntity mi ON m.meetingIntentId = mi.id " +
+                "JOIN MeetingProposedSlotEntity mps ON m.id = mps.meetingId " +
+                "WHERE mi.initiatorId = :initiatorId AND " +
+                "   mps.startDateTime > :fromDateTime AND " +
+                "   mps.startDateTime < :endDateTime"
+    )
+    fun findAllProposedSlots(initiatorId: UserId, fromDateTime: ZonedDateTime, endDateTime: ZonedDateTime): Collection<MeetingSlot>
 
     @Modifying(clearAutomatically = true)
     @Query("UPDATE MeetingEntity m SET status = :status WHERE id IN :ids")

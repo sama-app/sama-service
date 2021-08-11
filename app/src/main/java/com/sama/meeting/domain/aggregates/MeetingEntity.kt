@@ -64,7 +64,6 @@ class MeetingEntity {
     @JoinColumn(name = "meetingId", nullable = false, updatable = false, insertable = false)
     var proposedSlots: MutableList<MeetingProposedSlotEntity> = mutableListOf()
 
-
     @Embedded
     @AttributeOverrides(
         AttributeOverride(name = "recipientId", column = Column(name = "recipient_id")),

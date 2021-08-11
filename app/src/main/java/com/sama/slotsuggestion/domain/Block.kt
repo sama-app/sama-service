@@ -33,6 +33,8 @@ data class Block(
 
     fun zeroDuration() = Duration.between(startDateTime, endDateTime) == Duration.ZERO
 
+    fun isRecurring() = recurrenceCount > 1
+
     /**
      * Splits this [Block] into multiple [Block]s such that each block is within a single [java.time.LocalDate]. If
      * the [Block] is not [Block.multiDay] then a list containing itself is returned
@@ -79,7 +81,7 @@ data class Block(
         }
 
         if (recurrenceCount > 1) {
-            string += " recurring $recurrenceCount times"
+            string += " recurring"
         }
 
         return string
