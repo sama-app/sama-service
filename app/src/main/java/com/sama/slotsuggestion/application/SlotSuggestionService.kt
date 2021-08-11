@@ -1,22 +1,20 @@
 package com.sama.slotsuggestion.application
 
-import com.sama.common.ApplicationService
-import com.sama.slotsuggestion.domain.*
+import com.sama.slotsuggestion.domain.v1.SlotSuggestion
 import com.sama.users.domain.UserId
-import org.springframework.stereotype.Service
+import java.time.Duration
+import java.time.ZoneId
 
-@ApplicationService
-@Service
-class SlotSuggestionService(private val heatMapService: HeatMapService) {
-    fun suggestSlots(userId: UserId, request: SlotSuggestionRequest): SlotSuggestionResponse {
-        val heatMap = heatMapService.generate(userId, request.recipientTimezone)
-
-        val suggestions = SlotSuggestionEngine(heatMap)
-            .suggest(
-                request.slotDuration,
-                request.suggestionCount
-            )
-
-        return SlotSuggestionResponse(suggestions)
-    }
+interface SlotSuggestionService {
+    fun suggestSlots(userId: UserId, request: SlotSuggestionRequest): SlotSuggestionResponse
 }
+
+data class SlotSuggestionRequest(
+    val slotDuration: Duration,
+    val recipientTimezone: ZoneId,
+    val suggestionCount: Int,
+)
+
+data class SlotSuggestionResponse(
+    val suggestions: List<SlotSuggestion>,
+)

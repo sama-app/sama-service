@@ -11,8 +11,4 @@ data class User(
     val workingHours: Map<DayOfWeek, WorkingHours>
 )
 
-data class WorkingHours(val startTime: LocalTime, val endTime: LocalTime) {
-    fun isAllDay(): Boolean {
-        return startTime == LocalTime.MIN && endTime == LocalTime.MAX
-    }
-}
+data class WorkingHours(val startTime: LocalTime, val endTime: LocalTime)

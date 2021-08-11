@@ -3,6 +3,9 @@ package com.sama.slotsuggestion.application
 import com.sama.common.ApplicationService
 import com.sama.slotsuggestion.configuration.HeatMapConfiguration
 import com.sama.slotsuggestion.domain.*
+import com.sama.slotsuggestion.domain.v1.HeatMap
+import com.sama.slotsuggestion.domain.v1.HeatMapGenerator
+import com.sama.slotsuggestion.domain.v1.WeightContext
 import com.sama.users.domain.UserId
 import org.springframework.stereotype.Service
 import java.time.LocalDate
@@ -10,7 +13,7 @@ import java.time.ZoneId
 
 @ApplicationService
 @Service
-class HeatMapService(
+class HeatMapServiceV1(
     private val userRepository: UserRepository,
     private val blockRepository: BlockRepository,
     private val heatMapConfiguration: HeatMapConfiguration,

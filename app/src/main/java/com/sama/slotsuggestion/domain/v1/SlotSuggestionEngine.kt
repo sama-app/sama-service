@@ -1,14 +1,16 @@
-package com.sama.slotsuggestion.domain
+package com.sama.slotsuggestion.domain.v1
 
 import com.sama.common.DomainService
 import com.sama.common.mapValues
+import com.sama.slotsuggestion.domain.v2.Slot
 import java.time.Duration
 import java.time.ZonedDateTime
 
 data class SlotSuggestion(
     val startDateTime: ZonedDateTime,
     val endDateTime: ZonedDateTime,
-    val score: Double
+    val score: Double,
+    val slots: List<Slot> = emptyList()
 )
 
 @DomainService

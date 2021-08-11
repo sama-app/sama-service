@@ -1,8 +1,10 @@
-package com.sama.slotsuggestion.domain
+package com.sama.slotsuggestion.domain.v1
 
 import com.sama.common.DomainEntity
 import com.sama.common.DomainService
 import com.sama.common.datesUtil
+import com.sama.slotsuggestion.domain.Block
+import com.sama.slotsuggestion.domain.WorkingHours
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.ZoneId

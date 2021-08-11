@@ -12,7 +12,7 @@ data class Block(
     val allDay: Boolean,
     val hasRecipients: Boolean,
     val recurrenceCount: Int,
-    val recurrenceRule: RecurrenceRule?
+    val recurrenceRule: RecurrenceRule?,
 ) {
 
     /**
@@ -58,6 +58,32 @@ data class Block(
             }
             .toList()
     }
+
+    fun toDebugString(): String {
+        var string = ""
+
+        val timeZone = startDateTime.zone
+        val startDate = startDateTime.toLocalDate()
+        val endDate = startDateTime.toLocalDate()
+        if (startDate.isEqual(endDate)) {
+            string += "$startDate ${startDateTime.toLocalTime()}-${endDateTime.toLocalTime()}"
+        } else {
+            string += "$startDate ${startDateTime.toLocalTime()} - $endDate ${endDateTime.toLocalTime()}"
+        }
+        string += " ($timeZone)"
+
+        if (hasRecipients) {
+            string += " with recipients"
+        } else {
+            string += " no recipients"
+        }
+
+        if (recurrenceCount > 1) {
+            string += " recurring $recurrenceCount times"
+        }
+
+        return string
+    }
 }
 
 data class RecurrenceRule(
@@ -66,7 +92,7 @@ data class RecurrenceRule(
      * Repetition interval. For example, [Recurrence.DAILY] with interval 2 means
      * the [Block] repeats every other day
      */
-    val interval: Int
+    val interval: Int,
 )
 
 enum class Recurrence {

@@ -10,8 +10,8 @@ import com.sama.comms.application.CommsEventConsumer
 import com.sama.meeting.domain.MeetingSlotUnavailableException
 import com.sama.slotsuggestion.application.SlotSuggestionRequest
 import com.sama.slotsuggestion.application.SlotSuggestionResponse
-import com.sama.slotsuggestion.application.SlotSuggestionService
-import com.sama.slotsuggestion.domain.SlotSuggestion
+import com.sama.slotsuggestion.application.SlotSuggestionServiceV1
+import com.sama.slotsuggestion.domain.v1.SlotSuggestion
 import java.time.Clock
 import java.time.Duration.ofMinutes
 import java.time.ZonedDateTime
@@ -30,7 +30,7 @@ import org.springframework.security.access.AccessDeniedException
 class MeetingApplicationServiceTest : BaseApplicationTest() {
 
     @MockBean
-    lateinit var slotSuggestionService: SlotSuggestionService
+    lateinit var slotSuggestionService: SlotSuggestionServiceV1
 
     @MockBean
     lateinit var eventApplicationService: EventApplicationService
