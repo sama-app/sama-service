@@ -17,7 +17,6 @@ import org.springframework.stereotype.Service
 class HeatMapServiceV2(
     private val userRepository: UserRepository,
     private val blockRepository: BlockRepository,
-    private val meetingApplicationService: MeetingApplicationService,
     private val heatMapConfiguration: HeatMapConfiguration,
 ) {
     fun generate(initiatorId: UserId, recipientTimezone: ZoneId): HeatMap {
@@ -29,8 +28,6 @@ class HeatMapServiceV2(
 
         val futureBlockEndDate = today.plusDays(heatMapConfiguration.futureDays)
         val futureBlocks = blockRepository.findAllBlocks(initiatorId, today, futureBlockEndDate)
-
-        val futureProposedSlots = meetingApplicationService.findProposedSlots(initiatorId, today, futureBlockEndDate)
 
         val heatMap = HeatMap.create(
             user.userId,
@@ -44,7 +41,7 @@ class HeatMapServiceV2(
             searchBoundary()
             pastBlocks(pastBlocks)
             futureBlocks(futureBlocks)
-            futureProposedSlots(futureProposedSlots)
+            // futureProposedSlots(futureProposedSlots)
             workingHours(user.workingHours)
             recipientTimeZone(recipientTimezone)
             recency()
