@@ -169,29 +169,29 @@ class SuggestedSlotWeigher(private val ss: SlotSuggestion) : Weigher {
 }
 
 class TimeVarietyWeigher(private val ss: Collection<SlotSuggestion>) : Weigher {
-    private val weight = -100.0
+    private val baseWeight = -30.0
 
     override fun weight(heatMap: HeatMap): HeatMap {
         val repeatingSlots = ss
-            .groupBy { it.startDateTime.toLocalTime() }.values
-            .filter { it.size > 1 }
-            .map { it[0].startDateTime to it[0].endDateTime }
-            .toSet()
+            .groupBy { it.startDateTime.toLocalTime() to it.endDateTime.toLocalTime() }
+            .mapValues { it.value.size }
 
         if (repeatingSlots.isEmpty()) {
             return heatMap
         }
 
         var result = heatMap
-        for (repeatingSlot in repeatingSlots) {
+        for ((repeatingSlot, count) in repeatingSlots) {
+            val weight = baseWeight * count
+
             result = result
                 .query {
-                    fromTime = repeatingSlot.first.toLocalTime()
-                    toTime = repeatingSlot.second.toLocalTime()
+                    fromTime = repeatingSlot.first
+                    toTime = repeatingSlot.second
                 }
                 .modify { _, slot ->
                     slot.addWeight(
-                        "suggested time variety: ${repeatingSlot.first} - ${repeatingSlot.second}",
+                        "suggested time variety repeating $count times: ${repeatingSlot.first} - ${repeatingSlot.second}",
                         weight
                     )
                 }
