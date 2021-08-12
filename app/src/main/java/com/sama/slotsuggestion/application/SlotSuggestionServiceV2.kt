@@ -7,12 +7,12 @@ import org.springframework.stereotype.Service
 
 @ApplicationService
 @Service
-class SlotSuggestionServiceV2(private val heatMapService: HeatMapServiceV2): SlotSuggestionService {
+class SlotSuggestionServiceV2(private val heatMapService: HeatMapServiceV2) : SlotSuggestionService {
 
     override fun suggestSlots(userId: UserId, request: SlotSuggestionRequest): SlotSuggestionResponse {
         val heatMap = heatMapService.generate(userId, request.recipientTimezone)
 
-        val suggestions = SlotSuggestionEngine(heatMap)
+        val (suggestions, _) = SlotSuggestionEngine(heatMap)
             .suggest(
                 request.slotDuration,
                 request.suggestionCount

@@ -3,6 +3,7 @@ package com.sama.slotsuggestion.domain.v2
 import com.sama.meeting.application.MeetingSlotDTO
 import com.sama.slotsuggestion.domain.Block
 import com.sama.slotsuggestion.domain.WorkingHours
+import com.sama.slotsuggestion.domain.v1.SlotSuggestion
 import java.time.DayOfWeek
 import java.time.ZoneId
 
@@ -42,6 +43,14 @@ data class HeatMapWeigherBuilder(
 
     fun recency() {
         weighers.add(RecencyWeigher())
+    }
+
+    fun suggestedSlot(suggestion: SlotSuggestion) {
+        weighers.add(SuggestedSlotWeigher(suggestion))
+    }
+
+    fun timeVariety(suggestions: Collection<SlotSuggestion>) {
+        weighers.add(TimeVarietyWeigher(suggestions))
     }
 
     fun build(): HeatMapWeigher {

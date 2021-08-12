@@ -2,8 +2,8 @@ package com.sama.slotsuggestion.domain.v2
 
 import com.sama.meeting.application.MeetingSlotDTO
 import com.sama.slotsuggestion.domain.Block
-import com.sama.slotsuggestion.domain.v1.SlotSuggestion
 import com.sama.slotsuggestion.domain.WorkingHours
+import com.sama.slotsuggestion.domain.v1.SlotSuggestion
 import java.time.DayOfWeek
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -168,7 +168,42 @@ class SuggestedSlotWeigher(private val ss: SlotSuggestion) : Weigher {
     }
 }
 
-class FutureProposedSlotWeigher(private val ms: MeetingSlotDTO): Weigher {
+class TimeVarietyWeigher(private val ss: Collection<SlotSuggestion>) : Weigher {
+    private val weight = -100.0
+
+    override fun weight(heatMap: HeatMap): HeatMap {
+        val repeatingSlots = ss
+            .groupBy { it.startDateTime.toLocalTime() }.values
+            .filter { it.size > 1 }
+            .map { it[0].startDateTime to it[0].endDateTime }
+            .toSet()
+
+        if (repeatingSlots.isEmpty()) {
+            return heatMap
+        }
+
+        var result = heatMap
+        for (repeatingSlot in repeatingSlots) {
+            result = result
+                .query {
+                    fromTime = repeatingSlot.first.toLocalTime()
+                    toTime = repeatingSlot.second.toLocalTime()
+                }
+                .modify { _, slot ->
+                    slot.addWeight(
+                        "suggested time variety: ${repeatingSlot.first} - ${repeatingSlot.second}",
+                        weight
+                    )
+                }
+                .save(result)
+        }
+
+        return result
+    }
+
+}
+
+class FutureProposedSlotWeigher(private val ms: MeetingSlotDTO) : Weigher {
     private val weight = 5.0
 
     override fun weight(heatMap: HeatMap): HeatMap {

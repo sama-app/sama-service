@@ -15,6 +15,7 @@ import com.sama.slotsuggestion.application.SlotSuggestionServiceV2
 import com.sama.slotsuggestion.domain.UserRepository
 import com.sama.slotsuggestion.domain.v1.WeightContext
 import com.sama.slotsuggestion.domain.v1.sigmoid
+import com.sama.slotsuggestion.domain.v2.SlotSuggestionEngine
 import com.sama.users.domain.UserId
 import java.time.Duration
 import java.time.LocalTime
@@ -65,7 +66,7 @@ class DebugViewController(
                 cookie.maxAge = -1
                 cookie.path = "/"
                 response.addCookie(cookie)
-                response.sendRedirect("/api/__debug/user/heatmap2")
+                response.sendRedirect("/api/__debug/user/heatmap2?count=3")
             }
             is GoogleSignFailureDTO -> response.status = HttpStatus.FORBIDDEN.value()
         }
@@ -103,19 +104,18 @@ class DebugViewController(
     data class Cell(val label: String, val colour: String, val hover: Set<Map.Entry<Any, Double>> = emptySet())
 
     @GetMapping("/api/__debug/user/heatmap2")
-    fun renderUserHeapMap2(@AuthUserId userId: UserId, model: MutableMap<String, Any>): ModelAndView {
+    fun renderUserHeapMap2(
+        @AuthUserId userId: UserId,
+        @RequestParam(defaultValue = "3") count: Int,
+        model: MutableMap<String, Any>,
+    ): ModelAndView {
         val user = userRepository.findById(userId)
-        val heatMap = heatMapServiceV2.generate(userId, user.timeZone)
+        val baseHeatMap = heatMapServiceV2.generate(userId, user.timeZone)
+
+        val (suggestedSlots, heatMap) = SlotSuggestionEngine(baseHeatMap)
+            .suggest(Duration.ofMinutes(60), count)
+
         val maxWeight = heatMap.slots.maxOf { it.totalWeight }
-
-        val suggestedSlots = slotSuggestionServiceV2.suggestSlots(
-            userId, SlotSuggestionRequest(
-                Duration.ofMinutes(60),
-                ZoneId.systemDefault(),
-                3
-            )
-        ).suggestions
-
         val slotsByDate = heatMap.slots
             .groupBy { it.startDateTime.toLocalDate() }
 

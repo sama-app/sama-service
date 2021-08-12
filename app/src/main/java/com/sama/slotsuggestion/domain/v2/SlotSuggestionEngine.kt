@@ -11,9 +11,9 @@ import kotlin.math.ceil
 data class SlotSuggestionEngine(
     private val baseHeatMap: HeatMap,
 ) {
-    fun suggest(duration: Duration, count: Int): List<SlotSuggestion> {
+    fun suggest(duration: Duration, count: Int): Pair<List<SlotSuggestion>, HeatMap> {
         if (count == 0) {
-            return emptyList()
+            return emptyList<SlotSuggestion>() to baseHeatMap
         }
 
         val slotWindowSize = ceil(duration.toMinutes().toDouble() / baseHeatMap.intervalMinutes).toInt()
@@ -40,11 +40,14 @@ data class SlotSuggestionEngine(
             suggestions.add(bestSlot)
 
             // update heatmap to not suggest the same slot again
-            heatMap = SuggestedSlotWeigher(bestSlot)
-                .weight(heatMap)
+            val weighers = weigher {
+                suggestedSlot(bestSlot)
+                timeVariety(suggestions)
+            }
+            heatMap = weighers.apply(heatMap)
 
         } while (suggestions.size < count)
 
-        return suggestions
+        return suggestions to heatMap
     }
 }
