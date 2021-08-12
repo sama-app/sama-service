@@ -26,11 +26,14 @@ import com.sama.meeting.domain.repositories.MeetingIntentRepository
 import com.sama.meeting.domain.repositories.MeetingRepository
 import com.sama.meeting.domain.repositories.findByCodeOrThrow
 import com.sama.slotsuggestion.application.SlotSuggestionRequest
+import com.sama.slotsuggestion.application.SlotSuggestionService
 import com.sama.slotsuggestion.application.SlotSuggestionServiceV1
+import com.sama.slotsuggestion.application.SlotSuggestionServiceV2
 import com.sama.users.domain.UserId
 import com.sama.users.domain.UserRepository
 import java.time.Clock
 import java.time.ZonedDateTime
+import liquibase.pro.packaged.it
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
@@ -41,7 +44,7 @@ import org.springframework.transaction.annotation.Transactional
 class MeetingApplicationService(
     private val meetingIntentRepository: MeetingIntentRepository,
     private val meetingRepository: MeetingRepository,
-    private val slotSuggestionService: SlotSuggestionServiceV1,
+    private val slotSuggestionService: SlotSuggestionService,
     private val meetingInvitationService: MeetingInvitationService,
     private val meetingCodeGenerator: MeetingCodeGenerator,
     private val userRepository: UserRepository,
