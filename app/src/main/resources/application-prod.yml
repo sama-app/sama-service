@@ -38,7 +38,7 @@ sama:
   meeting:
     url:
       scheme: https
-      host: web.meetsama.com
+      host: app.meetsama.com
   landing:
     url: https://meetsama.com
 
