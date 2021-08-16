@@ -18,19 +18,20 @@ data class SlotSuggestionEngine(
 
         val slotWindowSize = ceil(duration.toMinutes().toDouble() / baseHeatMap.intervalMinutes).toInt()
         val maxWeight = baseHeatMap.slots.maxOf { it.totalWeight }
+        val sigmoidK = -10 / maxWeight
 
         var heatMap = baseHeatMap
         val suggestions = mutableListOf<SlotSuggestion>()
         do {
-            val rankedSlots = heatMap.slots
+            val rankedSlots = heatMap.slots.asSequence()
                 // Apply sigmoid, making sure that the highest weights produce values close to 1
-                .map { sigmoid(x = it.totalWeight, k = -10 / maxWeight) }
+                .map { sigmoid(x = it.totalWeight, k = sigmoidK) }
                 // Create ranking for each slot of the specified duration
-                .windowed(slotWindowSize)
-                .mapIndexed { idx, it -> idx to it.reduce { acc, d -> acc * d } }
+                .windowed(slotWindowSize) { it.reduce { acc, d -> acc * d } }
+                .withIndex()
 
             // take the best suggestion
-            val (index, score) = rankedSlots.maxByOrNull { it.second }!!
+            val (index, score) = rankedSlots.maxByOrNull { it.value }!!
 
             val slotsInWindow = heatMap.slots.subList(index, index + slotWindowSize)
             val start = heatMap.slots[index].startDateTime.atZone(baseHeatMap.userTimeZone)

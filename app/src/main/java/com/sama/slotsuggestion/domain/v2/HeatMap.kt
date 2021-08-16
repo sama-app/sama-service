@@ -63,14 +63,14 @@ data class Slot(
     }
 }
 
-inline fun HeatMap.query(query: SlotQuery.() -> Unit): List<Pair<Int, Slot>> {
+inline fun HeatMap.query(query: SlotQuery.() -> Unit): Sequence<Pair<Int, Slot>> {
     val slotQuery = SlotQuery()
     query.invoke(slotQuery)
     return this.query(slotQuery)
 }
 
-fun HeatMap.query(predicate: Predicate<Slot>): List<Pair<Int, Slot>> {
-    return slots.mapIndexedNotNull { idx, slot ->
+fun HeatMap.query(predicate: Predicate<Slot>): Sequence<Pair<Int, Slot>> {
+    return slots.asSequence().mapIndexedNotNull { idx, slot ->
         if (predicate.test(slot)) {
             idx to slot
         } else {
@@ -79,11 +79,11 @@ fun HeatMap.query(predicate: Predicate<Slot>): List<Pair<Int, Slot>> {
     }
 }
 
-inline fun List<Pair<Int, Slot>>.modify(transform: (Int, Slot) -> Slot): List<Pair<Int, Slot>> {
+inline fun Sequence<Pair<Int, Slot>>.modify(crossinline transform: (Int, Slot) -> Slot): Sequence<Pair<Int, Slot>> {
     return map { (idx, slot) -> idx to transform.invoke(idx, slot) }
 }
 
-fun List<Pair<Int, Slot>>.save(heatMap: HeatMap): HeatMap {
+fun Sequence<Pair<Int, Slot>>.save(heatMap: HeatMap): HeatMap {
     val newSlots = heatMap.slots.toMutableList()
     forEach { (idx, slot) -> newSlots[idx] = slot }
     return heatMap.copy(slots = newSlots)
