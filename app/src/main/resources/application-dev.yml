@@ -11,7 +11,8 @@ sama:
     allowed-origins: |
       http://0.0.0.0:8080,
       http://localhost:8080,
-      https://web.meetsama.com.smtest.it
+      https://web.meetsama.com.smtest.it,
+      https://app.meetsama.com.smtest.it
   auth.jwt:
     access:
       signing-secret: "dummy-value-this-is-loaded-from-AWS-SM"
