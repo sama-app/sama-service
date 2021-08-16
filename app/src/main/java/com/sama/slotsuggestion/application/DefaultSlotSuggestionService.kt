@@ -15,11 +15,11 @@ class DefaultSlotSuggestionService(
     private var logger: Logger = LoggerFactory.getLogger(DefaultSlotSuggestionService::class.java)
 
     override fun suggestSlots(userId: UserId, request: SlotSuggestionRequest): SlotSuggestionResponse {
-        try {
-            return slotSuggestionServiceV2.suggestSlots(userId, request)
+        return try {
+            slotSuggestionServiceV2.suggestSlots(userId, request)
         } catch (e: Exception) {
             logger.error("slot suggestion v2 error", e)
-            return slotSuggestionServiceV1.suggestSlots(userId, request)
+            slotSuggestionServiceV1.suggestSlots(userId, request)
         }
     }
 }
