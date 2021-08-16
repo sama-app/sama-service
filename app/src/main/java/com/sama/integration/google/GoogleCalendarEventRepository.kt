@@ -11,6 +11,7 @@ import com.sama.slotsuggestion.domain.Block
 import com.sama.slotsuggestion.domain.BlockRepository
 import com.sama.slotsuggestion.domain.Recurrence
 import com.sama.users.domain.UserId
+import liquibase.pro.packaged.it
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.util.UUID
@@ -94,17 +95,23 @@ class GoogleCalendarEventRepository(private val googleServiceFactory: GoogleServ
     override fun findAllBlocks(
         userId: Long,
         startDateTime: ZonedDateTime,
-        endDateTime: ZonedDateTime
+        endDateTime: ZonedDateTime,
+        includeRecurrence: Boolean
     ): Collection<Block> {
         return try {
             val calendarService = googleServiceFactory.calendarService(userId)
 
             val (calendarEvents, calendarTimeZone) = calendarService.findAllEvents(startDateTime, endDateTime)
-            val recurrenceRulesByEventID = calendarService.recurrenceRulesFor(calendarEvents)
             val recurringEventCounts = calendarEvents
                 .filter { it.recurringEventId != null }
                 .groupingBy { it.recurringEventId }
                 .eachCount()
+
+            val recurrenceRulesByEventID = if (includeRecurrence) {
+                calendarService.recurrenceRulesFor(calendarEvents)
+            } else {
+                emptyMap()
+            }
 
             calendarEvents
                 .map { it.toBlock(calendarTimeZone, recurringEventCounts, recurrenceRulesByEventID) }

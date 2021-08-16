@@ -49,8 +49,7 @@ fun Calendar.findAllEvents(
 
 fun Calendar.recurrenceRulesFor(calendarEvents: List<GoogleCalendarEvent>): Map<String, RecurrenceRule?> {
     val recurringEventIDs = calendarEvents
-        .mapNotNull { it.recurringEventId }
-        .toSet()
+        .mapNotNullTo(mutableSetOf()) { it.recurringEventId }
 
     val recurringEvents = recurringEventIDs
         .mapNotNull {
