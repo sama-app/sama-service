@@ -19,6 +19,17 @@ class UserController(
 ) {
 
     @Operation(
+        summary = "Retrieve public user details",
+        security = [SecurityRequirement(name = "user-auth")]
+    )
+    @GetMapping(
+        "/api/user/me/",
+        produces = [APPLICATION_JSON_VALUE]
+    )
+    fun getPublicDetails(@AuthUserId userId: UserId): UserDTO =
+        userApplicationService.findPublicDetails(userId)
+
+    @Operation(
         summary = "Deletes the user from the system",
         security = [SecurityRequirement(name = "user-auth")]
     )

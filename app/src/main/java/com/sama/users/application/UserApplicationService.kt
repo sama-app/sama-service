@@ -2,6 +2,8 @@ package com.sama.users.application
 
 import com.sama.common.ApplicationService
 import com.sama.common.findByIdOrThrow
+import com.sama.meeting.application.InitiatorDTO
+import com.sama.meeting.application.toInitiatorDTO
 import com.sama.users.configuration.AccessJwtConfiguration
 import com.sama.users.configuration.RefreshJwtConfiguration
 import com.sama.users.domain.*
@@ -20,6 +22,14 @@ class UserApplicationService(
     private val refreshJwtConfiguration: RefreshJwtConfiguration,
     private val clock: Clock
 ) {
+
+    @Transactional
+    fun findPublicDetails(userId: UserId): UserDTO {
+        val userEntity = userRepository.findByIdOrThrow(userId)
+        return userEntity.let {
+            UserDTO(it.publicId!!, it.fullName, it.email)
+        }
+    }
 
     @Transactional
     fun registerUser(command: RegisterUserCommand): UserId {

@@ -1,5 +1,6 @@
 package com.sama.users.application
 
+import com.sama.users.domain.UserPublicId
 import java.time.DayOfWeek
 import java.time.LocalTime
 import java.time.ZoneId
@@ -7,6 +8,12 @@ import java.util.Locale
 import java.util.UUID
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.format.annotation.DateTimeFormat.ISO.TIME
+
+data class UserDTO(
+    val userId: UserPublicId,
+    val fullName: String?,
+    val email: String
+)
 
 data class UserDeviceRegistrationsDTO(
     val firebaseDeviceRegistration: FirebaseDeviceRegistrationDTO?
