@@ -97,7 +97,7 @@ class MeetingApplicationServiceTest : BaseApplicationTest() {
             null,
             meetingInvitationDTO.meetingCode,
             ConfirmMeetingCommand(
-                meetingProposal.availableSlots[0],
+                meetingProposal.proposedSlots[0],
                 "non-sama-recipient@meetsama.com"
             ))
 

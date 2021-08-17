@@ -83,7 +83,6 @@ class MeetingViewTest {
         val expectedUrl = "$scheme://$host/$meetingCode"
         val expected = ProposedMeetingDTO(
             proposedSlots = listOf(MeetingSlotDTO(_10am, _11am)),
-            availableSlots = listOf(MeetingSlotDTO(_10am, _11am)),
             initiator = InitiatorDTO(
                 initiatorEntity.fullName,
                 initiatorEntity.email

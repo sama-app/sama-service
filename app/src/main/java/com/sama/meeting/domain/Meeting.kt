@@ -103,7 +103,7 @@ data class ProposedMeeting(
 }
 
 @DomainEntity
-data class AvailableSlots(val slots: List<MeetingSlot>) {
+data class AvailableSlots(val proposedSlots: List<MeetingSlot>) {
     companion object {
         fun of(proposedMeeting: ProposedMeeting, exclusions: Collection<EventDTO>, clock: Clock): AvailableSlots {
             val now = ZonedDateTime.now(clock)

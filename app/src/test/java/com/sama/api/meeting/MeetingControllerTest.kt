@@ -215,7 +215,6 @@ class MeetingControllerTest(
         ).thenReturn(
             ProposedMeetingDTO(
                 listOf(proposedSlot),
-                listOf(proposedSlot),
                 InitiatorDTO("test", "test@meetsama.com"),
                 MeetingAppLinksDTO("http://download.me")
             )
@@ -224,10 +223,6 @@ class MeetingControllerTest(
         val expectedResponse = """
             {
                 "proposedSlots": [{
-                    "startDateTime": "2021-01-01T12:00:00Z",
-                    "endDateTime": "2021-01-01T13:00:00Z"
-                 }],
-                 "availableSlots": [{
                     "startDateTime": "2021-01-01T12:00:00Z",
                     "endDateTime": "2021-01-01T13:00:00Z"
                  }],

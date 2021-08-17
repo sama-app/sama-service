@@ -49,8 +49,6 @@ data class InitiatorDTO(
 )
 
 data class ProposedMeetingDTO(
-    val availableSlots: List<MeetingSlotDTO>,
-    @Deprecated("use availableSlots")
     val proposedSlots: List<MeetingSlotDTO>,
     val initiator: InitiatorDTO,
     val appLinks: MeetingAppLinksDTO?

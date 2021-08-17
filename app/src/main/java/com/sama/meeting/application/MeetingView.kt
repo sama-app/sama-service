@@ -23,9 +23,9 @@ class MeetingView(
         val meetingUrl = proposedMeeting.meetingCode.toUrl(urlConfiguration)
         val appLinks = createAppLinks(meetingUrl)
 
-        val slots = availableSlots.slots.map { it.toDTO() }
+        val slots = availableSlots.proposedSlots.map { it.toDTO() }
         return ProposedMeetingDTO(
-            slots, slots,
+            slots,
             initiatorEntity.toInitiatorDTO(),
             appLinks
         )
