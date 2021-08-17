@@ -88,12 +88,8 @@ data class ProposedMeeting(
         }
     }
 
-    fun availableProposedSlots(exclusions: Collection<EventDTO>, clock: Clock): List<MeetingSlot> {
-        val now = ZonedDateTime.now(clock)
-        return expandedSlots()
-            .filter { slot ->
-                slot.startDateTime.isAfter(now) && !exclusions.any { slot.overlaps(it) }
-            }
+    fun availableSlots(exclusions: Collection<EventDTO>, clock: Clock): AvailableSlots {
+        return AvailableSlots.of(this, exclusions, clock)
     }
 
     fun confirm(slot: MeetingSlot, recipient: MeetingRecipient): Result<ConfirmedMeeting> {
@@ -102,6 +98,20 @@ data class ProposedMeeting(
                 ?: throw MeetingSlotUnavailableException(meetingCode, slot)
 
             ConfirmedMeeting(meetingId, initiatorId, duration, recipient, confirmedSlot)
+        }
+    }
+}
+
+@DomainEntity
+data class AvailableSlots(val slots: List<MeetingSlot>) {
+    companion object {
+        fun of(proposedMeeting: ProposedMeeting, exclusions: Collection<EventDTO>, clock: Clock): AvailableSlots {
+            val now = ZonedDateTime.now(clock)
+            return proposedMeeting.expandedSlots()
+                .filter { slot ->
+                    slot.startDateTime.isAfter(now) && !exclusions.any { slot.overlaps(it) }
+                }
+                .let { AvailableSlots(it) }
         }
     }
 }

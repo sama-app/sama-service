@@ -7,37 +7,23 @@ import com.sama.common.NotFoundException
 import com.sama.common.findByIdOrThrow
 import com.sama.common.toMinutes
 import com.sama.comms.application.CommsEventConsumer
-import com.sama.meeting.domain.ConfirmedMeeting
-import com.sama.meeting.domain.ExpiredMeeting
-import com.sama.meeting.domain.InvalidMeetingStatusException
-import com.sama.meeting.domain.MeetingAlreadyConfirmedException
-import com.sama.meeting.domain.MeetingCode
-import com.sama.meeting.domain.MeetingConfirmedEvent
-import com.sama.meeting.domain.MeetingIntent
-import com.sama.meeting.domain.MeetingRecipient
-import com.sama.meeting.domain.MeetingSlot
-import com.sama.meeting.domain.MeetingStatus
-import com.sama.meeting.domain.ProposedMeeting
+import com.sama.meeting.domain.*
 import com.sama.meeting.domain.aggregates.MeetingEntity
 import com.sama.meeting.domain.aggregates.MeetingIntentEntity
-import com.sama.meeting.domain.meetingFrom
 import com.sama.meeting.domain.repositories.MeetingCodeGenerator
 import com.sama.meeting.domain.repositories.MeetingIntentRepository
 import com.sama.meeting.domain.repositories.MeetingRepository
 import com.sama.meeting.domain.repositories.findByCodeOrThrow
 import com.sama.slotsuggestion.application.SlotSuggestionRequest
 import com.sama.slotsuggestion.application.SlotSuggestionService
-import com.sama.slotsuggestion.application.SlotSuggestionServiceV1
-import com.sama.slotsuggestion.application.SlotSuggestionServiceV2
 import com.sama.users.domain.UserId
 import com.sama.users.domain.UserRepository
-import java.time.Clock
-import java.time.ZonedDateTime
-import liquibase.pro.packaged.it
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.Clock
+import java.time.ZonedDateTime
 
 @ApplicationService
 @Service
@@ -45,10 +31,11 @@ class MeetingApplicationService(
     private val meetingIntentRepository: MeetingIntentRepository,
     private val meetingRepository: MeetingRepository,
     private val slotSuggestionService: SlotSuggestionService,
-    private val meetingInvitationService: MeetingInvitationService,
+    private val meetingInvitationView: MeetingInvitationView,
+    private val meetingView: MeetingView,
     private val meetingCodeGenerator: MeetingCodeGenerator,
-    private val userRepository: UserRepository,
     private val eventApplicationService: EventApplicationService,
+    private val userRepository: UserRepository,
     private val calendarEventConsumer: CalendarEventConsumer,
     private val commsEventConsumer: CommsEventConsumer,
     private val clock: Clock,
@@ -96,20 +83,9 @@ class MeetingApplicationService(
             .propose(meetingId, meetingCode, proposedSlots)
             .getOrThrow()
 
-        val meetingInvitation = meetingInvitationService.findForProposedMeeting(proposedMeeting, meetingIntent.timezone)
-        val initiatorEntity = userRepository.findByIdOrThrow(proposedMeeting.initiatorId)
-
         MeetingEntity.new(proposedMeeting).also { meetingRepository.save(it) }
 
-        return MeetingInvitationDTO(
-            ProposedMeetingDTO(
-                proposedMeeting.proposedSlots.map { it.toDTO() },
-                initiatorEntity.toInitiatorDTO()
-            ),
-            meetingCode,
-            meetingInvitation.url,
-            meetingInvitation.message
-        )
+        return meetingInvitationView.render(proposedMeeting, meetingIntent.timezone)
     }
 
     @Transactional(readOnly = true)
@@ -125,17 +101,13 @@ class MeetingApplicationService(
         }
 
         val (start, end) = proposedMeeting.proposedSlotsRange()
-        val calendarEvents = eventApplicationService.fetchEvents(
-            proposedMeeting.initiatorId, start.toLocalDate(), end.toLocalDate(), start.zone
+        val blockingCalendarEvents = eventApplicationService.fetchEvents(
+            proposedMeeting.initiatorId,
+            start.toLocalDate(), end.toLocalDate(), start.zone
         )
-        val availableProposedSlots = proposedMeeting.availableProposedSlots(calendarEvents.events, clock)
+        val availableSlots = proposedMeeting.availableSlots(blockingCalendarEvents.events, clock)
 
-        val initiatorEntity = userRepository.findByIdOrThrow(proposedMeeting.initiatorId)
-
-        return ProposedMeetingDTO(
-            availableProposedSlots.map { it.toDTO() },
-            initiatorEntity.toInitiatorDTO()
-        )
+        return meetingView.render(proposedMeeting, availableSlots)
     }
 
     @Transactional

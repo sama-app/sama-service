@@ -78,6 +78,12 @@ sama:
       code-length: 8
       scheme: http
       host: localhost:3000
+    app-link:
+      fqdn: meetsamatest.page.link
+      parameters:
+        ibi: com.meetsama.app.dev # BundleID
+        isi: TBD # AppStoreID
+        efr: 1 # Skip preview page
   landing:
     url: http://localhost:8080
 

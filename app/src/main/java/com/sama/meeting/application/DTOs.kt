@@ -2,7 +2,6 @@ package com.sama.meeting.application
 
 import com.sama.meeting.domain.MeetingCode
 import com.sama.meeting.domain.MeetingIntentCode
-import com.sama.meeting.domain.MeetingIntentId
 import com.sama.meeting.domain.MeetingSlot
 import com.sama.meeting.domain.aggregates.MeetingIntentEntity
 import com.sama.meeting.domain.aggregates.MeetingSuggestedSlotEntity
@@ -50,12 +49,22 @@ data class InitiatorDTO(
 )
 
 data class ProposedMeetingDTO(
+    val availableSlots: List<MeetingSlotDTO>,
+    @Deprecated("use availableSlots")
+    val proposedSlots: List<MeetingSlotDTO>,
+    val initiator: InitiatorDTO,
+    val appLinks: MeetingAppLinksDTO?
+)
+
+data class MeetingAppLinksDTO(val iosAppDownloadLink: String)
+
+data class MeetingDTO(
     val proposedSlots: List<MeetingSlotDTO>,
     val initiator: InitiatorDTO
 )
 
 data class MeetingInvitationDTO(
-    val meeting: ProposedMeetingDTO,
+    val meeting: MeetingDTO,
     val meetingCode: MeetingCode,
     val meetingUrl: String,
     val shareableMessage: String
