@@ -82,7 +82,8 @@ sama:
       fqdn: meetsamatest.page.link
       parameters:
         ibi: com.meetsama.app.dev # BundleID
-        isi: TBD # AppStoreID
+        ifl: itms-beta:// # TestFlight link
+        isi: # AppStoreID empty for local / dev
         efr: 1 # Skip preview page
   landing:
     url: http://localhost:8080

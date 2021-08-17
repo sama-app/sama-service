@@ -44,6 +44,7 @@ sama:
       fqdn: meetsama.page.link
       parameters:
         ibi: com.meetsama.app # BundleID
+        ifl: # Do not provide a custom Url
         isi: TBD # AppStoreID
         efr: 1 # Skip preview page
   landing:

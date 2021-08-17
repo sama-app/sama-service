@@ -32,7 +32,10 @@ class MeetingViewTestConfiguration {
 
     @Bean
     fun meetingAppLinkConfiguration() =
-        MeetingAppLinkConfiguration("meetsamatest.page.link", mapOf("param1" to "value1", "param2" to "value2"))
+        MeetingAppLinkConfiguration(
+            "meetsamatest.page.link",
+            mapOf("param1" to "value1", "param2" to "value2", "emptyVal" to "")
+        )
 }
 
 @ExtendWith(SpringExtension::class)

@@ -40,6 +40,7 @@ class MeetingView(
             .path("/")
             .queryParam("link", meetingUrl)
         for ((key, value) in appLinkConfiguration.parameters.entries) {
+            if (value.isEmpty()) continue
             urlBuilder.queryParam(key, value)
         }
 
