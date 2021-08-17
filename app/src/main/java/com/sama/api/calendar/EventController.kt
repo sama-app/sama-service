@@ -33,7 +33,7 @@ class EventController(
         produces = [MediaType.APPLICATION_JSON_VALUE]
     )
     fun fetchEvents(
-        @AuthUserId userId: UserId,
+        @AuthUserId userId: UserId?,
         @RequestParam @DateTimeFormat(iso = DATE) startDate: LocalDate,
         @RequestParam @DateTimeFormat(iso = DATE) endDate: LocalDate,
         @RequestParam timezone: ZoneId,
@@ -42,6 +42,6 @@ class EventController(
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "'endDate' must be after 'startDate'")
         }
 
-        return eventApplicationService.fetchEvents(userId, startDate, endDate, timezone)
+        return eventApplicationService.fetchEvents(userId!!, startDate, endDate, timezone)
     }
 }

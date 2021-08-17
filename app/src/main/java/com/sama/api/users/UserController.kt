@@ -26,8 +26,8 @@ class UserController(
         "/api/user/me/",
         produces = [APPLICATION_JSON_VALUE]
     )
-    fun getPublicDetails(@AuthUserId userId: UserId): UserDTO =
-        userApplicationService.findPublicDetails(userId)
+    fun getPublicDetails(@AuthUserId userId: UserId?): UserDTO =
+        userApplicationService.findPublicDetails(userId!!)
 
     @Operation(
         summary = "Deletes the user from the system",
@@ -36,8 +36,8 @@ class UserController(
     @PostMapping(
         "/api/user/me/delete"
     )
-    fun deleteUser(@AuthUserId userId: UserId) =
-        userApplicationService.deleteUser(userId)
+    fun deleteUser(@AuthUserId userId: UserId?) =
+        userApplicationService.deleteUser(userId!!)
 
     @Operation(
         summary = "Register a device for push notifications via Firebase",
@@ -47,8 +47,8 @@ class UserController(
         "/api/user/me/register-device",
         consumes = [APPLICATION_JSON_VALUE]
     )
-    fun registerDevice(@AuthUserId userId: UserId, @RequestBody command: RegisterDeviceCommand) =
-        userApplicationService.registerDevice(userId, command)
+    fun registerDevice(@AuthUserId userId: UserId?, @RequestBody command: RegisterDeviceCommand) =
+        userApplicationService.registerDevice(userId!!, command)
 
 
     @Operation(
@@ -59,8 +59,8 @@ class UserController(
         "/api/user/me/unregister-device",
         consumes = [APPLICATION_JSON_VALUE]
     )
-    fun unregisterDevice(@AuthUserId userId: UserId, @RequestBody command: UnregisterDeviceCommand) =
-        userApplicationService.unregisterDevice(userId, command)
+    fun unregisterDevice(@AuthUserId userId: UserId?, @RequestBody command: UnregisterDeviceCommand) =
+        userApplicationService.unregisterDevice(userId!!, command)
 
 
     @Operation(
@@ -71,8 +71,8 @@ class UserController(
         "/api/user/me/settings",
         produces = [APPLICATION_JSON_VALUE]
     )
-    fun getSettings(@AuthUserId userId: UserId): UserSettingsDTO =
-        userApplicationService.findUserSettings(userId)
+    fun getSettings(@AuthUserId userId: UserId?): UserSettingsDTO =
+        userApplicationService.findUserSettings(userId!!)
 
     @Operation(
         summary = "Update user working hours",
@@ -82,7 +82,7 @@ class UserController(
         "/api/user/me/update-working-hours",
         consumes = [APPLICATION_JSON_VALUE]
     )
-    fun updateWorkingHours(@AuthUserId userId: UserId, @RequestBody command: UpdateWorkingHoursCommand) =
-        userApplicationService.updateWorkingHours(userId, command)
+    fun updateWorkingHours(@AuthUserId userId: UserId?, @RequestBody command: UpdateWorkingHoursCommand) =
+        userApplicationService.updateWorkingHours(userId!!, command)
 
 }

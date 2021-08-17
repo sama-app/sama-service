@@ -12,6 +12,7 @@ import org.junit.jupiter.api.TestFactory
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.kotlin.any
 import org.mockito.kotlin.eq
+import org.mockito.kotlin.isNull
 import org.mockito.kotlin.whenever
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -24,6 +25,7 @@ import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.result.isEqualTo
 import java.time.ZoneId
@@ -103,7 +105,7 @@ class MeetingControllerTest(
                 .content(requestBody)
         )
             .andExpect(status().isOk)
-            .andExpect(MockMvcResultMatchers.content().json(expectedResponse))
+            .andExpect(content().json(expectedResponse))
     }
 
     @TestFactory
@@ -197,7 +199,7 @@ class MeetingControllerTest(
                 .content(requestBody)
         )
             .andExpect(status().isOk)
-            .andExpect(MockMvcResultMatchers.content().json(expectedResponse))
+            .andExpect(content().json(expectedResponse))
     }
 
 
@@ -210,7 +212,7 @@ class MeetingControllerTest(
         )
         whenever(
             meetingApplicationService.loadMeetingProposalFromCode(eq(meetingCode))
-        ).thenReturn(ProposedMeetingDTO( listOf(proposedSlot), InitiatorDTO("test", "test@meetsama.com")))
+        ).thenReturn(ProposedMeetingDTO(listOf(proposedSlot), InitiatorDTO("test", "test@meetsama.com")))
 
         val expectedResponse = """
             {
@@ -229,7 +231,7 @@ class MeetingControllerTest(
                 .header("Authorization", "Bearer $jwt")
         )
             .andExpect(status().isOk)
-            .andExpect(MockMvcResultMatchers.content().json(expectedResponse))
+            .andExpect(content().json(expectedResponse))
     }
 
     @Test
@@ -245,7 +247,7 @@ class MeetingControllerTest(
         """
         mockMvc.perform(get("/api/meeting/by-code/VGsUTGno"))
             .andExpect(status().isGone)
-            .andExpect(MockMvcResultMatchers.content().json(expectedResponse))
+            .andExpect(content().json(expectedResponse))
     }
 
     @Test
@@ -261,15 +263,15 @@ class MeetingControllerTest(
         """
         mockMvc.perform(get("/api/meeting/by-code/VGsUTGno"))
             .andExpect(status().isGone)
-            .andExpect(MockMvcResultMatchers.content().json(expectedResponse))
+            .andExpect(content().json(expectedResponse))
     }
 
     @Test
-    fun `confirm meeting`() {
+    fun `confirm meeting unauthenticated`() {
         val meetingCode = "code"
         val recipientEmail = "lucky@sama.com"
 
-        whenever(meetingApplicationService.confirmMeeting(eq(meetingCode), any()))
+        whenever(meetingApplicationService.confirmMeeting(isNull(), eq(meetingCode), any()))
             .thenReturn(true)
 
         val requestBody = """
@@ -285,11 +287,62 @@ class MeetingControllerTest(
         mockMvc.perform(
             post("/api/meeting/by-code/$meetingCode/confirm")
                 .contentType(APPLICATION_JSON)
+                .content(requestBody)
+        )
+            .andExpect(status().isOk)
+            .andExpect(content().string("true"))
+    }
+
+    @Test
+    fun `confirm meeting authenticated`() {
+        val meetingCode = "code"
+        val startDateTime = "2021-01-01T12:00:00Z"
+        val endDateTime = "2021-01-01T13:00:00Z"
+
+        whenever(meetingApplicationService.confirmMeeting(eq(userId), eq(meetingCode), any()))
+            .thenReturn(true)
+
+        val requestBody = """
+            {
+                "slot": {
+                    "startDateTime": "$startDateTime",
+                    "endDateTime": "$endDateTime"
+                }
+            }
+        """
+
+        mockMvc.perform(
+            post("/api/meeting/by-code/$meetingCode/confirm")
+                .contentType(APPLICATION_JSON)
                 .header("Authorization", "Bearer $jwt")
                 .content(requestBody)
         )
             .andExpect(status().isOk)
-            .andExpect(MockMvcResultMatchers.content().string("true"))
+            .andExpect(content().string("true"))
+    }
+
+    @Test
+    fun `confirm meeting unauthenticated without recipient email`() {
+        val meetingCode = "code"
+
+        whenever(meetingApplicationService.confirmMeeting(isNull(), eq(meetingCode), any()))
+            .thenReturn(true)
+
+        val requestBody = """
+            {
+                "slot": {
+                    "startDateTime": "2021-01-01T12:00:00Z",
+                    "endDateTime": "2021-01-01T13:00:00Z"
+                }
+            }
+        """
+
+        mockMvc.perform(
+            post("/api/meeting/by-code/$meetingCode/confirm")
+                .contentType(APPLICATION_JSON)
+                .content(requestBody)
+        )
+            .andExpect(status().isBadRequest)
     }
 
     @TestFactory
