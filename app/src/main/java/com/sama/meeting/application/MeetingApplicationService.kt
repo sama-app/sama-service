@@ -125,8 +125,9 @@ class MeetingApplicationService(
         }
 
         val (start, end) = proposedMeeting.proposedSlotsRange()
-        val calendarEvents = eventApplicationService.fetchEvents(proposedMeeting.initiatorId,
-            start.toLocalDate(), end.toLocalDate(), start.zone)
+        val calendarEvents = eventApplicationService.fetchEvents(
+            proposedMeeting.initiatorId, start.toLocalDate(), end.toLocalDate(), start.zone
+        )
         val availableProposedSlots = proposedMeeting.availableProposedSlots(calendarEvents.events, clock)
 
         val initiatorEntity = userRepository.findByIdOrThrow(proposedMeeting.initiatorId)
@@ -138,7 +139,7 @@ class MeetingApplicationService(
     }
 
     @Transactional
-    fun confirmMeeting(meetingCode: MeetingCode, command: ConfirmMeetingCommand): Boolean {
+    fun confirmMeeting(userId: UserId?, meetingCode: MeetingCode, command: ConfirmMeetingCommand): Boolean {
         val meetingEntity = meetingRepository.findByCodeOrThrow(meetingCode)
         val intentEntity = meetingIntentRepository.findByIdOrThrow(meetingEntity.meetingIntentId)
 
@@ -149,7 +150,11 @@ class MeetingApplicationService(
             else -> throw InvalidMeetingStatusException(meetingCode, meeting.status)
         }
 
-        val meetingRecipient = command.recipientEmail.let { MeetingRecipient.fromEmail(it) }
+        val recipientEntity = userId?.let { userRepository.findByIdOrThrow(it) }
+            ?: (command.recipientEmail?.let { userRepository.findByEmail(it) })
+        val meetingRecipient = recipientEntity?.let { MeetingRecipient.fromUser(it) }
+            ?: MeetingRecipient.fromEmail(command.recipientEmail!!)
+
         val confirmedMeeting = proposedMeeting
             .confirm(command.slot.toValueObject(), meetingRecipient)
             .getOrThrow()

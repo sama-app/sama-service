@@ -29,8 +29,8 @@ class MeetingController(
         consumes = [APPLICATION_JSON_VALUE],
         produces = [APPLICATION_JSON_VALUE],
     )
-    fun initiateMeeting(@AuthUserId userId: UserId, @RequestBody @Valid command: InitiateMeetingCommand) =
-        meetingApplicationService.initiateMeeting(userId, command)
+    fun initiateMeeting(@AuthUserId userId: UserId?, @RequestBody @Valid command: InitiateMeetingCommand) =
+        meetingApplicationService.initiateMeeting(userId!!, command)
 
     @Operation(
         summary = "Propose a meeting with a slot selection",
@@ -42,9 +42,9 @@ class MeetingController(
         produces = [APPLICATION_JSON_VALUE]
     )
     fun proposeMeeting(
-        @AuthUserId userId: UserId,
+        @AuthUserId userId: UserId?,
         @RequestBody command: ProposeMeetingCommand
-    ) = meetingApplicationService.proposeMeeting(userId, command)
+    ) = meetingApplicationService.proposeMeeting(userId!!, command)
 
 
     @Operation(summary = "Retrieve meeting proposal details using a shared meeting code")
@@ -60,6 +60,12 @@ class MeetingController(
         "/api/meeting/by-code/{meetingCode}/confirm",
         consumes = [APPLICATION_JSON_VALUE]
     )
-    fun confirmMeeting(@PathVariable meetingCode: MeetingCode, @RequestBody command: ConfirmMeetingCommand) =
-        meetingApplicationService.confirmMeeting(meetingCode, command)
+    fun confirmMeeting(
+        @AuthUserId userId: UserId?,
+        @PathVariable meetingCode: MeetingCode,
+        @RequestBody command: ConfirmMeetingCommand
+    ): Boolean {
+        require(userId != null || command.recipientEmail != null)
+        return meetingApplicationService.confirmMeeting(userId, meetingCode, command)
+    }
 }

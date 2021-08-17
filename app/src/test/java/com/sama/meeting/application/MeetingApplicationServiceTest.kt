@@ -93,10 +93,12 @@ class MeetingApplicationServiceTest : BaseApplicationTest() {
         val meetingProposal = underTest.loadMeetingProposalFromCode(meetingInvitationDTO.meetingCode)
 
         // confirm meeting
-        underTest.confirmMeeting(meetingInvitationDTO.meetingCode,
+        underTest.confirmMeeting(
+            null,
+            meetingInvitationDTO.meetingCode,
             ConfirmMeetingCommand(
                 meetingProposal.proposedSlots[0],
-                "recipient@meetsama.com"
+                "non-sama-recipient@meetsama.com"
             ))
 
         verify(calendarEventConsumer).onMeetingConfirmed(any())
@@ -190,7 +192,9 @@ class MeetingApplicationServiceTest : BaseApplicationTest() {
 
         // try to confirm meeting
         assertThrows<MeetingSlotUnavailableException> {
-            underTest.confirmMeeting(meetingInvitationDTO.meetingCode,
+            underTest.confirmMeeting(
+                null,
+                meetingInvitationDTO.meetingCode,
                 ConfirmMeetingCommand(
                     proposedSlot,
                     "recipient@meetsama.com"
@@ -199,6 +203,66 @@ class MeetingApplicationServiceTest : BaseApplicationTest() {
 
         verifyZeroInteractions(calendarEventConsumer)
         verifyZeroInteractions(commsEventConsumer)
+    }
+
+    @Test
+    fun `setup sama-non-sama meeting with existing sama user`() {
+        // create meeting intent
+        val meetingIntentDTO = asInitiator {
+            val suggestedSlotStart = ZonedDateTime.now(clock).plusHours(1)
+            val suggestedSlotEnd = suggestedSlotStart.plusHours(2)
+            whenever(slotSuggestionService.suggestSlots(
+                eq(it.id!!),
+                eq(SlotSuggestionRequest(ofMinutes(60), clock.zone, 3)))
+            )
+                .thenReturn(
+                    SlotSuggestionResponse(listOf(
+                        SlotSuggestion(suggestedSlotStart, suggestedSlotEnd, 1.0)
+                    ))
+                )
+
+            underTest.initiateMeeting(it.id!!, InitiateMeetingCommand(
+                60, clock.zone, 3
+            ))
+        }
+
+        // propose meeting
+        val proposedSlotStart = ZonedDateTime.now(clock).plusHours(2)
+        val proposedSlotEnd = proposedSlotStart.plusHours(3)
+        val proposedSlot = MeetingSlotDTO(proposedSlotStart, proposedSlotEnd)
+        val meetingInvitationDTO = asInitiator {
+            underTest.proposeMeeting(
+                it.id!!,
+                ProposeMeetingCommand(
+                    meetingIntentDTO.meetingIntentCode,
+                    listOf(proposedSlot)
+                ))
+        }
+
+        // load proposal from meeting code with initiator's calendar non-blocked
+        whenever(eventApplicationService.fetchEvents(
+            eq(initiator().id!!),
+            eq(proposedSlotStart.toLocalDate()),
+            eq(proposedSlotEnd.toLocalDate()),
+            any())
+        )
+            .thenReturn(FetchEventsDTO(emptyList(), emptyList()))
+
+        val meetingProposal = underTest.loadMeetingProposalFromCode(meetingInvitationDTO.meetingCode)
+
+        // confirm meeting
+        asRecipient {
+            underTest.confirmMeeting(
+                recipient().id!!,
+                meetingInvitationDTO.meetingCode,
+                ConfirmMeetingCommand(
+                    meetingProposal.proposedSlots[0],
+                        null
+                ))
+        }
+
+        verify(calendarEventConsumer).onMeetingConfirmed(any())
+        verify(commsEventConsumer).onMeetingConfirmed(any())
     }
 
     @Test

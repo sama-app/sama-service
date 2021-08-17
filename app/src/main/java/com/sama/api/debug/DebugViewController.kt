@@ -73,8 +73,8 @@ class DebugViewController(
     }
 
     @GetMapping("/api/__debug/user/heatmap")
-    fun renderUserHeapMap(@AuthUserId userId: UserId, model: MutableMap<String, Any>): ModelAndView {
-        val heatMap = heatMapService.generate(userId, ZoneId.systemDefault())
+    fun renderUserHeapMap(@AuthUserId userId: UserId?, model: MutableMap<String, Any>): ModelAndView {
+        val heatMap = heatMapService.generate(userId!!, ZoneId.systemDefault())
             .dayVectors()
             .mapValues { it.value.mapIndexed { _, value -> sigmoid(value) } }
             .toSortedMap()
@@ -105,12 +105,12 @@ class DebugViewController(
 
     @GetMapping("/api/__debug/user/heatmap2")
     fun renderUserHeapMap2(
-        @AuthUserId userId: UserId,
+        @AuthUserId userId: UserId?,
         @RequestParam(defaultValue = "3") count: Int,
         model: MutableMap<String, Any>,
     ): ModelAndView {
-        val user = userRepository.findById(userId)
-        val baseHeatMap = heatMapServiceV2.generate(userId, user.timeZone)
+        val user = userRepository.findById(userId!!)
+        val baseHeatMap = heatMapServiceV2.generate(userId!!, user.timeZone)
 
         val (suggestedSlots, heatMap) = SlotSuggestionEngine(baseHeatMap)
             .suggest(Duration.ofMinutes(60), count)
@@ -159,9 +159,10 @@ class DebugViewController(
     }
 
     @GetMapping("/api/__debug/user/suggestions", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun getTopSuggestions(@AuthUserId userId: UserId): SlotSuggestionResponse {
+    fun getTopSuggestions(@AuthUserId userId: UserId?): SlotSuggestionResponse {
         return slotSuggestionService.suggestSlots(
-            userId, SlotSuggestionRequest(
+            userId!!,
+            SlotSuggestionRequest(
                 Duration.ofMinutes(60),
                 ZoneId.systemDefault(),
                 10

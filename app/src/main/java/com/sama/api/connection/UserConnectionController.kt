@@ -23,33 +23,33 @@ class UserConnectionController(private val userConnectionApplicationService: Use
         "/api/connection/user-connections",
         produces = [MediaType.APPLICATION_JSON_VALUE],
     )
-    fun findConnections(@AuthUserId userId: UserId) =
-        userConnectionApplicationService.findUserConnections(userId)
+    fun findConnections(@AuthUserId userId: UserId?) =
+        userConnectionApplicationService.findUserConnections(userId!!)
 
     @GetMapping(
         "/api/connection/requests",
         produces = [MediaType.APPLICATION_JSON_VALUE],
     )
-    fun findConnectionRequests(@AuthUserId userId: UserId) =
-        userConnectionApplicationService.findConnectionRequests(userId)
+    fun findConnectionRequests(@AuthUserId userId: UserId?) =
+        userConnectionApplicationService.findConnectionRequests(userId!!)
 
     @PostMapping(
         "/api/connection/create-request",
         consumes = [MediaType.APPLICATION_JSON_VALUE]
     )
-    fun createConnectionRequest(@AuthUserId userId: UserId, @RequestBody command: CreateConnectionRequestCommand) =
-        userConnectionApplicationService.createConnectionRequest(userId, command)
+    fun createConnectionRequest(@AuthUserId userId: UserId?, @RequestBody command: CreateConnectionRequestCommand) =
+        userConnectionApplicationService.createConnectionRequest(userId!!, command)
 
     @PostMapping("/api/connection/request/{connectionRequestId}/approve")
-    fun approveConnectionRequest(@AuthUserId userId: UserId, @PathVariable connectionRequestId: ConnectionRequestId) =
-        userConnectionApplicationService.approveConnectionRequest(userId, connectionRequestId)
+    fun approveConnectionRequest(@AuthUserId userId: UserId?, @PathVariable connectionRequestId: ConnectionRequestId) =
+        userConnectionApplicationService.approveConnectionRequest(userId!!, connectionRequestId)
 
 
     @PostMapping("/api/connection/request/{connectionRequestId}/reject")
-    fun rejectConnectionRequest(@AuthUserId userId: UserId, @PathVariable connectionRequestId: ConnectionRequestId) =
-        userConnectionApplicationService.rejectConnectionRequest(userId, connectionRequestId)
+    fun rejectConnectionRequest(@AuthUserId userId: UserId?, @PathVariable connectionRequestId: ConnectionRequestId) =
+        userConnectionApplicationService.rejectConnectionRequest(userId!!, connectionRequestId)
 
     @PostMapping("/api/connection/user-connections/disconnect-user")
-    fun disconnectUser(@AuthUserId userId: UserId, @RequestBody command: RemoveUserConnectionCommand) =
-        userConnectionApplicationService.removeUserConnection(userId, command)
+    fun disconnectUser(@AuthUserId userId: UserId?, @RequestBody command: RemoveUserConnectionCommand) =
+        userConnectionApplicationService.removeUserConnection(userId!!, command)
 }

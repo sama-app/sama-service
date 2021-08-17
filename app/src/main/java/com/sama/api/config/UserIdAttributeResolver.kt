@@ -12,6 +12,7 @@ import org.springframework.web.bind.support.WebDataBinderFactory
 import org.springframework.web.context.request.NativeWebRequest
 import org.springframework.web.method.support.HandlerMethodArgumentResolver
 import org.springframework.web.method.support.ModelAndViewContainer
+import java.util.*
 
 /**
  * Resolves [AuthUserId] annotated parameters to an Authenticated [UserEntity.id]
@@ -22,7 +23,8 @@ class UserIdAttributeResolver(
 ) : HandlerMethodArgumentResolver {
     override fun supportsParameter(parameter: MethodParameter): Boolean {
         return parameter.hasParameterAnnotation(AuthUserId::class.java) &&
-                parameter.parameterType.equals(UserId::class.java)
+                // must be java.lang.Long, otherwise `UserId?` does not get matched
+                (parameter.parameterType.equals(java.lang.Long::class.java))
     }
 
     override fun resolveArgument(
@@ -30,14 +32,16 @@ class UserIdAttributeResolver(
         mavContainer: ModelAndViewContainer,
         webRequest: NativeWebRequest,
         binderFactory: WebDataBinderFactory
-    ): Long {
-        val token = webRequest.userPrincipal as UsernamePasswordAuthenticationToken
-        val userPrincipal = token.principal as UserPrincipal
-        if (userPrincipal.userId != null) {
-            return userRepository.findIdByPublicId(userPrincipal.userId)
+    ): UserId? {
+        val token = webRequest.userPrincipal as UsernamePasswordAuthenticationToken?
+        val userPrincipal = token?.principal as UserPrincipal?
+            ?: return null
+
+        return if (userPrincipal.userId != null) {
+            userRepository.findIdByPublicId(userPrincipal.userId)
                 ?: throw NotFoundException(UserEntity::class, "userId", userPrincipal.userId)
         } else {
-            return userRepository.findIdByEmail(userPrincipal.email)
+            userRepository.findIdByEmail(userPrincipal.email)
                 ?: throw NotFoundException(UserEntity::class, "email", userPrincipal.email)
         }
     }
