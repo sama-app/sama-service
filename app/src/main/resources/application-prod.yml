@@ -12,6 +12,10 @@ spring:
     password: "dummy-value-this-is-loaded-from-AWS-SM"
   jpa:
     show-sql: false
+  cache:
+    cache-names: blocks-by-user
+    caffeine:
+      spec: maximumSize=1000,expireAfterAccess=12h
 
 logging.level:
   org.springframework.jdbc.core: WARN

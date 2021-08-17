@@ -5,6 +5,10 @@ spring:
     database-name: sama
     username: sama
     password: "dummy-value-this-is-loaded-from-AWS-SM"
+  cache:
+    cache-names: blocks-by-user
+    caffeine:
+      spec: maximumSize=1000,expireAfterAccess=12h
 
 sama:
   api.cors:

@@ -40,7 +40,7 @@ spring:
   cache:
     cache-names: blocks-by-user
     caffeine:
-      spec: maximumSize=1000,expireAfterAccess=12h
+      spec: maximumSize=0
 
 management:
   endpoints:
@@ -110,5 +110,5 @@ integration:
 sentry:
   dsn: https://b8c06b0aa478447bbdc330ad9fef42f1@o877832.ingest.sentry.io/5828928
   environment: local
-  traces-sample-rate: 0.0
+  traces-sample-rate: 1.0
   debug: true
