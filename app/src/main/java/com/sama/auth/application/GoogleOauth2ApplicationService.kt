@@ -1,6 +1,7 @@
 package com.sama.auth.application
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier
 import com.sama.common.ApplicationService
 import com.sama.integration.google.GoogleInsufficientPermissionsException
 import com.sama.integration.google.GoogleUserRepository
@@ -14,12 +15,14 @@ import com.sama.users.domain.UserAlreadyExistsException
 import org.apache.commons.logging.LogFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import java.lang.RuntimeException
 
 @ApplicationService
 @Service
 class GoogleOauth2ApplicationService(
     private val userApplicationService: UserApplicationService,
     private val googleAuthorizationCodeFlow: GoogleAuthorizationCodeFlow,
+    private val googleIdTokenVerifier: GoogleIdTokenVerifier,
     private val googleUserRepository: GoogleUserRepository,
     @Value("\${integration.google.scopes}") private val requiredGoogleOauthScopes: List<String>
 ) {
@@ -72,8 +75,11 @@ class GoogleOauth2ApplicationService(
                 throw MissingScopesException()
             }
 
-            val parseIdToken = it.parseIdToken()
-            val email = parseIdToken.payload.email
+            val parsedIdToken = it.parseIdToken()
+            if (!googleIdTokenVerifier.verify(parsedIdToken)) {
+                throw RuntimeException("Invalid Google ID token")
+            }
+            val email = parsedIdToken.payload.email
             VerifiedGoogleOauth2Token(email, GoogleCredential(it.accessToken, it.refreshToken, it.expiresInSeconds))
         }.getOrThrow()
 
