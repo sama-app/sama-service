@@ -49,6 +49,32 @@ class UserControllerTest(
             "hcAQ6f8kaeB43nzFibGYZE8QWHyz9OIdFg9zHSbe9Vk"
 
     @Test
+    fun `get user public details`() {
+        val userDTO = UserDTO(
+            UUID.randomUUID(),
+            "test name",
+            "test@meetsama.com"
+        )
+        whenever(userApplicationService.findPublicDetails(eq(userId)))
+            .thenReturn(userDTO)
+
+        val expectedJson = """
+        {
+           "userId": "${userDTO.userId}",
+           "fullName": "${userDTO.fullName}",
+           "email": "${userDTO.email}"
+        }
+        """
+
+        mockMvc.perform(
+            get("/api/user/me/")
+                .header("Authorization", "Bearer $jwt")
+        )
+            .andExpect(status().isOk)
+            .andExpect(content().json(expectedJson))
+    }
+
+    @Test
     fun `delete user`() {
         whenever(userApplicationService.deleteUser(eq(userId))).thenReturn(true)
 
@@ -198,6 +224,7 @@ class UserControllerTest(
     fun `endpoint authorization without jwt`() = listOf(
         post("/api/user/me/update-working-hours") to UNAUTHORIZED,
         get("/api/user/me/settings") to UNAUTHORIZED,
+        get("/api/user/me/") to UNAUTHORIZED,
         post("/api/user/me/unregister-device") to UNAUTHORIZED,
         post("/api/user/me/register-device") to UNAUTHORIZED,
         post("/api/user/me/delete") to UNAUTHORIZED
