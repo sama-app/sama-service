@@ -31,6 +31,7 @@
         </root>
         <logger level="info" name="com.sama"/>
         <logger level="debug" name="org.hibernate.SQL"/>
+        <logger level="info" name="com.google.api.client.http" />
     </springProfile>
 
     <springProfile name="dev">

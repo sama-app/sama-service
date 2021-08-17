@@ -2,7 +2,7 @@ package com.sama.integration.google
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow
 import com.google.api.client.http.HttpTransport
-import com.google.api.client.json.jackson2.JacksonFactory
+import com.google.api.client.json.JsonFactory
 import com.google.api.services.calendar.Calendar
 import com.sama.SamaApplication
 import com.sama.users.domain.UserSettingsDefaults
@@ -14,8 +14,8 @@ import java.time.ZoneId
 @Component
 class GoogleUserSettingsDefaultsRepository(
     private val googleAuthorizationCodeFlow: GoogleAuthorizationCodeFlow,
-    private val googleNetHttpTransport: HttpTransport,
-    private val googleJacksonFactory: JacksonFactory
+    private val googleHttpTransport: HttpTransport,
+    private val jsonFactory: JsonFactory
 ) : UserSettingsDefaultsRepository {
 
     override fun findByIdOrNull(userId: Long): UserSettingsDefaults? {
@@ -37,7 +37,7 @@ class GoogleUserSettingsDefaultsRepository(
 
     private fun calendarServiceForUser(userId: Long): Calendar {
         val credential = googleAuthorizationCodeFlow.loadCredential(userId.toString())
-        return Calendar.Builder(googleNetHttpTransport, googleJacksonFactory, credential)
+        return Calendar.Builder(googleHttpTransport, jsonFactory, credential)
             .setApplicationName(SamaApplication::class.simpleName)
             .build()
     }

@@ -3,9 +3,10 @@ package com.sama.integration.google
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow
 import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier
-import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport
-import com.google.api.client.http.javanet.NetHttpTransport
-import com.google.api.client.json.jackson2.JacksonFactory
+import com.google.api.client.http.HttpTransport
+import com.google.api.client.http.apache.v2.ApacheHttpTransport
+import com.google.api.client.json.JsonFactory
+import com.google.api.client.json.gson.GsonFactory
 import com.sama.users.domain.UserRepository
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
@@ -18,19 +19,19 @@ import java.io.StringReader
 class GoogleConfiguration() {
 
     @Bean
-    fun googleJacksonFactory(): JacksonFactory {
-        return JacksonFactory.getDefaultInstance()
+    fun googleJsonFactory(): JsonFactory {
+        return GsonFactory.getDefaultInstance()
     }
 
     @Bean
-    fun googleNetHttpTransport(): NetHttpTransport {
-        return GoogleNetHttpTransport.newTrustedTransport()
+    fun googleHttpTransport(): HttpTransport {
+        return ApacheHttpTransport()
     }
 
     @Bean
     @Profile("!ci")
     fun googleClientSecrets(@Value("\${integration.google.credentials}") credentials: String): GoogleClientSecrets {
-        return GoogleClientSecrets.load(googleJacksonFactory(), StringReader(credentials))
+        return GoogleClientSecrets.load(googleJsonFactory(), StringReader(credentials))
     }
 
     @Bean
@@ -41,8 +42,8 @@ class GoogleConfiguration() {
         userRepository: UserRepository
     ): GoogleAuthorizationCodeFlow {
         return GoogleAuthorizationCodeFlow.Builder(
-            googleNetHttpTransport(),
-            googleJacksonFactory(),
+            googleHttpTransport(),
+            googleJsonFactory(),
             googleClientSecrets,
             scopes
         )
@@ -55,8 +56,8 @@ class GoogleConfiguration() {
     @Bean
     fun googleIdTokenVerifier(@Value("\${integration.google.client-id}") clientId: String): GoogleIdTokenVerifier {
         return GoogleIdTokenVerifier.Builder(
-            googleNetHttpTransport(),
-            googleJacksonFactory()
+            googleHttpTransport(),
+            googleJsonFactory()
         )
             .setAudience(listOf(clientId))
             .build()
