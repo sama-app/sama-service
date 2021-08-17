@@ -155,7 +155,7 @@ class MeetingControllerTest(
             )
         ).thenReturn(
             MeetingInvitationDTO(
-                ProposedMeetingDTO(
+                MeetingDTO(
                     listOf(proposedSlot),
                     InitiatorDTO(initiatorFullName, initiatorEmail)
                 ),
@@ -212,7 +212,14 @@ class MeetingControllerTest(
         )
         whenever(
             meetingApplicationService.loadMeetingProposalFromCode(eq(meetingCode))
-        ).thenReturn(ProposedMeetingDTO(listOf(proposedSlot), InitiatorDTO("test", "test@meetsama.com")))
+        ).thenReturn(
+            ProposedMeetingDTO(
+                listOf(proposedSlot),
+                listOf(proposedSlot),
+                InitiatorDTO("test", "test@meetsama.com"),
+                MeetingAppLinksDTO("http://download.me")
+            )
+        )
 
         val expectedResponse = """
             {
@@ -220,9 +227,16 @@ class MeetingControllerTest(
                     "startDateTime": "2021-01-01T12:00:00Z",
                     "endDateTime": "2021-01-01T13:00:00Z"
                  }],
+                 "availableSlots": [{
+                    "startDateTime": "2021-01-01T12:00:00Z",
+                    "endDateTime": "2021-01-01T13:00:00Z"
+                 }],
                 "initiator": {
                     "fullName": "test",
                     "email": "test@meetsama.com"
+                },
+                "appLinks": {
+                    "iosAppDownloadLink": "http://download.me"
                 }
             }
         """

@@ -40,6 +40,12 @@ sama:
     url:
       scheme: https
       host: app.meetsama.com
+    app-link:
+      fqdn: meetsama.page.link
+      parameters:
+        ibi: com.meetsama.app # BundleID
+        isi: TBD # AppStoreID
+        efr: 1 # Skip preview page
   landing:
     url: https://meetsama.com
 

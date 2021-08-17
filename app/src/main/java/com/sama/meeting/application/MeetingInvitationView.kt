@@ -1,10 +1,11 @@
 package com.sama.meeting.application
 
+import com.sama.common.findByIdOrThrow
 import com.sama.meeting.configuration.MeetingProposalMessageModel
 import com.sama.meeting.configuration.MeetingUrlConfiguration
-import com.sama.meeting.domain.MeetingInvitation
 import com.sama.meeting.domain.ProposedMeeting
 import com.sama.meeting.domain.toUrl
+import com.sama.users.domain.UserRepository
 import com.samskivert.mustache.Template
 import java.time.Instant
 import java.time.ZoneId
@@ -16,14 +17,15 @@ import java.util.Locale
 import org.springframework.stereotype.Component
 
 @Component
-class MeetingInvitationService(
+class MeetingInvitationView(
+    private val userRepository: UserRepository,
     private val meetingUrlConfiguration: MeetingUrlConfiguration,
     private val meetingProposalMessageTemplate: Template,
 ) {
     private val startDateTimeFormatter = ofLocalizedDateTime(MEDIUM, SHORT).withLocale(Locale.ENGLISH)
     private val endTimeFormatter = ofLocalizedTime(SHORT).withLocale(Locale.ENGLISH)
 
-    fun findForProposedMeeting(proposedMeeting: ProposedMeeting, zoneId: ZoneId): MeetingInvitation {
+    fun render(proposedMeeting: ProposedMeeting, zoneId: ZoneId): MeetingInvitationDTO {
         val meetingUrl = proposedMeeting.meetingCode.toUrl(meetingUrlConfiguration)
         val shareableMessage = meetingProposalMessageTemplate.execute(
             MeetingProposalMessageModel(
@@ -37,7 +39,14 @@ class MeetingInvitationService(
             )
         )
 
-        return MeetingInvitation(
+        val initiator = userRepository.findByIdOrThrow(proposedMeeting.initiatorId)
+
+        return MeetingInvitationDTO(
+            MeetingDTO(
+                proposedMeeting.proposedSlots.map { it.toDTO() },
+                initiator.toInitiatorDTO()
+            ),
+            proposedMeeting.meetingCode,
             meetingUrl,
             shareableMessage
         )

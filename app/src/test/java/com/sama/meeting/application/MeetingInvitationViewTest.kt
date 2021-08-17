@@ -2,17 +2,21 @@ package com.sama.meeting.application
 
 import com.sama.meeting.configuration.MeetingProposalMessageConfiguration
 import com.sama.meeting.configuration.MeetingUrlConfiguration
-import com.sama.meeting.domain.MeetingInvitation
 import com.sama.meeting.domain.MeetingSlot
 import com.sama.meeting.domain.ProposedMeeting
+import com.sama.users.domain.UserEntity
+import com.sama.users.domain.UserRepository
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import org.mockito.kotlin.whenever
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.TestConfiguration
+import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.context.annotation.Bean
 import org.springframework.test.context.junit.jupiter.SpringExtension
 import java.time.*
+import java.util.*
 import kotlin.test.assertEquals
 
 private const val scheme = "https"
@@ -30,17 +34,20 @@ class MeetingInvitationServiceTestConfiguration {
 @ExtendWith(SpringExtension::class)
 @SpringBootTest(
     classes = [
-        MeetingInvitationService::class,
+        MeetingInvitationView::class,
         MeetingProposalMessageConfiguration::class,
         MeetingInvitationServiceTestConfiguration::class
     ]
 )
-class MeetingInvitationServiceTest {
+class MeetingInvitationViewTest {
+    @MockBean
+    lateinit var userRepository: UserRepository
+
     @Autowired
-    lateinit var underTest: MeetingInvitationService
+    lateinit var underTest: MeetingInvitationView
 
     @Test
-    fun `find for proposed meeting`() {
+    fun render() {
         val targetZoneId = ZoneId.of("Europe/Rome")
         val _9am = ZonedDateTime.of(
             LocalDate.of(2021, 7, 7),
@@ -49,9 +56,14 @@ class MeetingInvitationServiceTest {
         val _10am = _9am.plusHours(1)
         val _11am = _9am.plusHours(2)
 
-        val meetingInvitation = underTest.findForProposedMeeting(
+        val initiatorId = 1L
+        val initiatorEntity = UserEntity("test@meetsama.com").apply { this.fullName = "test" }
+        whenever(userRepository.findById(initiatorId))
+            .thenReturn(Optional.of(initiatorEntity))
+
+        val actual = underTest.render(
             ProposedMeeting(
-                21L, 11L, 1L,
+                21L, 11L, initiatorId,
                 Duration.ofMinutes(15),
                 listOf(
                     MeetingSlot(_9am, _9am.plusMinutes(15)),
@@ -70,8 +82,22 @@ class MeetingInvitationServiceTest {
 
             Pick here $expectedUrl
         """.trimIndent()
+        val expected = MeetingInvitationDTO(
+            meeting = MeetingDTO(
+                initiator = InitiatorDTO(
+                    initiatorEntity.fullName,
+                    initiatorEntity.email
+                ),
+                proposedSlots = listOf(
+                    MeetingSlotDTO(_9am, _9am.plusMinutes(15)),
+                    MeetingSlotDTO(_10am, _11am)
+                )
+            ),
+            meetingCode = meetingCode,
+            shareableMessage = expectedMessage,
+            meetingUrl = expectedUrl
+        )
 
-        assertEquals(expectedUrl, meetingInvitation.url)
-        assertEquals(expectedMessage, meetingInvitation.message)
+        assertEquals(expected, actual)
     }
 }
