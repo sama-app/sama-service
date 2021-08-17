@@ -67,7 +67,7 @@ private fun Calendar.findEventsPage(
     return requestBuilder
 }
 
-fun Calendar.findRecurringEvents(
+fun Calendar.findRecurrenceRules(
     startDateTime: ZonedDateTime,
     endDateTime: ZonedDateTime
 ): Map<String, RecurrenceRule?> {

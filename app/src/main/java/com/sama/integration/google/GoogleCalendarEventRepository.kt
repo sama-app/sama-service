@@ -7,6 +7,8 @@ import com.sama.slotsuggestion.domain.Block
 import com.sama.slotsuggestion.domain.BlockRepository
 import com.sama.slotsuggestion.domain.Recurrence
 import com.sama.users.domain.UserId
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
 import org.dmfs.rfc5545.recur.Freq
 import org.dmfs.rfc5545.recur.RecurrenceRule
 import org.springframework.stereotype.Component
@@ -88,24 +90,30 @@ class GoogleCalendarEventRepository(private val googleServiceFactory: GoogleServ
         startDateTime: ZonedDateTime,
         endDateTime: ZonedDateTime,
         includeRecurrence: Boolean
-    ): Collection<Block> {
-        return try {
+    ) = runBlocking {
+        try {
             val calendarService = googleServiceFactory.calendarService(userId)
 
-            val (calendarEvents, calendarTimeZone) = calendarService.findAllEvents(startDateTime, endDateTime)
+            val calendarEventsResp = async {
+                calendarService.findAllEvents(startDateTime, endDateTime)
+            }
+
+            val recurrenceRulesResp = async {
+                if (includeRecurrence) {
+                    calendarService.findRecurrenceRules(startDateTime, endDateTime)
+                } else {
+                    emptyMap()
+                }
+            }
+
+            val (calendarEvents, calendarTimeZone) = calendarEventsResp.await()
+            val recurrenceRulesByEventId = recurrenceRulesResp.await()
             val recurringEventCounts = calendarEvents
                 .filter { it.recurringEventId != null }
                 .groupingBy { it.recurringEventId }
                 .eachCount()
-
-            val recurrenceRulesByEventID = if (includeRecurrence) {
-                calendarService.findRecurringEvents(startDateTime, endDateTime)
-            } else {
-                emptyMap()
-            }
-
             calendarEvents
-                .map { it.toBlock(calendarTimeZone, recurringEventCounts, recurrenceRulesByEventID) }
+                .map { it.toBlock(calendarTimeZone, recurringEventCounts, recurrenceRulesByEventId) }
         } catch (e: Exception) {
             throw translatedGoogleException(e)
         }
