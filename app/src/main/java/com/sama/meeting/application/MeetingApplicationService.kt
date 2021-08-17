@@ -122,10 +122,14 @@ class MeetingApplicationService(
             else -> throw InvalidMeetingStatusException(meetingCode, meeting.status)
         }
 
-        val recipientEntity = userId?.let { userRepository.findByIdOrThrow(it) }
-            ?: (command.recipientEmail?.let { userRepository.findByEmail(it) })
-        val meetingRecipient = recipientEntity?.let { MeetingRecipient.fromUser(it) }
-            ?: MeetingRecipient.fromEmail(command.recipientEmail!!)
+        val meetingRecipient = if (command.recipientEmail != null) {
+            userRepository.findByEmail(command.recipientEmail)
+                ?.let { MeetingRecipient.fromUser(it) }
+                ?: MeetingRecipient.fromEmail(command.recipientEmail)
+        } else {
+            userRepository.findByIdOrThrow(userId!!)
+                .let { MeetingRecipient.fromUser(it) }
+        }
 
         val confirmedMeeting = proposedMeeting
             .confirm(command.slot.toValueObject(), meetingRecipient)
