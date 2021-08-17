@@ -1,8 +1,10 @@
 package com.sama.slotsuggestion.domain
 
+import com.sama.common.DomainRepository
 import org.springframework.cache.annotation.Cacheable
 import java.time.ZonedDateTime
 
+@DomainRepository
 interface BlockRepository {
     fun findAllBlocks(
         userId: Long,

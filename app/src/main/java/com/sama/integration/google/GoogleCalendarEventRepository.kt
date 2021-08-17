@@ -1,23 +1,18 @@
 package com.sama.integration.google
 
-import com.google.api.services.calendar.model.ConferenceData
-import com.google.api.services.calendar.model.ConferenceSolutionKey
-import com.google.api.services.calendar.model.CreateConferenceRequest
-import com.google.api.services.calendar.model.EventAttendee
-import com.google.api.services.calendar.model.EventDateTime
+import com.google.api.services.calendar.model.*
 import com.sama.calendar.domain.Event
 import com.sama.calendar.domain.EventRepository
 import com.sama.slotsuggestion.domain.Block
 import com.sama.slotsuggestion.domain.BlockRepository
 import com.sama.slotsuggestion.domain.Recurrence
 import com.sama.users.domain.UserId
-import liquibase.pro.packaged.it
-import java.time.ZoneId
-import java.time.ZonedDateTime
-import java.util.UUID
 import org.dmfs.rfc5545.recur.Freq
 import org.dmfs.rfc5545.recur.RecurrenceRule
 import org.springframework.stereotype.Component
+import java.time.ZoneId
+import java.time.ZonedDateTime
+import java.util.*
 
 @Component
 class GoogleCalendarEventRepository(private val googleServiceFactory: GoogleServiceFactory) : EventRepository,
@@ -27,7 +22,6 @@ class GoogleCalendarEventRepository(private val googleServiceFactory: GoogleServ
     // https://developers.google.com/calendar/api/v3/reference/events/insert#request-body
     override fun save(userId: UserId, event: Event): Event {
         return try {
-            val calendarService = googleServiceFactory.calendarService(userId)
             val timeZone = event.startDateTime.zone
             val googleCalendarEvent = GoogleCalendarEvent().apply {
                 start = EventDateTime()
@@ -54,11 +48,8 @@ class GoogleCalendarEventRepository(private val googleServiceFactory: GoogleServ
                 }
             }
 
-            val inserted = calendarService.events()
-                .insert("primary", googleCalendarEvent)
-                .setSendNotifications(true)
-                .setConferenceDataVersion(1)
-                .execute()
+            val calendarService = googleServiceFactory.calendarService(userId)
+            val inserted = calendarService.insert(googleCalendarEvent)
             inserted.toEvent(timeZone)
         } catch (e: Exception) {
             throw translatedGoogleException(e)
@@ -108,7 +99,7 @@ class GoogleCalendarEventRepository(private val googleServiceFactory: GoogleServ
                 .eachCount()
 
             val recurrenceRulesByEventID = if (includeRecurrence) {
-                calendarService.recurrenceRulesFor(calendarEvents)
+                calendarService.findRecurringEvents(startDateTime, endDateTime)
             } else {
                 emptyMap()
             }

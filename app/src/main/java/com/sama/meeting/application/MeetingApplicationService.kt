@@ -18,6 +18,7 @@ import com.sama.slotsuggestion.application.SlotSuggestionRequest
 import com.sama.slotsuggestion.application.SlotSuggestionService
 import com.sama.users.domain.UserId
 import com.sama.users.domain.UserRepository
+import io.sentry.spring.tracing.SentryTransaction
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
@@ -153,6 +154,7 @@ class MeetingApplicationService(
             .map { it.toDTO() }
     }
 
+    @SentryTransaction(operation = "expireMeetings")
     @Scheduled(cron = "0 0/15 * * * *")
     @Transactional
     fun expireMeetings() {
