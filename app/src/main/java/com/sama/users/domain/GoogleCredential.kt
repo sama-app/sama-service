@@ -1,9 +1,13 @@
 package com.sama.users.domain
 
+import com.sama.common.DomainEntity
 import com.sama.common.ValueObject
 import java.time.Instant
 import javax.persistence.Column
 import javax.persistence.Embeddable
+
+@DomainEntity
+data class UserGoogleCredential(val userId: UserId, val googleCredential: GoogleCredential)
 
 /**
  * Object to store Google access & refresh tokens. Fields are marked nullable to catch cases

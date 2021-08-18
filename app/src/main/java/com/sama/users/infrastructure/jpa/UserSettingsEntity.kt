@@ -1,6 +1,9 @@
-package com.sama.users.domain
+package com.sama.users.infrastructure
 
 import com.sama.common.Factory
+import com.sama.users.domain.UserId
+import com.sama.users.domain.UserSettings
+import com.sama.users.domain.WorkingHours
 import org.springframework.data.annotation.LastModifiedDate
 import org.springframework.data.jpa.convert.threeten.Jsr310JpaConverters
 import java.time.DayOfWeek

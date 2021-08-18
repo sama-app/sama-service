@@ -5,16 +5,16 @@ import com.google.api.client.util.store.AbstractDataStore
 import com.google.api.client.util.store.DataStore
 import com.sama.common.findByIdOrThrow
 import com.sama.users.domain.GoogleCredential
-import com.sama.users.domain.UserEntity
-import com.sama.users.domain.UserRepository
-import com.sama.users.domain.applyChanges
+import com.sama.users.infrastructure.jpa.UserEntity
+import com.sama.users.infrastructure.jpa.UserJpaRepository
+import com.sama.users.infrastructure.jpa.applyChanges
 import org.apache.commons.logging.LogFactory
 import java.util.function.Function
 import java.util.stream.Collectors
 
 class GoogleCredentialJPADataStore internal constructor(
     dataStoreId: String,
-    private val userRepository: UserRepository,
+    private val userRepository: UserJpaRepository,
     dataStoreFactory: GoogleCredentialJPADataStoreFactory
 ) : AbstractDataStore<StoredCredential>(dataStoreFactory, dataStoreId), DataStore<StoredCredential> {
     private val logger = LogFactory.getLog(GoogleCredentialJPADataStore::class.java)

@@ -5,20 +5,20 @@ import com.sama.meeting.configuration.MeetingProposalMessageModel
 import com.sama.meeting.configuration.MeetingUrlConfiguration
 import com.sama.meeting.configuration.toUrl
 import com.sama.meeting.domain.ProposedMeeting
-import com.sama.users.domain.UserRepository
+import com.sama.users.infrastructure.jpa.UserJpaRepository
 import com.samskivert.mustache.Template
+import org.springframework.stereotype.Component
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter.ofLocalizedDateTime
 import java.time.format.DateTimeFormatter.ofLocalizedTime
 import java.time.format.FormatStyle.MEDIUM
 import java.time.format.FormatStyle.SHORT
-import java.util.Locale
-import org.springframework.stereotype.Component
+import java.util.*
 
 @Component
 class MeetingInvitationView(
-    private val userRepository: UserRepository,
+    private val userRepository: UserJpaRepository,
     private val meetingUrlConfiguration: MeetingUrlConfiguration,
     private val meetingProposalMessageTemplate: Template,
 ) {

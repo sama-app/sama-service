@@ -30,16 +30,6 @@ class UserController(
         userApplicationService.findPublicDetails(userId!!)
 
     @Operation(
-        summary = "Deletes the user from the system",
-        security = [SecurityRequirement(name = "user-auth")]
-    )
-    @PostMapping(
-        "/api/user/me/delete"
-    )
-    fun deleteUser(@AuthUserId userId: UserId?) =
-        userApplicationService.deleteUser(userId!!)
-
-    @Operation(
         summary = "Register a device for push notifications via Firebase",
         security = [SecurityRequirement(name = "user-auth")]
     )

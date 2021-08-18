@@ -1,4 +1,4 @@
-package com.sama.users.domain
+package com.sama.users.infrastructure.jpa
 
 import com.sama.common.ValueObject
 import java.time.Instant

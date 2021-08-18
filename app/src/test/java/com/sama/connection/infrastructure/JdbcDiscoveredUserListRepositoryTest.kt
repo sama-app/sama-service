@@ -2,8 +2,8 @@ package com.sama.connection.infrastructure
 
 import com.sama.common.BasePersistenceIT
 import com.sama.connection.domain.DiscoveredUserList
-import com.sama.users.domain.UserEntity
-import com.sama.users.domain.UserRepository
+import com.sama.users.infrastructure.jpa.UserEntity
+import com.sama.users.infrastructure.jpa.UserJpaRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -15,7 +15,7 @@ import org.springframework.test.context.ContextConfiguration
 class JdbcDiscoveredUserListRepositoryTest : BasePersistenceIT<JdbcDiscoveredUserListRepository>() {
 
     @Autowired
-    lateinit var userRepository: UserRepository
+    lateinit var userRepository: UserJpaRepository
 
     private lateinit var userOne: UserEntity
     private lateinit var userTwo: UserEntity

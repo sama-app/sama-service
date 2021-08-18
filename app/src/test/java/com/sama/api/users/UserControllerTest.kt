@@ -75,18 +75,6 @@ class UserControllerTest(
     }
 
     @Test
-    fun `delete user`() {
-        whenever(userApplicationService.deleteUser(eq(userId))).thenReturn(true)
-
-        mockMvc.perform(
-            post("/api/user/me/delete")
-                .header("Authorization", "Bearer $jwt")
-        )
-            .andExpect(status().isOk)
-            .andExpect(content().string("true"))
-    }
-
-    @Test
     fun `register device`() {
         val deviceId = UUID.fromString("075f7e8a-e01c-4f2f-9c3b-ce5d412e618c")
         val registrationToken = "some-token"

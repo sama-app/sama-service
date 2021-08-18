@@ -5,10 +5,10 @@ import com.auth0.jwt.JWTVerifier
 import com.auth0.jwt.algorithms.Algorithm
 import com.auth0.jwt.exceptions.JWTVerificationException
 import com.auth0.jwt.interfaces.DecodedJWT
+import com.sama.common.DomainService
 import com.sama.common.ValueObject
 import java.time.Clock
-import java.util.Date
-import java.util.UUID
+import java.util.*
 import kotlin.Result.Companion.failure
 import kotlin.Result.Companion.success
 
@@ -16,6 +16,30 @@ interface JwtConfiguration {
     val signingSecret: String
     val expirationSec: Long
     val keyId: String
+}
+
+const val USER_ID_CLAIM = "user_id"
+
+@DomainService
+data class UserJwtIssuer(val userId: UserId, val userPublicId: UserPublicId, val email: String, val active: Boolean) {
+
+    fun issue(jwtId: UUID, jwtConfiguration: JwtConfiguration, clock: Clock): Result<Jwt> {
+        return kotlin.runCatching {
+            if (!active) {
+                throw InactiveUserException()
+            }
+
+            val accessToken = JWT.create()
+                .withKeyId(jwtConfiguration.keyId)
+                .withJWTId(jwtId.toString())
+                .withSubject(email)
+                .withClaim(USER_ID_CLAIM, userPublicId.toString())
+                .withIssuedAt(Date.from(clock.instant()))
+                .withExpiresAt(Date.from(clock.instant().plusSeconds(jwtConfiguration.expirationSec)))
+                .sign(Algorithm.HMAC256(jwtConfiguration.signingSecret))
+            Jwt.raw(accessToken).getOrThrow()
+        }
+    }
 }
 
 @ValueObject

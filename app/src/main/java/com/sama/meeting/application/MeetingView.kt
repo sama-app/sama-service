@@ -6,13 +6,13 @@ import com.sama.meeting.configuration.MeetingUrlConfiguration
 import com.sama.meeting.configuration.toUrl
 import com.sama.meeting.domain.AvailableSlots
 import com.sama.meeting.domain.ProposedMeeting
-import com.sama.users.domain.UserRepository
+import com.sama.users.infrastructure.jpa.UserJpaRepository
 import org.springframework.stereotype.Component
 import org.springframework.web.util.UriComponentsBuilder
 
 @Component
 class MeetingView(
-    private val userRepository: UserRepository,
+    private val userRepository: UserJpaRepository,
     private val urlConfiguration: MeetingUrlConfiguration,
     private val appLinkConfiguration: MeetingAppLinkConfiguration
 ) {

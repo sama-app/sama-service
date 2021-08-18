@@ -1,44 +1,29 @@
 package com.sama.users.domain
 
 import com.sama.common.DomainRepository
-import com.sama.common.NotFoundException
-import java.util.UUID
-import org.springframework.data.jpa.repository.JpaRepository
-import org.springframework.data.jpa.repository.Query
-import org.springframework.stereotype.Repository
+import com.sama.users.infrastructure.jpa.UserEntity
+import org.springframework.data.repository.Repository
 
 @DomainRepository
-@Repository
-interface UserRepository : JpaRepository<UserEntity, UserId> {
-
-    @Query("select u.id from UserEntity u")
-    fun findAllIds(): Set<UserId>
-
-    @Query("select new com.sama.users.domain.UserPublicDetails(u.id, u.publicId, u.email, u.fullName) from UserEntity u where id in ?1")
-    fun findPublicDetailsById(ids: Set<UserId>): List<UserPublicDetails>
-
-    fun findByEmail(email: String): UserEntity?
-
-    fun findByPublicId(publicId: UserPublicId): UserEntity?
+interface UserRepository : Repository<UserDetails, UserId> {
+    fun findByIdOrThrow(userId: UserId): UserDetails
+    fun findPublicDetailsById(ids: Set<UserId>): List<UserDetails>
+    fun findByEmailOrThrow(email: String): UserDetails
+    fun findByPublicIdOrThrow(publicId: UserPublicId): UserDetails
 
     fun existsByEmail(email: String): Boolean
 
-    @Query("select u.id from UserEntity u where email = ?1")
-    fun findIdByEmail(email: String): UserId?
+    fun findAllIds(): Set<UserId>
+    fun findIdByPublicIdOrThrow(userPublicId: UserPublicId): UserId
+    fun findIdByEmailOrThrow(email: String): UserId
 
-    @Query("select u.id from UserEntity u where publicId = ?1")
-    fun findIdByPublicId(userPublicId: UserPublicId): UserId?
-}
+    fun findJwtIssuerByIdOrThrow(userId: UserId): UserJwtIssuer
+    fun findJwtIssuerByEmailOrThrow(email: String): UserJwtIssuer
+    fun findJwtIssuerByPublicOrThrow(publicId: UserPublicId): UserJwtIssuer
 
-fun UserRepository.findByEmailOrThrow(email: String) = findByEmail(email)
-    ?: throw NotFoundException(UserEntity::class, "email", email)
+    fun findDeviceRegistrationsByIdOrThrow(userId: UserId): UserDeviceRegistrations
 
-fun UserRepository.findByPublicIdOrThrow(publicId: UserPublicId) = findByPublicId(publicId)
-    ?: throw NotFoundException(UserEntity::class, "userId", publicId)
-
-fun UserRepository.findIdByPublicIdOrThrow(publicId: UserPublicId) = findIdByPublicId(publicId)
-    ?: throw NotFoundException(UserEntity::class, "userId", publicId)
-
-fun UserRepository.nextPublicId(): UserPublicId {
-    return UUID.randomUUID()
+    fun save(userDetails: UserDetails): UserDetails
+    fun save(userGoogleCredential: UserGoogleCredential): UserGoogleCredential
+    fun save(userDeviceRegistrations: UserDeviceRegistrations): UserDeviceRegistrations
 }

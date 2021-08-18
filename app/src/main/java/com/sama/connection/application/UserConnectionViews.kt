@@ -1,13 +1,13 @@
 package com.sama.connection.application
 
 import com.sama.connection.domain.ConnectionRequest
+import com.sama.users.domain.UserDetails
 import com.sama.users.domain.UserId
-import com.sama.users.domain.UserPublicDetails
-import com.sama.users.domain.UserRepository
+import com.sama.users.infrastructure.jpa.UserJpaRepository
 import org.springframework.stereotype.Component
 
 @Component
-class UserConnectionViews(private val userRepository: UserRepository) {
+class UserConnectionViews(private val userRepository: UserJpaRepository) {
 
     fun renderUserConnections(discoveredUsers: Set<UserId>, connectedUsers: Collection<UserId>): UserConnectionsDTO {
         val allUserIds = discoveredUsers.plus(connectedUsers)
@@ -50,7 +50,7 @@ class UserConnectionViews(private val userRepository: UserRepository) {
         )
     }
 
-    private fun UserPublicDetails.toUserDTO(): UserDTO {
+    private fun UserDetails.toUserDTO(): UserDTO {
         return UserDTO(publicId!!, email, fullName)
     }
 }

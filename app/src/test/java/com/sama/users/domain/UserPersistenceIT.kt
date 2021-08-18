@@ -1,21 +1,23 @@
 package com.sama.users.domain
 
 import com.sama.common.BasePersistenceIT
-import kotlin.test.assertNotEquals
+import com.sama.users.infrastructure.UserRepositoryImpl
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.springframework.test.context.ContextConfiguration
 
+@ContextConfiguration(classes = [UserRepositoryImpl::class])
 class UserPersistenceIT : BasePersistenceIT<UserRepository>() {
 
     @Test
     fun save() {
         val email = "test@meetsama.com"
         val fullName = "Test"
-        val userEntity = underTest.save(UserEntity(email).also { it.fullName = fullName })
+        val persisted = underTest.save(UserDetails(email = email, fullName = fullName))
 
-        assertThat(userEntity.id).isNotNull()
-        assertThat(userEntity.publicId).isNotNull()
-        assertThat(userEntity.email).isEqualTo(email)
-        assertThat(userEntity.fullName).isEqualTo(fullName)
+        assertThat(persisted.id).isNotNull
+        assertThat(persisted.publicId).isNotNull
+        assertThat(persisted.email).isEqualTo(email)
+        assertThat(persisted.fullName).isEqualTo(fullName)
     }
 }

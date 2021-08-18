@@ -5,8 +5,8 @@ import com.sama.meeting.configuration.MeetingUrlConfiguration
 import com.sama.meeting.domain.AvailableSlots
 import com.sama.meeting.domain.MeetingSlot
 import com.sama.meeting.domain.ProposedMeeting
-import com.sama.users.domain.UserEntity
-import com.sama.users.domain.UserRepository
+import com.sama.users.infrastructure.jpa.UserEntity
+import com.sama.users.infrastructure.jpa.UserJpaRepository
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.kotlin.whenever
@@ -47,7 +47,7 @@ class MeetingViewTestConfiguration {
 )
 class MeetingViewTest {
     @MockBean
-    lateinit var userRepository: UserRepository
+    lateinit var userRepository: UserJpaRepository
 
     @Autowired
     lateinit var underTest: MeetingView
