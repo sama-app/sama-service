@@ -1,24 +1,15 @@
-package com.sama.users.domain
+package com.sama.users.infrastructure.jpa
 
 import com.sama.common.AggregateRoot
 import com.sama.common.Factory
-import java.time.Instant
-import javax.persistence.Column
-import javax.persistence.Embedded
-import javax.persistence.Entity
-import javax.persistence.GeneratedValue
-import javax.persistence.GenerationType
-import javax.persistence.GenerationType.IDENTITY
-import javax.persistence.Id
-import javax.persistence.PrimaryKeyJoinColumn
-import javax.persistence.SecondaryTable
-import javax.persistence.SecondaryTables
-import javax.persistence.Table
+import com.sama.users.domain.*
 import org.hibernate.annotations.Generated
-import org.hibernate.annotations.GenerationTime
 import org.hibernate.annotations.GenerationTime.INSERT
 import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.annotation.LastModifiedDate
+import java.time.Instant
+import javax.persistence.*
+import javax.persistence.GenerationType.IDENTITY
 
 @AggregateRoot
 @Entity
@@ -39,10 +30,11 @@ class UserEntity(email: String) {
 
     @Factory
     companion object {
-        fun new(userRegistration: UserRegistration): UserEntity {
-            val user = UserEntity(userRegistration.email)
-            user.fullName = userRegistration.fullName
-            user.googleCredential = userRegistration.credential.copy(updatedAt = Instant.now())
+        fun new(userDetails: UserDetails): UserEntity {
+            val user = UserEntity(userDetails.email)
+            user.id = userDetails.id
+            user.publicId = userDetails.publicId
+            user.fullName = userDetails.fullName
             return user
         }
     }
@@ -95,13 +87,20 @@ fun UserEntity.applyChanges(user: UserDeviceRegistrations): UserEntity {
     return this
 }
 
+fun UserEntity.applyChanges(userGoogleCredential: UserGoogleCredential): UserEntity {
+    val newGoogleCredential = userGoogleCredential.googleCredential
+    this.googleCredential = this.googleCredential?.merge(newGoogleCredential)
+        ?: newGoogleCredential.copy(updatedAt = Instant.now())
+    return this
+}
+
 fun UserEntity.applyChanges(googleCredential: GoogleCredential): UserEntity {
     this.googleCredential = this.googleCredential?.merge(googleCredential)
         ?: googleCredential.copy(updatedAt = Instant.now())
     return this
 }
 
-fun UserEntity.applyChanges(userDetails: UserPublicDetails): UserEntity {
+fun UserEntity.applyChanges(userDetails: UserDetails): UserEntity {
     this.fullName = userDetails.fullName
     return this
 }

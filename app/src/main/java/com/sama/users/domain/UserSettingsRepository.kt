@@ -1,9 +1,10 @@
 package com.sama.users.domain
 
 import com.sama.common.DomainRepository
-import org.springframework.data.jpa.repository.JpaRepository
-import org.springframework.stereotype.Repository
+import org.springframework.data.repository.Repository
 
 @DomainRepository
-@Repository
-interface UserSettingsRepository : JpaRepository<UserSettingsEntity, UserId>
+interface UserSettingsRepository : Repository<UserSettings, UserId> {
+    fun findByIdOrThrow(userId: UserId): UserSettings
+    fun save(userSettings: UserSettings): UserSettings
+}

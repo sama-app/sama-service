@@ -4,7 +4,7 @@ import com.sama.meeting.domain.MeetingCode
 import com.sama.meeting.domain.MeetingIntent
 import com.sama.meeting.domain.MeetingIntentCode
 import com.sama.meeting.domain.MeetingSlot
-import com.sama.users.domain.UserEntity
+import com.sama.users.infrastructure.jpa.UserEntity
 import java.time.ZonedDateTime
 
 fun MeetingIntent.toDTO(): MeetingIntentDTO {

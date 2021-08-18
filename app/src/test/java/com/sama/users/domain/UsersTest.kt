@@ -1,17 +1,14 @@
 package com.sama.users.domain
 
 import com.auth0.jwt.JWT
-import com.sama.api.jwtKeyId
 import com.sama.common.assertDoesNotThrowOrNull
 import com.sama.common.assertThrows
 import com.sama.users.configuration.AccessJwtConfiguration
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import java.time.Clock
-import java.time.Instant.ofEpochSecond
 import java.time.LocalDate
 import java.time.ZoneId
-import java.time.ZoneOffset
 import java.time.ZoneOffset.UTC
 import java.util.*
 import kotlin.test.assertEquals
@@ -23,24 +20,24 @@ class UsersTest {
     private val jwtConfiguration = AccessJwtConfiguration("secret", 60, "key-id")
 
     @Test
-    fun `user registration with Google credentials`() {
-        val credential = GoogleCredential("access", "refresh", 0)
-        UserRegistration("balys@meetsama.com", false, "Balys Val", credential)
+    fun `valid user registration`() {
+        UserRegistration("balys@meetsama.com", false, "Balys Val")
+            .validate()
     }
 
     @Test
     fun `user registration with invalid email throws`() {
         assertThrows(InvalidEmailException::class.java) {
-            val credential = GoogleCredential("access", "refresh", 0)
-            UserRegistration("invalid-email.com", false, "Balys Val", credential)
+            UserRegistration("invalid-email.com", false, "Balys Val")
+                .validate()
         }
     }
 
     @Test
     fun `user registration with existing email throws`() {
         assertThrows(UserAlreadyExistsException::class.java) {
-            val credential = GoogleCredential("access", "refresh", 0)
-            UserRegistration("balys@meetsama.com", true, "Balys Val", credential)
+            UserRegistration("balys@meetsama.com", true, "Balys Val")
+                .validate()
         }
     }
 

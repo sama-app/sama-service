@@ -5,8 +5,8 @@ import com.sama.common.NotFoundException
 import com.sama.connection.domain.ConnectionRequest
 import com.sama.connection.domain.ConnectionRequestStatus.APPROVED
 import com.sama.connection.domain.ConnectionRequestStatus.PENDING
-import com.sama.users.domain.UserEntity
-import com.sama.users.domain.UserRepository
+import com.sama.users.infrastructure.jpa.UserEntity
+import com.sama.users.infrastructure.jpa.UserJpaRepository
 import java.util.UUID
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
@@ -20,7 +20,7 @@ import org.springframework.test.context.ContextConfiguration
 @ContextConfiguration(classes = [JdbcConnectionRequestRepository::class])
 class JdbcConnectionRequestRepositoryTest : BasePersistenceIT<JdbcConnectionRequestRepository>() {
     @Autowired
-    lateinit var userRepository: UserRepository
+    lateinit var userRepository: UserJpaRepository
 
     private lateinit var userOne: UserEntity
     private lateinit var userTwo: UserEntity

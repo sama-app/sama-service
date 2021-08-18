@@ -8,7 +8,10 @@ import org.mockito.kotlin.any
 import org.mockito.kotlin.whenever
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import java.time.*
+import java.time.Clock
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.ZoneOffset
 
 const val jwtSigningSecret = "secret"
 const val jwtKeyId = "key-id"
@@ -31,8 +34,8 @@ class ApiTestConfiguration {
     @Bean
     fun fixedUserIdAttributeResolver(): UserIdAttributeResolver {
         var authUserRepository = mock(UserRepository::class.java)
-        whenever(authUserRepository.findIdByPublicId(any())).thenReturn(1)
-        whenever(authUserRepository.findIdByEmail(any())).thenReturn(1)
+        whenever(authUserRepository.findIdByPublicIdOrThrow(any())).thenReturn(1)
+        whenever(authUserRepository.findIdByEmailOrThrow(any())).thenReturn(1)
         return UserIdAttributeResolver(authUserRepository)
     }
 

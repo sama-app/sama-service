@@ -1,16 +1,22 @@
 package com.sama.users.application
 
 import com.sama.common.ApplicationService
-import com.sama.common.findByIdOrThrow
-import com.sama.meeting.application.InitiatorDTO
-import com.sama.meeting.application.toInitiatorDTO
 import com.sama.users.configuration.AccessJwtConfiguration
 import com.sama.users.configuration.RefreshJwtConfiguration
-import com.sama.users.domain.*
+import com.sama.users.domain.InvalidRefreshTokenException
+import com.sama.users.domain.Jwt
+import com.sama.users.domain.UserGoogleCredential
+import com.sama.users.domain.UserId
+import com.sama.users.domain.UserRegistration
+import com.sama.users.domain.UserRepository
+import com.sama.users.domain.UserSettings
+import com.sama.users.domain.UserSettingsDefaultsRepository
+import com.sama.users.domain.UserSettingsRepository
+import com.sama.users.domain.WorkingHours
+import java.time.Clock
+import java.util.UUID
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.time.Clock
-import java.util.*
 
 @ApplicationService
 @Service
@@ -23,10 +29,10 @@ class UserApplicationService(
     private val clock: Clock
 ) {
 
-    @Transactional
+    @Transactional(readOnly = true)
     fun findPublicDetails(userId: UserId): UserDTO {
-        val userEntity = userRepository.findByIdOrThrow(userId)
-        return userEntity.let {
+        val userDetails = userRepository.findByIdOrThrow(userId)
+        return userDetails.let {
             UserDTO(it.publicId!!, it.fullName, it.email)
         }
     }
@@ -35,44 +41,33 @@ class UserApplicationService(
     fun registerUser(command: RegisterUserCommand): UserId {
         val userExistsByEmail = userRepository.existsByEmail(command.email)
 
-        val userRegistration =
-            UserRegistration(command.email, userExistsByEmail, command.fullName, command.googleCredential)
+        val userDetails = UserRegistration(command.email, userExistsByEmail, command.fullName)
+            .validate()
+            .let { userRepository.save(it) }
 
-        val userEntity = UserEntity.new(userRegistration).also { userRepository.save(it) }
-        return userEntity.id!!
-    }
+        userRepository.save(UserGoogleCredential(userDetails.id!!, command.googleCredential))
 
-    @Transactional
-    fun deleteUser(userId: UserId): Boolean {
-        userSettingsRepository.deleteById(userId)
-        userRepository.deleteById(userId)
-        return true
+        return userDetails.id
     }
 
     @Transactional
     fun refreshCredentials(command: RefreshCredentialsCommand): UserId {
-        val user = userRepository.findByEmailOrThrow(command.email)
-
-        user.applyChanges(command.googleCredential).also { userRepository.save(it) }
-        return user.id!!
+        val userDetails = userRepository.findByEmailOrThrow(command.email)
+        userRepository.save(UserGoogleCredential(userDetails.id!!, command.googleCredential))
+        return userDetails.id
     }
 
     @Transactional
     fun updatePublicDetails(userId: UserId, command: UpdateUserPublicDetailsCommand): Boolean {
-        val userEntity = userRepository.findByIdOrThrow(userId)
-
-        val publicDetails = UserPublicDetails.of(userEntity)
+        val userDetails = userRepository.findByIdOrThrow(userId)
             .rename(command.fullName)
-
-        userEntity.applyChanges(publicDetails).also { userRepository.save(it) }
+        userRepository.save(userDetails)
         return true
     }
 
-
-    @Transactional
+    @Transactional(readOnly = true)
     fun findUserDeviceRegistrations(userId: UserId): UserDeviceRegistrationsDTO {
-        val userEntity = userRepository.findByIdOrThrow(userId)
-        return UserDeviceRegistrations.of(userEntity)
+        return userRepository.findDeviceRegistrationsByIdOrThrow(userId)
             .let {
                 UserDeviceRegistrationsDTO(
                     if (it.deviceId != null && it.firebaseRegistrationToken != null) {
@@ -86,32 +81,25 @@ class UserApplicationService(
 
     @Transactional
     fun registerDevice(userId: UserId, command: RegisterDeviceCommand): Boolean {
-        val user = userRepository.findByIdOrThrow(userId)
-
-        val changes = UserDeviceRegistrations.of(user)
+        val changes = userRepository.findDeviceRegistrationsByIdOrThrow(userId)
             .register(command.deviceId, command.firebaseRegistrationToken)
             .getOrThrow()
-
-        user.applyChanges(changes).also { userRepository.save(it) }
+        userRepository.save(changes)
         return true
     }
 
     @Transactional
     fun unregisterDevice(userId: UserId, command: UnregisterDeviceCommand): Boolean {
-        val user = userRepository.findByIdOrThrow(userId)
-
-        val changes = UserDeviceRegistrations.of(user)
+        val changes = userRepository.findDeviceRegistrationsByIdOrThrow(userId)
             .unregister(command.deviceId)
             .getOrThrow()
 
-        user.applyChanges(changes).also { userRepository.save(it) }
+        userRepository.save(changes)
         return true
     }
 
     fun issueTokens(userId: UserId): JwtPairDTO {
-        val user = userRepository.findByIdOrThrow(userId)
-
-        val userJwtIssuer = UserJwtIssuer.of(user)
+        val userJwtIssuer = userRepository.findJwtIssuerByIdOrThrow(userId)
         val refreshJwt = userJwtIssuer.issue(UUID.randomUUID(), refreshJwtConfiguration, clock)
             .getOrThrow()
         val accessJwt = userJwtIssuer.issue(UUID.randomUUID(), accessJwtConfiguration, clock)
@@ -125,13 +113,13 @@ class UserApplicationService(
             .onFailure { throw InvalidRefreshTokenException() }
             .getOrThrow()
 
-        val user = if (refreshToken.userId() != null) {
-            userRepository.findByPublicIdOrThrow(refreshToken.userId()!!)
+        val userJwtIssuer = if (refreshToken.userId() != null) {
+            userRepository.findJwtIssuerByPublicOrThrow(refreshToken.userId()!!)
         } else {
-            userRepository.findByEmailOrThrow(refreshToken.userEmail())
+            userRepository.findJwtIssuerByEmailOrThrow(refreshToken.userEmail())
         }
 
-        val accessToken = UserJwtIssuer.of(user)
+        val accessToken = userJwtIssuer
             .issue(UUID.randomUUID(), accessJwtConfiguration, clock)
             .getOrThrow()
 
@@ -141,10 +129,8 @@ class UserApplicationService(
     @Transactional
     fun createUserSettings(userId: UserId): Boolean {
         val userSettingsDefaults = userSettingsDefaultsRepository.findByIdOrNull(userId)
-
         val userSettings = UserSettings.createWithDefaults(userId, userSettingsDefaults)
-
-        UserSettingsEntity.new(userSettings).also { userSettingsRepository.save(it) }
+        userSettingsRepository.save(userSettings)
         return true
     }
 
@@ -153,10 +139,10 @@ class UserApplicationService(
         val userSettings = userSettingsRepository.findByIdOrThrow(userId)
         return userSettings.let {
             UserSettingsDTO(
-                it.locale!!,
-                it.timezone!!,
-                it.format24HourTime!!,
-                it.workingHours().map { wh ->
+                it.locale,
+                it.timezone,
+                it.format24HourTime,
+                it.dayWorkingHours.map { wh ->
                     DayWorkingHoursDTO(wh.key, wh.value.startTime, wh.value.endTime)
                 }
             )
@@ -165,14 +151,13 @@ class UserApplicationService(
 
     @Transactional
     fun updateWorkingHours(userId: UserId, command: UpdateWorkingHoursCommand): Boolean {
-        val entity = userSettingsRepository.findByIdOrThrow(userId)
-
         val workingHours = command.workingHours
             .associate { Pair(it.dayOfWeek, WorkingHours(it.startTime, it.endTime)) }
-        val userSettings = UserSettings.of(entity)
+
+        val userSettings = userSettingsRepository.findByIdOrThrow(userId)
             .updateWorkingHours(workingHours)
 
-        entity.applyChanges(userSettings).also { userSettingsRepository.save(it) }
+        userSettingsRepository.save(userSettings)
         return true
     }
 }

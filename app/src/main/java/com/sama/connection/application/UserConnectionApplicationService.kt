@@ -1,15 +1,10 @@
 package com.sama.connection.application
 
 import com.sama.common.ApplicationService
-import com.sama.connection.domain.ConnectionRequest
-import com.sama.connection.domain.ConnectionRequestId
-import com.sama.connection.domain.ConnectionRequestRepository
-import com.sama.connection.domain.DiscoveredUserListRepository
-import com.sama.connection.domain.UserConnection
-import com.sama.connection.domain.UserConnectionRepository
+import com.sama.connection.domain.*
 import com.sama.users.domain.UserId
-import com.sama.users.domain.UserRepository
-import com.sama.users.domain.findIdByPublicIdOrThrow
+import com.sama.users.infrastructure.jpa.UserJpaRepository
+import com.sama.users.infrastructure.jpa.findIdByPublicIdOrThrow
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -17,7 +12,7 @@ import org.springframework.transaction.annotation.Transactional
 @ApplicationService
 @Service
 class UserConnectionApplicationService(
-    private val userRepository: UserRepository,
+    private val userRepository: UserJpaRepository,
     private val connectionRequestRepository: ConnectionRequestRepository,
     private val userConnectionRepository: UserConnectionRepository,
     private val discoveredUserListRepository: DiscoveredUserListRepository,

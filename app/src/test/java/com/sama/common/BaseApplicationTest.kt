@@ -3,8 +3,8 @@ package com.sama.common
 import com.sama.AppTestConfiguration
 import com.sama.IntegrationOverrides
 import com.sama.api.config.security.UserPrincipal
-import com.sama.users.domain.UserEntity
-import com.sama.users.domain.UserRepository
+import com.sama.users.infrastructure.jpa.UserEntity
+import com.sama.users.infrastructure.jpa.UserJpaRepository
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.extension.ExtendWith
@@ -44,7 +44,7 @@ class BaseApplicationTest {
     }
 
     @Autowired
-    lateinit var userRepository: UserRepository
+    lateinit var userRepository: UserJpaRepository
 
 
     // test data

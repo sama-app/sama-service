@@ -8,11 +8,10 @@ import com.sama.common.findByIdOrThrow
 import com.sama.common.toMinutes
 import com.sama.comms.application.CommsEventConsumer
 import com.sama.meeting.domain.*
-import com.sama.meeting.domain.MeetingCodeGenerator
 import com.sama.slotsuggestion.application.SlotSuggestionRequest
 import com.sama.slotsuggestion.application.SlotSuggestionService
 import com.sama.users.domain.UserId
-import com.sama.users.domain.UserRepository
+import com.sama.users.infrastructure.jpa.UserJpaRepository
 import io.sentry.spring.tracing.SentryTransaction
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.security.access.prepost.PreAuthorize
@@ -31,7 +30,7 @@ class MeetingApplicationService(
     private val meetingView: MeetingView,
     private val meetingCodeGenerator: MeetingCodeGenerator,
     private val eventApplicationService: EventApplicationService,
-    private val userRepository: UserRepository,
+    private val userRepository: UserJpaRepository,
     private val calendarEventConsumer: CalendarEventConsumer,
     private val commsEventConsumer: CommsEventConsumer,
     private val clock: Clock,

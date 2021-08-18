@@ -5,7 +5,7 @@ import com.sama.calendar.domain.EventRepository
 import com.sama.common.ApplicationService
 import com.sama.common.findByIdOrThrow
 import com.sama.users.domain.UserId
-import com.sama.users.domain.UserRepository
+import com.sama.users.infrastructure.jpa.UserJpaRepository
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.time.LocalDate
@@ -15,7 +15,7 @@ import java.time.ZoneId
 @Service
 class EventApplicationService(
     private val eventRepository: EventRepository,
-    private val userRepository: UserRepository,
+    private val userRepository: UserJpaRepository,
     @Value("\${sama.landing.url}") private val samaWebUrl: String,
 ) {
 

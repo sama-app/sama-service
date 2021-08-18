@@ -1,10 +1,9 @@
 package com.sama.api.config
 
 import com.sama.api.config.security.UserPrincipal
-import com.sama.common.NotFoundException
-import com.sama.users.domain.UserEntity
 import com.sama.users.domain.UserId
 import com.sama.users.domain.UserRepository
+import com.sama.users.infrastructure.jpa.UserEntity
 import org.springframework.core.MethodParameter
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.stereotype.Component
@@ -12,7 +11,6 @@ import org.springframework.web.bind.support.WebDataBinderFactory
 import org.springframework.web.context.request.NativeWebRequest
 import org.springframework.web.method.support.HandlerMethodArgumentResolver
 import org.springframework.web.method.support.ModelAndViewContainer
-import java.util.*
 
 /**
  * Resolves [AuthUserId] annotated parameters to an Authenticated [UserEntity.id]
@@ -38,11 +36,9 @@ class UserIdAttributeResolver(
             ?: return null
 
         return if (userPrincipal.userId != null) {
-            userRepository.findIdByPublicId(userPrincipal.userId)
-                ?: throw NotFoundException(UserEntity::class, "userId", userPrincipal.userId)
+            userRepository.findIdByPublicIdOrThrow(userPrincipal.userId)
         } else {
-            userRepository.findIdByEmail(userPrincipal.email)
-                ?: throw NotFoundException(UserEntity::class, "email", userPrincipal.email)
+            userRepository.findIdByEmailOrThrow(userPrincipal.email)
         }
     }
 }

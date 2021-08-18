@@ -38,12 +38,6 @@ data class UserSettings(
             )
         }
 
-        fun of(userSettings: UserSettingsEntity): UserSettings {
-            return UserSettings(
-                userSettings.userId, userSettings.locale!!, userSettings.timezone!!,
-                userSettings.format24HourTime!!, userSettings.workingHours()
-            )
-        }
     }
 
     fun updateWorkingHours(dayWorkingHours: Map<DayOfWeek, WorkingHours>): UserSettings {
