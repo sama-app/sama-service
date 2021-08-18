@@ -3,12 +3,13 @@ package com.sama.integration.google
 import com.google.api.services.calendar.model.*
 import com.sama.calendar.domain.Event
 import com.sama.calendar.domain.EventRepository
+import com.sama.integration.sentry.asyncTraced
+import com.sama.integration.sentry.runBlockingTraced
 import com.sama.slotsuggestion.domain.Block
 import com.sama.slotsuggestion.domain.BlockRepository
 import com.sama.slotsuggestion.domain.Recurrence
 import com.sama.users.domain.UserId
-import kotlinx.coroutines.async
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.Dispatchers
 import org.dmfs.rfc5545.recur.Freq
 import org.dmfs.rfc5545.recur.RecurrenceRule
 import org.springframework.stereotype.Component
@@ -90,24 +91,20 @@ class GoogleCalendarEventRepository(private val googleServiceFactory: GoogleServ
         startDateTime: ZonedDateTime,
         endDateTime: ZonedDateTime,
         includeRecurrence: Boolean
-    ) = runBlocking {
+    ) = runBlockingTraced(Dispatchers.IO) {
         try {
             val calendarService = googleServiceFactory.calendarService(userId)
 
-            val calendarEventsResp = async {
+            val calendarEventsResp = asyncTraced {
                 calendarService.findAllEvents(startDateTime, endDateTime)
             }
 
-            val recurrenceRulesResp = async {
-                if (includeRecurrence) {
-                    calendarService.findRecurrenceRules(startDateTime, endDateTime)
-                } else {
-                    emptyMap()
-                }
-            }
+            val recurrenceRulesResp = if (includeRecurrence) asyncTraced {
+                calendarService.findRecurrenceRules(startDateTime, endDateTime)
+            } else null
 
             val (calendarEvents, calendarTimeZone) = calendarEventsResp.await()
-            val recurrenceRulesByEventId = recurrenceRulesResp.await()
+            val recurrenceRulesByEventId = recurrenceRulesResp?.await() ?: emptyMap()
             val recurringEventCounts = calendarEvents
                 .filter { it.recurringEventId != null }
                 .groupingBy { it.recurringEventId }

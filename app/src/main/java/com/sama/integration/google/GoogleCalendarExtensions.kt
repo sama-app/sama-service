@@ -3,7 +3,6 @@ package com.sama.integration.google
 import com.google.api.services.calendar.Calendar
 import com.google.api.services.calendar.model.Event
 import com.sama.integration.sentry.sentrySpan
-import liquibase.pro.packaged.it
 import org.dmfs.rfc5545.recur.RecurrenceRule
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
