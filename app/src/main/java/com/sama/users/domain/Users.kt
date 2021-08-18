@@ -10,7 +10,8 @@ data class UserDetails(
     val id: UserId? = null,
     val publicId: UserPublicId? = null,
     val email: String,
-    val fullName: String?
+    val fullName: String?,
+    val active: Boolean
 ) {
     fun rename(fullName: String?): UserDetails {
         return copy(fullName = fullName)
@@ -32,7 +33,7 @@ data class UserRegistration(
             throw UserAlreadyExistsException(email)
         }
 
-        return UserDetails(email = email, fullName = fullName)
+        return UserDetails(email = email, fullName = fullName, active = true)
     }
 }
 

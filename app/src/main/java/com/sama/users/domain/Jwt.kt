@@ -21,19 +21,19 @@ interface JwtConfiguration {
 const val USER_ID_CLAIM = "user_id"
 
 @DomainService
-data class UserJwtIssuer(val userId: UserId, val userPublicId: UserPublicId, val email: String, val active: Boolean) {
+data class UserJwtIssuer(val userDetails: UserDetails) {
 
     fun issue(jwtId: UUID, jwtConfiguration: JwtConfiguration, clock: Clock): Result<Jwt> {
         return kotlin.runCatching {
-            if (!active) {
+            if (!userDetails.active) {
                 throw InactiveUserException()
             }
 
             val accessToken = JWT.create()
                 .withKeyId(jwtConfiguration.keyId)
                 .withJWTId(jwtId.toString())
-                .withSubject(email)
-                .withClaim(USER_ID_CLAIM, userPublicId.id.toString())
+                .withSubject(userDetails.email)
+                .withClaim(USER_ID_CLAIM, userDetails.publicId?.id.toString())
                 .withIssuedAt(Date.from(clock.instant()))
                 .withExpiresAt(Date.from(clock.instant().plusSeconds(jwtConfiguration.expirationSec)))
                 .sign(Algorithm.HMAC256(jwtConfiguration.signingSecret))

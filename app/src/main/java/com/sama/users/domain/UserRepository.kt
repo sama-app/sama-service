@@ -17,10 +17,6 @@ interface UserRepository : Repository<UserDetails, UserId> {
     fun findIdByPublicIdOrThrow(userPublicId: UserPublicId): UserId
     fun findIdByEmailOrThrow(email: String): UserId
 
-    fun findJwtIssuerByIdOrThrow(userId: UserId): UserJwtIssuer
-    fun findJwtIssuerByEmailOrThrow(email: String): UserJwtIssuer
-    fun findJwtIssuerByPublicOrThrow(publicId: UserPublicId): UserJwtIssuer
-
     fun findDeviceRegistrationsByIdOrThrow(userId: UserId): UserDeviceRegistrations
 
     fun save(userDetails: UserDetails): UserDetails

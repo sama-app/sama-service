@@ -53,8 +53,20 @@ class BaseApplicationTest {
 
     @BeforeEach
     fun setupUsers() {
-        initiatorUser = userRepository.save(UserDetails(email = "initiator@meetsama.com", fullName = "Initiator User"))
-        recipientUser = userRepository.save(UserDetails(email = "recipient@meetsama.com", fullName = "Recipient User"))
+        initiatorUser = userRepository.save(
+            UserDetails(
+                email = "initiator@meetsama.com",
+                fullName = "Initiator User",
+                active = true
+            )
+        )
+        recipientUser = userRepository.save(
+            UserDetails(
+                email = "recipient@meetsama.com",
+                fullName = "Recipient User",
+                active = true
+            )
+        )
     }
 
     @AfterEach
