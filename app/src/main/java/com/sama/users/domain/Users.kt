@@ -1,8 +1,6 @@
 package com.sama.users.domain
 
 import com.sama.common.DomainEntity
-import java.util.UUID
-import kotlin.Result.Companion.success
 import org.apache.commons.validator.routines.EmailValidator
 
 @DomainEntity
@@ -37,20 +35,3 @@ data class UserRegistration(
     }
 }
 
-@DomainEntity
-data class UserDeviceRegistrations(val userId: UserId, val deviceId: UUID?, val firebaseRegistrationToken: String?) {
-    fun register(deviceId: UUID, firebaseRegistrationToken: String): Result<UserDeviceRegistrations> {
-        return success(
-            copy(
-                deviceId = deviceId,
-                firebaseRegistrationToken = firebaseRegistrationToken
-            )
-        )
-    }
-
-    fun unregister(deviceId: UUID): Result<UserDeviceRegistrations> {
-        return success(
-            copy(deviceId = null, firebaseRegistrationToken = null)
-        )
-    }
-}
