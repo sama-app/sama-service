@@ -15,21 +15,22 @@ import com.sama.users.infrastructure.jpa.findByEmailOrThrow
 import com.sama.users.infrastructure.jpa.findByPublicIdOrThrow
 import com.sama.users.infrastructure.jpa.findIdByEmailOrThrow
 import com.sama.users.infrastructure.jpa.findIdByPublicIdOrThrow
+import java.util.UUID
 import org.springframework.stereotype.Component
 
 @Component
 class UserRepositoryImpl(private val userJpaRepository: UserJpaRepository) : UserRepository {
     override fun findByIdOrThrow(userId: UserId): UserDetails {
-        return userJpaRepository.findByIdOrThrow(userId).toUserDetails()
+        return userJpaRepository.findByIdOrThrow(userId.id).toUserDetails()
     }
 
     override fun findByIds(ids: Collection<UserId>): List<UserDetails> {
-        return userJpaRepository.findAllById(ids)
+        return userJpaRepository.findAllById(ids.map { it.id })
             .map { it.toUserDetails() }
     }
 
     override fun findJwtIssuerByIdOrThrow(userId: UserId): UserJwtIssuer {
-        return userJpaRepository.findByIdOrThrow(userId).toJwtIssuer()
+        return userJpaRepository.findByIdOrThrow(userId.id).toJwtIssuer()
     }
 
     override fun findJwtIssuerByEmailOrThrow(email: String): UserJwtIssuer {
@@ -37,15 +38,15 @@ class UserRepositoryImpl(private val userJpaRepository: UserJpaRepository) : Use
     }
 
     override fun findJwtIssuerByPublicOrThrow(publicId: UserPublicId): UserJwtIssuer {
-        return userJpaRepository.findByPublicIdOrThrow(publicId).toJwtIssuer()
+        return userJpaRepository.findByPublicIdOrThrow(publicId.id).toJwtIssuer()
     }
 
     override fun findDeviceRegistrationsByIdOrThrow(userId: UserId): UserDeviceRegistrations {
-        return userJpaRepository.findByIdOrThrow(userId).toDeviceRegistrations()
+        return userJpaRepository.findByIdOrThrow(userId.id).toDeviceRegistrations()
     }
 
     override fun findAllIds(): Set<UserId> {
-        return userJpaRepository.findAllIds()
+        return userJpaRepository.findAllIds().mapTo(mutableSetOf()) { it.toUserId() }
     }
 
     override fun findByEmailOrThrow(email: String): UserDetails {
@@ -53,7 +54,7 @@ class UserRepositoryImpl(private val userJpaRepository: UserJpaRepository) : Use
     }
 
     override fun findByPublicIdOrThrow(publicId: UserPublicId): UserDetails {
-        return userJpaRepository.findByPublicIdOrThrow(publicId).toUserDetails()
+        return userJpaRepository.findByPublicIdOrThrow(publicId.id).toUserDetails()
     }
 
     override fun existsByEmail(email: String): Boolean {
@@ -61,11 +62,11 @@ class UserRepositoryImpl(private val userJpaRepository: UserJpaRepository) : Use
     }
 
     override fun findIdByEmailOrThrow(email: String): UserId {
-        return userJpaRepository.findIdByEmailOrThrow(email)
+        return userJpaRepository.findIdByEmailOrThrow(email).toUserId()
     }
 
     override fun findIdByPublicIdOrThrow(userPublicId: UserPublicId): UserId {
-        return userJpaRepository.findIdByPublicIdOrThrow(userPublicId)
+        return userJpaRepository.findIdByPublicIdOrThrow(userPublicId.id).toUserId()
     }
 
     override fun save(userDetails: UserDetails): UserDetails {
@@ -75,24 +76,28 @@ class UserRepositoryImpl(private val userJpaRepository: UserJpaRepository) : Use
     }
 
     override fun save(userGoogleCredential: UserGoogleCredential): UserGoogleCredential {
-        var userEntity = userJpaRepository.findByIdOrThrow(userGoogleCredential.userId)
+        var userEntity = userJpaRepository.findByIdOrThrow(userGoogleCredential.userId.id)
         userEntity.applyChanges(userGoogleCredential.googleCredential)
         userEntity = userJpaRepository.save(userEntity)
         return userGoogleCredential.copy(googleCredential = userEntity.googleCredential!!)
     }
 
     override fun save(userDeviceRegistrations: UserDeviceRegistrations): UserDeviceRegistrations {
-        var userEntity = userJpaRepository.findByIdOrThrow(userDeviceRegistrations.userId)
+        var userEntity = userJpaRepository.findByIdOrThrow(userDeviceRegistrations.userId.id)
         userEntity = userEntity.applyChanges(userDeviceRegistrations)
         userEntity = userJpaRepository.save(userEntity)
         return userEntity.toDeviceRegistrations()
+    }
+
+    override fun deleteAll() {
+        userJpaRepository.deleteAll()
     }
 }
 
 fun UserEntity.toUserDetails(): UserDetails {
     return UserDetails(
-        this.id,
-        this.publicId,
+        this.id?.toUserId(),
+        this.publicId?.toUserPublicId(),
         this.email,
         this.fullName
     )
@@ -100,8 +105,8 @@ fun UserEntity.toUserDetails(): UserDetails {
 
 fun UserEntity.toJwtIssuer(): UserJwtIssuer {
     return UserJwtIssuer(
-        this.id!!,
-        this.publicId!!,
+        this.id!!.toUserId(),
+        this.publicId!!.toUserPublicId(),
         this.email,
         this.active!!
     )
@@ -109,8 +114,16 @@ fun UserEntity.toJwtIssuer(): UserJwtIssuer {
 
 fun UserEntity.toDeviceRegistrations(): UserDeviceRegistrations {
     return UserDeviceRegistrations(
-        this.id!!,
+        this.id!!.toUserId(),
         this.firebaseCredential?.deviceId,
         this.firebaseCredential?.registrationToken
     )
+}
+
+fun Long.toUserId(): UserId {
+    return UserId(this)
+}
+
+fun UUID.toUserPublicId(): UserPublicId {
+    return UserPublicId(this)
 }

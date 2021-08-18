@@ -2,6 +2,7 @@ package com.sama.comms.infrastructure
 
 import com.sama.comms.domain.CommsUser
 import com.sama.comms.domain.Notification
+import com.sama.users.domain.UserId
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -15,7 +16,7 @@ class StringNotificationRendererTest {
     @Test
     fun renderMeetingConfirmedSameTimeZone() {
         val timeZone = ZoneId.of("UTC")
-        val commsUser = CommsUser(1L, timeZone, "test@meetsama.com")
+        val commsUser = CommsUser(UserId(1), timeZone, "test@meetsama.com")
         val actual = underTest.renderMeetingConfirmed(
             commsUser,
             "attendee@meetsama.com",
@@ -38,7 +39,7 @@ class StringNotificationRendererTest {
     @Test
     fun renderMeetingConfirmedDifferentTimeZone() {
         val timeZone = ZoneId.of("UTC+10")
-        val commsUser = CommsUser(1L, timeZone, "test@meetsama.com")
+        val commsUser = CommsUser(UserId(1), timeZone, "test@meetsama.com")
         val actual = underTest.renderMeetingConfirmed(
             commsUser,
             "attendee@meetsama.com",

@@ -2,8 +2,10 @@ package com.sama.meeting.infrastructure
 
 import com.sama.common.BasePersistenceIT
 import com.sama.meeting.domain.MeetingIntent
+import com.sama.meeting.domain.MeetingIntentId
 import com.sama.meeting.domain.MeetingIntentRepository
 import com.sama.meeting.domain.MeetingSlot
+import com.sama.users.domain.UserId
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.test.context.ContextConfiguration
@@ -24,10 +26,10 @@ class MeetingIntentPersistenceIT : BasePersistenceIT<MeetingIntentRepository>() 
 
     @Test
     fun `meeting intent persists from domain entity`() {
-        val meetingIntentId = 11L
+        val meetingIntentId = MeetingIntentId(11)
         val meetingIntent = MeetingIntent(
             meetingIntentId,
-            1L,
+            UserId(1),
             Duration.ofMinutes(60),
             ZoneId.of("Europe/Rome"),
             listOf(
@@ -50,10 +52,10 @@ class MeetingIntentPersistenceIT : BasePersistenceIT<MeetingIntentRepository>() 
 
     @Test
     fun `meeting intent find by code`() {
-        val meetingIntentId = 11L
+        val meetingIntentId = MeetingIntentId(11)
         val meetingIntent = MeetingIntent(
             meetingIntentId,
-            1L,
+            UserId(1),
             Duration.ofMinutes(60),
             ZoneId.of("Europe/Rome"),
             listOf(

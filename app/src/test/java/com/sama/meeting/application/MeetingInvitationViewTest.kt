@@ -2,10 +2,15 @@ package com.sama.meeting.application
 
 import com.sama.meeting.configuration.MeetingProposalMessageConfiguration
 import com.sama.meeting.configuration.MeetingUrlConfiguration
+import com.sama.meeting.domain.MeetingCode
+import com.sama.meeting.domain.MeetingId
+import com.sama.meeting.domain.MeetingIntentId
 import com.sama.meeting.domain.MeetingSlot
 import com.sama.meeting.domain.ProposedMeeting
 import com.sama.users.application.UserPublicDTO
 import com.sama.users.application.UserService
+import com.sama.users.domain.UserId
+import com.sama.users.domain.UserPublicId
 import com.sama.users.infrastructure.jpa.UserEntity
 import com.sama.users.infrastructure.jpa.UserJpaRepository
 import org.junit.jupiter.api.Test
@@ -23,7 +28,7 @@ import kotlin.test.assertEquals
 
 private const val scheme = "https"
 private const val host = "sama.com"
-private const val meetingCode = "code"
+private val meetingCode = MeetingCode("VGsUTGno")
 
 @TestConfiguration
 class MeetingInvitationServiceTestConfiguration {
@@ -58,14 +63,14 @@ class MeetingInvitationViewTest {
         val _10am = _9am.plusHours(1)
         val _11am = _9am.plusHours(2)
 
-        val initiatorId = 1L
-        val initiator = UserPublicDTO(UUID.randomUUID(), "test", "test@meetsama.com")
+        val initiatorId = UserId(1)
+        val initiator = UserPublicDTO(UserPublicId.random(), "test", "test@meetsama.com")
         whenever(userService.find(initiatorId))
             .thenReturn(initiator)
 
         val actual = underTest.render(
             ProposedMeeting(
-                21L, 11L, initiatorId,
+                MeetingId(21), MeetingIntentId(11L), initiatorId,
                 Duration.ofMinutes(15),
                 listOf(
                     MeetingSlot(_9am, _9am.plusMinutes(15)),
@@ -77,7 +82,7 @@ class MeetingInvitationViewTest {
         )
 
         // verify
-        val expectedUrl = "$scheme://$host/$meetingCode"
+        val expectedUrl = "$scheme://$host/${meetingCode.code}"
         val expectedMessage = """
             * Jul 7 11:00 AM - 11:15 AM (GMT+2)
             * Jul 7 12:00 PM - 1:00 PM (GMT+2)

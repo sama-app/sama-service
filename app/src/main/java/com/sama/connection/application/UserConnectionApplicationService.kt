@@ -9,6 +9,7 @@ import com.sama.connection.domain.UserConnection
 import com.sama.connection.domain.UserConnectionRepository
 import com.sama.users.application.InternalUserService
 import com.sama.users.domain.UserId
+import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -57,9 +58,11 @@ class UserConnectionApplicationService(
 
 
     @Transactional
-    @PreAuthorize("@auth.hasRecipientAccess(#userId, #connectionRequestId)")
     fun approveConnectionRequest(userId: UserId, connectionRequestId: ConnectionRequestId) {
         val connectionRequest = connectionRequestRepository.findByIdOrThrow(connectionRequestId)
+        if (connectionRequest.recipientUserId != userId) {
+            throw AccessDeniedException("User#$userId does not have access to ConnectionRequest#$connectionRequestId")
+        }
 
         val (approvedRequest, userConnection) = connectionRequest.approve()
 
@@ -69,10 +72,13 @@ class UserConnectionApplicationService(
     }
 
     @Transactional
-    @PreAuthorize("@auth.hasRecipientAccess(#userId, #connectionRequestId)")
     fun rejectConnectionRequest(userId: UserId, connectionRequestId: ConnectionRequestId) {
-        val rejectedRequest = connectionRequestRepository.findByIdOrThrow(connectionRequestId)
-            .reject()
+        val connectionRequest = connectionRequestRepository.findByIdOrThrow(connectionRequestId)
+        if (connectionRequest.recipientUserId != userId) {
+            throw AccessDeniedException("User#$userId does not have access to ConnectionRequest#$connectionRequestId")
+        }
+
+        val rejectedRequest = connectionRequest.reject()
         connectionRequestRepository.save(rejectedRequest)
         // TODO: send comms?
     }

@@ -8,6 +8,7 @@ import org.hibernate.annotations.GenerationTime.INSERT
 import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.annotation.LastModifiedDate
 import java.time.Instant
+import java.util.UUID
 import javax.persistence.*
 import javax.persistence.GenerationType.IDENTITY
 
@@ -32,8 +33,8 @@ class UserEntity(email: String) {
     companion object {
         fun new(userDetails: UserDetails): UserEntity {
             val user = UserEntity(userDetails.email)
-            user.id = userDetails.id
-            user.publicId = userDetails.publicId
+            user.id = userDetails.id?.id
+            user.publicId = userDetails.publicId?.id
             user.fullName = userDetails.fullName
             return user
         }
@@ -41,11 +42,11 @@ class UserEntity(email: String) {
 
     @Id
     @GeneratedValue(strategy = IDENTITY)
-    var id: UserId? = null
+    var id: Long? = null
 
     @Column(nullable = false)
     @Generated(value = INSERT)
-    var publicId: UserPublicId? = null
+    var publicId: UUID? = null
 
     @Column(nullable = false)
     var email: String = email

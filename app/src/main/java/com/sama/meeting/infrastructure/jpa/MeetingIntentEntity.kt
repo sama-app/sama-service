@@ -1,19 +1,28 @@
-package com.sama.meeting.domain.aggregates
+package com.sama.meeting.infrastructure.jpa
 
-import com.sama.calendar.domain.SlotId
 import com.sama.common.AggregateRoot
 import com.sama.common.Factory
 import com.sama.meeting.domain.MeetingIntent
 import com.sama.meeting.domain.MeetingIntentId
 import com.sama.users.domain.UserId
-import org.springframework.data.annotation.CreatedDate
-import org.springframework.data.annotation.LastModifiedDate
-import org.springframework.data.jpa.convert.threeten.Jsr310JpaConverters
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZonedDateTime
-import java.util.*
-import javax.persistence.*
+import java.util.UUID
+import javax.persistence.CascadeType
+import javax.persistence.Column
+import javax.persistence.Convert
+import javax.persistence.Entity
+import javax.persistence.FetchType
+import javax.persistence.GeneratedValue
+import javax.persistence.GenerationType
+import javax.persistence.Id
+import javax.persistence.JoinColumn
+import javax.persistence.OneToMany
+import javax.persistence.Table
+import org.springframework.data.annotation.CreatedDate
+import org.springframework.data.annotation.LastModifiedDate
+import org.springframework.data.jpa.convert.threeten.Jsr310JpaConverters
 
 @AggregateRoot
 @Entity
@@ -24,9 +33,9 @@ class MeetingIntentEntity {
     companion object {
         fun new(meetingIntent: MeetingIntent): MeetingIntentEntity {
             val meetingEntity = MeetingIntentEntity()
-            meetingEntity.id = meetingIntent.meetingIntentId
+            meetingEntity.id = meetingIntent.meetingIntentId.id
             meetingEntity.code = UUID.randomUUID()
-            meetingEntity.initiatorId = meetingIntent.initiatorId
+            meetingEntity.initiatorId = meetingIntent.initiatorId.id
             meetingEntity.durationMinutes = meetingIntent.duration.toMinutes()
             meetingEntity.timezone = meetingIntent.timezone
             val slots = meetingIntent.suggestedSlots.map {
@@ -46,16 +55,16 @@ class MeetingIntentEntity {
     }
 
     @Id
-    var id: MeetingIntentId? = null
+    var id: Long? = null
 
     @Column(nullable = false)
     var code: UUID? = null
 
     @Column(nullable = false)
-    var initiatorId: UserId? = null
+    var initiatorId: Long? = null
 
     @Column(nullable = true)
-    var recipientId: UserId? = null
+    var recipientId: Long? = null
 
     @Column(nullable = false)
     var durationMinutes: Long? = null
@@ -79,7 +88,7 @@ class MeetingIntentEntity {
 @Table(schema = "sama", name = "meeting_suggested_slot")
 data class MeetingSuggestedSlotEntity(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: SlotId? = null,
+    var id: Long? = null,
     private val meetingIntentId: MeetingIntentId,
     var startDateTime: ZonedDateTime,
     var endDateTime: ZonedDateTime,

@@ -7,6 +7,7 @@ import com.sama.connection.domain.ConnectionRequestStatus.APPROVED
 import com.sama.connection.domain.ConnectionRequestStatus.PENDING
 import com.sama.users.infrastructure.jpa.UserEntity
 import com.sama.users.infrastructure.jpa.UserJpaRepository
+import com.sama.users.infrastructure.toUserId
 import java.util.UUID
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
@@ -41,7 +42,7 @@ class JdbcConnectionRequestRepositoryTest : BasePersistenceIT<JdbcConnectionRequ
     @Test
     fun `save and find by id`() {
         val id = UUID.randomUUID()
-        val expected = ConnectionRequest(id, userOne.id!!, userTwo.id!!, PENDING)
+        val expected = ConnectionRequest(id, userOne.id!!.toUserId(), userTwo.id!!.toUserId(), PENDING)
         underTest.save(expected)
 
         val actual = underTest.findByIdOrThrow(id)
@@ -59,20 +60,20 @@ class JdbcConnectionRequestRepositoryTest : BasePersistenceIT<JdbcConnectionRequ
     @Test
     fun `find pending by user ids`() {
         val id = UUID.randomUUID()
-        val connectionRequest = ConnectionRequest(id, userOne.id!!, userTwo.id!!, PENDING)
+        val connectionRequest = ConnectionRequest(id, userOne.id!!.toUserId(), userTwo.id!!.toUserId(), PENDING)
         underTest.save(connectionRequest)
 
-        val actual = underTest.findPendingByUserIds(userOne.id!!, userTwo.id!!)
+        val actual = underTest.findPendingByUserIds(userOne.id!!.toUserId(), userTwo.id!!.toUserId())
         assertThat(actual).isEqualTo(connectionRequest)
     }
 
     @Test
     fun `find pending by initiator id`() {
         val id = UUID.randomUUID()
-        val connectionRequest = ConnectionRequest(id, userOne.id!!, userTwo.id!!, PENDING)
+        val connectionRequest = ConnectionRequest(id, userOne.id!!.toUserId(), userTwo.id!!.toUserId(), PENDING)
         underTest.save(connectionRequest)
 
-        val actual = underTest.findPendingByInitiatorId(userOne.id!!)
+        val actual = underTest.findPendingByInitiatorId(userOne.id!!.toUserId())
         assertThat(actual).containsExactly(connectionRequest)
     }
 
@@ -80,27 +81,27 @@ class JdbcConnectionRequestRepositoryTest : BasePersistenceIT<JdbcConnectionRequ
     @Test
     fun `find pending by recipient id`() {
         val id = UUID.randomUUID()
-        val connectionRequest = ConnectionRequest(id, userOne.id!!, userTwo.id!!, PENDING)
+        val connectionRequest = ConnectionRequest(id, userOne.id!!.toUserId(), userTwo.id!!.toUserId(), PENDING)
         underTest.save(connectionRequest)
 
-        val actual = underTest.findPendingByRecipientId(userTwo.id!!)
+        val actual = underTest.findPendingByRecipientId(userTwo.id!!.toUserId())
         assertThat(actual).containsExactly(connectionRequest)
     }
 
     @Test
     fun `does not exists pending by user ids`() {
         val id = UUID.randomUUID()
-        val connectionRequest = ConnectionRequest(id, userOne.id!!, userTwo.id!!, APPROVED)
+        val connectionRequest = ConnectionRequest(id, userOne.id!!.toUserId(), userTwo.id!!.toUserId(), APPROVED)
         underTest.save(connectionRequest)
 
-        val actual = underTest.findPendingByUserIds(userOne.id!!, userTwo.id!!)
+        val actual = underTest.findPendingByUserIds(userOne.id!!.toUserId(), userTwo.id!!.toUserId())
         assertThat(actual).isNull()
     }
 
     @Test
     fun update() {
         val id = UUID.randomUUID()
-        val initial = ConnectionRequest(id, userOne.id!!, userTwo.id!!, PENDING)
+        val initial = ConnectionRequest(id, userOne.id!!.toUserId(), userTwo.id!!.toUserId(), PENDING)
         underTest.save(initial)
 
         val expected = initial.copy(status = APPROVED)

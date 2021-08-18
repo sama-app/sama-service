@@ -8,6 +8,7 @@ import java.time.Clock
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZoneOffset
+import java.util.TimeZone
 import org.mockito.Mockito
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
 import org.springframework.boot.test.context.TestConfiguration
@@ -21,6 +22,8 @@ class AppTestConfiguration {
     @Bean
     @Primary
     fun clock(): Clock {
+        // Force JVM timezone to UTC so that the JDBC driver interpret timezones consistently
+        TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
         val fixedDate = LocalDate.of(2021, 6, 1).atStartOfDay().toInstant(ZoneOffset.UTC)
         return Clock.fixed(fixedDate, ZoneId.of("UTC"));
     }

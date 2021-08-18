@@ -3,8 +3,8 @@ package com.sama.common
 import com.sama.AppTestConfiguration
 import com.sama.IntegrationOverrides
 import com.sama.api.config.security.UserPrincipal
-import com.sama.users.infrastructure.jpa.UserEntity
-import com.sama.users.infrastructure.jpa.UserJpaRepository
+import com.sama.users.domain.UserDetails
+import com.sama.users.domain.UserRepository
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.extension.ExtendWith
@@ -44,58 +44,49 @@ class BaseApplicationTest {
     }
 
     @Autowired
-    lateinit var userRepository: UserJpaRepository
+    lateinit var userRepository: UserRepository
 
 
     // test data
-    private lateinit var initiatorUser: UserEntity
-    private lateinit var recipientUser: UserEntity
+    private lateinit var initiatorUser: UserDetails
+    private lateinit var recipientUser: UserDetails
 
     @BeforeEach
     fun setupUsers() {
-        initiatorUser = userRepository.save(
-            UserEntity("initiator@meetsama.com").apply {
-                fullName = "Initiator User"
-            })
-        recipientUser = userRepository.save(
-            UserEntity("recipient@meetsama.com").apply {
-                fullName = "Recipient User"
-            })
-        userRepository.flush()
+        initiatorUser = userRepository.save(UserDetails(email = "initiator@meetsama.com", fullName = "Initiator User"))
+        recipientUser = userRepository.save(UserDetails(email = "recipient@meetsama.com", fullName = "Recipient User"))
     }
 
     @AfterEach
     fun cleanupUsers() {
         userRepository.deleteAll()
-        userRepository.flush()
     }
 
-
-    fun initiator(): UserEntity {
+    fun initiator(): UserDetails {
         return initiatorUser
     }
 
-    fun recipient(): UserEntity {
+    fun recipient(): UserDetails {
         return recipientUser
     }
 
     /**
      * Execute an action as a logged in "initiator" user
      */
-    fun <T> asInitiator(executable: (user: UserEntity) -> T): T {
+    fun <T> asInitiator(executable: (user: UserDetails) -> T): T {
         return asUser(initiator(), executable)
     }
 
     /**
      * Execute an action as a logged in "recipient" user
      */
-    fun <T> asRecipient(executable: (user: UserEntity) -> T): T {
+    fun <T> asRecipient(executable: (user: UserDetails) -> T): T {
         return asUser(recipient(), executable)
     }
 
     private fun <T> asUser(
-        user: UserEntity,
-        executable: (user: UserEntity) -> T,
+        user: UserDetails,
+        executable: (user: UserDetails) -> T,
     ): T {
         val userPrincipal = UserPrincipal(user.email, user.publicId)
         val auth = UsernamePasswordAuthenticationToken(userPrincipal, null, null)

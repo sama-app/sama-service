@@ -2,14 +2,14 @@ package com.sama.meeting.domain
 
 import com.sama.common.DomainRepository
 import com.sama.users.domain.UserId
-import org.springframework.data.repository.Repository
 import java.time.ZonedDateTime
+import org.springframework.data.repository.Repository
 
 @DomainRepository
 interface MeetingRepository : Repository<Meeting, MeetingId> {
     fun nextIdentity(): MeetingId
 
-    fun findByIdOrThrow(id: MeetingId): Meeting
+    fun findByIdOrThrow(meetingId: MeetingId): Meeting
 
     fun findByCodeOrThrow(code: MeetingCode): Meeting
 

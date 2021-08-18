@@ -22,7 +22,7 @@ class UserIdAttributeResolver(
     override fun supportsParameter(parameter: MethodParameter): Boolean {
         return parameter.hasParameterAnnotation(AuthUserId::class.java) &&
                 // must be java.lang.Long, otherwise `UserId?` does not get matched
-                (parameter.parameterType.equals(java.lang.Long::class.java))
+                (parameter.parameterType.equals(UserId::class.java))
     }
 
     override fun resolveArgument(

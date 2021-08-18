@@ -26,4 +26,6 @@ interface UserRepository : Repository<UserDetails, UserId> {
     fun save(userDetails: UserDetails): UserDetails
     fun save(userGoogleCredential: UserGoogleCredential): UserGoogleCredential
     fun save(userDeviceRegistrations: UserDeviceRegistrations): UserDeviceRegistrations
+
+    fun deleteAll()
 }

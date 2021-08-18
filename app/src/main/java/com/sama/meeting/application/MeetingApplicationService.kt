@@ -27,6 +27,7 @@ import io.sentry.spring.tracing.SentryTransaction
 import java.time.Clock
 import java.time.ZonedDateTime
 import org.springframework.scheduling.annotation.Scheduled
+import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -75,9 +76,12 @@ class MeetingApplicationService(
     }
 
     @Transactional
-    @PreAuthorize("@auth.hasAccessByCode(#userId, #command.meetingIntentCode)")
     fun proposeMeeting(userId: UserId, command: ProposeMeetingCommand): MeetingInvitationDTO {
         val meetingIntent = meetingIntentRepository.findByCodeOrThrow(command.meetingIntentCode)
+        if (meetingIntent.initiatorId != userId) {
+            throw AccessDeniedException("User#$userId does not have access to MeetingIntent#${command.meetingIntentCode}")
+        }
+
         val meetingId = meetingRepository.nextIdentity()
         val meetingCode = meetingCodeGenerator.generate()
 

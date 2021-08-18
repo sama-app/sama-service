@@ -5,6 +5,7 @@ import com.sama.api.config.WebMvcConfiguration
 import com.sama.calendar.application.EventApplicationService
 import com.sama.calendar.application.EventDTO
 import com.sama.calendar.application.FetchEventsDTO
+import com.sama.users.domain.UserId
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.kotlin.eq
@@ -35,7 +36,7 @@ class EventControllerTest(
     @MockBean
     lateinit var eventApplicationService: EventApplicationService
 
-    private val userId: Long = 1
+    private val userId = UserId(1)
     private val jwt = "eyJraWQiOiJrZXktaWQiLCJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9." +
             "eyJzdWIiOiJiYWx5c0B5b3Vyc2FtYS5jb20iLCJ1c2VyX2lkIjoiNjViOTc3ZWEtODk4MC00YjFhLWE2ZWUtZjhmY2MzZjFmYzI0Iiwi" +
             "ZXhwIjoxNjIyNTA1NjYwLCJpYXQiOjE2MjI1MDU2MDAsImp0aSI6IjNlNWE3NTY3LWZmYmQtNDcxYi1iYTI2LTU2YjMwOTgwMWZlZSJ9." +
@@ -50,7 +51,7 @@ class EventControllerTest(
         val startDateTime = ZonedDateTime.of(startDate, LocalTime.of(12, 15), zoneId)
         val endDateTime = ZonedDateTime.of(startDate, LocalTime.of(12, 30), zoneId)
         val eventDTO = EventDTO(startDateTime, endDateTime, false, "test")
-        whenever(eventApplicationService.fetchEvents(eq(userId), eq(startDate), eq(endDate), eq(zoneId)))
+        whenever(eventApplicationService.fetchEvents(userId, startDate, endDate, zoneId))
             .thenReturn(FetchEventsDTO(listOf(eventDTO), listOf(eventDTO)))
 
         val expectedJson = """
@@ -91,7 +92,7 @@ class EventControllerTest(
         val endDate = LocalDate.of(2021, 1, 2)
         val zoneId = ZoneId.of("Europe/Rome")
 
-        whenever(eventApplicationService.fetchEvents(eq(userId), eq(startDate), eq(endDate), eq(zoneId)))
+        whenever(eventApplicationService.fetchEvents(userId, startDate, endDate, zoneId))
             .thenReturn(FetchEventsDTO(emptyList(), emptyList()))
 
         val expectedJson = """

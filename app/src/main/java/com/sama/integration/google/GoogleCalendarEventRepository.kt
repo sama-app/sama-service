@@ -1,6 +1,10 @@
 package com.sama.integration.google
 
-import com.google.api.services.calendar.model.*
+import com.google.api.services.calendar.model.ConferenceData
+import com.google.api.services.calendar.model.ConferenceSolutionKey
+import com.google.api.services.calendar.model.CreateConferenceRequest
+import com.google.api.services.calendar.model.EventAttendee
+import com.google.api.services.calendar.model.EventDateTime
 import com.sama.calendar.domain.Event
 import com.sama.calendar.domain.EventRepository
 import com.sama.integration.sentry.asyncTraced
@@ -9,13 +13,13 @@ import com.sama.slotsuggestion.domain.Block
 import com.sama.slotsuggestion.domain.BlockRepository
 import com.sama.slotsuggestion.domain.Recurrence
 import com.sama.users.domain.UserId
+import java.time.ZoneId
+import java.time.ZonedDateTime
+import java.util.UUID
 import kotlinx.coroutines.Dispatchers
 import org.dmfs.rfc5545.recur.Freq
 import org.dmfs.rfc5545.recur.RecurrenceRule
 import org.springframework.stereotype.Component
-import java.time.ZoneId
-import java.time.ZonedDateTime
-import java.util.*
 
 @Component
 class GoogleCalendarEventRepository(private val googleServiceFactory: GoogleServiceFactory) : EventRepository,
@@ -87,7 +91,7 @@ class GoogleCalendarEventRepository(private val googleServiceFactory: GoogleServ
     }
 
     override fun findAllBlocks(
-        userId: Long,
+        userId: UserId,
         startDateTime: ZonedDateTime,
         endDateTime: ZonedDateTime,
         includeRecurrence: Boolean

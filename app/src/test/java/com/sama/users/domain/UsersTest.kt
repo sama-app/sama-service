@@ -4,14 +4,14 @@ import com.auth0.jwt.JWT
 import com.sama.common.assertDoesNotThrowOrNull
 import com.sama.common.assertThrows
 import com.sama.users.configuration.AccessJwtConfiguration
-import org.junit.jupiter.api.Assertions.assertThrows
-import org.junit.jupiter.api.Test
 import java.time.Clock
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZoneOffset.UTC
-import java.util.*
+import java.util.UUID
 import kotlin.test.assertEquals
+import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Test
 
 class UsersTest {
 
@@ -44,8 +44,8 @@ class UsersTest {
     @Test
     fun `issue jwt`() {
         val userJwtIssuer = UserJwtIssuer(
-            1L,
-            UUID.fromString("65b977ea-8980-4b1a-a6ee-f8fcc3f1fc24"),
+            UserId(1),
+            UserPublicId.of("65b977ea-8980-4b1a-a6ee-f8fcc3f1fc24"),
             "balys@yoursama.com",
             true
         )
@@ -73,7 +73,7 @@ class UsersTest {
 
     @Test
     fun `issue jwt for inactive user throws`() {
-        val userJwtIssuer = UserJwtIssuer(1L, UUID.randomUUID(), "balys@meetsama.com", false)
+        val userJwtIssuer = UserJwtIssuer(UserId(1), UserPublicId.random(), "balys@meetsama.com", false)
 
         val actual = userJwtIssuer.issue(jwtId, jwtConfiguration, fixedClock)
         actual.assertThrows(InactiveUserException::class.java)
