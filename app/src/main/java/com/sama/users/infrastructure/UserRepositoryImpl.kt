@@ -29,18 +29,6 @@ class UserRepositoryImpl(private val userJpaRepository: UserJpaRepository) : Use
             .map { it.toUserDetails() }
     }
 
-    override fun findJwtIssuerByIdOrThrow(userId: UserId): UserJwtIssuer {
-        return userJpaRepository.findByIdOrThrow(userId.id).toJwtIssuer()
-    }
-
-    override fun findJwtIssuerByEmailOrThrow(email: String): UserJwtIssuer {
-        return userJpaRepository.findByEmailOrThrow(email).toJwtIssuer()
-    }
-
-    override fun findJwtIssuerByPublicOrThrow(publicId: UserPublicId): UserJwtIssuer {
-        return userJpaRepository.findByPublicIdOrThrow(publicId.id).toJwtIssuer()
-    }
-
     override fun findDeviceRegistrationsByIdOrThrow(userId: UserId): UserDeviceRegistrations {
         return userJpaRepository.findByIdOrThrow(userId.id).toDeviceRegistrations()
     }
@@ -99,15 +87,7 @@ fun UserEntity.toUserDetails(): UserDetails {
         this.id?.toUserId(),
         this.publicId?.toUserPublicId(),
         this.email,
-        this.fullName
-    )
-}
-
-fun UserEntity.toJwtIssuer(): UserJwtIssuer {
-    return UserJwtIssuer(
-        this.id!!.toUserId(),
-        this.publicId!!.toUserPublicId(),
-        this.email,
+        this.fullName,
         this.active!!
     )
 }

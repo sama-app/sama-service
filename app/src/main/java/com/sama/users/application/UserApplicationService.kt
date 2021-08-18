@@ -7,6 +7,7 @@ import com.sama.users.domain.InvalidRefreshTokenException
 import com.sama.users.domain.Jwt
 import com.sama.users.domain.UserGoogleCredential
 import com.sama.users.domain.UserId
+import com.sama.users.domain.UserJwtIssuer
 import com.sama.users.domain.UserPublicId
 import com.sama.users.domain.UserRegistration
 import com.sama.users.domain.UserRepository
@@ -120,7 +121,8 @@ class UserApplicationService(
     }
 
     fun issueTokens(userId: UserId): JwtPairDTO {
-        val userJwtIssuer = userRepository.findJwtIssuerByIdOrThrow(userId)
+        val userDetails = userRepository.findByIdOrThrow(userId)
+        val userJwtIssuer = UserJwtIssuer(userDetails)
         val refreshJwt = userJwtIssuer.issue(UUID.randomUUID(), refreshJwtConfiguration, clock)
             .getOrThrow()
         val accessJwt = userJwtIssuer.issue(UUID.randomUUID(), accessJwtConfiguration, clock)
@@ -134,13 +136,13 @@ class UserApplicationService(
             .onFailure { throw InvalidRefreshTokenException() }
             .getOrThrow()
 
-        val userJwtIssuer = if (refreshToken.userId() != null) {
-            userRepository.findJwtIssuerByPublicOrThrow(refreshToken.userId()!!)
+        val userDetails = if (refreshToken.userId() != null) {
+            userRepository.findByPublicIdOrThrow(refreshToken.userId()!!)
         } else {
-            userRepository.findJwtIssuerByEmailOrThrow(refreshToken.userEmail())
+            userRepository.findByEmailOrThrow(refreshToken.userEmail())
         }
 
-        val accessToken = userJwtIssuer
+        val accessToken = UserJwtIssuer(userDetails)
             .issue(UUID.randomUUID(), accessJwtConfiguration, clock)
             .getOrThrow()
 

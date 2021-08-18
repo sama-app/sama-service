@@ -8,6 +8,6 @@ class GoogleUserRepository(private val googleServiceFactory: GoogleServiceFactor
 
     fun findUsingToken(accessToken: String): UserDetails {
         val result = googleServiceFactory.oauth2Service(accessToken).userinfo().get().execute()
-        return result.let { UserDetails(null, null, it.email, it.name) }
+        return result.let { UserDetails(null, null, it.email, it.name, true) }
     }
 }

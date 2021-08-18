@@ -44,10 +44,13 @@ class UsersTest {
     @Test
     fun `issue jwt`() {
         val userJwtIssuer = UserJwtIssuer(
-            UserId(1),
-            UserPublicId.of("65b977ea-8980-4b1a-a6ee-f8fcc3f1fc24"),
-            "balys@yoursama.com",
-            true
+            UserDetails(
+                UserId(1),
+                UserPublicId.of("65b977ea-8980-4b1a-a6ee-f8fcc3f1fc24"),
+                "balys@yoursama.com",
+                "balys",
+                true
+            )
         )
 
         val actual = userJwtIssuer.issue(jwtId, jwtConfiguration, fixedClock)
@@ -73,7 +76,15 @@ class UsersTest {
 
     @Test
     fun `issue jwt for inactive user throws`() {
-        val userJwtIssuer = UserJwtIssuer(UserId(1), UserPublicId.random(), "balys@meetsama.com", false)
+        val userJwtIssuer = UserJwtIssuer(
+            UserDetails(
+                UserId(1),
+                UserPublicId.of("65b977ea-8980-4b1a-a6ee-f8fcc3f1fc24"),
+                "balys@yoursama.com",
+                "balys",
+                false
+            )
+        )
 
         val actual = userJwtIssuer.issue(jwtId, jwtConfiguration, fixedClock)
         actual.assertThrows(InactiveUserException::class.java)

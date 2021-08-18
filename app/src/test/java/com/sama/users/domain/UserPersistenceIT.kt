@@ -13,11 +13,12 @@ class UserPersistenceIT : BasePersistenceIT<UserRepository>() {
     fun save() {
         val email = "test@meetsama.com"
         val fullName = "Test"
-        val persisted = underTest.save(UserDetails(email = email, fullName = fullName))
+        val persisted = underTest.save(UserDetails(email = email, fullName = fullName, active = true))
 
         assertThat(persisted.id).isNotNull
         assertThat(persisted.publicId).isNotNull
         assertThat(persisted.email).isEqualTo(email)
         assertThat(persisted.fullName).isEqualTo(fullName)
+        assertThat(persisted.active).isTrue
     }
 }
