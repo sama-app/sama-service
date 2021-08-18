@@ -1,5 +1,6 @@
 package com.sama.users.application
 
+import com.sama.users.domain.UserId
 import com.sama.users.domain.UserPublicId
 import java.time.DayOfWeek
 import java.time.LocalTime
@@ -9,8 +10,15 @@ import java.util.UUID
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.format.annotation.DateTimeFormat.ISO.TIME
 
-data class UserDTO(
+data class UserPublicDTO(
     val userId: UserPublicId,
+    val fullName: String?,
+    val email: String
+)
+
+data class UserInternalDTO(
+    var id: UserId,
+    val publicId: UserPublicId,
     val fullName: String?,
     val email: String
 )

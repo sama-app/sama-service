@@ -5,8 +5,15 @@ import com.sama.meeting.configuration.MeetingUrlConfiguration
 import com.sama.meeting.domain.AvailableSlots
 import com.sama.meeting.domain.MeetingSlot
 import com.sama.meeting.domain.ProposedMeeting
-import com.sama.users.infrastructure.jpa.UserEntity
-import com.sama.users.infrastructure.jpa.UserJpaRepository
+import com.sama.users.application.UserPublicDTO
+import com.sama.users.application.UserService
+import java.time.Duration
+import java.time.LocalDate
+import java.time.LocalTime
+import java.time.ZoneId
+import java.time.ZonedDateTime
+import java.util.UUID
+import kotlin.test.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.kotlin.whenever
@@ -16,9 +23,6 @@ import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.context.annotation.Bean
 import org.springframework.test.context.junit.jupiter.SpringExtension
-import java.time.*
-import java.util.*
-import kotlin.test.assertEquals
 
 private const val scheme = "https"
 private const val host = "sama.com"
@@ -47,7 +51,7 @@ class MeetingViewTestConfiguration {
 )
 class MeetingViewTest {
     @MockBean
-    lateinit var userRepository: UserJpaRepository
+    lateinit var userService: UserService
 
     @Autowired
     lateinit var underTest: MeetingView
@@ -62,9 +66,9 @@ class MeetingViewTest {
         val _11am = _9am.plusHours(2)
 
         val initiatorId = 1L
-        val initiatorEntity = UserEntity("test@meetsama.com").apply { this.fullName = "test" }
-        whenever(userRepository.findById(initiatorId))
-            .thenReturn(Optional.of(initiatorEntity))
+        val initiator = UserPublicDTO(UUID.randomUUID(), "test", "test@meetsama.com")
+        whenever(userService.find(initiatorId))
+            .thenReturn(initiator)
 
         // act
         val proposedSlots = listOf(
@@ -86,9 +90,10 @@ class MeetingViewTest {
         val expectedUrl = "$scheme://$host/$meetingCode"
         val expected = ProposedMeetingDTO(
             proposedSlots = listOf(MeetingSlotDTO(_10am, _11am)),
-            initiator = InitiatorDTO(
-                initiatorEntity.fullName,
-                initiatorEntity.email
+            initiator = UserPublicDTO(
+                initiator.userId,
+                initiator.fullName,
+                initiator.email
             ),
             appLinks = MeetingAppLinksDTO(
                 iosAppDownloadLink = "https://meetsamatest.page.link/?link=$expectedUrl&param1=value1&param2=value2"

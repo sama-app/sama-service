@@ -1,6 +1,7 @@
 package com.sama.connection.application
 
 import com.sama.common.BaseApplicationTest
+import com.sama.users.application.UserPublicDTO
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -26,7 +27,7 @@ class UserConnectionApplicationServiceTest : BaseApplicationTest() {
             val connections = underTest.findUserConnections(it.id!!)
             val connectionRequests = underTest.findConnectionRequests(it.id!!)
             assertThat(connections.connectedUsers)
-                .containsExactly(UserDTO(recipient().publicId!!, recipient().email, recipient().fullName))
+                .containsExactly(UserPublicDTO(recipient().publicId!!, recipient().fullName, recipient().email))
             assertThat(connectionRequests.initiatedConnectionRequests).isEmpty()
         }
 
@@ -34,7 +35,7 @@ class UserConnectionApplicationServiceTest : BaseApplicationTest() {
             val connections = underTest.findUserConnections(it.id!!)
             val connectionRequests = underTest.findConnectionRequests(it.id!!)
             assertThat(connections.connectedUsers)
-                .containsExactly(UserDTO(initiator().publicId!!, initiator().email, initiator().fullName))
+                .containsExactly(UserPublicDTO(initiator().publicId!!, initiator().fullName, initiator().email))
             assertThat(connectionRequests.pendingConnectionRequests).isEmpty()
         }
     }
@@ -104,12 +105,14 @@ class UserConnectionApplicationServiceTest : BaseApplicationTest() {
     @Test
     fun `list connection requests for two users`() {
         val connectionRequestDTO = asInitiator {
-            val request = underTest.createConnectionRequest(it.id!!,
-                CreateConnectionRequestCommand(recipient().publicId!!))
+            val request = underTest.createConnectionRequest(
+                it.id!!,
+                CreateConnectionRequestCommand(recipient().publicId!!)
+            )
             ConnectionRequestDTO(
                 request.connectionRequestId,
-                initiator = UserDTO(it.publicId!!, it.email, it.fullName),
-                recipient = UserDTO(recipient().publicId!!, recipient().email, recipient().fullName)
+                initiator = UserPublicDTO(it.publicId!!, it.fullName, it.email),
+                recipient = UserPublicDTO(recipient().publicId!!, recipient().fullName, recipient().email)
             )
         }
 

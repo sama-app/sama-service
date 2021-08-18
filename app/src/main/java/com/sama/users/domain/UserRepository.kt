@@ -7,7 +7,7 @@ import org.springframework.data.repository.Repository
 @DomainRepository
 interface UserRepository : Repository<UserDetails, UserId> {
     fun findByIdOrThrow(userId: UserId): UserDetails
-    fun findPublicDetailsById(ids: Set<UserId>): List<UserDetails>
+    fun findByIds(ids: Collection<UserId>): List<UserDetails>
     fun findByEmailOrThrow(email: String): UserDetails
     fun findByPublicIdOrThrow(publicId: UserPublicId): UserDetails
 

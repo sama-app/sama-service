@@ -7,6 +7,7 @@ import com.sama.users.domain.InvalidRefreshTokenException
 import com.sama.users.domain.Jwt
 import com.sama.users.domain.UserGoogleCredential
 import com.sama.users.domain.UserId
+import com.sama.users.domain.UserPublicId
 import com.sama.users.domain.UserRegistration
 import com.sama.users.domain.UserRepository
 import com.sama.users.domain.UserSettings
@@ -27,14 +28,20 @@ class UserApplicationService(
     private val accessJwtConfiguration: AccessJwtConfiguration,
     private val refreshJwtConfiguration: RefreshJwtConfiguration,
     private val clock: Clock
-) {
+) : InternalUserService, UserService {
 
     @Transactional(readOnly = true)
-    fun findPublicDetails(userId: UserId): UserDTO {
+    override fun find(userId: UserId): UserPublicDTO {
         val userDetails = userRepository.findByIdOrThrow(userId)
         return userDetails.let {
-            UserDTO(it.publicId!!, it.fullName, it.email)
+            UserPublicDTO(it.publicId!!, it.fullName, it.email)
         }
+    }
+
+    @Transactional(readOnly = true)
+    override fun findAll(userIds: Collection<UserId>): Map<UserId, UserPublicDTO> {
+        return userRepository.findByIds(userIds)
+            .associate { it.id!! to UserPublicDTO(it.publicId!!, it.fullName, it.email) }
     }
 
     @Transactional
@@ -66,7 +73,7 @@ class UserApplicationService(
     }
 
     @Transactional(readOnly = true)
-    fun findUserDeviceRegistrations(userId: UserId): UserDeviceRegistrationsDTO {
+    override fun findUserDeviceRegistrations(userId: UserId): UserDeviceRegistrationsDTO {
         return userRepository.findDeviceRegistrationsByIdOrThrow(userId)
             .let {
                 UserDeviceRegistrationsDTO(
@@ -77,6 +84,20 @@ class UserApplicationService(
                     }
                 )
             }
+    }
+
+    override fun translatePublicId(userPublicId: UserPublicId): UserId {
+        return userRepository.findIdByPublicIdOrThrow(userPublicId)
+    }
+
+    override fun findInternalByEmail(email: String): UserInternalDTO {
+        return userRepository.findByEmailOrThrow(email)
+            .let { UserInternalDTO(it.id!!, it.publicId!!, it.fullName, it.email) }
+    }
+
+    override fun findInternalByPublicId(userPublicId: UserPublicId): UserInternalDTO {
+        return userRepository.findByPublicIdOrThrow(userPublicId)
+            .let { UserInternalDTO(it.id!!, it.publicId!!, it.fullName, it.email) }
     }
 
     @Transactional
@@ -135,7 +156,7 @@ class UserApplicationService(
     }
 
     @Transactional(readOnly = true)
-    fun findUserSettings(userId: UserId): UserSettingsDTO {
+    override fun findUserSettings(userId: UserId): UserSettingsDTO {
         val userSettings = userSettingsRepository.findByIdOrThrow(userId)
         return userSettings.let {
             UserSettingsDTO(

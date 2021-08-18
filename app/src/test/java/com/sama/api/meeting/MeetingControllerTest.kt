@@ -6,6 +6,7 @@ import com.sama.meeting.application.*
 import com.sama.meeting.domain.InvalidMeetingStatusException
 import com.sama.meeting.domain.MeetingAlreadyConfirmedException
 import com.sama.meeting.domain.MeetingStatus
+import com.sama.users.application.UserPublicDTO
 import org.junit.jupiter.api.DynamicTest.dynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
@@ -24,7 +25,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.result.isEqualTo
@@ -140,6 +140,7 @@ class MeetingControllerTest(
 
     @Test
     fun `propose meeting`() {
+        val initiatorId = UUID.randomUUID()
         val initiatorFullName = "test"
         val initiatorEmail = "test@meetsama.com"
         val shareableMessage = "a nice message"
@@ -157,7 +158,7 @@ class MeetingControllerTest(
             MeetingInvitationDTO(
                 MeetingDTO(
                     listOf(proposedSlot),
-                    InitiatorDTO(initiatorFullName, initiatorEmail)
+                    UserPublicDTO(initiatorId, initiatorFullName, initiatorEmail)
                 ),
                 meetingCode,
                 meetingUrl,
@@ -183,6 +184,7 @@ class MeetingControllerTest(
                         "endDateTime": "2021-01-01T13:00:00Z"
                      }],
                     "initiator": {
+                        "userId": $initiatorId,
                         "fullName": $initiatorFullName,
                         "email": $initiatorEmail
                     }
@@ -205,6 +207,7 @@ class MeetingControllerTest(
 
     @Test
     fun `load meeting proposal`() {
+        val userId = UUID.randomUUID()
         val meetingCode = "code"
         val proposedSlot = MeetingSlotDTO(
             ZonedDateTime.parse("2021-01-01T12:00:00Z"),
@@ -215,7 +218,7 @@ class MeetingControllerTest(
         ).thenReturn(
             ProposedMeetingDTO(
                 listOf(proposedSlot),
-                InitiatorDTO("test", "test@meetsama.com"),
+                UserPublicDTO(userId, "test", "test@meetsama.com"),
                 MeetingAppLinksDTO("http://download.me")
             )
         )
@@ -227,6 +230,7 @@ class MeetingControllerTest(
                     "endDateTime": "2021-01-01T13:00:00Z"
                  }],
                 "initiator": {
+                    "userId": $userId,
                     "fullName": "test",
                     "email": "test@meetsama.com"
                 },

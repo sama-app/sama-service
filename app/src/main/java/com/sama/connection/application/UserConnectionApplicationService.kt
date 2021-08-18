@@ -1,10 +1,14 @@
 package com.sama.connection.application
 
 import com.sama.common.ApplicationService
-import com.sama.connection.domain.*
+import com.sama.connection.domain.ConnectionRequest
+import com.sama.connection.domain.ConnectionRequestId
+import com.sama.connection.domain.ConnectionRequestRepository
+import com.sama.connection.domain.DiscoveredUserListRepository
+import com.sama.connection.domain.UserConnection
+import com.sama.connection.domain.UserConnectionRepository
+import com.sama.users.application.InternalUserService
 import com.sama.users.domain.UserId
-import com.sama.users.infrastructure.jpa.UserJpaRepository
-import com.sama.users.infrastructure.jpa.findIdByPublicIdOrThrow
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -12,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional
 @ApplicationService
 @Service
 class UserConnectionApplicationService(
-    private val userRepository: UserJpaRepository,
+    private val userService: InternalUserService,
     private val connectionRequestRepository: ConnectionRequestRepository,
     private val userConnectionRepository: UserConnectionRepository,
     private val discoveredUserListRepository: DiscoveredUserListRepository,
@@ -35,7 +39,7 @@ class UserConnectionApplicationService(
 
     @Transactional
     fun createConnectionRequest(initiatorId: UserId, command: CreateConnectionRequestCommand): ConnectionRequestDTO {
-        val recipientId = userRepository.findIdByPublicIdOrThrow(command.recipientId)
+        val recipientId = userService.translatePublicId(command.recipientId)
 
         val connectionRequest = connectionRequestRepository.findPendingByUserIds(initiatorId, recipientId)
         if (connectionRequest != null) {
@@ -75,7 +79,7 @@ class UserConnectionApplicationService(
 
     @Transactional
     fun removeUserConnection(userId: UserId, command: RemoveUserConnectionCommand) {
-        val recipientId = userRepository.findIdByPublicIdOrThrow(command.userId)
+        val recipientId = userService.translatePublicId(command.userId)
         userConnectionRepository.delete(UserConnection(userId, recipientId))
     }
 }

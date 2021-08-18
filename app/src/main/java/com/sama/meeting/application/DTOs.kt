@@ -4,6 +4,7 @@ import com.sama.meeting.domain.MeetingCode
 import com.sama.meeting.domain.MeetingIntent
 import com.sama.meeting.domain.MeetingIntentCode
 import com.sama.meeting.domain.MeetingSlot
+import com.sama.users.application.UserPublicDTO
 import com.sama.users.infrastructure.jpa.UserEntity
 import java.time.ZonedDateTime
 
@@ -34,18 +35,9 @@ fun MeetingSlotDTO.toValueObject(): MeetingSlot {
     return MeetingSlot(this.startDateTime, this.endDateTime)
 }
 
-fun UserEntity.toInitiatorDTO(): InitiatorDTO {
-    return InitiatorDTO(this.fullName, this.email)
-}
-
-data class InitiatorDTO(
-    val fullName: String?,
-    val email: String
-)
-
 data class ProposedMeetingDTO(
     val proposedSlots: List<MeetingSlotDTO>,
-    val initiator: InitiatorDTO,
+    val initiator: UserPublicDTO,
     val appLinks: MeetingAppLinksDTO?
 )
 
@@ -53,7 +45,7 @@ data class MeetingAppLinksDTO(val iosAppDownloadLink: String)
 
 data class MeetingDTO(
     val proposedSlots: List<MeetingSlotDTO>,
-    val initiator: InitiatorDTO
+    val initiator: UserPublicDTO
 )
 
 data class MeetingInvitationDTO(
