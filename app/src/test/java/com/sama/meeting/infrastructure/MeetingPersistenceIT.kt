@@ -1,32 +1,25 @@
 package com.sama.meeting.infrastructure
 
 import com.sama.common.BasePersistenceIT
-import com.sama.common.findByIdOrThrow
-import com.sama.meeting.domain.ConfirmedMeeting
-import com.sama.meeting.domain.MeetingRecipient
-import com.sama.meeting.domain.MeetingSlot
-import com.sama.meeting.domain.MeetingStatus
-import com.sama.meeting.domain.ProposedMeeting
-import com.sama.meeting.domain.aggregates.MeetingEntity
+import com.sama.meeting.domain.*
 import com.sama.meeting.domain.aggregates.MeetingIntentEntity
-import com.sama.meeting.domain.meetingFrom
-import com.sama.meeting.domain.repositories.MeetingIntentRepository
-import com.sama.meeting.domain.repositories.MeetingRepository
+import com.sama.meeting.infrastructure.jpa.MeetingIntentJpaRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.test.context.ContextConfiguration
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import kotlin.test.assertNotEquals
 
-
+@ContextConfiguration(classes = [MeetingRepositoryImpl::class])
 class MeetingPersistenceIT : BasePersistenceIT<MeetingRepository>() {
 
     @Autowired
-    private lateinit var meetingIntentRepository: MeetingIntentRepository
+    private lateinit var meetingIntentRepository: MeetingIntentJpaRepository
 
     // common
     private val meetingIntentId = 11L
@@ -52,7 +45,7 @@ class MeetingPersistenceIT : BasePersistenceIT<MeetingRepository>() {
     }
 
     @Test
-    fun `meeting persists from proposed domain entity`() {
+    fun `proposed meeting persistance`() {
         val meetingId = 21L
         val proposedMeeting = ProposedMeeting(
             meetingId,
@@ -68,57 +61,53 @@ class MeetingPersistenceIT : BasePersistenceIT<MeetingRepository>() {
             "meeting-code"
         )
 
-        val toPersist = MeetingEntity.new(proposedMeeting)
-
         // act
-        underTest.save(toPersist)
-        val persisted = underTest.findByIdOrThrow(meetingId)
+        underTest.save(proposedMeeting)
+        val persisted = underTest.findByIdOrThrow(proposedMeeting.meetingId)
 
         // verify
         assertThat(persisted).usingRecursiveComparison()
-            .ignoringFields("proposedSlots.id") // db generated
-            .isEqualTo(toPersist)
-        assertThat(persisted.proposedSlots).allMatch { it.id != null }
-
-        assertThat(meetingFrom(meetingIntentEntity, persisted).getOrNull())
-            .usingRecursiveComparison()
             .isEqualTo(proposedMeeting)
     }
 
     @Test
-    fun `meeting persists from applied domain entity changes`() {
+    fun `confirmed meeting persistance`() {
         val meetingId = 21L
         val meetingCode = "meeting-code"
+        val initiatorId = 1L
 
-        val entity = MeetingEntity()
-        entity.id = meetingId
-        entity.code = meetingCode
-        entity.meetingIntentId = meetingIntentId
-        entity.status = MeetingStatus.PROPOSED
-        entity.createdAt = Instant.now()
-        entity.updatedAt = Instant.now()
-        underTest.save(entity)
+        // act
+        val proposedMeeting = ProposedMeeting(
+            meetingId,
+            meetingIntentId,
+            initiatorId,
+            Duration.ofMinutes(60),
+            listOf(
+                MeetingSlot(
+                    ZonedDateTime.now(clock).plusHours(3),
+                    ZonedDateTime.now(clock).plusHours(4)
+                )
+            ),
+            meetingCode
+        )
+
+        underTest.save(proposedMeeting)
 
         val confirmedMeeting = ConfirmedMeeting(
-            meetingId, 1L, Duration.ofMinutes(60),
+            meetingId, initiatorId, Duration.ofMinutes(60),
             MeetingRecipient(2L, "test@meetsama.com"),
             MeetingSlot(
                 ZonedDateTime.now(clock).plusHours(3),
                 ZonedDateTime.now(clock).plusHours(4)
             )
         )
-        val toPersist = entity.applyChanges(confirmedMeeting)
 
         // act
-        underTest.save(toPersist)
-        val persisted = underTest.findByIdOrThrow(meetingId)
+        underTest.save(confirmedMeeting)
+        val persisted = underTest.findByIdOrThrow(confirmedMeeting.meetingId)
 
         // verify
         assertThat(persisted).usingRecursiveComparison()
-            .isEqualTo(toPersist)
-
-        assertThat(meetingFrom(meetingIntentEntity, persisted).getOrNull())
-            .usingRecursiveComparison()
             .isEqualTo(confirmedMeeting)
     }
 
@@ -126,21 +115,30 @@ class MeetingPersistenceIT : BasePersistenceIT<MeetingRepository>() {
     fun `find by code`() {
         val meetingId = 21L
         val meetingCode = "meeting-code"
-
-        val entity = MeetingEntity()
-        entity.id = meetingId
-        entity.code = meetingCode
-        entity.meetingIntentId = meetingIntentId
-        entity.status = MeetingStatus.PROPOSED
-        entity.createdAt = Instant.now()
-        entity.updatedAt = Instant.now()
-        underTest.save(entity)
+        val initiatorId = 1L
 
         // act
-        val persisted = underTest.findByCode(meetingCode)
+        val proposedMeeting = ProposedMeeting(
+            meetingId,
+            meetingIntentId,
+            initiatorId,
+            Duration.ofMinutes(60),
+            listOf(
+                MeetingSlot(
+                    ZonedDateTime.now(clock).plusHours(3),
+                    ZonedDateTime.now(clock).plusHours(4)
+                )
+            ),
+            meetingCode
+        )
+
+        underTest.save(proposedMeeting)
+
+        // act
+        val persisted = underTest.findByCodeOrThrow(meetingCode)
 
         // verify
-        assertThat(persisted!!.id).isEqualTo(meetingId)
+        assertThat(persisted.meetingId).isEqualTo(meetingId)
     }
 
     @Test
@@ -167,18 +165,20 @@ class MeetingPersistenceIT : BasePersistenceIT<MeetingRepository>() {
             ),
             "code"
         )
-        underTest.save(MeetingEntity.new(proposedMeeting))
+        underTest.save(proposedMeeting)
 
         // act
-        val actual = underTest.findAllProposedSlots(initiatorId,
+        val actual = underTest.findAllProposedSlots(
+            initiatorId,
             ZonedDateTime.now(clock).plusDays(1),
-            ZonedDateTime.now(clock).plusDays(2))
+            ZonedDateTime.now(clock).plusDays(2)
+        )
 
         assertThat(actual).containsExactly(expected)
     }
 
     @Test
-    fun `find ids for expiring`() {
+    fun `find expiring`() {
         val validMeetingId = 22L
         val validMeeting = ProposedMeeting(
             validMeetingId,
@@ -216,22 +216,18 @@ class MeetingPersistenceIT : BasePersistenceIT<MeetingRepository>() {
             ),
             "meeting-code-2"
         )
-        underTest.saveAll(
-            listOf(
-                MeetingEntity.new(validMeeting),
-                MeetingEntity.new(expiringMeeting)
-            )
-        )
+        underTest.save(validMeeting)
+        underTest.save(expiringMeeting)
 
         // act
-        val result = underTest.findAllIdsExpiring(ZonedDateTime.now(clock))
+        val result = underTest.findAllExpiring(ZonedDateTime.now(clock))
 
         // verify
-        assertThat(result).containsExactly(expiringMeetingId)
+        assertThat(result).containsExactly(ExpiredMeeting(expiringMeetingId))
     }
 
     @Test
-    fun `update status and code`() {
+    fun `save all expired`() {
         val expiringMeetingId = 21L
         val expiringMeeting = ProposedMeeting(
             expiringMeetingId,
@@ -246,13 +242,13 @@ class MeetingPersistenceIT : BasePersistenceIT<MeetingRepository>() {
             ),
             "meeting-code"
         )
-        underTest.save(MeetingEntity.new(expiringMeeting))
+        underTest.save(expiringMeeting)
 
         // act
-        underTest.updateStatus(MeetingStatus.EXPIRED, listOf(expiringMeetingId))
+        underTest.saveAllExpired(listOf(ExpiredMeeting(expiringMeetingId)))
 
         // verify
         val result = underTest.findByIdOrThrow(expiringMeetingId)
-        assertThat(result.status!!).isEqualTo(MeetingStatus.EXPIRED)
+        assertThat(result.status).isEqualTo(MeetingStatus.EXPIRED)
     }
 }

@@ -3,8 +3,8 @@ package com.sama.meeting.application
 import com.sama.common.findByIdOrThrow
 import com.sama.meeting.configuration.MeetingProposalMessageModel
 import com.sama.meeting.configuration.MeetingUrlConfiguration
+import com.sama.meeting.configuration.toUrl
 import com.sama.meeting.domain.ProposedMeeting
-import com.sama.meeting.domain.toUrl
 import com.sama.users.domain.UserRepository
 import com.samskivert.mustache.Template
 import java.time.Instant

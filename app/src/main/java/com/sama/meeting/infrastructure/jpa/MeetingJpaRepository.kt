@@ -1,4 +1,4 @@
-package com.sama.meeting.domain.repositories
+package com.sama.meeting.infrastructure.jpa
 
 import com.sama.common.DomainRepository
 import com.sama.common.NotFoundException
@@ -15,9 +15,8 @@ import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
 import java.time.ZonedDateTime
 
-@DomainRepository
 @Repository
-interface MeetingRepository : JpaRepository<MeetingEntity, MeetingId> {
+interface MeetingJpaRepository : JpaRepository<MeetingEntity, MeetingId> {
     @Query("select nextval('sama.meeting_id_seq')", nativeQuery = true)
     fun nextIdentity(): MeetingId
 
@@ -46,5 +45,5 @@ interface MeetingRepository : JpaRepository<MeetingEntity, MeetingId> {
     fun updateStatus(status: MeetingStatus, ids: Collection<MeetingId>)
 }
 
-fun MeetingRepository.findByCodeOrThrow(code: MeetingCode): MeetingEntity = findByCode(code)
+fun MeetingJpaRepository.findByCodeOrThrow(code: MeetingCode): MeetingEntity = findByCode(code)
     ?: throw NotFoundException(MeetingEntity::class, "code", code)

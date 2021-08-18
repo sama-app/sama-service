@@ -14,23 +14,9 @@ data class MeetingIntent(
     val duration: Duration,
     val timezone: ZoneId,
     val suggestedSlots: List<MeetingSlot>,
+    val code: MeetingIntentCode? = null
 ) {
-    val minimumDuration = Duration.ofMinutes(15)
-
-    @Factory
-    companion object {
-        fun of(meetingIntentEntity: MeetingIntentEntity): Result<MeetingIntent> {
-            return kotlin.runCatching {
-                MeetingIntent(
-                    meetingIntentEntity.id!!, meetingIntentEntity.initiatorId!!,
-                    Duration.ofMinutes(meetingIntentEntity.durationMinutes!!),
-                    meetingIntentEntity.timezone!!,
-                    meetingIntentEntity.suggestedSlots
-                        .map { MeetingSlot(it.startDateTime, it.endDateTime) }
-                )
-            }
-        }
-    }
+    private val minimumDuration: Duration = Duration.ofMinutes(15)
 
     init {
         if (duration < minimumDuration) {
@@ -65,8 +51,6 @@ data class MeetingIntent(
 
     private fun validateSlots(slots: List<MeetingSlot>) {
         slots.firstOrNull { it.duration() < duration }
-            ?.run {
-                throw InvalidMeetingSlotException(this)
-            }
+            ?.run { throw InvalidMeetingSlotException(this) }
     }
 }

@@ -1,4 +1,4 @@
-package com.sama.meeting.domain.repositories
+package com.sama.meeting.infrastructure.jpa
 
 import com.sama.common.DomainRepository
 import com.sama.common.NotFoundException
@@ -10,9 +10,8 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
 
-@DomainRepository
 @Repository
-interface MeetingIntentRepository : JpaRepository<MeetingIntentEntity, MeetingIntentId> {
+interface MeetingIntentJpaRepository : JpaRepository<MeetingIntentEntity, MeetingIntentId> {
     @Query("select nextval('sama.meeting_intent_id_seq')", nativeQuery = true)
     fun nextIdentity(): MeetingIntentId
 
@@ -23,5 +22,5 @@ interface MeetingIntentRepository : JpaRepository<MeetingIntentEntity, MeetingIn
     fun existsByCodeAndInitiatorId(code: MeetingIntentCode, initiatorId: UserId): Boolean
 }
 
-fun MeetingIntentRepository.findByCodeOrThrow(code: MeetingIntentCode): MeetingIntentEntity = findByCode(code)
+fun MeetingIntentJpaRepository.findByCodeOrThrow(code: MeetingIntentCode): MeetingIntentEntity = findByCode(code)
     ?: throw NotFoundException(MeetingIntentEntity::class, "code", code)

@@ -1,4 +1,4 @@
-package com.sama.meeting.domain.repositories
+package com.sama.meeting.domain
 
 import com.sama.meeting.domain.MeetingCode
 
