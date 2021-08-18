@@ -1,14 +1,13 @@
 package com.sama.connection.application
 
 import com.sama.connection.domain.ConnectionRequestId
+import com.sama.users.application.UserPublicDTO
 import java.util.UUID
 
 data class UserConnectionsDTO(
-    val connectedUsers: List<UserDTO>,
-    val discoveredUsers: List<UserDTO>
+    val connectedUsers: List<UserPublicDTO>,
+    val discoveredUsers: List<UserPublicDTO>
 )
-
-data class UserDTO(val userId: UUID, val email: String, val fullName: String?)
 
 data class ConnectionRequestsDTO(
     val initiatedConnectionRequests: List<ConnectionRequestDTO>,
@@ -17,6 +16,6 @@ data class ConnectionRequestsDTO(
 
 data class ConnectionRequestDTO(
     val connectionRequestId: ConnectionRequestId,
-    val initiator: UserDTO,
-    val recipient: UserDTO
+    val initiator: UserPublicDTO,
+    val recipient: UserPublicDTO
 )

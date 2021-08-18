@@ -1,14 +1,31 @@
 package com.sama.users.infrastructure
 
 import com.sama.common.findByIdOrThrow
-import com.sama.users.domain.*
-import com.sama.users.infrastructure.jpa.*
+import com.sama.users.domain.UserDetails
+import com.sama.users.domain.UserDeviceRegistrations
+import com.sama.users.domain.UserGoogleCredential
+import com.sama.users.domain.UserId
+import com.sama.users.domain.UserJwtIssuer
+import com.sama.users.domain.UserPublicId
+import com.sama.users.domain.UserRepository
+import com.sama.users.infrastructure.jpa.UserEntity
+import com.sama.users.infrastructure.jpa.UserJpaRepository
+import com.sama.users.infrastructure.jpa.applyChanges
+import com.sama.users.infrastructure.jpa.findByEmailOrThrow
+import com.sama.users.infrastructure.jpa.findByPublicIdOrThrow
+import com.sama.users.infrastructure.jpa.findIdByEmailOrThrow
+import com.sama.users.infrastructure.jpa.findIdByPublicIdOrThrow
 import org.springframework.stereotype.Component
 
 @Component
 class UserRepositoryImpl(private val userJpaRepository: UserJpaRepository) : UserRepository {
     override fun findByIdOrThrow(userId: UserId): UserDetails {
         return userJpaRepository.findByIdOrThrow(userId).toUserDetails()
+    }
+
+    override fun findByIds(ids: Collection<UserId>): List<UserDetails> {
+        return userJpaRepository.findAllById(ids)
+            .map { it.toUserDetails() }
     }
 
     override fun findJwtIssuerByIdOrThrow(userId: UserId): UserJwtIssuer {
@@ -29,10 +46,6 @@ class UserRepositoryImpl(private val userJpaRepository: UserJpaRepository) : Use
 
     override fun findAllIds(): Set<UserId> {
         return userJpaRepository.findAllIds()
-    }
-
-    override fun findPublicDetailsById(ids: Set<UserId>): List<UserDetails> {
-        return userJpaRepository.findPublicDetailsById(ids)
     }
 
     override fun findByEmailOrThrow(email: String): UserDetails {

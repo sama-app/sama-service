@@ -4,21 +4,32 @@ import com.sama.calendar.application.CalendarEventConsumer
 import com.sama.calendar.application.EventApplicationService
 import com.sama.common.ApplicationService
 import com.sama.common.NotFoundException
-import com.sama.common.findByIdOrThrow
 import com.sama.common.toMinutes
 import com.sama.comms.application.CommsEventConsumer
-import com.sama.meeting.domain.*
+import com.sama.meeting.domain.ConfirmedMeeting
+import com.sama.meeting.domain.ExpiredMeeting
+import com.sama.meeting.domain.InvalidMeetingStatusException
+import com.sama.meeting.domain.MeetingAlreadyConfirmedException
+import com.sama.meeting.domain.MeetingCode
+import com.sama.meeting.domain.MeetingCodeGenerator
+import com.sama.meeting.domain.MeetingConfirmedEvent
+import com.sama.meeting.domain.MeetingIntent
+import com.sama.meeting.domain.MeetingIntentRepository
+import com.sama.meeting.domain.MeetingRecipient
+import com.sama.meeting.domain.MeetingRepository
+import com.sama.meeting.domain.MeetingSlot
+import com.sama.meeting.domain.ProposedMeeting
 import com.sama.slotsuggestion.application.SlotSuggestionRequest
 import com.sama.slotsuggestion.application.SlotSuggestionService
+import com.sama.users.application.InternalUserService
 import com.sama.users.domain.UserId
-import com.sama.users.infrastructure.jpa.UserJpaRepository
 import io.sentry.spring.tracing.SentryTransaction
+import java.time.Clock
+import java.time.ZonedDateTime
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.time.Clock
-import java.time.ZonedDateTime
 
 @ApplicationService
 @Service
@@ -30,7 +41,7 @@ class MeetingApplicationService(
     private val meetingView: MeetingView,
     private val meetingCodeGenerator: MeetingCodeGenerator,
     private val eventApplicationService: EventApplicationService,
-    private val userRepository: UserJpaRepository,
+    private val userService: InternalUserService,
     private val calendarEventConsumer: CalendarEventConsumer,
     private val commsEventConsumer: CommsEventConsumer,
     private val clock: Clock,
@@ -108,12 +119,14 @@ class MeetingApplicationService(
         }
 
         val meetingRecipient = if (command.recipientEmail != null) {
-            userRepository.findByEmail(command.recipientEmail)
-                ?.let { MeetingRecipient.fromUser(it) }
-                ?: MeetingRecipient.fromEmail(command.recipientEmail)
+            try {
+                userService.findInternalByEmail(command.recipientEmail)
+                    .let { MeetingRecipient.fromUser(it) }
+            } catch (e: NotFoundException) {
+                MeetingRecipient.fromEmail(command.recipientEmail)
+            }
         } else {
-            userRepository.findByIdOrThrow(userId!!)
-                .let { MeetingRecipient.fromUser(it) }
+            MeetingRecipient.fromUserId(userId!!)
         }
 
         val confirmedMeeting = proposedMeeting

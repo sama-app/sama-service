@@ -1,25 +1,23 @@
 package com.sama.connection.application
 
 import com.sama.connection.domain.ConnectionRequest
-import com.sama.users.domain.UserDetails
+import com.sama.users.application.UserService
 import com.sama.users.domain.UserId
-import com.sama.users.infrastructure.jpa.UserJpaRepository
 import org.springframework.stereotype.Component
 
 @Component
-class UserConnectionViews(private val userRepository: UserJpaRepository) {
+class UserConnectionViews(private val userService: UserService) {
 
     fun renderUserConnections(discoveredUsers: Set<UserId>, connectedUsers: Collection<UserId>): UserConnectionsDTO {
         val allUserIds = discoveredUsers.plus(connectedUsers)
-        val userIdToPublicDetails = userRepository.findPublicDetailsById(allUserIds)
-            .associateBy { it.id }
+        val userIdToPublicDetails = userService.findAll(allUserIds)
 
         return UserConnectionsDTO(
             connectedUsers.mapNotNull { connectionUserId ->
-                userIdToPublicDetails[connectionUserId]?.toUserDTO()
+                userIdToPublicDetails[connectionUserId]
             },
             discoveredUsers.mapNotNull { connectionUserId ->
-                userIdToPublicDetails[connectionUserId]?.toUserDTO()
+                userIdToPublicDetails[connectionUserId]
             },
         )
     }
@@ -40,17 +38,12 @@ class UserConnectionViews(private val userRepository: UserJpaRepository) {
     }
 
     private fun ConnectionRequest.toDTO(): ConnectionRequestDTO {
-        val userDetails = userRepository.findPublicDetailsById(setOf(this.initiatorUserId, this.recipientUserId))
-            .associateBy { it.id }
+        val userIdToPublicDetails = userService.findAll(setOf(this.initiatorUserId, this.recipientUserId))
 
         return ConnectionRequestDTO(
             id,
-            initiator = userDetails[initiatorUserId]!!.toUserDTO(),
-            recipient = userDetails[recipientUserId]!!.toUserDTO()
+            initiator = userIdToPublicDetails[initiatorUserId]!!,
+            recipient = userIdToPublicDetails[recipientUserId]!!
         )
-    }
-
-    private fun UserDetails.toUserDTO(): UserDTO {
-        return UserDTO(publicId!!, email, fullName)
     }
 }

@@ -50,19 +50,19 @@ class UserControllerTest(
 
     @Test
     fun `get user public details`() {
-        val userDTO = UserDTO(
+        val userPublicDTO = UserPublicDTO(
             UUID.randomUUID(),
             "test name",
             "test@meetsama.com"
         )
-        whenever(userApplicationService.findPublicDetails(eq(userId)))
-            .thenReturn(userDTO)
+        whenever(userApplicationService.find(eq(userId)))
+            .thenReturn(userPublicDTO)
 
         val expectedJson = """
         {
-           "userId": "${userDTO.userId}",
-           "fullName": "${userDTO.fullName}",
-           "email": "${userDTO.email}"
+           "userId": "${userPublicDTO.userId}",
+           "fullName": "${userPublicDTO.fullName}",
+           "email": "${userPublicDTO.email}"
         }
         """
 

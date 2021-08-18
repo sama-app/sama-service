@@ -3,19 +3,18 @@ package com.sama.calendar.application
 import com.sama.calendar.domain.Event
 import com.sama.calendar.domain.EventRepository
 import com.sama.common.ApplicationService
-import com.sama.common.findByIdOrThrow
+import com.sama.users.application.UserService
 import com.sama.users.domain.UserId
-import com.sama.users.infrastructure.jpa.UserJpaRepository
-import org.springframework.beans.factory.annotation.Value
-import org.springframework.stereotype.Service
 import java.time.LocalDate
 import java.time.ZoneId
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.stereotype.Service
 
 @ApplicationService
 @Service
 class EventApplicationService(
     private val eventRepository: EventRepository,
-    private val userRepository: UserJpaRepository,
+    private val userService: UserService,
     @Value("\${sama.landing.url}") private val samaWebUrl: String,
 ) {
 
@@ -30,7 +29,7 @@ class EventApplicationService(
 
 
     fun createEvent(userId: UserId, command: CreateEventCommand) {
-        val initiatorName = userRepository.findByIdOrThrow(userId).fullName
+        val initiatorName = userService.find(userId).fullName
 
         val block = Event(
             command.startDateTime,

@@ -1,24 +1,23 @@
 package com.sama.meeting.application
 
-import com.sama.common.findByIdOrThrow
 import com.sama.meeting.configuration.MeetingProposalMessageModel
 import com.sama.meeting.configuration.MeetingUrlConfiguration
 import com.sama.meeting.configuration.toUrl
 import com.sama.meeting.domain.ProposedMeeting
-import com.sama.users.infrastructure.jpa.UserJpaRepository
+import com.sama.users.application.UserService
 import com.samskivert.mustache.Template
-import org.springframework.stereotype.Component
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter.ofLocalizedDateTime
 import java.time.format.DateTimeFormatter.ofLocalizedTime
 import java.time.format.FormatStyle.MEDIUM
 import java.time.format.FormatStyle.SHORT
-import java.util.*
+import java.util.Locale
+import org.springframework.stereotype.Component
 
 @Component
 class MeetingInvitationView(
-    private val userRepository: UserJpaRepository,
+    private val userService: UserService,
     private val meetingUrlConfiguration: MeetingUrlConfiguration,
     private val meetingProposalMessageTemplate: Template,
 ) {
@@ -39,12 +38,12 @@ class MeetingInvitationView(
             )
         )
 
-        val initiator = userRepository.findByIdOrThrow(proposedMeeting.initiatorId)
+        val initiator = userService.find(proposedMeeting.initiatorId)
 
         return MeetingInvitationDTO(
             MeetingDTO(
                 proposedMeeting.proposedSlots.map { it.toDTO() },
-                initiator.toInitiatorDTO()
+                initiator
             ),
             proposedMeeting.meetingCode,
             meetingUrl,

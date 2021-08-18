@@ -26,8 +26,8 @@ class UserController(
         "/api/user/me/",
         produces = [APPLICATION_JSON_VALUE]
     )
-    fun getPublicDetails(@AuthUserId userId: UserId?): UserDTO =
-        userApplicationService.findPublicDetails(userId!!)
+    fun getPublicDetails(@AuthUserId userId: UserId?): UserPublicDTO =
+        userApplicationService.find(userId!!)
 
     @Operation(
         summary = "Register a device for push notifications via Firebase",

@@ -4,6 +4,8 @@ import com.sama.meeting.configuration.MeetingProposalMessageConfiguration
 import com.sama.meeting.configuration.MeetingUrlConfiguration
 import com.sama.meeting.domain.MeetingSlot
 import com.sama.meeting.domain.ProposedMeeting
+import com.sama.users.application.UserPublicDTO
+import com.sama.users.application.UserService
 import com.sama.users.infrastructure.jpa.UserEntity
 import com.sama.users.infrastructure.jpa.UserJpaRepository
 import org.junit.jupiter.api.Test
@@ -41,7 +43,7 @@ class MeetingInvitationServiceTestConfiguration {
 )
 class MeetingInvitationViewTest {
     @MockBean
-    lateinit var userRepository: UserJpaRepository
+    lateinit var userService: UserService
 
     @Autowired
     lateinit var underTest: MeetingInvitationView
@@ -57,9 +59,9 @@ class MeetingInvitationViewTest {
         val _11am = _9am.plusHours(2)
 
         val initiatorId = 1L
-        val initiatorEntity = UserEntity("test@meetsama.com").apply { this.fullName = "test" }
-        whenever(userRepository.findById(initiatorId))
-            .thenReturn(Optional.of(initiatorEntity))
+        val initiator = UserPublicDTO(UUID.randomUUID(), "test", "test@meetsama.com")
+        whenever(userService.find(initiatorId))
+            .thenReturn(initiator)
 
         val actual = underTest.render(
             ProposedMeeting(
@@ -84,9 +86,10 @@ class MeetingInvitationViewTest {
         """.trimIndent()
         val expected = MeetingInvitationDTO(
             meeting = MeetingDTO(
-                initiator = InitiatorDTO(
-                    initiatorEntity.fullName,
-                    initiatorEntity.email
+                initiator = UserPublicDTO(
+                    initiator.userId,
+                    initiator.fullName,
+                    initiator.email
                 ),
                 proposedSlots = listOf(
                     MeetingSlotDTO(_9am, _9am.plusMinutes(15)),
