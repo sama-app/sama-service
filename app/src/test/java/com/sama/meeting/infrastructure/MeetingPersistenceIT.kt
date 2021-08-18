@@ -1,19 +1,29 @@
 package com.sama.meeting.infrastructure
 
 import com.sama.common.BasePersistenceIT
-import com.sama.meeting.domain.*
-import com.sama.meeting.domain.aggregates.MeetingIntentEntity
+import com.sama.meeting.domain.ConfirmedMeeting
+import com.sama.meeting.domain.ExpiredMeeting
+import com.sama.meeting.domain.MeetingCode
+import com.sama.meeting.domain.MeetingId
+import com.sama.meeting.domain.MeetingIntentId
+import com.sama.meeting.domain.MeetingRecipient
+import com.sama.meeting.domain.MeetingRepository
+import com.sama.meeting.domain.MeetingSlot
+import com.sama.meeting.domain.MeetingStatus
+import com.sama.meeting.domain.ProposedMeeting
+import com.sama.meeting.infrastructure.jpa.MeetingIntentEntity
 import com.sama.meeting.infrastructure.jpa.MeetingIntentJpaRepository
-import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.test.context.ContextConfiguration
+import com.sama.users.domain.UserId
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import kotlin.test.assertNotEquals
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.test.context.ContextConfiguration
 
 @ContextConfiguration(classes = [MeetingRepositoryImpl::class])
 class MeetingPersistenceIT : BasePersistenceIT<MeetingRepository>() {
@@ -22,9 +32,9 @@ class MeetingPersistenceIT : BasePersistenceIT<MeetingRepository>() {
     private lateinit var meetingIntentRepository: MeetingIntentJpaRepository
 
     // common
-    private val meetingIntentId = 11L
+    private val meetingIntentId = MeetingIntentId(11)
     private val meetingIntentEntity = MeetingIntentEntity().apply {
-        this.id = meetingIntentId
+        this.id = meetingIntentId.id
         this.initiatorId = 1L
         this.durationMinutes = 60
         this.timezone = ZoneId.systemDefault()
@@ -45,12 +55,12 @@ class MeetingPersistenceIT : BasePersistenceIT<MeetingRepository>() {
     }
 
     @Test
-    fun `proposed meeting persistance`() {
-        val meetingId = 21L
+    fun `proposed meeting persistence`() {
+        val meetingId = MeetingId(21)
         val proposedMeeting = ProposedMeeting(
             meetingId,
             meetingIntentId,
-            1L,
+            UserId(1),
             Duration.ofMinutes(60),
             listOf(
                 MeetingSlot(
@@ -58,7 +68,7 @@ class MeetingPersistenceIT : BasePersistenceIT<MeetingRepository>() {
                     ZonedDateTime.now(clock).plusHours(4)
                 )
             ),
-            "meeting-code"
+            MeetingCode("VGsUTGno")
         )
 
         // act
@@ -72,9 +82,9 @@ class MeetingPersistenceIT : BasePersistenceIT<MeetingRepository>() {
 
     @Test
     fun `confirmed meeting persistance`() {
-        val meetingId = 21L
-        val meetingCode = "meeting-code"
-        val initiatorId = 1L
+        val meetingId = MeetingId(21)
+        val meetingCode = MeetingCode("VGsUTGno")
+        val initiatorId = UserId(1)
 
         // act
         val proposedMeeting = ProposedMeeting(
@@ -95,7 +105,7 @@ class MeetingPersistenceIT : BasePersistenceIT<MeetingRepository>() {
 
         val confirmedMeeting = ConfirmedMeeting(
             meetingId, initiatorId, Duration.ofMinutes(60),
-            MeetingRecipient(2L, "test@meetsama.com"),
+            MeetingRecipient(UserId(2), "test@meetsama.com"),
             MeetingSlot(
                 ZonedDateTime.now(clock).plusHours(3),
                 ZonedDateTime.now(clock).plusHours(4)
@@ -113,9 +123,9 @@ class MeetingPersistenceIT : BasePersistenceIT<MeetingRepository>() {
 
     @Test
     fun `find by code`() {
-        val meetingId = 21L
-        val meetingCode = "meeting-code"
-        val initiatorId = 1L
+        val meetingId = MeetingId(21)
+        val meetingCode = MeetingCode("VGsUTGno")
+        val initiatorId = UserId(1)
 
         // act
         val proposedMeeting = ProposedMeeting(
@@ -143,8 +153,8 @@ class MeetingPersistenceIT : BasePersistenceIT<MeetingRepository>() {
 
     @Test
     fun `find future proposed slots`() {
-        val validMeetingId = 22L
-        val initiatorId = 1L
+        val validMeetingId = MeetingId(21)
+        val initiatorId = UserId(1)
 
         val expected = MeetingSlot(
             ZonedDateTime.now(clock).plusDays(1).plusMinutes(1),
@@ -163,7 +173,7 @@ class MeetingPersistenceIT : BasePersistenceIT<MeetingRepository>() {
                 ),
                 expected
             ),
-            "code"
+            MeetingCode("VGsUTGno")
         )
         underTest.save(proposedMeeting)
 
@@ -179,11 +189,11 @@ class MeetingPersistenceIT : BasePersistenceIT<MeetingRepository>() {
 
     @Test
     fun `find expiring`() {
-        val validMeetingId = 22L
+        val validMeetingId = MeetingId(22)
         val validMeeting = ProposedMeeting(
             validMeetingId,
             meetingIntentId,
-            1L,
+            UserId(1),
             Duration.ofMinutes(60),
             listOf(
                 MeetingSlot(
@@ -195,14 +205,14 @@ class MeetingPersistenceIT : BasePersistenceIT<MeetingRepository>() {
                     ZonedDateTime.now(clock).plusMinutes(61)
                 )
             ),
-            "meeting-code-1"
+            MeetingCode("one")
         )
 
-        val expiringMeetingId = 21L
+        val expiringMeetingId = MeetingId(21)
         val expiringMeeting = ProposedMeeting(
             expiringMeetingId,
             meetingIntentId,
-            1L,
+            UserId(1),
             Duration.ofMinutes(60),
             listOf(
                 MeetingSlot(
@@ -214,7 +224,7 @@ class MeetingPersistenceIT : BasePersistenceIT<MeetingRepository>() {
                     ZonedDateTime.now(clock).plusMinutes(30)
                 )
             ),
-            "meeting-code-2"
+            MeetingCode("two")
         )
         underTest.save(validMeeting)
         underTest.save(expiringMeeting)
@@ -228,11 +238,11 @@ class MeetingPersistenceIT : BasePersistenceIT<MeetingRepository>() {
 
     @Test
     fun `save all expired`() {
-        val expiringMeetingId = 21L
+        val expiringMeetingId = MeetingId(21)
         val expiringMeeting = ProposedMeeting(
             expiringMeetingId,
             meetingIntentId,
-            1L,
+            UserId(1),
             Duration.ofMinutes(60),
             listOf(
                 MeetingSlot(
@@ -240,7 +250,7 @@ class MeetingPersistenceIT : BasePersistenceIT<MeetingRepository>() {
                     ZonedDateTime.now(clock).minusHours(4)
                 )
             ),
-            "meeting-code"
+            MeetingCode("VGsUTGno")
         )
         underTest.save(expiringMeeting)
 

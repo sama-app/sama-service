@@ -3,6 +3,7 @@ package com.sama.connection.infrastructure
 import com.sama.connection.domain.DiscoveredUserList
 import com.sama.connection.domain.DiscoveredUserListRepository
 import com.sama.users.domain.UserId
+import com.sama.users.infrastructure.toUserId
 import java.sql.Types
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations
@@ -16,7 +17,7 @@ class JdbcDiscoveredUserListRepository(private val namedParameterJdbcTemplate: N
 
     override fun findById(userId: UserId): DiscoveredUserList {
         val namedParameters: SqlParameterSource = MapSqlParameterSource()
-            .addValue("user_id", userId, Types.BIGINT)
+            .addValue("user_id", userId.id, Types.BIGINT)
 
         val discoveredUserIds = namedParameterJdbcTemplate.query(
             """
@@ -24,7 +25,7 @@ class JdbcDiscoveredUserListRepository(private val namedParameterJdbcTemplate: N
                 WHERE udu.user_id = :user_id
             """.trimIndent(),
             namedParameters
-        ) { rs, _ -> rs.getLong("discovered_user_id") }
+        ) { rs, _ -> rs.getLong("discovered_user_id").toUserId() }
 
         return DiscoveredUserList(userId, discoveredUserIds.toSet())
     }
@@ -37,8 +38,8 @@ class JdbcDiscoveredUserListRepository(private val namedParameterJdbcTemplate: N
                     WHERE udu.user_id = :user_id AND udu.discovered_user_id NOT IN (:discovered_user_ids)
                 """.trimIndent(),
                 MapSqlParameterSource()
-                    .addValue("user_id", discoveredUserList.userId, Types.BIGINT)
-                    .addValue("discovered_user_ids", discoveredUserList.discoveredUsers)
+                    .addValue("user_id", discoveredUserList.userId.id, Types.BIGINT)
+                    .addValue("discovered_user_ids", discoveredUserList.discoveredUsers.map { it.id })
             )
 
             namedParameterJdbcTemplate.batchUpdate(
@@ -50,8 +51,8 @@ class JdbcDiscoveredUserListRepository(private val namedParameterJdbcTemplate: N
                 discoveredUserList.discoveredUsers
                     .map {
                         MapSqlParameterSource()
-                            .addValue("user_id", discoveredUserList.userId, Types.BIGINT)
-                            .addValue("discovered_user_id", it, Types.BIGINT)
+                            .addValue("user_id", discoveredUserList.userId.id, Types.BIGINT)
+                            .addValue("discovered_user_id", it.id, Types.BIGINT)
                     }.toTypedArray()
             )
         } else {
@@ -61,7 +62,7 @@ class JdbcDiscoveredUserListRepository(private val namedParameterJdbcTemplate: N
                     WHERE udu.user_id = :user_id
                 """.trimIndent(),
                 MapSqlParameterSource()
-                    .addValue("user_id", discoveredUserList.userId, Types.BIGINT)
+                    .addValue("user_id", discoveredUserList.userId.id, Types.BIGINT)
             )
         }
     }

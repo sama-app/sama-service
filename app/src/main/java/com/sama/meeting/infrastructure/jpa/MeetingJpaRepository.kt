@@ -1,26 +1,22 @@
 package com.sama.meeting.infrastructure.jpa
 
-import com.sama.common.DomainRepository
 import com.sama.common.NotFoundException
-import com.sama.meeting.domain.MeetingCode
-import com.sama.meeting.domain.MeetingId
 import com.sama.meeting.domain.MeetingSlot
 import com.sama.meeting.domain.MeetingStatus
-import com.sama.meeting.domain.aggregates.MeetingEntity
 import com.sama.users.domain.UserId
+import java.time.ZonedDateTime
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
-import java.time.ZonedDateTime
 
 @Repository
-interface MeetingJpaRepository : JpaRepository<MeetingEntity, MeetingId> {
+interface MeetingJpaRepository : JpaRepository<MeetingEntity, Long> {
     @Query("select nextval('sama.meeting_id_seq')", nativeQuery = true)
-    fun nextIdentity(): MeetingId
+    fun nextIdentity(): Long
 
-    fun findByCode(code: MeetingCode): MeetingEntity?
+    fun findByCode(code: String): MeetingEntity?
 
     @Query(
         "SELECT m.id " +
@@ -28,7 +24,7 @@ interface MeetingJpaRepository : JpaRepository<MeetingEntity, MeetingId> {
                 "WHERE m.status = 'PROPOSED' GROUP BY m.id " +
                 "HAVING max(ps.startDateTime) < :expiryDateTime"
     )
-    fun findAllIdsExpiring(@Param("expiryDateTime") expiryDateTime: ZonedDateTime): Collection<MeetingId>
+    fun findAllIdsExpiring(@Param("expiryDateTime") expiryDateTime: ZonedDateTime): Collection<Long>
 
     @Query(
         "SELECT new com.sama.meeting.domain.MeetingSlot(mps.startDateTime, mps.endDateTime) " +
@@ -38,12 +34,16 @@ interface MeetingJpaRepository : JpaRepository<MeetingEntity, MeetingId> {
                 "   mps.startDateTime > :fromDateTime AND " +
                 "   mps.startDateTime < :endDateTime"
     )
-    fun findAllProposedSlots(initiatorId: UserId, fromDateTime: ZonedDateTime, endDateTime: ZonedDateTime): Collection<MeetingSlot>
+    fun findAllProposedSlots(
+        initiatorId: UserId,
+        fromDateTime: ZonedDateTime,
+        endDateTime: ZonedDateTime
+    ): Collection<MeetingSlot>
 
     @Modifying(clearAutomatically = true)
     @Query("UPDATE MeetingEntity m SET status = :status WHERE id IN :ids")
-    fun updateStatus(status: MeetingStatus, ids: Collection<MeetingId>)
+    fun updateStatus(status: MeetingStatus, ids: Collection<Long>)
 }
 
-fun MeetingJpaRepository.findByCodeOrThrow(code: MeetingCode): MeetingEntity = findByCode(code)
+fun MeetingJpaRepository.findByCodeOrThrow(code: String): MeetingEntity = findByCode(code)
     ?: throw NotFoundException(MeetingEntity::class, "code", code)

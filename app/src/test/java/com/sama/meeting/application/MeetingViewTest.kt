@@ -3,10 +3,15 @@ package com.sama.meeting.application
 import com.sama.meeting.configuration.MeetingAppLinkConfiguration
 import com.sama.meeting.configuration.MeetingUrlConfiguration
 import com.sama.meeting.domain.AvailableSlots
+import com.sama.meeting.domain.MeetingCode
+import com.sama.meeting.domain.MeetingId
+import com.sama.meeting.domain.MeetingIntentId
 import com.sama.meeting.domain.MeetingSlot
 import com.sama.meeting.domain.ProposedMeeting
 import com.sama.users.application.UserPublicDTO
 import com.sama.users.application.UserService
+import com.sama.users.domain.UserId
+import com.sama.users.domain.UserPublicId
 import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalTime
@@ -26,7 +31,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension
 
 private const val scheme = "https"
 private const val host = "sama.com"
-private const val meetingCode = "code"
+private val meetingCode = MeetingCode("VGsUTGno")
 
 @TestConfiguration
 class MeetingViewTestConfiguration {
@@ -65,8 +70,8 @@ class MeetingViewTest {
         val _10am = _9am.plusHours(1)
         val _11am = _9am.plusHours(2)
 
-        val initiatorId = 1L
-        val initiator = UserPublicDTO(UUID.randomUUID(), "test", "test@meetsama.com")
+        val initiatorId = UserId(1)
+        val initiator = UserPublicDTO(UserPublicId.random(), "test", "test@meetsama.com")
         whenever(userService.find(initiatorId))
             .thenReturn(initiator)
 
@@ -78,7 +83,7 @@ class MeetingViewTest {
         val availableSlots = listOf(MeetingSlot(_10am, _11am))
         val actual = underTest.render(
             ProposedMeeting(
-                21L, 11L, initiatorId,
+                MeetingId(21),  MeetingIntentId(11), initiatorId,
                 Duration.ofMinutes(15),
                 proposedSlots,
                 meetingCode
@@ -87,7 +92,7 @@ class MeetingViewTest {
         )
 
         // verify
-        val expectedUrl = "$scheme://$host/$meetingCode"
+        val expectedUrl = "$scheme://$host/${meetingCode.code}"
         val expected = ProposedMeetingDTO(
             proposedSlots = listOf(MeetingSlotDTO(_10am, _11am)),
             initiator = UserPublicDTO(

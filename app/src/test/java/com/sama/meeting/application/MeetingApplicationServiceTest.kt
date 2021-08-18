@@ -7,6 +7,7 @@ import com.sama.calendar.application.FetchEventsDTO
 import com.sama.common.BaseApplicationTest
 import com.sama.common.NotFoundException
 import com.sama.comms.application.CommsEventConsumer
+import com.sama.meeting.domain.MeetingCode
 import com.sama.meeting.domain.MeetingSlotUnavailableException
 import com.sama.slotsuggestion.application.SlotSuggestionRequest
 import com.sama.slotsuggestion.application.SlotSuggestionResponse
@@ -19,7 +20,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.mockito.kotlin.any
-import org.mockito.kotlin.eq
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.verifyZeroInteractions
 import org.mockito.kotlin.whenever
@@ -53,19 +53,25 @@ class MeetingApplicationServiceTest : BaseApplicationTest() {
         val meetingIntentDTO = asInitiator {
             val suggestedSlotStart = ZonedDateTime.now(clock).plusHours(1)
             val suggestedSlotEnd = suggestedSlotStart.plusHours(2)
-            whenever(slotSuggestionService.suggestSlots(
-                eq(it.id!!),
-                eq(SlotSuggestionRequest(ofMinutes(60), clock.zone, 3)))
+            whenever(
+                slotSuggestionService.suggestSlots(
+                    it.id!!,
+                    SlotSuggestionRequest(ofMinutes(60), clock.zone, 3)
+                )
             )
                 .thenReturn(
-                    SlotSuggestionResponse(listOf(
-                        SlotSuggestion(suggestedSlotStart, suggestedSlotEnd, 1.0)
-                    ))
+                    SlotSuggestionResponse(
+                        listOf(
+                            SlotSuggestion(suggestedSlotStart, suggestedSlotEnd, 1.0)
+                        )
+                    )
                 )
 
-            underTest.initiateMeeting(it.id!!, InitiateMeetingCommand(
-                60, clock.zone, 3
-            ))
+            underTest.initiateMeeting(
+                it.id!!, InitiateMeetingCommand(
+                    60, clock.zone, 3
+                )
+            )
         }
 
         // propose meeting
@@ -78,15 +84,18 @@ class MeetingApplicationServiceTest : BaseApplicationTest() {
                 ProposeMeetingCommand(
                     meetingIntentDTO.meetingIntentCode,
                     listOf(proposedSlot)
-                ))
+                )
+            )
         }
 
         // load proposal from meeting code with initiator's calendar non-blocked
-        whenever(eventApplicationService.fetchEvents(
-            eq(initiator().id!!),
-            eq(proposedSlotStart.toLocalDate()),
-            eq(proposedSlotEnd.toLocalDate()),
-            any())
+        whenever(
+            eventApplicationService.fetchEvents(
+                initiator().id!!,
+                proposedSlotStart.toLocalDate(),
+                proposedSlotEnd.toLocalDate(),
+                proposedSlotStart.zone
+            )
         )
             .thenReturn(FetchEventsDTO(emptyList(), emptyList()))
 
@@ -99,7 +108,8 @@ class MeetingApplicationServiceTest : BaseApplicationTest() {
             ConfirmMeetingCommand(
                 meetingProposal.proposedSlots[0],
                 "non-sama-recipient@meetsama.com"
-            ))
+            )
+        )
 
         verify(calendarEventConsumer).onMeetingConfirmed(any())
         verify(commsEventConsumer).onMeetingConfirmed(any())
@@ -111,19 +121,25 @@ class MeetingApplicationServiceTest : BaseApplicationTest() {
         val meetingIntentDTO = asInitiator {
             val suggestedSlotStart = ZonedDateTime.now(clock).plusHours(1)
             val suggestedSlotEnd = suggestedSlotStart.plusHours(2)
-            whenever(slotSuggestionService.suggestSlots(
-                eq(it.id!!),
-                eq(SlotSuggestionRequest(ofMinutes(60), clock.zone, 3)))
+            whenever(
+                slotSuggestionService.suggestSlots(
+                    it.id!!,
+                    SlotSuggestionRequest(ofMinutes(60), clock.zone, 3)
+                )
             )
                 .thenReturn(
-                    SlotSuggestionResponse(listOf(
-                        SlotSuggestion(suggestedSlotStart, suggestedSlotEnd, 1.0)
-                    ))
+                    SlotSuggestionResponse(
+                        listOf(
+                            SlotSuggestion(suggestedSlotStart, suggestedSlotEnd, 1.0)
+                        )
+                    )
                 )
 
-            underTest.initiateMeeting(it.id!!, InitiateMeetingCommand(
-                60, clock.zone, 3
-            ))
+            underTest.initiateMeeting(
+                it.id!!, InitiateMeetingCommand(
+                    60, clock.zone, 3
+                )
+            )
         }
 
         assertThrows<AccessDeniedException> {
@@ -133,7 +149,8 @@ class MeetingApplicationServiceTest : BaseApplicationTest() {
                     ProposeMeetingCommand(
                         meetingIntentDTO.meetingIntentCode,
                         listOf()
-                    ))
+                    )
+                )
             }
         }
     }
@@ -144,19 +161,25 @@ class MeetingApplicationServiceTest : BaseApplicationTest() {
         val meetingIntentDTO = asInitiator {
             val suggestedSlotStart = ZonedDateTime.now(clock).plusHours(1)
             val suggestedSlotEnd = suggestedSlotStart.plusHours(2)
-            whenever(slotSuggestionService.suggestSlots(
-                eq(it.id!!),
-                eq(SlotSuggestionRequest(ofMinutes(60), clock.zone, 3)))
+            whenever(
+                slotSuggestionService.suggestSlots(
+                    it.id!!,
+                    SlotSuggestionRequest(ofMinutes(60), clock.zone, 3)
+                )
             )
                 .thenReturn(
-                    SlotSuggestionResponse(listOf(
-                        SlotSuggestion(suggestedSlotStart, suggestedSlotEnd, 1.0)
-                    ))
+                    SlotSuggestionResponse(
+                        listOf(
+                            SlotSuggestion(suggestedSlotStart, suggestedSlotEnd, 1.0)
+                        )
+                    )
                 )
 
-            underTest.initiateMeeting(it.id!!, InitiateMeetingCommand(
-                60, clock.zone, 3
-            ))
+            underTest.initiateMeeting(
+                it.id!!, InitiateMeetingCommand(
+                    60, clock.zone, 3
+                )
+            )
         }
 
         // propose meeting with two slots
@@ -173,18 +196,26 @@ class MeetingApplicationServiceTest : BaseApplicationTest() {
                 ProposeMeetingCommand(
                     meetingIntentDTO.meetingIntentCode,
                     listOf(proposedSlot, proposedSlotTwo)
-                ))
+                )
+            )
         }
 
         // load proposal from meeting code with initiator's calendar blocked completely
-        whenever(eventApplicationService.fetchEvents(eq(initiator().id!!),
-            eq(proposedSlotStart.toLocalDate()),
-            eq(proposedSlotTwoEnd.toLocalDate()),
-            any())
+        whenever(
+            eventApplicationService.fetchEvents(
+                initiator().id!!,
+                proposedSlotStart.toLocalDate(),
+                proposedSlotTwoEnd.toLocalDate(),
+                proposedSlotStart.zone
+            )
         )
-            .thenReturn(FetchEventsDTO(emptyList(), listOf(
-                EventDTO(proposedSlotStart, proposedSlotTwoEnd, false, "Title")
-            )))
+            .thenReturn(
+                FetchEventsDTO(
+                    emptyList(), listOf(
+                        EventDTO(proposedSlotStart, proposedSlotTwoEnd, false, "Title")
+                    )
+                )
+            )
         val meetingProposal = underTest.loadMeetingProposalFromCode(meetingInvitationDTO.meetingCode)
 
         // no proposed slots available
@@ -198,7 +229,8 @@ class MeetingApplicationServiceTest : BaseApplicationTest() {
                 ConfirmMeetingCommand(
                     proposedSlot,
                     "recipient@meetsama.com"
-                ))
+                )
+            )
         }
 
         verifyZeroInteractions(calendarEventConsumer)
@@ -211,19 +243,25 @@ class MeetingApplicationServiceTest : BaseApplicationTest() {
         val meetingIntentDTO = asInitiator {
             val suggestedSlotStart = ZonedDateTime.now(clock).plusHours(1)
             val suggestedSlotEnd = suggestedSlotStart.plusHours(2)
-            whenever(slotSuggestionService.suggestSlots(
-                eq(it.id!!),
-                eq(SlotSuggestionRequest(ofMinutes(60), clock.zone, 3)))
+            whenever(
+                slotSuggestionService.suggestSlots(
+                    it.id!!,
+                    SlotSuggestionRequest(ofMinutes(60), clock.zone, 3)
+                )
             )
                 .thenReturn(
-                    SlotSuggestionResponse(listOf(
-                        SlotSuggestion(suggestedSlotStart, suggestedSlotEnd, 1.0)
-                    ))
+                    SlotSuggestionResponse(
+                        listOf(
+                            SlotSuggestion(suggestedSlotStart, suggestedSlotEnd, 1.0)
+                        )
+                    )
                 )
 
-            underTest.initiateMeeting(it.id!!, InitiateMeetingCommand(
-                60, clock.zone, 3
-            ))
+            underTest.initiateMeeting(
+                it.id!!, InitiateMeetingCommand(
+                    60, clock.zone, 3
+                )
+            )
         }
 
         // propose meeting
@@ -236,15 +274,18 @@ class MeetingApplicationServiceTest : BaseApplicationTest() {
                 ProposeMeetingCommand(
                     meetingIntentDTO.meetingIntentCode,
                     listOf(proposedSlot)
-                ))
+                )
+            )
         }
 
         // load proposal from meeting code with initiator's calendar non-blocked
-        whenever(eventApplicationService.fetchEvents(
-            eq(initiator().id!!),
-            eq(proposedSlotStart.toLocalDate()),
-            eq(proposedSlotEnd.toLocalDate()),
-            any())
+        whenever(
+            eventApplicationService.fetchEvents(
+                initiator().id!!,
+                proposedSlotStart.toLocalDate(),
+                proposedSlotEnd.toLocalDate(),
+                proposedSlotStart.zone
+            )
         )
             .thenReturn(FetchEventsDTO(emptyList(), emptyList()))
 
@@ -257,8 +298,9 @@ class MeetingApplicationServiceTest : BaseApplicationTest() {
                 meetingInvitationDTO.meetingCode,
                 ConfirmMeetingCommand(
                     meetingProposal.proposedSlots[0],
-                        null
-                ))
+                    null
+                )
+            )
         }
 
         verify(calendarEventConsumer).onMeetingConfirmed(any())
@@ -268,7 +310,7 @@ class MeetingApplicationServiceTest : BaseApplicationTest() {
     @Test
     fun `load meeting proposal from non-existent code`() {
         assertThrows<NotFoundException> {
-            underTest.loadMeetingProposalFromCode("some random code")
+            underTest.loadMeetingProposalFromCode(MeetingCode("VGsUTGno"))
         }
     }
 
@@ -278,19 +320,25 @@ class MeetingApplicationServiceTest : BaseApplicationTest() {
         val meetingIntentDTO = asInitiator {
             val suggestedSlotStart = ZonedDateTime.now(clock).plusHours(1)
             val suggestedSlotEnd = suggestedSlotStart.plusHours(2)
-            whenever(slotSuggestionService.suggestSlots(
-                eq(it.id!!),
-                eq(SlotSuggestionRequest(ofMinutes(60), clock.zone, 3)))
+            whenever(
+                slotSuggestionService.suggestSlots(
+                    it.id!!,
+                    SlotSuggestionRequest(ofMinutes(60), clock.zone, 3)
+                )
             )
                 .thenReturn(
-                    SlotSuggestionResponse(listOf(
-                        SlotSuggestion(suggestedSlotStart, suggestedSlotEnd, 1.0)
-                    ))
+                    SlotSuggestionResponse(
+                        listOf(
+                            SlotSuggestion(suggestedSlotStart, suggestedSlotEnd, 1.0)
+                        )
+                    )
                 )
 
-            underTest.initiateMeeting(it.id!!, InitiateMeetingCommand(
-                60, clock.zone, 3
-            ))
+            underTest.initiateMeeting(
+                it.id!!, InitiateMeetingCommand(
+                    60, clock.zone, 3
+                )
+            )
         }
 
         // propose meeting with one slot in 5 minutes
@@ -303,7 +351,8 @@ class MeetingApplicationServiceTest : BaseApplicationTest() {
                 ProposeMeetingCommand(
                     meetingIntentDTO.meetingIntentCode,
                     listOf(proposedSlot)
-                ))
+                )
+            )
         }
 
         // trigger expiration job

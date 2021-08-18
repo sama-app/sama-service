@@ -16,7 +16,6 @@ class NanoIdMeetingCodeGenerator(
             NanoIdUtils.DEFAULT_NUMBER_GENERATOR,
             NanoIdUtils.DEFAULT_ALPHABET,
             codeLength
-        )
+        ).toMeetingCode()
     }
-
 }

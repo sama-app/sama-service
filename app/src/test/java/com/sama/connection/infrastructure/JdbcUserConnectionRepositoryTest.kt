@@ -4,6 +4,7 @@ import com.sama.common.BasePersistenceIT
 import com.sama.connection.domain.UserConnection
 import com.sama.users.infrastructure.jpa.UserEntity
 import com.sama.users.infrastructure.jpa.UserJpaRepository
+import com.sama.users.infrastructure.toUserId
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -37,33 +38,33 @@ class JdbcUserConnectionRepositoryTest : BasePersistenceIT<JdbcUserConnectionRep
 
     @Test
     fun `save and find connected user ids`() {
-        val userConnection1 = UserConnection(userOne.id!!, userTwo.id!!)
-        val userConnection2 = UserConnection(userThree.id!!, userOne.id!!)
+        val userConnection1 = UserConnection(userOne.id!!.toUserId(), userTwo.id!!.toUserId())
+        val userConnection2 = UserConnection(userThree.id!!.toUserId(), userOne.id!!.toUserId())
 
         underTest.save(userConnection1)
         underTest.save(userConnection2)
 
-        assertThat(underTest.findConnectedUserIds(userOne.id!!))
-            .containsExactlyInAnyOrder(userTwo.id!!, userThree.id!!)
+        assertThat(underTest.findConnectedUserIds(userOne.id!!.toUserId()))
+            .containsExactlyInAnyOrder(userTwo.id!!.toUserId(), userThree.id!!.toUserId())
 
-        assertThat(underTest.findConnectedUserIds(userTwo.id!!))
-            .containsExactlyInAnyOrder(userOne.id!!)
+        assertThat(underTest.findConnectedUserIds(userTwo.id!!.toUserId()))
+            .containsExactlyInAnyOrder(userOne.id!!.toUserId())
 
-        assertThat(underTest.findConnectedUserIds(userThree.id!!))
-            .containsExactlyInAnyOrder(userOne.id!!)
+        assertThat(underTest.findConnectedUserIds(userThree.id!!.toUserId()))
+            .containsExactlyInAnyOrder(userOne.id!!.toUserId())
     }
 
     @Test
     fun delete() {
 
-        val userConnection1 = UserConnection(userOne.id!!, userTwo.id!!)
-        val userConnection2 = UserConnection(userOne.id!!, userThree.id!!)
+        val userConnection1 = UserConnection(userOne.id!!.toUserId(), userTwo.id!!.toUserId())
+        val userConnection2 = UserConnection(userOne.id!!.toUserId(), userThree.id!!.toUserId())
 
         underTest.save(userConnection1)
         underTest.save(userConnection2)
         underTest.delete(userConnection1)
 
-        val connectedUserIds = underTest.findConnectedUserIds(userOne.id!!)
-        assertThat(connectedUserIds).containsExactly(userThree.id!!)
+        val connectedUserIds = underTest.findConnectedUserIds(userOne.id!!.toUserId())
+        assertThat(connectedUserIds).containsExactly(userThree.id!!.toUserId())
     }
 }

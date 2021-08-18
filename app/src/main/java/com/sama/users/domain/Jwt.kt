@@ -33,7 +33,7 @@ data class UserJwtIssuer(val userId: UserId, val userPublicId: UserPublicId, val
                 .withKeyId(jwtConfiguration.keyId)
                 .withJWTId(jwtId.toString())
                 .withSubject(email)
-                .withClaim(USER_ID_CLAIM, userPublicId.toString())
+                .withClaim(USER_ID_CLAIM, userPublicId.id.toString())
                 .withIssuedAt(Date.from(clock.instant()))
                 .withExpiresAt(Date.from(clock.instant().plusSeconds(jwtConfiguration.expirationSec)))
                 .sign(Algorithm.HMAC256(jwtConfiguration.signingSecret))
@@ -73,7 +73,7 @@ data class Jwt(val token: String) {
     }
 
     fun userId(): UserPublicId? {
-        return decoded().getClaim(USER_ID_CLAIM)?.asString()?.let { UUID.fromString(it) }
+        return decoded().getClaim(USER_ID_CLAIM)?.asString()?.let { UserPublicId.of(it) }
     }
 
     fun userEmail(): String {

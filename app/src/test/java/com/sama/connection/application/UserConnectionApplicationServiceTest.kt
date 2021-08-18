@@ -2,6 +2,8 @@ package com.sama.connection.application
 
 import com.sama.common.BaseApplicationTest
 import com.sama.users.application.UserPublicDTO
+import com.sama.users.infrastructure.toUserId
+import com.sama.users.infrastructure.toUserPublicId
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows

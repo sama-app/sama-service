@@ -2,6 +2,7 @@ package com.sama.meeting.domain
 
 import com.sama.common.assertDoesNotThrowOrNull
 import com.sama.common.assertThrows
+import com.sama.users.domain.UserId
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.DynamicTest.dynamicTest
@@ -17,10 +18,10 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class MeetingTest {
-    private val validMeetingCode = "valid-meet-code"
-    private val meetingIntentId = 1L
-    private val meetingId = 11L
-    private val initiatorId = 21L
+    private val validMeetingCode = MeetingCode("VGsUTGno")
+    private val meetingIntentId = MeetingIntentId(1)
+    private val meetingId = MeetingId(11)
+    private val initiatorId = UserId(21)
 
     private val _9am = ZonedDateTime.of(LocalDate.now(), LocalTime.of(9, 0), systemDefault())
     private val _915am = _9am.plus(ofMinutes(15))
@@ -53,10 +54,10 @@ class MeetingTest {
         .map { (duration, success) ->
             dynamicTest("meeting with duration '${duration.toMinutes()}min' allowed: $success") {
                 if (success) {
-                    MeetingIntent(1L, 10L, duration, systemDefault(), emptyList())
+                    MeetingIntent(meetingIntentId, initiatorId, duration, systemDefault(), emptyList())
                 } else {
                     assertThrows(InvalidDurationException::class.java) {
-                        MeetingIntent(1L, 10L, duration, systemDefault(), emptyList())
+                        MeetingIntent(meetingIntentId, initiatorId, duration, systemDefault(), emptyList())
                     }
                 }
             }
@@ -73,10 +74,10 @@ class MeetingTest {
             dynamicTest("suggesting a slot of ${slotDuration.toMinutes()}min allowed: $success") {
                 val slot = MeetingSlot(_9am, _9am.plus(slotDuration))
                 if (success) {
-                    MeetingIntent(1L, 10L, ofHours(1), systemDefault(), listOf(slot))
+                    MeetingIntent(meetingIntentId, initiatorId, ofHours(1), systemDefault(), listOf(slot))
                 } else {
                     assertThrows(InvalidMeetingSlotException::class.java) {
-                        MeetingIntent(1L, 10L, ofHours(1), systemDefault(), listOf(slot))
+                        MeetingIntent(meetingIntentId, initiatorId, ofHours(1), systemDefault(), listOf(slot))
                     }
                 }
             }
@@ -85,8 +86,7 @@ class MeetingTest {
     @TestFactory
     fun `propose meeting`(): List<DynamicTest> {
         val initiatorId = initiatorId
-        val meetingId = 11L
-        val meetingIntentId = 2L
+        val meetingIntentId = MeetingIntentId(2)
         return listOf(
             listOf(proposedSlotID1.copy()) to ProposedMeeting(
                 meetingId, meetingIntentId, initiatorId, ofHours(1),
@@ -140,22 +140,21 @@ class MeetingTest {
     ).map { (proposedSlots, expected) ->
 
         val initiatedMeeting = MeetingIntent(
-            1L, initiatorId, ofHours(1), systemDefault(), listOf(proposedSlotID1.copy(), proposedSlotID2.copy())
+            meetingIntentId, initiatorId, ofHours(1), systemDefault(), listOf(proposedSlotID1.copy(), proposedSlotID2.copy())
         )
-        val meetingCode = "meet-me-kei"
+        val meetingCode = MeetingCode("VGsUTGno")
 
         dynamicTest("proposing slots $proposedSlots throws $expected") {
-            val actual = initiatedMeeting.propose(11L, meetingCode, proposedSlots)
+            val actual = initiatedMeeting.propose(meetingId, meetingCode, proposedSlots)
             actual.assertThrows(expected)
         }
     }
 
     @Test
     fun `confirm meeting`() {
-        val meetingId = 11L
         val slot = proposedSlotID1
         val proposedMeeting = ProposedMeeting(
-            meetingId, 1L, initiatorId, ofHours(1), listOf(slot), validMeetingCode
+            meetingId, meetingIntentId, initiatorId, ofHours(1), listOf(slot), validMeetingCode
         )
         val recipient = MeetingRecipient(null, null) // todo
         val slotToConfirm = proposedSlotID1.copy()
@@ -173,10 +172,9 @@ class MeetingTest {
 
     @Test
     fun `confirm meeting fails`() {
-        val meetingId = 11L
         val slot = proposedSlotID1
         val proposedMeeting = ProposedMeeting(
-            meetingId, 1L, initiatorId, ofHours(1), listOf(slot), validMeetingCode
+            meetingId, meetingIntentId, initiatorId, ofHours(1), listOf(slot), validMeetingCode
         )
         val recipient = MeetingRecipient(null, null) // todo
 

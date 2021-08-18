@@ -26,7 +26,7 @@ fun MeetingCode.toUrl(config: MeetingUrlConfiguration): String {
     return UriComponentsBuilder.newInstance()
         .scheme(config.scheme)
         .host(config.host)
-        .path("/$this")
+        .path("/${this.code}")
         .build().toUriString()
 }
 

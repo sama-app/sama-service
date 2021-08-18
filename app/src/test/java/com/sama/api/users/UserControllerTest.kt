@@ -2,12 +2,26 @@ package com.sama.api.users
 
 import com.sama.api.ApiTestConfiguration
 import com.sama.api.config.WebMvcConfiguration
-import com.sama.users.application.*
+import com.sama.users.application.DayWorkingHoursDTO
+import com.sama.users.application.RegisterDeviceCommand
+import com.sama.users.application.UnregisterDeviceCommand
+import com.sama.users.application.UpdateWorkingHoursCommand
+import com.sama.users.application.UserApplicationService
+import com.sama.users.application.UserPublicDTO
+import com.sama.users.application.UserSettingsDTO
+import com.sama.users.domain.UserId
+import com.sama.users.domain.UserPublicId
+import java.time.DayOfWeek.MONDAY
+import java.time.DayOfWeek.TUESDAY
+import java.time.DayOfWeek.WEDNESDAY
+import java.time.LocalTime
+import java.time.ZoneId
+import java.util.Locale
+import java.util.UUID
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
 import org.junit.jupiter.api.extension.ExtendWith
-import org.mockito.kotlin.eq
 import org.mockito.kotlin.whenever
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -22,10 +36,6 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.result.isEqualTo
-import java.time.DayOfWeek.*
-import java.time.LocalTime
-import java.time.ZoneId
-import java.util.*
 
 @ExtendWith(SpringExtension::class)
 @SpringBootTest(
@@ -42,7 +52,7 @@ class UserControllerTest(
     @MockBean
     lateinit var userApplicationService: UserApplicationService
 
-    private val userId: Long = 1
+    private val userId = UserId(1)
     private val jwt = "eyJraWQiOiJrZXktaWQiLCJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9." +
             "eyJzdWIiOiJiYWx5c0B5b3Vyc2FtYS5jb20iLCJ1c2VyX2lkIjoiNjViOTc3ZWEtODk4MC00YjFhLWE2ZWUtZjhmY2MzZjFmYzI0Iiwi" +
             "ZXhwIjoxNjIyNTA1NjYwLCJpYXQiOjE2MjI1MDU2MDAsImp0aSI6IjNlNWE3NTY3LWZmYmQtNDcxYi1iYTI2LTU2YjMwOTgwMWZlZSJ9." +
@@ -51,16 +61,16 @@ class UserControllerTest(
     @Test
     fun `get user public details`() {
         val userPublicDTO = UserPublicDTO(
-            UUID.randomUUID(),
+            UserPublicId.random(),
             "test name",
             "test@meetsama.com"
         )
-        whenever(userApplicationService.find(eq(userId)))
+        whenever(userApplicationService.find(userId))
             .thenReturn(userPublicDTO)
 
         val expectedJson = """
         {
-           "userId": "${userPublicDTO.userId}",
+           "userId": "${userPublicDTO.userId.id}",
            "fullName": "${userPublicDTO.fullName}",
            "email": "${userPublicDTO.email}"
         }
@@ -80,8 +90,8 @@ class UserControllerTest(
         val registrationToken = "some-token"
         whenever(
             (userApplicationService.registerDevice(
-                eq(userId),
-                eq(RegisterDeviceCommand(deviceId, registrationToken))
+                userId,
+                RegisterDeviceCommand(deviceId, registrationToken)
             ))
         )
             .thenReturn(true)
@@ -104,12 +114,11 @@ class UserControllerTest(
 
     @Test
     fun `unregister device`() {
-        val userId: Long = 1
         val deviceId = UUID.fromString("075f7e8a-e01c-4f2f-9c3b-ce5d412e618c")
         whenever(
             (userApplicationService.unregisterDevice(
-                eq(userId),
-                eq(UnregisterDeviceCommand(deviceId))
+                userId,
+                UnregisterDeviceCommand(deviceId)
             ))
         )
             .thenReturn(true)
@@ -131,7 +140,7 @@ class UserControllerTest(
 
     @Test
     fun `get settings`() {
-        whenever(userApplicationService.findUserSettings(eq(userId)))
+        whenever(userApplicationService.findUserSettings(userId))
             .thenReturn(
                 UserSettingsDTO(
                     Locale.ENGLISH,
@@ -174,14 +183,11 @@ class UserControllerTest(
 
     @Test
     fun `update working hours`() {
-        val userId: Long = 1
         whenever(
             userApplicationService.updateWorkingHours(
-                eq(userId),
-                eq(
-                    UpdateWorkingHoursCommand(
-                        listOf(DayWorkingHoursDTO(TUESDAY, LocalTime.of(10, 0), LocalTime.of(12, 0)))
-                    )
+                userId,
+                UpdateWorkingHoursCommand(
+                    listOf(DayWorkingHoursDTO(TUESDAY, LocalTime.of(10, 0), LocalTime.of(12, 0)))
                 )
             )
         )

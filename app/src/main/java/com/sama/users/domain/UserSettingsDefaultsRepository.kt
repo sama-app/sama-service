@@ -6,7 +6,7 @@ import org.springframework.data.repository.Repository
 
 @DomainRepository
 interface UserSettingsDefaultsRepository : Repository<UserSettingsDefaults, UserId> {
-    fun findByIdOrNull(userId: Long): UserSettingsDefaults?
-    fun findByIdOrThrow(userId: Long) = findByIdOrNull(userId)
+    fun findByIdOrNull(userId: UserId): UserSettingsDefaults?
+    fun findByIdOrThrow(userId: UserId) = findByIdOrNull(userId)
         ?: throw NotFoundException(UserSettingsDefaults::class, userId)
 }

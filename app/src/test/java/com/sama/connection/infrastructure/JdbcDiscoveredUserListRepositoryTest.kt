@@ -4,6 +4,7 @@ import com.sama.common.BasePersistenceIT
 import com.sama.connection.domain.DiscoveredUserList
 import com.sama.users.infrastructure.jpa.UserEntity
 import com.sama.users.infrastructure.jpa.UserJpaRepository
+import com.sama.users.infrastructure.toUserId
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -37,33 +38,33 @@ class JdbcDiscoveredUserListRepositoryTest : BasePersistenceIT<JdbcDiscoveredUse
 
     @Test
     fun `save and find`() {
-        val expected = DiscoveredUserList(userOne.id!!, setOf(userTwo.id!!, userThree.id!!))
+        val expected = DiscoveredUserList(userOne.id!!.toUserId(), setOf(userTwo.id!!.toUserId(), userThree.id!!.toUserId()))
         underTest.save(expected)
 
-        val actual = underTest.findById(userOne.id!!)
+        val actual = underTest.findById(userOne.id!!.toUserId())
 
         assertThat(actual).isEqualTo(expected)
     }
 
     @Test
     fun `save empty list`() {
-        val expected = DiscoveredUserList(userOne.id!!, emptySet())
+        val expected = DiscoveredUserList(userOne.id!!.toUserId(), emptySet())
         underTest.save(expected)
 
-        val actual = underTest.findById(userOne.id!!)
+        val actual = underTest.findById(userOne.id!!.toUserId())
 
         assertThat(actual).isEqualTo(expected)
     }
 
     @Test
     fun `remove from list and find`() {
-        val initial = DiscoveredUserList(userOne.id!!, setOf(userTwo.id!!, userThree.id!!))
+        val initial = DiscoveredUserList(userOne.id!!.toUserId(), setOf(userTwo.id!!.toUserId(), userThree.id!!.toUserId()))
         underTest.save(initial)
 
-        val expected = initial.copy(discoveredUsers = setOf(userTwo.id!!))
+        val expected = initial.copy(discoveredUsers = setOf(userTwo.id!!.toUserId()))
         underTest.save(expected)
 
-        val actual = underTest.findById(userOne.id!!)
+        val actual = underTest.findById(userOne.id!!.toUserId())
         assertThat(actual).isEqualTo(expected)
     }
 }

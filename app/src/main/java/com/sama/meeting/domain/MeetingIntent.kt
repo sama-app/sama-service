@@ -1,8 +1,6 @@
 package com.sama.meeting.domain
 
 import com.sama.common.DomainEntity
-import com.sama.common.Factory
-import com.sama.meeting.domain.aggregates.MeetingIntentEntity
 import com.sama.users.domain.UserId
 import java.time.Duration
 import java.time.ZoneId

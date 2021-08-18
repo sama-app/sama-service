@@ -3,6 +3,7 @@ package com.sama.connection.infrastructure
 import com.sama.connection.domain.UserConnection
 import com.sama.connection.domain.UserConnectionRepository
 import com.sama.users.domain.UserId
+import com.sama.users.infrastructure.toUserId
 import java.lang.Long.max
 import java.lang.Long.min
 import java.sql.Types
@@ -17,7 +18,7 @@ class JdbcUserConnectionRepository(private val namedParameterJdbcTemplate: Named
 
     override fun findConnectedUserIds(userId: UserId): Collection<UserId> {
         val namedParameters: SqlParameterSource = MapSqlParameterSource()
-            .addValue("user_id", userId, Types.BIGINT)
+            .addValue("user_id", userId.id, Types.BIGINT)
 
         return namedParameterJdbcTemplate.query(
             """
@@ -30,7 +31,7 @@ class JdbcUserConnectionRepository(private val namedParameterJdbcTemplate: Named
                 ) uc
             """.trimIndent(),
             namedParameters
-        ) { rs, _ -> rs.getLong("connected_user_id") }
+        ) { rs, _ -> rs.getLong("connected_user_id").toUserId() }
     }
 
     override fun save(userConnection: UserConnection) {
@@ -56,7 +57,7 @@ class JdbcUserConnectionRepository(private val namedParameterJdbcTemplate: Named
     fun UserConnection.toSqlParameterSource(): SqlParameterSource {
         // always put the smaller id in the first column to ensure uniqueness
         return MapSqlParameterSource()
-            .addValue("l_user_id", min(this.leftUserId, this.rightUserId))
-            .addValue("r_user_id", max(this.leftUserId, this.rightUserId))
+            .addValue("l_user_id", min(leftUserId.id, rightUserId.id))
+            .addValue("r_user_id", max(leftUserId.id, rightUserId.id))
     }
 }

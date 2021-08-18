@@ -1,12 +1,13 @@
 package com.sama.meeting.infrastructure
 
+import kotlin.test.assertTrue
 import org.junit.jupiter.api.Test
 
 class NanoIdMeetingCodeGeneratorTest {
 
     @Test
     fun `meeting code generated with at desired length`() {
-        kotlin.test.assertTrue(NanoIdMeetingCodeGenerator(10).generate().length == 10)
+        assertTrue(NanoIdMeetingCodeGenerator(10).generate().code.length == 10)
     }
 
     @Test

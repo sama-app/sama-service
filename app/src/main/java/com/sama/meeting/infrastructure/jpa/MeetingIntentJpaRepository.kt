@@ -1,26 +1,24 @@
 package com.sama.meeting.infrastructure.jpa
 
-import com.sama.common.DomainRepository
 import com.sama.common.NotFoundException
 import com.sama.meeting.domain.MeetingIntentCode
-import com.sama.meeting.domain.MeetingIntentId
-import com.sama.meeting.domain.aggregates.MeetingIntentEntity
 import com.sama.users.domain.UserId
+import java.util.UUID
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
 
 @Repository
-interface MeetingIntentJpaRepository : JpaRepository<MeetingIntentEntity, MeetingIntentId> {
+interface MeetingIntentJpaRepository : JpaRepository<MeetingIntentEntity, Long> {
     @Query("select nextval('sama.meeting_intent_id_seq')", nativeQuery = true)
-    fun nextIdentity(): MeetingIntentId
+    fun nextIdentity(): Long
 
-    fun findByCode(code: MeetingIntentCode): MeetingIntentEntity?
+    fun findByCode(code: UUID): MeetingIntentEntity?
 
-    fun existsByIdAndInitiatorId(meetingIntentId: MeetingIntentId, initiatorId: UserId): Boolean
+    fun existsByIdAndInitiatorId(meetingIntentId: Long, initiatorId: Long): Boolean
 
-    fun existsByCodeAndInitiatorId(code: MeetingIntentCode, initiatorId: UserId): Boolean
+    fun existsByCodeAndInitiatorId(code: UUID, initiatorId: Long): Boolean
 }
 
-fun MeetingIntentJpaRepository.findByCodeOrThrow(code: MeetingIntentCode): MeetingIntentEntity = findByCode(code)
+fun MeetingIntentJpaRepository.findByCodeOrThrow(code: UUID): MeetingIntentEntity = findByCode(code)
     ?: throw NotFoundException(MeetingIntentEntity::class, "code", code)
