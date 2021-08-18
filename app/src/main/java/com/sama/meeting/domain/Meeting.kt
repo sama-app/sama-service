@@ -1,62 +1,22 @@
 package com.sama.meeting.domain
 
 import com.sama.calendar.application.EventDTO
-import com.sama.calendar.domain.Event
 import com.sama.common.DomainEntity
-import com.sama.common.Factory
-import com.sama.meeting.domain.aggregates.MeetingIntentEntity
-import com.sama.meeting.domain.aggregates.MeetingEntity
 import com.sama.users.domain.UserId
 import java.time.Clock
 import java.time.Duration
 import java.time.ZonedDateTime
-import kotlin.Result.Companion.success
-
-sealed interface Meeting {
-    val meetingId: MeetingId
-    val status: MeetingStatus
-}
-
-@Factory
-fun meetingFrom(
-    meetingIntentEntity: MeetingIntentEntity,
-    meetingEntity: MeetingEntity
-): Result<Meeting> {
-    return when (meetingEntity.status!!) {
-        MeetingStatus.PROPOSED -> {
-            val proposedSlots = meetingEntity.proposedSlots
-                .map { MeetingSlot(it.startDateTime, it.endDateTime) }
-            success(
-                ProposedMeeting(
-                    meetingEntity.id!!,
-                    meetingIntentEntity.id!!,
-                    meetingIntentEntity.initiatorId!!,
-                    Duration.ofMinutes(meetingIntentEntity.durationMinutes!!),
-                    proposedSlots,
-                    meetingEntity.code!!,
-                )
-            )
-        }
-        MeetingStatus.CONFIRMED -> success(
-            ConfirmedMeeting(
-                meetingEntity.id!!,
-                meetingIntentEntity.initiatorId!!,
-                Duration.ofMinutes(meetingIntentEntity.durationMinutes!!),
-                meetingEntity.meetingRecipient!!,
-                meetingEntity.confirmedSlot!!
-            )
-        )
-        MeetingStatus.REJECTED -> success(RejectedMeeting(meetingEntity.id!!))
-        MeetingStatus.EXPIRED -> success(ExpiredMeeting(meetingEntity.id!!))
-    }
-}
-
 
 enum class MeetingStatus {
     PROPOSED,
     CONFIRMED,
     REJECTED,
     EXPIRED,
+}
+
+sealed interface Meeting {
+    val meetingId: MeetingId
+    val status: MeetingStatus
 }
 
 @DomainEntity

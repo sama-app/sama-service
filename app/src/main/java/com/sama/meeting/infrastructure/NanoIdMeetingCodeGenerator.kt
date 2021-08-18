@@ -2,7 +2,7 @@ package com.sama.meeting.infrastructure
 
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils
 import com.sama.meeting.domain.MeetingCode
-import com.sama.meeting.domain.repositories.MeetingCodeGenerator
+import com.sama.meeting.domain.MeetingCodeGenerator
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 

@@ -3,9 +3,9 @@ package com.sama.meeting.application
 import com.sama.common.findByIdOrThrow
 import com.sama.meeting.configuration.MeetingAppLinkConfiguration
 import com.sama.meeting.configuration.MeetingUrlConfiguration
+import com.sama.meeting.configuration.toUrl
 import com.sama.meeting.domain.AvailableSlots
 import com.sama.meeting.domain.ProposedMeeting
-import com.sama.meeting.domain.toUrl
 import com.sama.users.domain.UserRepository
 import org.springframework.stereotype.Component
 import org.springframework.web.util.UriComponentsBuilder

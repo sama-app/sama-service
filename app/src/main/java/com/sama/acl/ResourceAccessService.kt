@@ -4,7 +4,7 @@ import com.sama.connection.domain.ConnectionRequestId
 import com.sama.connection.domain.ConnectionRequestRepository
 import com.sama.meeting.domain.MeetingIntentCode
 import com.sama.meeting.domain.MeetingIntentId
-import com.sama.meeting.domain.repositories.MeetingIntentRepository
+import com.sama.meeting.infrastructure.jpa.MeetingIntentJpaRepository
 import com.sama.users.domain.UserId
 import org.springframework.stereotype.Service
 
@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service
  */
 @Service("auth")
 class ResourceAccessService(
-    private val meetingIntentRepository: MeetingIntentRepository,
+    private val meetingIntentRepository: MeetingIntentJpaRepository,
     private val connectionRequestRepository: ConnectionRequestRepository
 ) {
     fun hasAccess(userId: UserId, meetingIntentId: MeetingIntentId): Boolean {
