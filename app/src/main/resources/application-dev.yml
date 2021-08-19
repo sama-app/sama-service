@@ -38,8 +38,8 @@ integration:
     client-id: 690866307711-8nm12p73mo585k5njoaqepjupgm31im3.apps.googleusercontent.com
     credentials: "dummy-value-this-is-loaded-from-AWS-SM"
     tokens.encryption:
-      password: "dummy-value-this-is-loaded-from-AWS-SM"
-      salt: "dummy-value-this-is-loaded-from-AWS-SM"
+      password: # Loaded from AWS SM
+      salt: # Loaded from AWS SM
 
   firebase:
     credentials: "dummy-value-this-is-loaded-from-AWS-SM"

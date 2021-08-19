@@ -41,6 +41,7 @@ class GoogleConfiguration() {
         @Value("\${integration.google.tokens.encryption.password}") encryptionPassword: String,
         @Value("\${integration.google.tokens.encryption.salt}") encryptionSalt: String,
     ): TextEncryptor {
+        check(encryptionPassword.isNotBlank() && encryptionSalt.isNotBlank()) { "Invalid TokenEncryptor configuration" }
         return Encryptors.text(encryptionPassword, encryptionSalt)
     }
 
