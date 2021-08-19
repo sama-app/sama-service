@@ -2,12 +2,12 @@ package com.sama.common
 
 import org.junit.jupiter.api.Assertions
 
-fun <T, E : RuntimeException> Result<T>.assertThrows(expectedType: Class<E>) {
+fun <T, E : RuntimeException> kotlin.Result<T>.assertThrows(expectedType: Class<E>) {
     Assertions.assertThrows(expectedType) { this.getOrThrow() }
     Assertions.assertTrue(this.isFailure)
 }
 
-fun <T> Result<T>.assertDoesNotThrowOrNull(): T {
+fun <T> kotlin.Result<T>.assertDoesNotThrowOrNull(): T {
     Assertions.assertDoesNotThrow { this.getOrThrow() }
     Assertions.assertTrue(this.isSuccess)
     val actual = this.getOrNull()
