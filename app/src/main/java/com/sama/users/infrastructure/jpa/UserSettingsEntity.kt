@@ -1,9 +1,10 @@
-package com.sama.users.infrastructure
+package com.sama.users.infrastructure.jpa
 
 import com.sama.common.Factory
 import com.sama.users.domain.UserId
 import com.sama.users.domain.UserSettings
 import com.sama.users.domain.WorkingHours
+import com.sama.users.infrastructure.toUserId
 import org.springframework.data.annotation.LastModifiedDate
 import org.springframework.data.jpa.convert.threeten.Jsr310JpaConverters
 import java.time.DayOfWeek
@@ -16,13 +17,13 @@ import javax.persistence.*
 @Table(schema = "sama", name = "user_settings")
 class UserSettingsEntity(
     @Id
-    val userId: UserId
+    val userId: Long
 ) {
 
     @Factory
     companion object {
         fun new(userSettings: UserSettings): UserSettingsEntity {
-            val entity = UserSettingsEntity(userId = userSettings.userId)
+            val entity = UserSettingsEntity(userId = userSettings.userId.id)
             entity.applyChanges(userSettings)
             return entity
         }
@@ -43,10 +44,6 @@ class UserSettingsEntity(
 
     @LastModifiedDate
     var updatedAt: Instant? = null
-
-    fun workingHours(): Map<DayOfWeek, WorkingHours> {
-        return this.dayWorkingHours.mapValues { it.value.workingHours }
-    }
 }
 
 @Entity
@@ -54,7 +51,7 @@ class UserSettingsEntity(
 data class DayWorkingHoursEntity(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private val id: Long? = null,
-    private val userId: UserId,
+    private val userId: Long,
     @Enumerated(EnumType.STRING)
     private val dayOfWeek: DayOfWeek,
 
@@ -64,7 +61,7 @@ data class DayWorkingHoursEntity(
     companion object {
         fun create(dayOfWeek: DayOfWeek, userId: UserId, workingHours: WorkingHours): DayWorkingHoursEntity {
             return DayWorkingHoursEntity(
-                userId = userId,
+                userId = userId.id,
                 dayOfWeek = dayOfWeek,
                 workingHours = workingHours
             )
@@ -81,7 +78,7 @@ fun UserSettingsEntity.applyChanges(userSettings: UserSettings): UserSettingsEnt
         { _, value ->
             value
                 ?.apply { this.workingHours = newWorkingHours }
-                ?: DayWorkingHoursEntity.create(dayOfWeek, userId, newWorkingHours)
+                ?: DayWorkingHoursEntity.create(dayOfWeek, userId.toUserId(), newWorkingHours)
         }
     }
     this.dayWorkingHours.entries.removeIf { it.key !in dayWorkingHours.keys }

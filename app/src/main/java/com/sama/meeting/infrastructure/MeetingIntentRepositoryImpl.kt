@@ -25,10 +25,6 @@ class MeetingIntentRepositoryImpl(private val meetingIntentJpaRepository: Meetin
         return meetingIntentEntity.toDomainObject()
     }
 
-    override fun existsByIdAndInitiatorId(meetingIntentId: MeetingIntentId, initiatorId: UserId): Boolean {
-        return meetingIntentJpaRepository.existsByIdAndInitiatorId(meetingIntentId.id, initiatorId.id)
-    }
-
     override fun existsByCodeAndInitiatorId(code: MeetingIntentCode, initiatorId: UserId): Boolean {
         return meetingIntentJpaRepository.existsByCodeAndInitiatorId(code.code, initiatorId.id)
     }

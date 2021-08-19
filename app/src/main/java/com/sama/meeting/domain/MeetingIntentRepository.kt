@@ -10,8 +10,6 @@ interface MeetingIntentRepository : Repository<MeetingIntent, MeetingIntentId> {
 
     fun findByCodeOrThrow(code: MeetingIntentCode): MeetingIntent
 
-    fun existsByIdAndInitiatorId(meetingIntentId: MeetingIntentId, initiatorId: UserId): Boolean
-
     fun existsByCodeAndInitiatorId(code: MeetingIntentCode, initiatorId: UserId): Boolean
 
     fun save(meetingIntent: MeetingIntent): MeetingIntent

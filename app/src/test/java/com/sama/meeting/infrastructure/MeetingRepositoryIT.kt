@@ -26,7 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
 
 @ContextConfiguration(classes = [MeetingRepositoryImpl::class])
-class MeetingPersistenceIT : BasePersistenceIT<MeetingRepository>() {
+class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
 
     @Autowired
     private lateinit var meetingIntentRepository: MeetingIntentJpaRepository

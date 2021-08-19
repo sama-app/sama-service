@@ -4,6 +4,7 @@ import com.sama.common.findByIdOrThrow
 import com.sama.users.domain.UserId
 import com.sama.users.domain.UserSettings
 import com.sama.users.domain.UserSettingsRepository
+import com.sama.users.infrastructure.jpa.UserSettingsEntity
 import com.sama.users.infrastructure.jpa.UserSettingsJpaRepository
 import org.springframework.stereotype.Component
 
@@ -11,7 +12,7 @@ import org.springframework.stereotype.Component
 class UserSettingsRepositoryImpl(private val userSettingsJpaRepository: UserSettingsJpaRepository) :
     UserSettingsRepository {
     override fun findByIdOrThrow(userId: UserId): UserSettings {
-        return userSettingsJpaRepository.findByIdOrThrow(userId).toDomainObject()
+        return userSettingsJpaRepository.findByIdOrThrow(userId.id).toDomainObject()
     }
 
     override fun save(userSettings: UserSettings): UserSettings {
@@ -23,7 +24,10 @@ class UserSettingsRepositoryImpl(private val userSettingsJpaRepository: UserSett
 
 fun UserSettingsEntity.toDomainObject(): UserSettings {
     return UserSettings(
-        this.userId, this.locale!!, this.timezone!!,
-        this.format24HourTime!!, this.workingHours()
+        userId.toUserId(),
+        locale!!,
+        timezone!!,
+        format24HourTime!!,
+        dayWorkingHours.mapValues { it.value.workingHours }
     )
 }

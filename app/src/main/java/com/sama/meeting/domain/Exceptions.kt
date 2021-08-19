@@ -15,10 +15,10 @@ class InvalidMeetingProposalException(message: String) :
     DomainValidationException("Meeting cannot be proposed: $message")
 
 class MeetingAlreadyConfirmedException(meetingCode: MeetingCode) :
-    DomainEntityStatusException("already_confirmed", "Meeting#$meetingCode already confirmed")
+    DomainEntityStatusException("already_confirmed", "Meeting#${meetingCode.code} already confirmed")
 
 class InvalidMeetingStatusException(meetingCode: MeetingCode, status: MeetingStatus):
-    DomainEntityStatusException("invalid_status", "Meeting#$meetingCode: Invalid status: $status")
+    DomainEntityStatusException("invalid_status", "Meeting#$meetingCode.code: Invalid status: $status")
 
 class MeetingSlotUnavailableException(meetingCode: MeetingCode, slot: MeetingSlot):
-    DomainInvalidActionException("slot_unavailable", "Meeting#$meetingCode: Slot unavailable: '${slot.startDateTime} - ${slot.endDateTime}'")
+    DomainInvalidActionException("slot_unavailable", "Meeting#$meetingCode.code: Slot unavailable: '${slot.startDateTime} - ${slot.endDateTime}'")

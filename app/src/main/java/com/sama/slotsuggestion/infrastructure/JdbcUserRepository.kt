@@ -14,11 +14,11 @@ import java.time.DayOfWeek
 import java.time.LocalTime
 import java.time.ZoneId
 
-@Repository
+@Deprecated("Use alternative implementations")
 class JdbcUserRepository(private val namedParameterJdbcTemplate: NamedParameterJdbcOperations) : UserRepository {
     override fun findById(userId: UserId): User {
         val namedParameters: SqlParameterSource = MapSqlParameterSource()
-            .addValue("user_id", userId, BIGINT)
+            .addValue("user_id", userId.id, BIGINT)
 
         val zoneId = namedParameterJdbcTemplate.queryForObject(
             """SELECT timezone FROM sama.user_settings WHERE user_id = :user_id""",
