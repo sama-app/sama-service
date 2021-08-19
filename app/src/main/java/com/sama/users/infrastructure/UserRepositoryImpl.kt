@@ -5,7 +5,6 @@ import com.sama.users.domain.UserDetails
 import com.sama.users.domain.UserDeviceRegistrations
 import com.sama.users.domain.UserGoogleCredential
 import com.sama.users.domain.UserId
-import com.sama.users.domain.UserJwtIssuer
 import com.sama.users.domain.UserPublicId
 import com.sama.users.domain.UserRepository
 import com.sama.users.infrastructure.jpa.UserEntity
@@ -16,10 +15,14 @@ import com.sama.users.infrastructure.jpa.findByPublicIdOrThrow
 import com.sama.users.infrastructure.jpa.findIdByEmailOrThrow
 import com.sama.users.infrastructure.jpa.findIdByPublicIdOrThrow
 import java.util.UUID
+import org.springframework.security.crypto.encrypt.TextEncryptor
 import org.springframework.stereotype.Component
 
 @Component
-class UserRepositoryImpl(private val userJpaRepository: UserJpaRepository) : UserRepository {
+class UserRepositoryImpl(
+    private val userJpaRepository: UserJpaRepository,
+    private val googleTokenEncryptor: TextEncryptor
+) : UserRepository {
     override fun findByIdOrThrow(userId: UserId): UserDetails {
         return userJpaRepository.findByIdOrThrow(userId.id).toUserDetails()
     }
@@ -54,14 +57,21 @@ class UserRepositoryImpl(private val userJpaRepository: UserJpaRepository) : Use
     }
 
     override fun save(userDetails: UserDetails): UserDetails {
-        var userEntity = UserEntity.new(userDetails)
-        userEntity = userJpaRepository.save(userEntity)
-        return userEntity.toUserDetails()
+        return if (userDetails.id == null) {
+            var userEntity = UserEntity.new(userDetails)
+            userEntity = userJpaRepository.save(userEntity)
+            userEntity.toUserDetails()
+        } else {
+            var userEntity = userJpaRepository.findByIdOrThrow(userDetails.id.id)
+            userEntity= userEntity.applyChanges(userDetails)
+            userEntity = userJpaRepository.save(userEntity)
+            userEntity.toUserDetails()
+        }
     }
 
     override fun save(userGoogleCredential: UserGoogleCredential): UserGoogleCredential {
         var userEntity = userJpaRepository.findByIdOrThrow(userGoogleCredential.userId.id)
-        userEntity.applyChanges(userGoogleCredential.googleCredential)
+        userEntity.applyChanges(userGoogleCredential.googleCredential.encrypt(googleTokenEncryptor))
         userEntity = userJpaRepository.save(userEntity)
         return userGoogleCredential.copy(googleCredential = userEntity.googleCredential!!)
     }

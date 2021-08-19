@@ -79,7 +79,7 @@ class GoogleOauth2ApplicationService(
                 throw RuntimeException("Invalid Google ID token")
             }
             val email = parsedIdToken.payload.email
-            VerifiedGoogleOauth2Token(email, GoogleCredential(it.accessToken, it.refreshToken, it.expiresInSeconds))
+            VerifiedGoogleOauth2Token(email, GoogleCredential.plainText(it.accessToken, it.refreshToken, it.expiresInSeconds))
         }.getOrThrow()
 
         // Step #2: Fetch extended user details

@@ -21,3 +21,5 @@ databaseChangeLog:
       file: classpath*:liquibase/change-sets/20210805155000-add-public-user-id.yml
   - include:
       file: classpath*:liquibase/change-sets/20210806151000-move-to-bigint-pks.yml
+  - include:
+      file: classpath*:liquibase/change-sets/20210819105000-encrypted-google-tokens.yml
