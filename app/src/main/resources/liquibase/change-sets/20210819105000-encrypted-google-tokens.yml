@@ -1,0 +1,15 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-encrypted-google-tokens
+      author: balys
+      changes:
+      - addColumn:
+          schemaName: sama
+          tableName: user_google_credential
+          columns:
+            - column:
+                name: google_access_token_encrypted
+                type: VARCHAR
+            - column:
+                name: google_refresh_token_encrypted
+                type: VARCHAR

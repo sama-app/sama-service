@@ -105,6 +105,10 @@ integration:
       https://www.googleapis.com/auth/userinfo.email,
       https://www.googleapis.com/auth/userinfo.profile
     credentials: "dummy-value-this-is-loaded-from-AWS-SM"
+    tokens.encryption:
+      password: "dummy-value-this-is-loaded-from-AWS-SM"
+      salt: "dummy-value-this-is-loaded-from-AWS-SM"
+
   firebase:
     credentials: "dummy-value-this-is-loaded-from-AWS-SM"
 
