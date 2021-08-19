@@ -5,19 +5,19 @@ import com.google.api.client.util.store.AbstractDataStore
 import com.google.api.client.util.store.DataStore
 import com.sama.common.findByIdOrThrow
 import com.sama.users.domain.GoogleCredential
-import com.sama.users.infrastructure.jpa.UserEntity
 import com.sama.users.infrastructure.jpa.UserJpaRepository
 import com.sama.users.infrastructure.jpa.applyChanges
 import org.apache.commons.logging.LogFactory
-import java.util.function.Function
-import java.util.stream.Collectors
+import org.springframework.security.crypto.encrypt.TextEncryptor
 
-class GoogleCredentialJPADataStore internal constructor(
+// TODO: Remove unencrypted values after all data has been migrated
+class EncryptedGoogleCredentialDataStore internal constructor(
     dataStoreId: String,
     private val userRepository: UserJpaRepository,
-    dataStoreFactory: GoogleCredentialJPADataStoreFactory
+    private val tokenEncryptor: TextEncryptor,
+    dataStoreFactory: GoogleCredentialDataStoreFactory,
 ) : AbstractDataStore<StoredCredential>(dataStoreFactory, dataStoreId), DataStore<StoredCredential> {
-    private val logger = LogFactory.getLog(GoogleCredentialJPADataStore::class.java)
+    private val logger = LogFactory.getLog(EncryptedGoogleCredentialDataStore::class.java)
 
     override fun keySet(): Set<String> {
         return userRepository.findAllIds()
@@ -25,22 +25,19 @@ class GoogleCredentialJPADataStore internal constructor(
             .toSet()
     }
 
-    override fun values(): Collection<StoredCredential> {
-        return userRepository.findAll().stream()
-            .map(toStoredCredential)
-            .collect(Collectors.toList())
-    }
-
     override fun get(id: String): StoredCredential? {
-        return userRepository.findByIdOrThrow(id.toLong())
+        val storedCredential = userRepository.findByIdOrThrow(id.toLong())
             .googleCredential
-            ?.let {
+            ?.let { googleCredential ->
                 val credential = StoredCredential()
-                credential.accessToken = it.accessToken
-                credential.refreshToken = it.refreshToken
-                credential.expirationTimeMilliseconds = it.expirationTimeMs
+                credential.accessToken = googleCredential.accessTokenEncrypted
+                    ?.let { tokenEncryptor.decrypt(it) } ?: googleCredential.accessToken
+                credential.refreshToken = googleCredential.refreshTokenEncrypted
+                    ?.let { tokenEncryptor.decrypt(it) } ?: googleCredential.refreshToken
+                credential.expirationTimeMilliseconds = googleCredential.expirationTimeMs
                 credential
             }
+        return storedCredential
     }
 
     override fun set(id: String, c: StoredCredential): DataStore<StoredCredential> {
@@ -51,7 +48,12 @@ class GoogleCredentialJPADataStore internal constructor(
 
         val user = userRepository.findByIdOrThrow(id.toLong())
 
-        val newCredentials = GoogleCredential(c.accessToken, c.refreshToken, c.expirationTimeMilliseconds)
+        val newCredentials = GoogleCredential.encrypted(
+            c.accessToken,
+            c.refreshToken,
+            c.expirationTimeMilliseconds,
+            tokenEncryptor
+        )
 
         val googleCredential = user.googleCredential?.merge(newCredentials)
             ?: newCredentials
@@ -60,21 +62,16 @@ class GoogleCredentialJPADataStore internal constructor(
         return this
     }
 
+    override fun values(): Collection<StoredCredential> {
+        throw UnsupportedOperationException("Unsupported")
+    }
+
     override fun clear(): DataStore<StoredCredential> {
         throw UnsupportedOperationException("Unsupported: modify GoogleCredentials directly via UserEntity")
     }
 
     override fun delete(id: String): DataStore<StoredCredential> {
         throw UnsupportedOperationException("Unsupported: modify GoogleCredentials directly via UserEntity")
-    }
-
-    private val toStoredCredential = Function { au: UserEntity ->
-        val credential = StoredCredential()
-        val gc: GoogleCredential = au.googleCredential!!
-        credential.accessToken = gc.accessToken
-        credential.refreshToken = gc.refreshToken
-        credential.expirationTimeMilliseconds = gc.expirationTimeMs
-        credential
     }
 
     private fun StoredCredential.isUsable(): Boolean {

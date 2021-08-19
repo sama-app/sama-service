@@ -88,13 +88,6 @@ fun UserEntity.applyChanges(user: UserDeviceRegistrations): UserEntity {
     return this
 }
 
-fun UserEntity.applyChanges(userGoogleCredential: UserGoogleCredential): UserEntity {
-    val newGoogleCredential = userGoogleCredential.googleCredential
-    this.googleCredential = this.googleCredential?.merge(newGoogleCredential)
-        ?: newGoogleCredential.copy(updatedAt = Instant.now())
-    return this
-}
-
 fun UserEntity.applyChanges(googleCredential: GoogleCredential): UserEntity {
     this.googleCredential = this.googleCredential?.merge(googleCredential)
         ?: googleCredential.copy(updatedAt = Instant.now())
