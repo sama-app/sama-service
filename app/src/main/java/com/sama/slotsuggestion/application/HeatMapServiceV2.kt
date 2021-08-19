@@ -1,7 +1,7 @@
 package com.sama.slotsuggestion.application
 
 import com.sama.common.ApplicationService
-import com.sama.meeting.application.MeetingApplicationService
+import com.sama.integration.sentry.sentrySpan
 import com.sama.slotsuggestion.configuration.HeatMapConfiguration
 import com.sama.slotsuggestion.domain.BlockRepository
 import com.sama.slotsuggestion.domain.UserRepository
@@ -29,24 +29,27 @@ class HeatMapServiceV2(
         val futureBlockEndDate = today.plusDays(heatMapConfiguration.futureDays)
         val futureBlocks = blockRepository.findAllBlocks(initiatorId, today, futureBlockEndDate)
 
-        val heatMap = HeatMap.create(
-            user.userId,
-            user.timeZone,
-            today.toLocalDate(),
-            futureBlockEndDate.toLocalDate(),
-            heatMapConfiguration.intervalMinutes
-        )
+        sentrySpan(method = "HeatMap.create") {
+            val baseHeatMap = HeatMap.create(
+                user.userId,
+                user.timeZone,
+                today.toLocalDate(),
+                futureBlockEndDate.toLocalDate(),
+                heatMapConfiguration.intervalMinutes
+            )
 
-        val weigher = weigher {
-            searchBoundary()
-            pastBlocks(pastBlocks)
-            futureBlocks(futureBlocks)
-            // futureProposedSlots(futureProposedSlots)
-            workingHours(user.workingHours)
-            recipientTimeZone(recipientTimezone)
-            recency()
+            val weigher = weigher {
+                searchBoundary()
+                pastBlocks(pastBlocks)
+                futureBlocks(futureBlocks)
+                // futureProposedSlots(futureProposedSlots)
+                workingHours(user.workingHours)
+                recipientTimeZone(recipientTimezone)
+                recency()
+            }
+
+            val heatMap = weigher.apply(baseHeatMap)
+            return heatMap
         }
-
-        return weigher.apply(heatMap)
     }
 }
