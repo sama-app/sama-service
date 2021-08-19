@@ -79,7 +79,7 @@ class MeetingApplicationService(
     fun proposeMeeting(userId: UserId, command: ProposeMeetingCommand): MeetingInvitationDTO {
         val meetingIntent = meetingIntentRepository.findByCodeOrThrow(command.meetingIntentCode)
         if (meetingIntent.initiatorId != userId) {
-            throw AccessDeniedException("User#$userId does not have access to MeetingIntent#${command.meetingIntentCode}")
+            throw AccessDeniedException("User#${userId.id} does not have access to MeetingIntent#${command.meetingIntentCode.code}")
         }
 
         val meetingId = meetingRepository.nextIdentity()

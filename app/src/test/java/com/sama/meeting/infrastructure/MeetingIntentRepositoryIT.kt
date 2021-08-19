@@ -15,7 +15,7 @@ import java.time.ZonedDateTime
 import kotlin.test.assertNotEquals
 
 @ContextConfiguration(classes = [MeetingIntentRepositoryImpl::class])
-class MeetingIntentPersistenceIT : BasePersistenceIT<MeetingIntentRepository>() {
+class MeetingIntentRepositoryIT : BasePersistenceIT<MeetingIntentRepository>() {
 
     @Test
     fun `next identity`() {

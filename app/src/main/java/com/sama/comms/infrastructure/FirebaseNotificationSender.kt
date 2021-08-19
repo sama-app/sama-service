@@ -16,9 +16,9 @@ class FirebaseNotificationSender(private val userService: UserService) : Notific
 
     override fun send(userId: UserId, notification: Notification): Boolean {
         return kotlin.runCatching {
-            val token = (userService.findUserDeviceRegistrations(userId).firebaseDeviceRegistration
+            val token = userService.findUserDeviceRegistrations(userId).firebaseDeviceRegistration
                 ?.registrationToken
-                ?: throw RuntimeException("No Firebase device registration found"))
+                ?: throw RuntimeException("No Firebase device registration found")
 
             val message: Message = Message.builder()
                 .setNotification(
@@ -33,8 +33,8 @@ class FirebaseNotificationSender(private val userService: UserService) : Notific
 
             FirebaseMessaging.getInstance().send(message)
         }
-            .onSuccess { logger.debug("Notification sent to User#$userId") }
-            .onFailure { logger.warn("Could not send Firebase notification to User#$userId", it) }
+            .onSuccess { logger.debug("Notification sent to User#${userId.id}") }
+            .onFailure { logger.warn("Could not send Firebase notification to User#${userId.id}", it) }
             .isSuccess
     }
 }

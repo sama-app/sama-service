@@ -33,10 +33,6 @@ class UserRepositoryImpl(private val userJpaRepository: UserJpaRepository) : Use
         return userJpaRepository.findByIdOrThrow(userId.id).toDeviceRegistrations()
     }
 
-    override fun findAllIds(): Set<UserId> {
-        return userJpaRepository.findAllIds().mapTo(mutableSetOf()) { it.toUserId() }
-    }
-
     override fun findByEmailOrThrow(email: String): UserDetails {
         return userJpaRepository.findByEmailOrThrow(email).toUserDetails()
     }

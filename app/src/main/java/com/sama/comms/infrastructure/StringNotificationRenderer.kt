@@ -28,7 +28,6 @@ class StringNotificationRenderer : NotificationRenderer {
             body = "Meet on $date on $time in your time zone",
             additionalData = emptyMap()
         )
-
     }
 
     private fun String.removeYear(): String {

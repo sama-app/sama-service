@@ -13,7 +13,6 @@ interface UserRepository : Repository<UserDetails, UserId> {
 
     fun existsByEmail(email: String): Boolean
 
-    fun findAllIds(): Set<UserId>
     fun findIdByPublicIdOrThrow(userPublicId: UserPublicId): UserId
     fun findIdByEmailOrThrow(email: String): UserId
 

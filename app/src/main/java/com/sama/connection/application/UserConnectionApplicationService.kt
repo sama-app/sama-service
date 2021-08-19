@@ -61,7 +61,7 @@ class UserConnectionApplicationService(
     fun approveConnectionRequest(userId: UserId, connectionRequestId: ConnectionRequestId) {
         val connectionRequest = connectionRequestRepository.findByIdOrThrow(connectionRequestId)
         if (connectionRequest.recipientUserId != userId) {
-            throw AccessDeniedException("User#$userId does not have access to ConnectionRequest#$connectionRequestId")
+            throw AccessDeniedException("User#${userId.id} does not have access to ConnectionRequest#$connectionRequestId")
         }
 
         val (approvedRequest, userConnection) = connectionRequest.approve()
@@ -75,7 +75,7 @@ class UserConnectionApplicationService(
     fun rejectConnectionRequest(userId: UserId, connectionRequestId: ConnectionRequestId) {
         val connectionRequest = connectionRequestRepository.findByIdOrThrow(connectionRequestId)
         if (connectionRequest.recipientUserId != userId) {
-            throw AccessDeniedException("User#$userId does not have access to ConnectionRequest#$connectionRequestId")
+            throw AccessDeniedException("User#${userId.id} does not have access to ConnectionRequest#$connectionRequestId")
         }
 
         val rejectedRequest = connectionRequest.reject()
