@@ -41,13 +41,7 @@ class EncryptedGoogleCredentialDataStore internal constructor(
     }
 
     override fun set(id: String, c: StoredCredential): DataStore<StoredCredential> {
-        if (!c.isUsable()) {
-            logger.warn("User#$id received invalid Google Credentials")
-            throw GoogleInvalidCredentialsException(null)
-        }
-
         val user = userRepository.findByIdOrThrow(id.toLong())
-
         val newCredentials = GoogleCredential.encrypted(
             c.accessToken,
             c.refreshToken,
@@ -59,6 +53,13 @@ class EncryptedGoogleCredentialDataStore internal constructor(
             ?: newCredentials
 
         user.applyChanges(googleCredential).also { userRepository.save(it) }
+
+        // throw only after storing the invalid credentials so that Google's SDK
+        // can handle the missing tokens itself
+        if (!c.isUsable()) {
+            logger.warn("User#$id received invalid Google Credentials")
+            throw GoogleInvalidCredentialsException(null)
+        }
         return this
     }
 
