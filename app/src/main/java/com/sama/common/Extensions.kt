@@ -49,6 +49,46 @@ fun DoubleArray.mapIndexed(transform: (Int, Double) -> Double): DoubleArray {
 }
 
 
+/**
+ * Returns a sequence of snapshots given a [chunkCutOffPredicate] that determines where each
+ * chunk ends.
+ */
+fun <T> Sequence<T>.chunkedBy(chunkCutOffPredicate: (T, T) -> Boolean): Sequence<List<T>> {
+    return Sequence { chunkedByIterator(iterator(), chunkCutOffPredicate) }
+}
+
+/**
+ * Returns a sequence of snapshots given a [chunkCutOffPredicate] that determines where each
+ * chunk ends and perform a transformation on the result chunks.
+ */
+fun <T, R> Sequence<T>.chunkedBy(chunkCutOffPredicate: (T, T) -> Boolean, transform: (Int, List<T>) -> R): Sequence<R> {
+    return Sequence { chunkedByIterator(iterator(), chunkCutOffPredicate) }.mapIndexed(transform)
+}
+
+fun <T> chunkedByIterator(
+    iterator: Iterator<T>,
+    chunkCutOffPredicate: (T, T) -> Boolean
+): Iterator<List<T>> {
+    return iterator<List<T>> {
+        val bufferInitialCapacity = 4
+        var buffer = ArrayList<T>(bufferInitialCapacity)
+        for (e in iterator) {
+            if (buffer.isNotEmpty()) {
+                val cutOff = chunkCutOffPredicate.invoke(buffer.last(), e)
+                if (cutOff) {
+                    yield(buffer)
+                    buffer = ArrayList(bufferInitialCapacity)
+                }
+            }
+            buffer.add(e)
+        }
+        if (buffer.isNotEmpty()) {
+            yield(buffer)
+        }
+    }
+}
+
+
 fun Long.toMinutes(): Duration = Duration.ofMinutes(this)
 
 fun LocalDate.datesUtil(endDate: LocalDate): Sequence<LocalDate> {

@@ -12,3 +12,5 @@ data class User(
 )
 
 data class WorkingHours(val startTime: LocalTime, val endTime: LocalTime)
+
+fun WorkingHours?.isNonWorkingDay() = this == null || this.startTime == this.endTime

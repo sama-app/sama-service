@@ -3,20 +3,22 @@ package com.sama.slotsuggestion.domain.v2
 import com.sama.meeting.application.MeetingSlotDTO
 import com.sama.slotsuggestion.domain.Block
 import com.sama.slotsuggestion.domain.WorkingHours
+import com.sama.slotsuggestion.domain.isNonWorkingDay
 import com.sama.slotsuggestion.domain.v1.SlotSuggestion
-import java.time.DayOfWeek
-import java.time.LocalDateTime
-import java.time.LocalTime
-import java.time.ZoneId
-import java.time.ZonedDateTime
+import java.time.*
+import java.util.function.Predicate.not
+import kotlin.math.min
+import kotlin.math.pow
 
 interface Weigher {
     fun weight(heatMap: HeatMap): HeatMap
 }
 
 class PastBlockWeigher(private val inputBlock: Block) : Weigher {
-    private val weightWithRecipient = 10.0
-    private val weightWithoutRecipients = 5.0
+    companion object {
+        private const val weightWithRecipient = 10.0
+        private const val weightWithoutRecipients = 5.0
+    }
 
     override fun weight(heatMap: HeatMap): HeatMap {
         val block = inputBlock.atTimeZone(heatMap.userTimeZone)
@@ -24,10 +26,17 @@ class PastBlockWeigher(private val inputBlock: Block) : Weigher {
             return heatMap
         }
 
+        val weight = if (block.hasRecipients) {
+            // there's a meeting with a person, we should add weight
+            weightWithRecipient
+        } else {
+            // if it's a self-blocked time, we count as we DON'T want meetings for the time
+            weightWithoutRecipients
+        }
+
         return heatMap
             .query {
-                fromTime = block.startDateTime.toLocalTime()
-                toTime = block.endDateTime.toLocalTime()
+                inTimeRange(block.startDateTime.toLocalTime(), block.endDateTime.toLocalTime())
                 // recurring blocks affect days of weeks
                 if (block.isRecurring()) {
                     dayOfWeek(block.startDateTime.dayOfWeek)
@@ -39,24 +48,16 @@ class PastBlockWeigher(private val inputBlock: Block) : Weigher {
                     weekend()
                 }
             }
-            .modify { _, slot ->
-                val weight = if (block.hasRecipients) {
-                    // there's a meeting with a person, we should add weight
-                    weightWithRecipient
-                } else {
-                    // if it's a self-blocked time, we count as we DON'T want meetings for the time
-                    weightWithoutRecipients
-                }
-
-                slot.addWeight("past block: ${block.toDebugString()}", weight)
-            }
+            .addFixedWeight(weight) { "past block: ${block.toDebugString()}" }
             .save(heatMap)
     }
 }
 
 
 class FutureBlockWeigher(private val block: Block) : Weigher {
-    private val weight = -10000.0
+    companion object {
+        private const val weight = -10000.0
+    }
 
     override fun weight(heatMap: HeatMap): HeatMap {
         if (block.zeroDuration()) {
@@ -68,42 +69,54 @@ class FutureBlockWeigher(private val block: Block) : Weigher {
                 from(block.startDateTime, heatMap.userTimeZone)
                 to(block.endDateTime, heatMap.userTimeZone)
             }
-            .modify { _, slot -> slot.addWeight("future block: ${block.toDebugString()}", weight) }
+            .addFixedWeight(weight) { "future block: ${block.toDebugString()}" }
             .save(heatMap)
 
     }
 }
 
 class WorkingHoursWeigher(private val workingHours: Map<DayOfWeek, WorkingHours>) : Weigher {
-    private val weight = -1000.0
+    companion object {
+        private const val baseWeight = -900.0
+        private const val maxWeight = -600.0
+        private const val weightStep = 12.5
+    }
 
     override fun weight(heatMap: HeatMap): HeatMap {
         var result = heatMap
 
         for (dow in DayOfWeek.values()) {
             val wh = workingHours[dow]
-            val startTime = wh?.startTime ?: LocalTime.MIN
-            val endTime = wh?.endTime ?: LocalTime.MIN
+            if (wh.isNonWorkingDay()) {
+                result = result.query(slotQuery { dayOfWeek(dow) })
+                    .addFixedWeight(baseWeight) { "non working day: $dow" }
+                    .save(result)
+            } else {
+                check(wh != null)
+                val query = slotQuery { dayOfWeek(dow) }
+                    .and(not(slotQuery { inTimeRange(wh.startTime, wh.endTime) }))
 
-            val slotQuery = slotQuery {
-                dayOfWeek(dow)
-                this.toTime = startTime
-            }.or(slotQuery {
-                dayOfWeek(dow)
-                this.fromTime = endTime
-            })
-
-            result = result
-                .query(slotQuery)
-                .modify { _, slot -> slot.addWeight("working hours: $dow - $wh", weight) }
-                .save(result)
+                result = result.query(query)
+                    .grouped()
+                    .mapValue { groupInfo, slot ->
+                        val isStartOfDay = groupInfo.chunkIdx % 2 == 1 // Every other slot group is the start of day
+                        var fraction = (groupInfo.itemIdx.toDouble() / (groupInfo.size - 1)).pow(2.0)
+                        if (isStartOfDay) fraction = 1 - fraction // reverse direction for start of day
+                        val w = min(baseWeight + (fraction * weightStep * groupInfo.size), maxWeight)
+                        slot.addWeight(w, "working hours: $dow - $wh")
+                    }
+                    .save(result)
+            }
         }
         return result
     }
 }
 
 class RecipientTimeZoneWeigher(private val recipientTimeZone: ZoneId) : Weigher {
-    private val weight = -50.0
+    companion object {
+        private const val baseWeight = -1000.0
+        private const val weightStep = 10.0
+    }
 
     override fun weight(heatMap: HeatMap): HeatMap {
         val now = LocalDateTime.now()
@@ -114,48 +127,45 @@ class RecipientTimeZoneWeigher(private val recipientTimeZone: ZoneId) : Weigher 
             return heatMap
         }
 
-        val startTime = LocalTime.of(8, 0).plusSeconds(offsetDifference)
-        val endTime = LocalTime.of(20, 0).plusSeconds(offsetDifference)
+        val startTime = LocalTime.of(9, 0).plusSeconds(offsetDifference)
+        val endTime = LocalTime.of(17, 0).plusSeconds(offsetDifference)
 
-        val slotQuery = slotQuery {
-            this.toTime = startTime
-        }.or(slotQuery {
-            this.fromTime = endTime
-        })
-
-        return heatMap
-            .query(slotQuery)
-            .modify { _, slot -> slot.addWeight("recipient time zone preferred: $recipientTimeZone", weight) }
+        return heatMap.query(not(slotQuery { inTimeRange(startTime, endTime) }))
+            .grouped()
+            .addParabolicWeight(baseWeight, weightStep) { "recipient time zone preferred: $recipientTimeZone" }
             .save(heatMap)
     }
 }
 
 class SearchBoundaryWeigher : Weigher {
-    private val weight = -10000.0
+    companion object {
+        private const val weight = -10000.0
+    }
 
     override fun weight(heatMap: HeatMap): HeatMap {
         val searchStartDateTime = ZonedDateTime.now(heatMap.userTimeZone)
         return heatMap
             .query { to(searchStartDateTime.plusMinutes(heatMap.intervalMinutes), heatMap.userTimeZone) }
-            .modify { _, slot -> slot.addWeight("search boundary", weight) }
+            .addFixedWeight(weight) { "search boundary" }
             .save(heatMap)
     }
 }
 
 class RecencyWeigher : Weigher {
-    private val weightIncrement = -0.01
-
     override fun weight(heatMap: HeatMap): HeatMap {
-        val startDate = heatMap.startDate.plusDays(4)
+        val startDate = heatMap.startDate.plusDays(3)
         return heatMap
-            .query { this.fromDate = startDate }
-            .modify { idx, slot -> slot.addWeight("recency", weightIncrement * idx) }
+            .query { fromDate(startDate) }
+            .grouped()
+            .addLinearWeight(startValue = 0.0, endValue = -20.0) { "recency " }
             .save(heatMap)
     }
 }
 
 class SuggestedSlotWeigher(private val ss: SlotSuggestion) : Weigher {
-    private val weight = -1000.0
+    companion object {
+        private const val weight = -1000.0
+    }
 
     override fun weight(heatMap: HeatMap): HeatMap {
         return heatMap
@@ -163,13 +173,15 @@ class SuggestedSlotWeigher(private val ss: SlotSuggestion) : Weigher {
                 from(ss.startDateTime.minusHours(4), heatMap.userTimeZone)
                 to(ss.endDateTime.plusHours(4), heatMap.userTimeZone)
             }
-            .modify { _, slot -> slot.addWeight("suggested slot: ${ss.startDateTime} - ${ss.endDateTime}", weight) }
+            .addFixedWeight(weight) { "suggested slot: ${ss.startDateTime} - ${ss.endDateTime}" }
             .save(heatMap)
     }
 }
 
 class TimeVarietyWeigher(private val ss: Collection<SlotSuggestion>) : Weigher {
-    private val baseWeight = -30.0
+    companion object {
+        private const val baseWeight = -50.0
+    }
 
     override fun weight(heatMap: HeatMap): HeatMap {
         val repeatingSlots = ss
@@ -185,16 +197,8 @@ class TimeVarietyWeigher(private val ss: Collection<SlotSuggestion>) : Weigher {
             val weight = baseWeight * count
 
             result = result
-                .query {
-                    fromTime = repeatingSlot.first
-                    toTime = repeatingSlot.second
-                }
-                .modify { _, slot ->
-                    slot.addWeight(
-                        "suggested time variety repeating $count times: ${repeatingSlot.first} - ${repeatingSlot.second}",
-                        weight
-                    )
-                }
+                .query { inTimeRange(repeatingSlot.first, repeatingSlot.second) }
+                .addFixedWeight(weight) { "suggested time variety repeating $count times: ${repeatingSlot.first} - ${repeatingSlot.second}" }
                 .save(result)
         }
 
@@ -204,7 +208,9 @@ class TimeVarietyWeigher(private val ss: Collection<SlotSuggestion>) : Weigher {
 }
 
 class FutureProposedSlotWeigher(private val ms: MeetingSlotDTO) : Weigher {
-    private val weight = 5.0
+    companion object {
+        private const val weight = 5.0
+    }
 
     override fun weight(heatMap: HeatMap): HeatMap {
         return heatMap
@@ -212,7 +218,7 @@ class FutureProposedSlotWeigher(private val ms: MeetingSlotDTO) : Weigher {
                 from(ms.startDateTime, heatMap.userTimeZone)
                 to(ms.endDateTime, heatMap.userTimeZone)
             }
-            .modify { _, slot -> slot.addWeight("proposed slot: ${ms.startDateTime} - ${ms.endDateTime}", weight) }
+            .addFixedWeight(weight) { "proposed slot: ${ms.startDateTime} - ${ms.endDateTime}" }
             .save(heatMap)
     }
 

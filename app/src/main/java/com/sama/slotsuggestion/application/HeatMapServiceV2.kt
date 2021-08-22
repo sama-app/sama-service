@@ -42,14 +42,14 @@ class HeatMapServiceV2(
                 searchBoundary()
                 pastBlocks(pastBlocks)
                 futureBlocks(futureBlocks)
-                // futureProposedSlots(futureProposedSlots)
+//                 futureProposedSlots(futureProposedSlots)
                 workingHours(user.workingHours)
                 recipientTimeZone(recipientTimezone)
                 recency()
             }
 
             val heatMap = weigher.apply(baseHeatMap)
-            return heatMap
+            return heatMap.normalize()
         }
     }
 }
