@@ -6,24 +6,12 @@ import com.sama.auth.application.GoogleOauth2ApplicationService
 import com.sama.auth.application.GoogleSignFailureDTO
 import com.sama.auth.application.GoogleSignSuccessDTO
 import com.sama.common.mapIndexed
-import com.sama.slotsuggestion.application.HeatMapServiceV1
-import com.sama.slotsuggestion.application.HeatMapServiceV2
-import com.sama.slotsuggestion.application.SlotSuggestionRequest
-import com.sama.slotsuggestion.application.SlotSuggestionResponse
-import com.sama.slotsuggestion.application.SlotSuggestionServiceV1
-import com.sama.slotsuggestion.application.SlotSuggestionServiceV2
+import com.sama.slotsuggestion.application.*
 import com.sama.slotsuggestion.domain.UserRepository
 import com.sama.slotsuggestion.domain.v1.WeightContext
 import com.sama.slotsuggestion.domain.v1.sigmoid
 import com.sama.slotsuggestion.domain.v2.SlotSuggestionEngine
 import com.sama.users.domain.UserId
-import java.time.Duration
-import java.time.LocalTime
-import java.time.ZoneId
-import javax.servlet.http.Cookie
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
-import kotlin.math.round
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.GetMapping
@@ -31,6 +19,13 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.servlet.ModelAndView
 import org.springframework.web.servlet.view.RedirectView
+import java.time.Duration
+import java.time.LocalTime
+import java.time.ZoneId
+import javax.servlet.http.Cookie
+import javax.servlet.http.HttpServletRequest
+import javax.servlet.http.HttpServletResponse
+import kotlin.math.round
 
 @RestController
 class DebugViewController(
@@ -101,7 +96,7 @@ class DebugViewController(
         return ModelAndView("heatmap", model)
     }
 
-    data class Cell(val label: String, val colour: String, val hover: Set<Map.Entry<Any, Double>> = emptySet())
+    data class Cell(val label: String, val colour: String, val hover: Set<Map.Entry<Any, Any>> = emptySet())
 
     @GetMapping("/api/__debug/user/heatmap2")
     fun renderUserHeapMap2(
@@ -110,7 +105,9 @@ class DebugViewController(
         model: MutableMap<String, Any>,
     ): ModelAndView {
         val user = userRepository.findById(userId!!)
-        val baseHeatMap = heatMapServiceV2.generate(userId!!, user.timeZone)
+        val userTimeZone = user.timeZone
+        val recipientTimezone = ZoneId.of("UTC+3")
+        val baseHeatMap = heatMapServiceV2.generate(userId!!, recipientTimezone)
 
         val (suggestedSlots, heatMap) = SlotSuggestionEngine(baseHeatMap)
             .suggest(Duration.ofMinutes(60), count)
@@ -128,22 +125,30 @@ class DebugViewController(
             for (j in values[0].indices) {
                 val slot = values[i][j]
 
-                val isSuggested = suggestedSlots.find { ss ->
+                val suggestedSlot = suggestedSlots.find { ss ->
                     ss.slots.find {
                         it.startDateTime.isEqual(slot.startDateTime) && it.endDateTime.isEqual(slot.endDateTime)
                     } != null
-                } != null
+                }
 
                 val weight = String.format("%.2f", slot.totalWeight)
-                val sigmoid = sigmoid(x = slot.totalWeight, k = -10 / maxWeight)
+                val sigmoid = sigmoid(x = slot.totalWeight, k = -3 / maxWeight)
                 transposed[j][i] = Cell(
                     weight,
-                    if (isSuggested) {
+                    if (suggestedSlot != null) {
                         "#FFFFFF"
                     } else {
                         percentageToColour((sigmoid * 100).toInt())
                     },
-                    slot.influences.entries
+                    slot.influences.entries.plus(
+                        mapOf(
+                            "Recipient time:" to slot.startDateTime.atZone(userTimeZone)
+                                .withZoneSameInstant(recipientTimezone)
+                                .toLocalTime(),
+                            "SIGMOID:" to sigmoid,
+                            "SCORE:" to (suggestedSlot?.let { it.score.toString() } ?: "N/A")
+                        ).entries
+                    )
                 )
             }
         }

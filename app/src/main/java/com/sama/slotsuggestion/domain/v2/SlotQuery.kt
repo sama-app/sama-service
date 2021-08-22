@@ -1,18 +1,7 @@
 package com.sama.slotsuggestion.domain.v2
 
-import java.time.DayOfWeek
-import java.time.DayOfWeek.FRIDAY
-import java.time.DayOfWeek.MONDAY
-import java.time.DayOfWeek.SATURDAY
-import java.time.DayOfWeek.SUNDAY
-import java.time.DayOfWeek.THURSDAY
-import java.time.DayOfWeek.TUESDAY
-import java.time.DayOfWeek.WEDNESDAY
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.LocalTime
-import java.time.ZoneId
-import java.time.ZonedDateTime
+import java.time.*
+import java.time.DayOfWeek.*
 import java.util.function.Predicate
 
 
@@ -26,13 +15,13 @@ inline fun slotQuery(query: SlotQuery.() -> Unit): SlotQuery {
 }
 
 data class SlotQuery(
-    var fromDateTime: LocalDateTime = LocalDateTime.MIN,
-    var toDateTime: LocalDateTime = LocalDateTime.MAX,
-    var fromTime: LocalTime = LocalTime.MIDNIGHT,
-    var toTime: LocalTime? = null, // null indicates MIDNIGHT of the next day
-    var fromDate: LocalDate = LocalDate.MIN,
-    var toDate: LocalDate = LocalDate.MAX,
-    var daysOfWeek: Set<DayOfWeek>? = null,
+    private var fromDateTime: LocalDateTime = LocalDateTime.MIN,
+    private var toDateTime: LocalDateTime = LocalDateTime.MAX,
+    private var fromTime: LocalTime = LocalTime.MIDNIGHT,
+    private var toTime: LocalTime? = null, // null indicates MIDNIGHT of the next day
+    private var fromDate: LocalDate = LocalDate.MIN,
+    private var toDate: LocalDate = LocalDate.MAX,
+    private var daysOfWeek: Set<DayOfWeek>? = null,
 ) : Predicate<Slot> {
 
     fun from(zonedDateTime: ZonedDateTime, zoneId: ZoneId) {
@@ -43,17 +32,35 @@ data class SlotQuery(
         toDateTime = zonedDateTime.withZoneSameInstant(zoneId).toLocalDateTime()
     }
 
+    fun fromDate(localDate: LocalDate) {
+        fromDate = localDate
+    }
+
     fun fromDate(zonedDateTime: ZonedDateTime, zoneId: ZoneId) {
-        fromDate = zonedDateTime.withZoneSameInstant(zoneId).toLocalDate()
+        fromDate(zonedDateTime.withZoneSameInstant(zoneId).toLocalDate())
+    }
+
+    fun toDate(localDate: LocalDate) {
+        toDate = localDate
     }
 
     fun toDate(zonedDateTime: ZonedDateTime, zoneId: ZoneId) {
-        toDate = zonedDateTime.withZoneSameInstant(zoneId).toLocalDate()
+        toDate(zonedDateTime.withZoneSameInstant(zoneId).toLocalDate())
     }
 
-    fun timeRange(startTime: LocalTime, endTime: LocalTime) {
+    fun inTimeRange(startTime: LocalTime, endTime: LocalTime) {
         this.fromTime = startTime
         this.toTime = endTime
+    }
+
+    fun toMidnight(fromTime: LocalTime) {
+        this.fromTime = fromTime
+        this.toTime = null
+    }
+
+    fun fromMidnight(toTime: LocalTime) {
+        this.fromTime = LocalTime.MIN
+        this.toTime = toTime
     }
 
     fun dayOfWeek(dayOfWeek: DayOfWeek) {
@@ -94,7 +101,8 @@ data class SlotQuery(
                 return false
             }
         } else {
-            if ((toTime != null && startLocalTime.isBefore(toTime)) || endLocalTime.isAfter(fromTime)) {
+            check(toTime != null)
+            if (startLocalTime.isAfter(toTime) && startLocalTime.isBefore(fromTime)) {
                 return false
             }
         }

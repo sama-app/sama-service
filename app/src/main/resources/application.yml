@@ -94,7 +94,7 @@ sama:
       interval-minutes: 15
       historical-days: 90
       historical-cache-duration-hours: 12
-      future-days: 21
+      future-days: 14
 
 integration:
   google:
