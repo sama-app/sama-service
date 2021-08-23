@@ -5,20 +5,17 @@ import com.sama.api.config.AuthUserId
 import com.sama.auth.application.GoogleOauth2ApplicationService
 import com.sama.auth.application.GoogleSignFailureDTO
 import com.sama.auth.application.GoogleSignSuccessDTO
-import com.sama.common.mapIndexed
-import com.sama.slotsuggestion.application.*
+import com.sama.slotsuggestion.application.HeatMapServiceV1
+import com.sama.slotsuggestion.application.HeatMapServiceV2
+import com.sama.slotsuggestion.application.SlotSuggestionRequest
+import com.sama.slotsuggestion.application.SlotSuggestionResponse
+import com.sama.slotsuggestion.application.SlotSuggestionServiceV1
+import com.sama.slotsuggestion.application.SlotSuggestionServiceV2
 import com.sama.slotsuggestion.domain.UserRepository
 import com.sama.slotsuggestion.domain.v1.WeightContext
 import com.sama.slotsuggestion.domain.v1.sigmoid
 import com.sama.slotsuggestion.domain.v2.SlotSuggestionEngine
 import com.sama.users.domain.UserId
-import org.springframework.http.HttpStatus
-import org.springframework.http.MediaType
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.RequestParam
-import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.servlet.ModelAndView
-import org.springframework.web.servlet.view.RedirectView
 import java.time.Duration
 import java.time.LocalTime
 import java.time.ZoneId
@@ -26,6 +23,13 @@ import javax.servlet.http.Cookie
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 import kotlin.math.round
+import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.servlet.ModelAndView
+import org.springframework.web.servlet.view.RedirectView
 
 @RestController
 class DebugViewController(
@@ -61,44 +65,15 @@ class DebugViewController(
                 cookie.maxAge = -1
                 cookie.path = "/"
                 response.addCookie(cookie)
-                response.sendRedirect("/api/__debug/user/heatmap2?count=3")
+                response.sendRedirect("/api/__debug/user/heatmap?count=3")
             }
             is GoogleSignFailureDTO -> response.status = HttpStatus.FORBIDDEN.value()
         }
     }
 
-    @GetMapping("/api/__debug/user/heatmap")
-    fun renderUserHeapMap(@AuthUserId userId: UserId?, model: MutableMap<String, Any>): ModelAndView {
-        val heatMap = heatMapService.generate(userId!!, ZoneId.systemDefault())
-            .dayVectors()
-            .mapValues { it.value.mapIndexed { _, value -> sigmoid(value) } }
-            .toSortedMap()
-
-        model["headers"] = listOf(" ") + heatMap.keys.map { it.toString().substring(5) }
-
-        // TODO replace this poor implementation of Matrix transpose
-        val values = heatMap.values.toList()
-        val transposed = MutableList(values[0].size) { MutableList(values.size) { "0" to "" } }
-        for (i in values.indices) {
-            for (j in values[0].indices) {
-                val percentage = (values[i][j] * 100).toInt()
-                transposed[j][i] = percentage.toString() to percentageToColour(percentage)
-            }
-        }
-
-        for (i in transposed.indices) {
-            val time = LocalTime.MIDNIGHT.plusMinutes(i * weightContext.intervalMinutes.toLong())
-            transposed[i] =
-                (mutableListOf(Pair("${time.hour}:${time.minute}", "#FFFFFF")) + transposed[i]).toMutableList()
-        }
-
-        model["vectors"] = transposed
-        return ModelAndView("heatmap", model)
-    }
-
     data class Cell(val label: String, val colour: String, val hover: Set<Map.Entry<Any, Any>> = emptySet())
 
-    @GetMapping("/api/__debug/user/heatmap2")
+    @GetMapping("/api/__debug/user/heatmap")
     fun renderUserHeapMap2(
         @AuthUserId userId: UserId?,
         @RequestParam(defaultValue = "3") count: Int,
@@ -164,19 +139,6 @@ class DebugViewController(
     }
 
     @GetMapping("/api/__debug/user/suggestions", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun getTopSuggestions(@AuthUserId userId: UserId?): SlotSuggestionResponse {
-        return slotSuggestionService.suggestSlots(
-            userId!!,
-            SlotSuggestionRequest(
-                Duration.ofMinutes(60),
-                ZoneId.systemDefault(),
-                10
-            )
-        )
-    }
-
-
-    @GetMapping("/api/__debug/user/suggestions2", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getTopSuggestions2(@AuthUserId userId: UserId): SlotSuggestionResponse {
         return slotSuggestionServiceV2.suggestSlots(
             userId, SlotSuggestionRequest(
