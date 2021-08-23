@@ -3,24 +3,18 @@ package com.sama.users.domain
 import com.sama.common.DomainEntity
 import com.sama.common.Factory
 import com.sama.common.ValueObject
-import org.springframework.data.annotation.LastModifiedDate
-import org.springframework.data.jpa.convert.threeten.Jsr310JpaConverters.ZoneIdConverter
 import java.time.DayOfWeek
 import java.time.DayOfWeek.*
-import java.time.Instant
 import java.time.LocalTime
 import java.time.ZoneId
 import java.util.*
 import javax.persistence.*
-import javax.persistence.CascadeType.ALL
-import javax.persistence.FetchType.LAZY
-import javax.persistence.GenerationType.IDENTITY
 
 @DomainEntity
 data class UserSettings(
     val userId: UserId,
     val locale: Locale,
-    val timezone: ZoneId,
+    val timeZone: ZoneId,
     val format24HourTime: Boolean,
     val dayWorkingHours: Map<DayOfWeek, WorkingHours>,
 ) {
@@ -31,7 +25,7 @@ data class UserSettings(
             return UserSettings(
                 userId,
                 locale = defaults?.locale ?: Locale.ENGLISH,
-                timezone = defaults?.timezone ?: ZoneId.of("Etc/GMT"),
+                timeZone = defaults?.timezone ?: ZoneId.of("Etc/GMT"),
                 format24HourTime = defaults?.format24HourTime ?: false,
                 dayWorkingHours = defaults?.workingHours ?: listOf(MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY)
                     .associateWith { WorkingHours.nineToFive() }
@@ -42,6 +36,10 @@ data class UserSettings(
 
     fun updateWorkingHours(dayWorkingHours: Map<DayOfWeek, WorkingHours>): UserSettings {
         return copy(dayWorkingHours = dayWorkingHours)
+    }
+
+    fun updateTimeZone(timeZone: ZoneId): UserSettings {
+        return copy(timeZone = timeZone)
     }
 }
 

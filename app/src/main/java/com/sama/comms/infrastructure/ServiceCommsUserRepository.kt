@@ -11,6 +11,6 @@ class ServiceCommsUserRepository(private val userService: UserService) : CommsUs
     override fun findById(userId: UserId): CommsUser {
         val user = userService.find(userId)
         val userSettings = userService.findUserSettings(userId)
-        return CommsUser(userId, userSettings.timezone, user.email)
+        return CommsUser(userId, userSettings.timeZone, user.email)
     }
 }

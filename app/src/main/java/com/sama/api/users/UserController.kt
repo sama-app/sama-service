@@ -52,7 +52,6 @@ class UserController(
     fun unregisterDevice(@AuthUserId userId: UserId?, @RequestBody command: UnregisterDeviceCommand) =
         userApplicationService.unregisterDevice(userId!!, command)
 
-
     @Operation(
         summary = "Retrieve user settings",
         security = [SecurityRequirement(name = "user-auth")]
@@ -75,4 +74,15 @@ class UserController(
     fun updateWorkingHours(@AuthUserId userId: UserId?, @RequestBody command: UpdateWorkingHoursCommand) =
         userApplicationService.updateWorkingHours(userId!!, command)
 
+
+    @Operation(
+        summary = "Update user time zone",
+        security = [SecurityRequirement(name = "user-auth")]
+    )
+    @PostMapping(
+        "/api/user/me/update-time-zone",
+        consumes = [APPLICATION_JSON_VALUE]
+    )
+    fun updateTimeZone(@AuthUserId userId: UserId?, @RequestBody command: UpdateTimeZoneCommand) =
+        userApplicationService.updateTimeZone(userId!!, command)
 }

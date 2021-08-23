@@ -5,6 +5,7 @@ import com.sama.api.config.WebMvcConfiguration
 import com.sama.users.application.DayWorkingHoursDTO
 import com.sama.users.application.RegisterDeviceCommand
 import com.sama.users.application.UnregisterDeviceCommand
+import com.sama.users.application.UpdateTimeZoneCommand
 import com.sama.users.application.UpdateWorkingHoursCommand
 import com.sama.users.application.UserApplicationService
 import com.sama.users.application.UserPublicDTO
@@ -214,9 +215,31 @@ class UserControllerTest(
             .andExpect(content().string("true"))
     }
 
+    @Test
+    fun `update time zone`() {
+        val timeZone = "Europe/Rome"
+        whenever(userApplicationService.updateTimeZone(userId, UpdateTimeZoneCommand(ZoneId.of(timeZone))))
+            .thenReturn(true)
+
+        val requestBody = """
+            {
+                "timeZone": "$timeZone"
+            }
+        """
+        mockMvc.perform(
+            post("/api/user/me/update-time-zone")
+                .contentType(APPLICATION_JSON)
+                .header("Authorization", "Bearer $jwt")
+                .content(requestBody)
+        )
+            .andExpect(status().isOk)
+            .andExpect(content().string("true"))
+    }
+
     @TestFactory
     fun `endpoint authorization without jwt`() = listOf(
         post("/api/user/me/update-working-hours") to UNAUTHORIZED,
+        post("/api/user/me/update-time-zone") to UNAUTHORIZED,
         get("/api/user/me/settings") to UNAUTHORIZED,
         get("/api/user/me/") to UNAUTHORIZED,
         post("/api/user/me/unregister-device") to UNAUTHORIZED,
