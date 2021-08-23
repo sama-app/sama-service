@@ -24,7 +24,6 @@ class GoogleUserSettingsDefaultsRepository(
                 settings["locale"]?.let { LocaleUtils.toLocale(it) },
                 settings["timezone"]?.let { ZoneId.of(it) },
                 settings["format24HourTime"]?.let { it.toBoolean() },
-                null
             )
         }
     }

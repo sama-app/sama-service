@@ -10,6 +10,7 @@ import com.sama.users.application.RefreshCredentialsCommand
 import com.sama.users.application.RegisterUserCommand
 import com.sama.users.application.UpdateUserPublicDetailsCommand
 import com.sama.users.application.UserApplicationService
+import com.sama.users.application.UserSettingsApplicationService
 import com.sama.users.domain.GoogleCredential
 import com.sama.users.domain.UserAlreadyExistsException
 import org.apache.commons.logging.LogFactory
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Service
 @Service
 class GoogleOauth2ApplicationService(
     private val userApplicationService: UserApplicationService,
+    private val userSettingsApplicationService: UserSettingsApplicationService,
     private val googleAuthorizationCodeFlow: GoogleAuthorizationCodeFlow,
     private val googleIdTokenVerifier: GoogleIdTokenVerifier,
     private val googleUserRepository: GoogleUserRepository,
@@ -91,7 +93,7 @@ class GoogleOauth2ApplicationService(
             val userId = userApplicationService.registerUser(
                 RegisterUserCommand(verifiedToken.email, userDetails.fullName, verifiedToken.credential)
             )
-            userApplicationService.createUserSettings(userId)
+            userSettingsApplicationService.createUserSettings(userId)
             userId
         }.recover {
             if (it !is UserAlreadyExistsException) {

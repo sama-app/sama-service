@@ -3,22 +3,17 @@ package com.sama.api.users
 import com.sama.api.ApiTestConfiguration
 import com.sama.api.config.WebMvcConfiguration
 import com.sama.users.application.DayWorkingHoursDTO
-import com.sama.users.application.RegisterDeviceCommand
-import com.sama.users.application.UnregisterDeviceCommand
 import com.sama.users.application.UpdateTimeZoneCommand
 import com.sama.users.application.UpdateWorkingHoursCommand
-import com.sama.users.application.UserApplicationService
-import com.sama.users.application.UserPublicDTO
+import com.sama.users.application.UserSettingsApplicationService
 import com.sama.users.application.UserSettingsDTO
 import com.sama.users.domain.UserId
-import com.sama.users.domain.UserPublicId
 import java.time.DayOfWeek.MONDAY
 import java.time.DayOfWeek.TUESDAY
 import java.time.DayOfWeek.WEDNESDAY
 import java.time.LocalTime
 import java.time.ZoneId
 import java.util.Locale
-import java.util.UUID
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
@@ -28,7 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.mock.mockito.MockBean
-import org.springframework.http.HttpStatus.UNAUTHORIZED
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType.APPLICATION_JSON
 import org.springframework.test.context.junit.jupiter.SpringExtension
 import org.springframework.test.web.servlet.MockMvc
@@ -41,17 +36,17 @@ import org.springframework.test.web.servlet.result.isEqualTo
 @ExtendWith(SpringExtension::class)
 @SpringBootTest(
     classes = [
-        UserController::class,
+        UserSettingsController::class,
         WebMvcConfiguration::class,
         ApiTestConfiguration::class
     ]
 )
 @AutoConfigureMockMvc
-class UserControllerTest(
+class UserSettingsControllerTest(
     @Autowired val mockMvc: MockMvc
 ) {
     @MockBean
-    lateinit var userApplicationService: UserApplicationService
+    lateinit var userSettingsApplicationService: UserSettingsApplicationService
 
     private val userId = UserId(1)
     private val jwt = "eyJraWQiOiJrZXktaWQiLCJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9." +
@@ -60,51 +55,73 @@ class UserControllerTest(
             "hcAQ6f8kaeB43nzFibGYZE8QWHyz9OIdFg9zHSbe9Vk"
 
     @Test
-    fun `get user public details`() {
-        val userPublicDTO = UserPublicDTO(
-            UserPublicId.random(),
-            "test name",
-            "test@meetsama.com"
-        )
-        whenever(userApplicationService.find(userId))
-            .thenReturn(userPublicDTO)
+    fun `get settings`() {
+        whenever(userSettingsApplicationService.find(userId))
+            .thenReturn(
+                UserSettingsDTO(
+                    Locale.ENGLISH,
+                    ZoneId.of("Europe/Rome"),
+                    true,
+                    listOf(
+                        DayWorkingHoursDTO(MONDAY, LocalTime.of(10, 0), LocalTime.of(12, 0)),
+                        DayWorkingHoursDTO(WEDNESDAY, LocalTime.of(13, 0), LocalTime.of(17, 30))
+                    )
+                )
+            )
 
         val expectedJson = """
         {
-           "userId": "${userPublicDTO.userId.id}",
-           "fullName": "${userPublicDTO.fullName}",
-           "email": "${userPublicDTO.email}"
+            "locale": "en",
+            "timeZone": "Europe/Rome",
+            "format24HourTime": true,
+            "workingHours": [
+                {
+                    "dayOfWeek": "MONDAY",
+                    "startTime": "10:00:00",
+                    "endTime": "12:00:00"
+                },
+                {
+                    "dayOfWeek": "WEDNESDAY",
+                    "startTime": "13:00:00",
+                    "endTime": "17:30:00"
+                }
+            ]
         }
         """
 
         mockMvc.perform(
-            get("/api/user/me/")
+            get("/api/user/me/settings")
                 .header("Authorization", "Bearer $jwt")
         )
             .andExpect(status().isOk)
-            .andExpect(content().json(expectedJson))
+            .andExpect(content().json(expectedJson, true))
     }
 
     @Test
-    fun `register device`() {
-        val deviceId = UUID.fromString("075f7e8a-e01c-4f2f-9c3b-ce5d412e618c")
-        val registrationToken = "some-token"
+    fun `update working hours`() {
         whenever(
-            (userApplicationService.registerDevice(
+            userSettingsApplicationService.updateWorkingHours(
                 userId,
-                RegisterDeviceCommand(deviceId, registrationToken)
-            ))
+                UpdateWorkingHoursCommand(
+                    listOf(DayWorkingHoursDTO(TUESDAY, LocalTime.of(10, 0), LocalTime.of(12, 0)))
+                )
+            )
         )
             .thenReturn(true)
 
         val requestBody = """
             {
-                "deviceId": "075f7e8a-e01c-4f2f-9c3b-ce5d412e618c",
-                "firebaseRegistrationToken": "some-token"
+                "workingHours": [
+                    {
+                        "dayOfWeek": "TUESDAY",
+                        "startTime": "10:00:00",
+                        "endTime": "12:00:00"
+                    }
+                ]
             }
         """
         mockMvc.perform(
-            post("/api/user/me/register-device")
+            post("/api/user/me/update-working-hours")
                 .contentType(APPLICATION_JSON)
                 .header("Authorization", "Bearer $jwt")
                 .content(requestBody)
@@ -114,23 +131,18 @@ class UserControllerTest(
     }
 
     @Test
-    fun `unregister device`() {
-        val deviceId = UUID.fromString("075f7e8a-e01c-4f2f-9c3b-ce5d412e618c")
-        whenever(
-            (userApplicationService.unregisterDevice(
-                userId,
-                UnregisterDeviceCommand(deviceId)
-            ))
-        )
+    fun `update time zone`() {
+        val timeZone = "Europe/Rome"
+        whenever(userSettingsApplicationService.updateTimeZone(userId, UpdateTimeZoneCommand(ZoneId.of(timeZone))))
             .thenReturn(true)
 
         val requestBody = """
             {
-                "deviceId": "075f7e8a-e01c-4f2f-9c3b-ce5d412e618c"
+                "timeZone": "$timeZone"
             }
         """
         mockMvc.perform(
-            post("/api/user/me/unregister-device")
+            post("/api/user/me/update-time-zone")
                 .contentType(APPLICATION_JSON)
                 .header("Authorization", "Bearer $jwt")
                 .content(requestBody)
@@ -141,10 +153,9 @@ class UserControllerTest(
 
     @TestFactory
     fun `endpoint authorization without jwt`() = listOf(
-        get("/api/user/me/") to UNAUTHORIZED,
-        post("/api/user/me/unregister-device") to UNAUTHORIZED,
-        post("/api/user/me/register-device") to UNAUTHORIZED,
-        post("/api/user/me/delete") to UNAUTHORIZED
+        post("/api/user/me/update-working-hours") to HttpStatus.UNAUTHORIZED,
+        post("/api/user/me/update-time-zone") to HttpStatus.UNAUTHORIZED,
+        get("/api/user/me/settings") to HttpStatus.UNAUTHORIZED,
     )
         .mapIndexed { idx, (request, expectedStatus) ->
             DynamicTest.dynamicTest("request#$idx returns $expectedStatus") {
