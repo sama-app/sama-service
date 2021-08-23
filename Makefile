@@ -6,12 +6,20 @@ verify:
 	@mvn --batch-mode verify -Dspring.profiles.active=ci -pl app
 
 container: build
+	# service
 	docker pull 216862985054.dkr.ecr.eu-central-1.amazonaws.com/sama-service:latest || true
-	docker build -t sama-service .
+	docker build -t sama-service app/
+	# webserver
+	docker pull 216862985054.dkr.ecr.eu-central-1.amazonaws.com/sama-webserver:latest || true
+	docker build -t sama-webserver webserver/
 
 upload-to-ecr:
+	# service
 	docker tag sama-service:latest 216862985054.dkr.ecr.eu-central-1.amazonaws.com/sama-service:$(VERSION)
 	docker push 216862985054.dkr.ecr.eu-central-1.amazonaws.com/sama-service:$(VERSION)
+	# webserver
+	docker tag sama-webserver:latest 216862985054.dkr.ecr.eu-central-1.amazonaws.com/sama-webserver:$(VERSION)
+	docker push 216862985054.dkr.ecr.eu-central-1.amazonaws.com/sama-webserver:$(VERSION)
 
 # Deployment
 terraform-init: terraform-init

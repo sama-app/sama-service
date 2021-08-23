@@ -271,14 +271,9 @@ resource "aws_iam_policy" "sama_service_asg" {
       {
         Effect : "Allow",
         Action : [
-          "logs:CreateLogGroup",
-          "logs:CreateLogStream",
-          "logs:PutLogEvents",
-          "logs:DescribeLogStreams"
+          "ec2:DescribeTags"
         ],
-        Resource : [
-          "arn:aws:logs:*:*:*"
-        ]
+        Resource : ["*"]
       },
       {
         Effect : "Allow",

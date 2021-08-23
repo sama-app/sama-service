@@ -14,7 +14,7 @@ services:
     container_name: sama-service
     image: sama-service:latest
     ports:
-      - "3000:3000"
+      - "3001:3000"
     environment:
       X_JAVA_OPTS: |
         -Dspring.datasource.host=sama-db
@@ -22,3 +22,9 @@ services:
     volumes:
       - /var/log/sama/sama-service:/var/log/sama/sama-service
       - $HOME/.aws/credentials:/home/sama/.aws/credentials:ro
+
+  sama-webserver:
+    container_name: sama-webserver
+    image: sama-webserver:latest
+    ports:
+      - "3000:8080"
