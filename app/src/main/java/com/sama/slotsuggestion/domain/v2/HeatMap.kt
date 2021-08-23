@@ -4,6 +4,7 @@ import com.sama.common.DomainEntity
 import com.sama.common.Factory
 import com.sama.common.chunkedBy
 import com.sama.common.datesUtil
+import com.sama.meeting.domain.MeetingSlot
 import com.sama.users.domain.UserId
 import java.time.*
 import java.util.function.Predicate
@@ -18,6 +19,8 @@ data class HeatMap(
     val intervalMinutes: Long,
     val slots: List<Slot>,
 ) {
+    val interval = Duration.ofMinutes(intervalMinutes)
+
     companion object {
         @Factory
         fun create(
@@ -33,7 +36,7 @@ data class HeatMap(
                 .flatMap { date ->
                     (0L until slotCount).map {
                         val startDateTime = LocalTime.MIN.plus(duration.multipliedBy(it)).atDate(date)
-                        Slot(startDateTime, startDateTime.plus(duration), 0.0, emptyMap())
+                        Slot(startDateTime, startDateTime.plus(duration))
                     }
                 }
                 .toList()
@@ -56,8 +59,8 @@ data class HeatMap(
 data class Slot(
     val startDateTime: LocalDateTime,
     val endDateTime: LocalDateTime,
-    val totalWeight: Double,
-    val influences: Map<Any, Double>,
+    val totalWeight: Double = 0.0,
+    val influences: Map<Any, Double> = emptyMap(),
 ) {
     val dayOfWeek: DayOfWeek = startDateTime.dayOfWeek
 

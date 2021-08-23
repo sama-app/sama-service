@@ -20,10 +20,16 @@ data class SlotSuggestionEngine(
         val maxWeight = baseHeatMap.slots.maxOf { it.totalWeight }
         val sigmoidK = -10 / maxWeight
 
-        var heatMap = baseHeatMap
+        var filteredHeatMap: HeatMap
         val suggestions = mutableListOf<SlotSuggestion>()
         do {
-            val rankedSlots = heatMap.slots.asSequence()
+            // apply one-off weights (e.g. templates)
+            filteredHeatMap = weigher {
+                suggestedSlots(suggestions)
+                thisOrNextWeek(suggestions)
+            }.apply(baseHeatMap)
+
+            val rankedSlots = filteredHeatMap.slots.asSequence()
                 // Apply sigmoid, making sure that the highest weights produce values close to 1
                 .map { sigmoid(x = it.totalWeight, k = sigmoidK) }
                 // Create ranking for each slot of the specified duration
@@ -33,22 +39,15 @@ data class SlotSuggestionEngine(
             // take the best suggestion
             val (index, score) = rankedSlots.maxByOrNull { it.value }!!
 
-            val slotsInWindow = heatMap.slots.subList(index, index + slotWindowSize)
-            val start = heatMap.slots[index].startDateTime.atZone(baseHeatMap.userTimeZone)
+            val slotsInWindow = filteredHeatMap.slots.subList(index, index + slotWindowSize)
+            val start = filteredHeatMap.slots[index].startDateTime.atZone(baseHeatMap.userTimeZone)
             val end = start.plus(duration)
 
             val bestSlot = SlotSuggestion(start, end, score, slotsInWindow)
             suggestions.add(bestSlot)
 
-            // update heatmap to not suggest the same slot again
-            val weighers = weigher {
-                suggestedSlot(bestSlot)
-                timeVariety(suggestions)
-            }
-            heatMap = weighers.apply(heatMap)
-
         } while (suggestions.size < count)
 
-        return suggestions to heatMap
+        return suggestions to filteredHeatMap
     }
 }

@@ -21,8 +21,8 @@ data class HeatMapWeigherBuilder(
         weighers.addAll(block.map { PastBlockWeigher(it) })
     }
 
-    fun futureBlocks(block: Collection<Block>) {
-        weighers.addAll(block.map { FutureBlockWeigher(it) })
+    fun futureBlocks(blocks: Collection<Block>) {
+        weighers.add(FutureBlocksWeigher(blocks))
     }
 
     fun workingHours(workingHours: Map<DayOfWeek, WorkingHours>) {
@@ -33,8 +33,8 @@ data class HeatMapWeigherBuilder(
         weighers.add(RecipientTimeZoneWeigher(recipientTimeZone))
     }
 
-    fun futureProposedSlots(proposedSlots: Collection<MeetingSlotDTO>) {
-        weighers.addAll(proposedSlots.map { FutureProposedSlotWeigher(it) })
+    fun futureProposedSlots(proposedSlots: List<MeetingSlotDTO>) {
+        weighers.add(FutureProposedSlotWeigher(proposedSlots))
     }
 
     fun searchBoundary() {
@@ -45,12 +45,12 @@ data class HeatMapWeigherBuilder(
         weighers.add(RecencyWeigher())
     }
 
-    fun suggestedSlot(suggestion: SlotSuggestion) {
-        weighers.add(SuggestedSlotWeigher(suggestion))
+    fun suggestedSlots(suggestions: Collection<SlotSuggestion>) {
+        weighers.add(SuggestedSlotWeigher(suggestions))
     }
 
-    fun timeVariety(suggestions: Collection<SlotSuggestion>) {
-        weighers.add(TimeVarietyWeigher(suggestions))
+    fun thisOrNextWeek(suggestions: Collection<SlotSuggestion>) {
+        weighers.add(ThisOrNextWeekTemplateWeigher(suggestions))
     }
 
     fun build(): HeatMapWeigher {

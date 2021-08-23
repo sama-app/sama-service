@@ -106,7 +106,7 @@ class DebugViewController(
     ): ModelAndView {
         val user = userRepository.findById(userId!!)
         val userTimeZone = user.timeZone
-        val recipientTimezone = ZoneId.of("UTC+3")
+        val recipientTimezone = userTimeZone
         val baseHeatMap = heatMapServiceV2.generate(userId!!, recipientTimezone)
 
         val (suggestedSlots, heatMap) = SlotSuggestionEngine(baseHeatMap)

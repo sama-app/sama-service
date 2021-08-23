@@ -5,7 +5,14 @@ import com.sama.slotsuggestion.domain.Block
 import com.sama.slotsuggestion.domain.WorkingHours
 import com.sama.slotsuggestion.domain.isNonWorkingDay
 import com.sama.slotsuggestion.domain.v1.SlotSuggestion
-import java.time.*
+import java.time.DayOfWeek
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.ZoneId
+import java.time.ZonedDateTime
+import java.time.temporal.ChronoField.DAY_OF_WEEK
+import java.time.temporal.ChronoUnit.DAYS
+import java.util.function.Predicate
 import java.util.function.Predicate.not
 import kotlin.math.min
 import kotlin.math.pow
@@ -54,22 +61,28 @@ class PastBlockWeigher(private val inputBlock: Block) : Weigher {
 }
 
 
-class FutureBlockWeigher(private val block: Block) : Weigher {
+class FutureBlocksWeigher(private val blocks: Collection<Block>) : Weigher {
     companion object {
         private const val weight = -10000.0
     }
 
     override fun weight(heatMap: HeatMap): HeatMap {
-        if (block.zeroDuration()) {
+        if (blocks.isEmpty()) {
             return heatMap
         }
 
-        return heatMap
-            .query {
-                from(block.startDateTime, heatMap.userTimeZone)
-                to(block.endDateTime, heatMap.userTimeZone)
+        val query = blocks.asSequence()
+            .filter { !it.zeroDuration() }
+            .map {
+                slotQuery {
+                    from(it.startDateTime, heatMap.userTimeZone)
+                    to(it.endDateTime, heatMap.userTimeZone)
+                } as Predicate<Slot>
             }
-            .addFixedWeight(weight) { "future block: ${block.toDebugString()}" }
+            .reduce { acc, slotQuery -> acc.or(slotQuery) }
+
+        return heatMap.query(query)
+            .addFixedWeight(weight) { "future block" }
             .save(heatMap)
 
     }
@@ -162,64 +175,106 @@ class RecencyWeigher : Weigher {
     }
 }
 
-class SuggestedSlotWeigher(private val ss: SlotSuggestion) : Weigher {
+class SuggestedSlotWeigher(private val ss: Collection<SlotSuggestion>) : Weigher {
     companion object {
         private const val weight = -1000.0
     }
 
     override fun weight(heatMap: HeatMap): HeatMap {
-        return heatMap
-            .query {
-                from(ss.startDateTime.minusHours(4), heatMap.userTimeZone)
-                to(ss.endDateTime.plusHours(4), heatMap.userTimeZone)
+        if (ss.isEmpty()) {
+            return heatMap
+        }
+        val query = ss.asSequence()
+            .map {
+                slotQuery {
+                    from(it.startDateTime.minusHours(4), heatMap.userTimeZone)
+                    to(it.endDateTime.plusHours(3), heatMap.userTimeZone)
+                } as Predicate<Slot>
             }
-            .addFixedWeight(weight) { "suggested slot: ${ss.startDateTime} - ${ss.endDateTime}" }
+            .reduce { acc, slotQuery -> acc.or(slotQuery) }
+
+        return heatMap
+            .query(query)
+            .addFixedWeight(weight) { "suggested slot" }
             .save(heatMap)
     }
 }
 
-class TimeVarietyWeigher(private val ss: Collection<SlotSuggestion>) : Weigher {
+class ThisOrNextWeekTemplateWeigher(private val ss: Collection<SlotSuggestion>) : Weigher {
     companion object {
-        private const val baseWeight = -50.0
+        private const val repeatingTimeBaseWeight = -50.0
+        private const val repeatingWeekWeight = -500.0
     }
 
     override fun weight(heatMap: HeatMap): HeatMap {
-        val repeatingSlots = ss
-            .groupBy { it.startDateTime.toLocalTime() to it.endDateTime.toLocalTime() }
-            .mapValues { it.value.size }
-
-        if (repeatingSlots.isEmpty()) {
+        if (ss.isEmpty()) {
             return heatMap
         }
 
+        // Vary suggested times (decrease weight of repeating slot times)
+        val repeatingSlotsByTime = ss
+            .groupBy { it.startDateTime.toLocalTime() to it.endDateTime.toLocalTime() }
+            .mapValues { it.value.size }
+
         var result = heatMap
-        for ((repeatingSlot, count) in repeatingSlots) {
-            val weight = baseWeight * count
+        for ((repeatingSlot, count) in repeatingSlotsByTime) {
+            val weight = repeatingTimeBaseWeight * count
 
             result = result
                 .query { inTimeRange(repeatingSlot.first, repeatingSlot.second) }
-                .addFixedWeight(weight) { "suggested time variety repeating $count times: ${repeatingSlot.first} - ${repeatingSlot.second}" }
+                .addFixedWeight(weight) { "Suggested time variety (repeating $count times)" }
+                .save(result)
+        }
+
+        // Vary suggested weeks (no more than two slots per week)
+        val startOfThisWeekDate = heatMap.startDate
+            .with(DAY_OF_WEEK, 1)
+
+        val repeatingSlotsByWeek = ss
+            .groupBy { startOfThisWeekDate.until(it.startDateTime.toLocalDate(), DAYS) / 7 }
+            .mapValues { it.value.size }
+
+        for ((weekNumber, count) in repeatingSlotsByWeek) {
+            if (count == 1) {
+                continue
+            }
+
+            result = result
+                .query {
+                    fromDate(startOfThisWeekDate.plusWeeks(weekNumber))
+                    toDate(startOfThisWeekDate.plusWeeks(weekNumber + 1).minusDays(1))
+                }
+                .addFixedWeight(repeatingWeekWeight) { "Suggest week variety (repeating $count times)" }
                 .save(result)
         }
 
         return result
     }
-
 }
 
-class FutureProposedSlotWeigher(private val ms: MeetingSlotDTO) : Weigher {
+class FutureProposedSlotWeigher(private val slots: List<MeetingSlotDTO>) : Weigher {
     companion object {
-        private const val weight = 5.0
+        private const val baseWeight = 15.0
+        private const val maxWeight = 75.0
     }
 
     override fun weight(heatMap: HeatMap): HeatMap {
-        return heatMap
-            .query {
-                from(ms.startDateTime, heatMap.userTimeZone)
-                to(ms.endDateTime, heatMap.userTimeZone)
-            }
-            .addFixedWeight(weight) { "proposed slot: ${ms.startDateTime} - ${ms.endDateTime}" }
-            .save(heatMap)
-    }
+        val proposedSlotRepeatingCounts = slots
+            .groupingBy { it }
+            .eachCount()
 
+        var result = heatMap
+        for ((ms, repeatingCount) in proposedSlotRepeatingCounts) {
+            val weight = min(baseWeight * repeatingCount, maxWeight)
+            result = result
+                .query {
+                    from(ms.startDateTime, heatMap.userTimeZone)
+                    to(ms.endDateTime, heatMap.userTimeZone)
+                }
+                .addFixedWeight(weight) { "proposed slot: ${ms.startDateTime} - ${ms.endDateTime} (repeating $repeatingCount times)" }
+                .save(result)
+        }
+
+        return result
+    }
 }
