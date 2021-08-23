@@ -11,10 +11,6 @@ import com.sama.users.domain.UserJwtIssuer
 import com.sama.users.domain.UserPublicId
 import com.sama.users.domain.UserRegistration
 import com.sama.users.domain.UserRepository
-import com.sama.users.domain.UserSettings
-import com.sama.users.domain.UserSettingsDefaultsRepository
-import com.sama.users.domain.UserSettingsRepository
-import com.sama.users.domain.WorkingHours
 import java.time.Clock
 import java.util.UUID
 import org.springframework.stereotype.Service
@@ -24,8 +20,6 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class UserApplicationService(
     private val userRepository: UserRepository,
-    private val userSettingsRepository: UserSettingsRepository,
-    private val userSettingsDefaultsRepository: UserSettingsDefaultsRepository,
     private val accessJwtConfiguration: AccessJwtConfiguration,
     private val refreshJwtConfiguration: RefreshJwtConfiguration,
     private val clock: Clock
@@ -147,49 +141,5 @@ class UserApplicationService(
             .getOrThrow()
 
         return JwtPairDTO(accessToken.token, refreshToken.token)
-    }
-
-    @Transactional
-    fun createUserSettings(userId: UserId): Boolean {
-        val userSettingsDefaults = userSettingsDefaultsRepository.findByIdOrNull(userId)
-        val userSettings = UserSettings.createWithDefaults(userId, userSettingsDefaults)
-        userSettingsRepository.save(userSettings)
-        return true
-    }
-
-    @Transactional(readOnly = true)
-    override fun findUserSettings(userId: UserId): UserSettingsDTO {
-        val userSettings = userSettingsRepository.findByIdOrThrow(userId)
-        return userSettings.let {
-            UserSettingsDTO(
-                it.locale,
-                it.timeZone,
-                it.format24HourTime,
-                it.dayWorkingHours.map { wh ->
-                    DayWorkingHoursDTO(wh.key, wh.value.startTime, wh.value.endTime)
-                }
-            )
-        }
-    }
-
-    @Transactional
-    fun updateWorkingHours(userId: UserId, command: UpdateWorkingHoursCommand): Boolean {
-        val workingHours = command.workingHours
-            .associate { Pair(it.dayOfWeek, WorkingHours(it.startTime, it.endTime)) }
-
-        val userSettings = userSettingsRepository.findByIdOrThrow(userId)
-            .updateWorkingHours(workingHours)
-
-        userSettingsRepository.save(userSettings)
-        return true
-    }
-
-    @Transactional
-    fun updateTimeZone(userId: UserId, command: UpdateTimeZoneCommand): Boolean {
-        val userSettings = userSettingsRepository.findByIdOrThrow(userId)
-            .updateTimeZone(command.timeZone)
-
-        userSettingsRepository.save(userSettings)
-        return true
     }
 }

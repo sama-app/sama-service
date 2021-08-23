@@ -81,7 +81,8 @@ fun UserSettingsEntity.applyChanges(userSettings: UserSettings): UserSettingsEnt
                 ?: DayWorkingHoursEntity.create(dayOfWeek, userId.toUserId(), newWorkingHours)
         }
     }
-    this.dayWorkingHours.entries.removeIf { it.key !in dayWorkingHours.keys }
+    this.dayWorkingHours.entries
+        .removeIf { it.key !in userSettings.dayWorkingHours.keys }
     this.updatedAt = Instant.now()
     return this
 }
