@@ -12,7 +12,7 @@ RUN mkdir -p /var/log/sama/sama-service
 
 WORKDIR /home/sama
 
-COPY app/target/service-0.0.1-SNAPSHOT.jar app.jar
+COPY target/service-0.0.1-SNAPSHOT.jar app.jar
 RUN chown -R sama:sama /home/sama && \
     chown -R sama:sama /var/log/sama
 
