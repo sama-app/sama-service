@@ -26,7 +26,7 @@ fun Calendar.insert(googleCalendarEvent: Event): Event {
 fun Calendar.findAllEvents(
     startDateTime: ZonedDateTime,
     endDateTime: ZonedDateTime,
-    singleEvents: Boolean = false
+    singleEvents: Boolean = true
 ): Pair<MutableList<GoogleCalendarEvent>, ZoneId> {
     sentrySpan(method = "Calendar.findAllEvents") {
         val calendarEvents = mutableListOf<GoogleCalendarEvent>()
