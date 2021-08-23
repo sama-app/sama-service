@@ -71,7 +71,7 @@ data class DayWorkingHoursEntity(
 
 fun UserSettingsEntity.applyChanges(userSettings: UserSettings): UserSettingsEntity {
     this.locale = userSettings.locale
-    this.timezone = userSettings.timezone
+    this.timezone = userSettings.timeZone
     this.format24HourTime = userSettings.format24HourTime
     userSettings.dayWorkingHours.forEach { (dayOfWeek, newWorkingHours) ->
         this.dayWorkingHours.compute(dayOfWeek)

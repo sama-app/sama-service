@@ -38,7 +38,7 @@ data class GoogleOauth2Redirect(
 
 data class UserSettingsDTO(
     val locale: Locale,
-    val timezone: ZoneId,
+    val timeZone: ZoneId,
     val format24HourTime: Boolean,
     val workingHours: List<DayWorkingHoursDTO>,
 )

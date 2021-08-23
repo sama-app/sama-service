@@ -163,7 +163,7 @@ class UserApplicationService(
         return userSettings.let {
             UserSettingsDTO(
                 it.locale,
-                it.timezone,
+                it.timeZone,
                 it.format24HourTime,
                 it.dayWorkingHours.map { wh ->
                     DayWorkingHoursDTO(wh.key, wh.value.startTime, wh.value.endTime)
@@ -179,6 +179,15 @@ class UserApplicationService(
 
         val userSettings = userSettingsRepository.findByIdOrThrow(userId)
             .updateWorkingHours(workingHours)
+
+        userSettingsRepository.save(userSettings)
+        return true
+    }
+
+    @Transactional
+    fun updateTimeZone(userId: UserId, command: UpdateTimeZoneCommand): Boolean {
+        val userSettings = userSettingsRepository.findByIdOrThrow(userId)
+            .updateTimeZone(command.timeZone)
 
         userSettingsRepository.save(userSettings)
         return true

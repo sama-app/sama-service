@@ -13,7 +13,7 @@ class ServiceUserRepository(private val userService: UserService) : UserReposito
         val userSettings = userService.findUserSettings(userId)
         return User(
             userId,
-            userSettings.timezone,
+            userSettings.timeZone,
             userSettings.workingHours.associate {
                 it.dayOfWeek to WorkingHours(it.startTime, it.endTime)
             })
