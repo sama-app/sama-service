@@ -25,4 +25,4 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
 
       - name: Verify
-        run: make verify
+        run: make app-verify

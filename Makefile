@@ -1,27 +1,34 @@
-# App
-build:
+###########
+### App ###
+###########
+app-build:
 	@mvn --batch-mode clean install -Dspring.profiles.active=ci -pl app
 
-verify:
+app-verify:
 	@mvn --batch-mode verify -Dspring.profiles.active=ci -pl app
 
-container: build
-	# service
+app-container: app-build
 	docker pull 216862985054.dkr.ecr.eu-central-1.amazonaws.com/sama-service:latest || true
 	docker build -t sama-service app/
-	# webserver
+
+app-upload-to-ecr:
+	docker tag sama-service:latest 216862985054.dkr.ecr.eu-central-1.amazonaws.com/sama-service:$(VERSION)
+	docker push 216862985054.dkr.ecr.eu-central-1.amazonaws.com/sama-service:$(VERSION)
+
+#################
+### Webserver ###
+#################
+webserver-container:
 	docker pull 216862985054.dkr.ecr.eu-central-1.amazonaws.com/sama-webserver:latest || true
 	docker build -t sama-webserver webserver/
 
-upload-to-ecr:
-	# service
-	docker tag sama-service:latest 216862985054.dkr.ecr.eu-central-1.amazonaws.com/sama-service:$(VERSION)
-	docker push 216862985054.dkr.ecr.eu-central-1.amazonaws.com/sama-service:$(VERSION)
-	# webserver
+webserver-upload-to-ecr:
 	docker tag sama-webserver:latest 216862985054.dkr.ecr.eu-central-1.amazonaws.com/sama-webserver:$(VERSION)
 	docker push 216862985054.dkr.ecr.eu-central-1.amazonaws.com/sama-webserver:$(VERSION)
 
-# Deployment
+##################
+### Deployment ###
+##################
 terraform-init: terraform-init
 	@terraform -chdir=infra/terraform init -input=false
 	@terraform -chdir=infra/terraform workspace new $(ENV) ||:

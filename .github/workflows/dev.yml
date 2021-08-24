@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  app-build:
     runs-on: ubuntu-latest
     if: "!contains(github.event.head_commit.message, '[ci skip]')"
 
@@ -36,14 +36,37 @@ jobs:
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Build
-        run: make container
+      - name: Build App
+        run: make app-container
 
       - name: Upload to ECR
-        run: make upload-to-ecr VERSION=latest
+        run: make app-upload-to-ecr VERSION=latest
+
+  webserver-build:
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[ci skip]')"
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-central-1
+
+      - uses: actions/checkout@v2
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build Webserver
+        run: make webserver-container
+
+      - name: Upload to ECR
+        run: make webserver-upload-to-ecr VERSION=latest
 
   deploy:
-    needs: build
+    needs: [app-build, webserver-build]
     runs-on: ubuntu-latest
     if: "!contains(github.event.head_commit.message, '[deploy skip]')"
 
