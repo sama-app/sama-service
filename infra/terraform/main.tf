@@ -87,6 +87,12 @@ resource "aws_lb_listener_rule" "sama-service" {
       values = [local.env.service_domain]
     }
   }
+  condition {
+    http_header {
+      http_header_name = "X-Alb-Secure"
+      values           = [local.env.cf_to_alb_secure_header_value]
+    }
+  }
 }
 
 ############
