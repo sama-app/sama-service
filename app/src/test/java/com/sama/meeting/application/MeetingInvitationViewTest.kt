@@ -63,6 +63,7 @@ class MeetingInvitationViewTest {
         val _10am = _9am.plusHours(1)
         val _11am = _9am.plusHours(2)
 
+        val meetingTitle = "Meeting with test"
         val initiatorId = UserId(1)
         val initiator = UserPublicDTO(UserPublicId.random(), "test", "test@meetsama.com")
         whenever(userService.find(initiatorId))
@@ -76,7 +77,8 @@ class MeetingInvitationViewTest {
                     MeetingSlot(_9am, _9am.plusMinutes(15)),
                     MeetingSlot(_10am, _11am)
                 ),
-                meetingCode
+                meetingCode,
+                meetingTitle
             ),
             targetZoneId
         )
@@ -99,7 +101,8 @@ class MeetingInvitationViewTest {
                 proposedSlots = listOf(
                     MeetingSlotDTO(_9am, _9am.plusMinutes(15)),
                     MeetingSlotDTO(_10am, _11am)
-                )
+                ),
+                title = meetingTitle,
             ),
             meetingCode = meetingCode,
             shareableMessage = expectedMessage,

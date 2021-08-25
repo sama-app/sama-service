@@ -26,7 +26,8 @@ data class MeetingIntent(
     fun propose(
         meetingId: MeetingId,
         meetingCode: MeetingCode,
-        proposedSlots: List<MeetingSlot>
+        proposedSlots: List<MeetingSlot>,
+        meetingTitle: String
     ): Result<ProposedMeeting> {
         if (proposedSlots.isEmpty()) {
             return Result.failure(InvalidMeetingProposalException("No slots proposed"))
@@ -42,7 +43,8 @@ data class MeetingIntent(
                 initiatorId,
                 duration,
                 proposedSlots,
-                meetingCode
+                meetingCode,
+                meetingTitle
             )
         )
     }

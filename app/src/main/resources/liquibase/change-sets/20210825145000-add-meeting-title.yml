@@ -1,0 +1,20 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-meeting-title
+      author: balys
+      changes:
+      - addColumn:
+          schemaName: sama
+          tableName: meeting
+          columns:
+            - column:
+                name: title
+                type: VARCHAR
+                constraints:
+                  nullable: false
+                defaultValue: 'Meeting'
+      - dropDefaultValue:
+          schemaName: sama
+          tableName: meeting
+          columnName: title
+          columnDataType: VARCHAR

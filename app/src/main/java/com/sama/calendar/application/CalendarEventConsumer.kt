@@ -10,7 +10,12 @@ class CalendarEventConsumer(private val eventApplicationService: EventApplicatio
         val meeting = event.confirmedMeeting
         eventApplicationService.createEvent(
             meeting.initiatorId,
-            CreateEventCommand(meeting.slot.startDateTime, meeting.slot.endDateTime, meeting.meetingRecipient.email!!)
+            CreateEventCommand(
+                meeting.slot.startDateTime,
+                meeting.slot.endDateTime,
+                meeting.meetingRecipient.email!!,
+                meeting.meetingTitle
+            )
         )
     }
 }

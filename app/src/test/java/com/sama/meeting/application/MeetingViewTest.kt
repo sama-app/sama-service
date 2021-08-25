@@ -74,6 +74,7 @@ class MeetingViewTest {
         val initiator = UserPublicDTO(UserPublicId.random(), "test", "test@meetsama.com")
         whenever(userService.find(initiatorId))
             .thenReturn(initiator)
+        val meetingTitle = "Meeting with test"
 
         // act
         val proposedSlots = listOf(
@@ -86,7 +87,8 @@ class MeetingViewTest {
                 MeetingId(21),  MeetingIntentId(11), initiatorId,
                 Duration.ofMinutes(15),
                 proposedSlots,
-                meetingCode
+                meetingCode,
+                meetingTitle
             ),
             AvailableSlots(availableSlots)
         )
@@ -100,6 +102,7 @@ class MeetingViewTest {
                 initiator.fullName,
                 initiator.email
             ),
+            title = meetingTitle,
             appLinks = MeetingAppLinksDTO(
                 iosAppDownloadLink = "https://meetsamatest.page.link/?link=$expectedUrl&param1=value1&param2=value2"
             )

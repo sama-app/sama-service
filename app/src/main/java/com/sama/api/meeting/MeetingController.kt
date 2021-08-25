@@ -5,6 +5,7 @@ import com.sama.meeting.application.ConfirmMeetingCommand
 import com.sama.meeting.application.InitiateMeetingCommand
 import com.sama.meeting.application.MeetingApplicationService
 import com.sama.meeting.application.ProposeMeetingCommand
+import com.sama.meeting.application.UpdateMeetingTitleCommand
 import com.sama.meeting.domain.MeetingCode
 import com.sama.users.domain.UserId
 import io.swagger.v3.oas.annotations.Operation
@@ -17,7 +18,7 @@ import javax.validation.Valid
 @Tag(name = "meeting")
 @RestController
 class MeetingController(
-    private val meetingApplicationService: MeetingApplicationService
+    private val meetingApplicationService: MeetingApplicationService,
 ) {
 
     @Operation(
@@ -43,7 +44,7 @@ class MeetingController(
     )
     fun proposeMeeting(
         @AuthUserId userId: UserId?,
-        @RequestBody command: ProposeMeetingCommand
+        @RequestBody command: ProposeMeetingCommand,
     ) = meetingApplicationService.proposeMeeting(userId!!, command)
 
 
@@ -53,7 +54,21 @@ class MeetingController(
         produces = [APPLICATION_JSON_VALUE]
     )
     fun loadMeetingProposal(@PathVariable meetingCode: MeetingCode) =
-        meetingApplicationService.loadMeetingProposalFromCode(meetingCode)
+        meetingApplicationService.loadMeetingProposal(meetingCode)
+
+    @Operation(
+        summary = "Update meeting title to be used on the confirmed calendar event",
+        security = [SecurityRequirement(name = "user-auth")]
+    )
+    @PostMapping(
+        "/api/meeting/by-code/{meetingCode}/update-title",
+        consumes = [APPLICATION_JSON_VALUE],
+    )
+    fun updateMeetingTitle(
+        @AuthUserId userId: UserId?,
+        @PathVariable meetingCode: MeetingCode,
+        @RequestBody command: UpdateMeetingTitleCommand,
+    ) = meetingApplicationService.updateMeetingTitle(userId!!, meetingCode, command)
 
     @Operation(summary = "Confirm a meeting using a meeting code")
     @PostMapping(
@@ -63,7 +78,7 @@ class MeetingController(
     fun confirmMeeting(
         @AuthUserId userId: UserId?,
         @PathVariable meetingCode: MeetingCode,
-        @RequestBody command: ConfirmMeetingCommand
+        @RequestBody command: ConfirmMeetingCommand,
     ): Boolean {
         require(userId != null || command.recipientEmail != null)
         return meetingApplicationService.confirmMeeting(userId, meetingCode, command)

@@ -29,14 +29,11 @@ class EventApplicationService(
 
 
     fun createEvent(userId: UserId, command: CreateEventCommand) {
-        val initiatorName = userService.find(userId).fullName
-
         val block = Event(
             command.startDateTime,
             command.endDateTime,
             false,
-            // TODO: use Moustache templates
-            initiatorName?.let { "Meeting with $it" },
+            command.title,
             "Time for this meeting was created via <a href=$samaWebUrl>Sama app</a>",
             command.recipientEmail,
         )

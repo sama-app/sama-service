@@ -27,6 +27,7 @@ data class ProposedMeeting(
     val duration: Duration,
     val proposedSlots: List<MeetingSlot>,
     val meetingCode: MeetingCode,
+    val meetingTitle: String
 ) : Meeting {
     override val status = MeetingStatus.PROPOSED
     val slotInterval = Duration.ofMinutes(15)
@@ -52,12 +53,16 @@ data class ProposedMeeting(
         return AvailableSlots.of(this, exclusions, clock)
     }
 
+    fun updateTitle(title: String): ProposedMeeting {
+        return copy(meetingTitle = title)
+    }
+
     fun confirm(slot: MeetingSlot, recipient: MeetingRecipient): Result<ConfirmedMeeting> {
         return kotlin.runCatching {
             val confirmedSlot = expandedSlots().find { it == slot }
                 ?: throw MeetingSlotUnavailableException(meetingCode, slot)
 
-            ConfirmedMeeting(meetingId, initiatorId, duration, recipient, confirmedSlot)
+            ConfirmedMeeting(meetingId, initiatorId, duration, recipient, confirmedSlot, meetingTitle)
         }
     }
 }
@@ -82,7 +87,8 @@ data class ConfirmedMeeting(
     val initiatorId: UserId,
     val duration: Duration,
     val meetingRecipient: MeetingRecipient,
-    val slot: MeetingSlot
+    val slot: MeetingSlot,
+    val meetingTitle: String
 ) : Meeting {
     override val status = MeetingStatus.CONFIRMED
 }
