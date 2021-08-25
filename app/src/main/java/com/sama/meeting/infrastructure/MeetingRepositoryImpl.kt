@@ -28,7 +28,7 @@ import org.springframework.stereotype.Component
 @Component
 class MeetingRepositoryImpl(
     private val meetingJpaRepository: MeetingJpaRepository,
-    private val meetingIntentJpaRepository: MeetingIntentJpaRepository
+    private val meetingIntentJpaRepository: MeetingIntentJpaRepository,
 ) : MeetingRepository {
 
     override fun nextIdentity(): MeetingId {
@@ -41,10 +41,11 @@ class MeetingRepositoryImpl(
         return meetingFrom(intentEntity, meetingEntity)
     }
 
-    override fun findByCodeOrThrow(code: MeetingCode): Meeting {
-        val meetingEntity = meetingJpaRepository.findByCodeOrThrow(code.code)
-        val intentEntity = meetingIntentJpaRepository.findByIdOrThrow(meetingEntity.meetingIntentId!!)
+    override fun findByCodeOrThrow(code: MeetingCode, forUpdate: Boolean): Meeting {
+        val meetingEntity = if (forUpdate) meetingJpaRepository.findByCodeForUpdateOrThrow(code.code)
+        else meetingJpaRepository.findByCodeOrThrow(code.code)
 
+        val intentEntity = meetingIntentJpaRepository.findByIdOrThrow(meetingEntity.meetingIntentId!!)
         return meetingFrom(intentEntity, meetingEntity)
     }
 
@@ -77,7 +78,7 @@ class MeetingRepositoryImpl(
     override fun findAllProposedSlots(
         initiatorId: UserId,
         fromDateTime: ZonedDateTime,
-        endDateTime: ZonedDateTime
+        endDateTime: ZonedDateTime,
     ): Collection<MeetingSlot> {
         return meetingJpaRepository.findAllProposedSlots(initiatorId, fromDateTime, endDateTime)
     }
@@ -85,7 +86,7 @@ class MeetingRepositoryImpl(
     @Factory
     private fun meetingFrom(
         meetingIntentEntity: MeetingIntentEntity,
-        meetingEntity: MeetingEntity
+        meetingEntity: MeetingEntity,
     ): Meeting {
         return when (meetingEntity.status!!) {
             MeetingStatus.PROPOSED -> {

@@ -115,7 +115,7 @@ class MeetingApplicationService(
 
     @Transactional
     fun confirmMeeting(userId: UserId?, meetingCode: MeetingCode, command: ConfirmMeetingCommand): Boolean {
-        val proposedMeeting = when (val meeting = meetingRepository.findByCodeOrThrow(meetingCode)) {
+        val proposedMeeting = when (val meeting = meetingRepository.findByCodeOrThrow(meetingCode, true)) {
             is ProposedMeeting -> meeting
             is ConfirmedMeeting -> throw MeetingAlreadyConfirmedException(meetingCode)
             is ExpiredMeeting -> throw NotFoundException(ProposedMeeting::class, meetingCode)
