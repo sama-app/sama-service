@@ -84,24 +84,25 @@ class MeetingApplicationService(
 
         val meetingId = meetingRepository.nextIdentity()
         val meetingCode = meetingCodeGenerator.generate()
+        val meetingTitle = generateMeetingTitle(meetingIntent.initiatorId)
 
         val proposedSlots = command.proposedSlots.map { it.toValueObject() }
         val proposedMeeting = meetingIntent
-            .propose(meetingId, meetingCode, proposedSlots)
+            .propose(meetingId, meetingCode, proposedSlots, meetingTitle)
             .getOrThrow()
             .also { meetingRepository.save(it) }
 
         return meetingInvitationView.render(proposedMeeting, meetingIntent.timezone)
     }
 
+    private fun generateMeetingTitle(initiatorId: UserId): String {
+        val initiatorName = userService.find(initiatorId).fullName
+        return initiatorName?.let { "Meeting with $it" } ?: "Meeting"
+    }
+
     @Transactional(readOnly = true)
-    fun loadMeetingProposalFromCode(meetingCode: MeetingCode): ProposedMeetingDTO {
-        val proposedMeeting = when (val meeting = meetingRepository.findByCodeOrThrow(meetingCode)) {
-            is ProposedMeeting -> meeting
-            is ConfirmedMeeting -> throw MeetingAlreadyConfirmedException(meetingCode)
-            is ExpiredMeeting -> throw NotFoundException(ProposedMeeting::class, meetingCode)
-            else -> throw InvalidMeetingStatusException(meetingCode, meeting.status)
-        }
+    fun loadMeetingProposal(meetingCode: MeetingCode): ProposedMeetingDTO {
+        val proposedMeeting = findProposedMeetingOrThrow(meetingCode)
 
         val (start, end) = proposedMeeting.proposedSlotsRange()
         val blockingCalendarEvents = eventApplicationService.fetchEvents(
@@ -114,13 +115,19 @@ class MeetingApplicationService(
     }
 
     @Transactional
-    fun confirmMeeting(userId: UserId?, meetingCode: MeetingCode, command: ConfirmMeetingCommand): Boolean {
-        val proposedMeeting = when (val meeting = meetingRepository.findByCodeOrThrow(meetingCode, true)) {
-            is ProposedMeeting -> meeting
-            is ConfirmedMeeting -> throw MeetingAlreadyConfirmedException(meetingCode)
-            is ExpiredMeeting -> throw NotFoundException(ProposedMeeting::class, meetingCode)
-            else -> throw InvalidMeetingStatusException(meetingCode, meeting.status)
+    fun updateMeetingTitle(userId: UserId, meetingCode: MeetingCode, command: UpdateMeetingTitleCommand): Boolean {
+        val proposedMeeting = findProposedMeetingOrThrow(meetingCode)
+        if (proposedMeeting.initiatorId != userId) {
+            throw AccessDeniedException("User#${userId.id} does not have access to update Meeting#${meetingCode}")
         }
+
+        meetingRepository.save(proposedMeeting.updateTitle(command.title))
+        return true
+    }
+
+    @Transactional
+    fun confirmMeeting(userId: UserId?, meetingCode: MeetingCode, command: ConfirmMeetingCommand): Boolean {
+        val proposedMeeting = findProposedMeetingOrThrow(meetingCode, true)
 
         val meetingRecipient = if (command.recipientEmail != null) {
             try {
@@ -148,13 +155,14 @@ class MeetingApplicationService(
         return true
     }
 
-    @Transactional(readOnly = true)
-    fun findProposedSlots(
-        userId: UserId, startDateTime: ZonedDateTime, endDateTime: ZonedDateTime,
-    ): List<MeetingSlotDTO> {
-        return meetingRepository.findAllProposedSlots(userId, startDateTime, endDateTime)
-            .map { it.toDTO() }
-    }
+
+    private fun findProposedMeetingOrThrow(meetingCode: MeetingCode, forUpdate: Boolean = false) =
+        when (val meeting = meetingRepository.findByCodeOrThrow(meetingCode, forUpdate)) {
+            is ProposedMeeting -> meeting
+            is ConfirmedMeeting -> throw MeetingAlreadyConfirmedException(meetingCode)
+            is ExpiredMeeting -> throw NotFoundException(ProposedMeeting::class, meetingCode)
+            else -> throw InvalidMeetingStatusException(meetingCode, meeting.status)
+        }
 
     @SentryTransaction(operation = "expireMeetings")
     @Scheduled(cron = "0 0/15 * * * *")

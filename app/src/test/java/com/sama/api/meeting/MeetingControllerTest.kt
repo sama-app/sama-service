@@ -12,6 +12,7 @@ import com.sama.meeting.application.MeetingInvitationDTO
 import com.sama.meeting.application.MeetingSlotDTO
 import com.sama.meeting.application.ProposeMeetingCommand
 import com.sama.meeting.application.ProposedMeetingDTO
+import com.sama.meeting.application.UpdateMeetingTitleCommand
 import com.sama.meeting.domain.InvalidMeetingStatusException
 import com.sama.meeting.domain.MeetingAlreadyConfirmedException
 import com.sama.meeting.domain.MeetingCode
@@ -52,9 +53,8 @@ import org.springframework.test.web.servlet.result.isEqualTo
     ]
 )
 @AutoConfigureMockMvc
-class MeetingControllerTest(
-    @Autowired val mockMvc: MockMvc
-) {
+class MeetingControllerTest(@Autowired val mockMvc: MockMvc) {
+
     @MockBean
     lateinit var meetingApplicationService: MeetingApplicationService
 
@@ -157,6 +157,7 @@ class MeetingControllerTest(
         val shareableMessage = "a nice message"
         val meetingCode = MeetingCode("code")
         val meetingUrl = "localhost:3000/$meetingCode"
+        val meetingTitle = "Meeting with test"
         val proposedSlot = MeetingSlotDTO(
             ZonedDateTime.parse("2021-01-01T12:00:00Z[UTC]"),
             ZonedDateTime.parse("2021-01-01T13:00:00Z[UTC]"),
@@ -172,7 +173,8 @@ class MeetingControllerTest(
             MeetingInvitationDTO(
                 MeetingDTO(
                     listOf(proposedSlot),
-                    UserPublicDTO(initiatorId, initiatorFullName, initiatorEmail)
+                    UserPublicDTO(initiatorId, initiatorFullName, initiatorEmail),
+                    meetingTitle
                 ),
                 meetingCode,
                 meetingUrl,
@@ -201,7 +203,8 @@ class MeetingControllerTest(
                         "userId": ${initiatorId.id},
                         "fullName": $initiatorFullName,
                         "email": $initiatorEmail
-                    }
+                    },
+                    "title": "$meetingTitle"
                 },
                 "meetingCode": ${meetingCode.code},
                 "meetingUrl": "$meetingUrl",
@@ -223,15 +226,17 @@ class MeetingControllerTest(
     fun `load meeting proposal`() {
         val userId = UserPublicId.random()
         val meetingCode = MeetingCode("code")
+        val meetingTitle = "Meeting title"
         val proposedSlot = MeetingSlotDTO(
             ZonedDateTime.parse("2021-01-01T12:00:00Z"),
             ZonedDateTime.parse("2021-01-01T13:00:00Z"),
         )
-        whenever(meetingApplicationService.loadMeetingProposalFromCode(meetingCode))
+        whenever(meetingApplicationService.loadMeetingProposal(meetingCode))
             .thenReturn(
                 ProposedMeetingDTO(
                     listOf(proposedSlot),
                     UserPublicDTO(userId, "test", "test@meetsama.com"),
+                    meetingTitle,
                     MeetingAppLinksDTO("http://download.me")
                 )
             )
@@ -247,6 +252,7 @@ class MeetingControllerTest(
                     "fullName": "test",
                     "email": "test@meetsama.com"
                 },
+                "title": "$meetingTitle",
                 "appLinks": {
                     "iosAppDownloadLink": "http://download.me"
                 }
@@ -261,9 +267,35 @@ class MeetingControllerTest(
     }
 
     @Test
+    fun `update meeting title`() {
+        val meetingCode = MeetingCode("VGsUTGno")
+        val meetingTitle = "my fancy title"
+
+        whenever(meetingApplicationService.updateMeetingTitle(
+            userId, meetingCode, UpdateMeetingTitleCommand(meetingTitle))
+        ).thenReturn(true)
+
+
+        val requestBody =
+            """
+                {
+                    "title": "$meetingTitle"
+                }
+            """.trimIndent()
+
+        mockMvc.perform(
+            post("/api/meeting/by-code/${meetingCode.code}/update-title")
+                .contentType(APPLICATION_JSON)
+                .content(requestBody)
+                .header("Authorization", "Bearer $jwt"))
+            .andExpect(status().isOk)
+            .andExpect(content().string("true"))
+    }
+
+    @Test
     fun `meeting already confirmed`() {
         val meetingCode = MeetingCode("VGsUTGno")
-        whenever(meetingApplicationService.loadMeetingProposalFromCode(meetingCode))
+        whenever(meetingApplicationService.loadMeetingProposal(meetingCode))
             .thenThrow(MeetingAlreadyConfirmedException(meetingCode))
 
         val expectedResponse = """
@@ -279,7 +311,7 @@ class MeetingControllerTest(
 
     @Test
     fun `meeting status invalid`() {
-        whenever(meetingApplicationService.loadMeetingProposalFromCode(MeetingCode("VGsUTGno")))
+        whenever(meetingApplicationService.loadMeetingProposal(MeetingCode("VGsUTGno")))
             .thenThrow(InvalidMeetingStatusException(MeetingCode("VGsUTGno"), MeetingStatus.REJECTED))
 
         val expectedResponse = """
@@ -394,6 +426,7 @@ class MeetingControllerTest(
         post("/api/meeting/initiate") to UNAUTHORIZED,
         post("/api/meeting/1/propose") to UNAUTHORIZED,
         get("/api/meeting/by-code/some-code") to OK,
+        post("/api/meeting/by-code/some-code/update-title") to UNAUTHORIZED,
         post("/api/meeting/by-code/some-code/confirm")
             .contentType(APPLICATION_JSON) to BAD_REQUEST, // no payload
     )

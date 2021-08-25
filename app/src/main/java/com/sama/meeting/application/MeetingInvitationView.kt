@@ -43,7 +43,8 @@ class MeetingInvitationView(
         return MeetingInvitationDTO(
             MeetingDTO(
                 proposedMeeting.proposedSlots.map { it.toDTO() },
-                initiator
+                initiator,
+                proposedMeeting.meetingTitle
             ),
             proposedMeeting.meetingCode,
             meetingUrl,

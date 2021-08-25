@@ -38,6 +38,7 @@ fun MeetingSlotDTO.toValueObject(): MeetingSlot {
 data class ProposedMeetingDTO(
     val proposedSlots: List<MeetingSlotDTO>,
     val initiator: UserPublicDTO,
+    val title: String,
     val appLinks: MeetingAppLinksDTO?
 )
 
@@ -45,7 +46,8 @@ data class MeetingAppLinksDTO(val iosAppDownloadLink: String)
 
 data class MeetingDTO(
     val proposedSlots: List<MeetingSlotDTO>,
-    val initiator: UserPublicDTO
+    val initiator: UserPublicDTO,
+    val title: String
 )
 
 data class MeetingInvitationDTO(

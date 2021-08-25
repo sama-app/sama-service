@@ -24,9 +24,7 @@ interface MeetingJpaRepository : JpaRepository<MeetingEntity, Long> {
     fun findByCode(code: String): MeetingEntity?
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("select m from MeetingEntity m where m.code = ?1")
-    fun findByCodeForUpdateOrThrow(code: String) = findByCode(code)
-        ?: throw NotFoundException(MeetingEntity::class, "code", code)
+    fun findFirstByCode(code: String): MeetingEntity?
 
     @Query(
         "SELECT m.id " +
@@ -56,4 +54,7 @@ interface MeetingJpaRepository : JpaRepository<MeetingEntity, Long> {
 }
 
 fun MeetingJpaRepository.findByCodeOrThrow(code: String): MeetingEntity = findByCode(code)
+    ?: throw NotFoundException(MeetingEntity::class, "code", code)
+
+fun MeetingJpaRepository.findLockedByCodeOrThrow(code: String): MeetingEntity = findFirstByCode(code)
     ?: throw NotFoundException(MeetingEntity::class, "code", code)

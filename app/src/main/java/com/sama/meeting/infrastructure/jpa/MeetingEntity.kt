@@ -3,11 +3,9 @@ package com.sama.meeting.infrastructure.jpa
 import com.sama.common.Factory
 import com.sama.meeting.domain.ConfirmedMeeting
 import com.sama.meeting.domain.MeetingId
-import com.sama.meeting.domain.MeetingRecipient
 import com.sama.meeting.domain.MeetingSlot
 import com.sama.meeting.domain.MeetingStatus
 import com.sama.meeting.domain.ProposedMeeting
-import com.sama.users.domain.UserId
 import java.time.Instant
 import java.time.ZonedDateTime
 import javax.persistence.AttributeOverride
@@ -43,6 +41,7 @@ class MeetingEntity {
             entity.createdAt = Instant.now()
             entity.updatedAt = Instant.now()
             entity.status = proposedMeeting.status
+            entity.title = proposedMeeting.meetingTitle
             val slots = proposedMeeting.proposedSlots.map {
                 MeetingProposedSlotEntity(
                     null,
@@ -83,6 +82,9 @@ class MeetingEntity {
     @Column(name = "meeting_code")
     var code: String? = null
 
+    @Column(nullable = false)
+    var title: String? = null
+
     @OneToMany(cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(name = "meetingId", nullable = false, updatable = false, insertable = false)
     var proposedSlots: MutableList<MeetingProposedSlotEntity> = mutableListOf()
@@ -119,7 +121,7 @@ data class MeetingProposedSlotEntity(
     var startDateTime: ZonedDateTime,
     var endDateTime: ZonedDateTime,
     @CreatedDate
-    var createdAt: Instant? = null
+    var createdAt: Instant? = null,
 )
 
 @Embeddable

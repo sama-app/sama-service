@@ -40,7 +40,7 @@ class MeetingTest {
 
     private val proposedMeetingID1 = ProposedMeeting(
         meetingId, meetingIntentId, initiatorId, ofMinutes(30),
-        listOf(proposedSlotID1), validMeetingCode
+        listOf(proposedSlotID1), validMeetingCode, "meeting title"
     )
 
     @TestFactory
@@ -87,15 +87,16 @@ class MeetingTest {
     fun `propose meeting`(): List<DynamicTest> {
         val initiatorId = initiatorId
         val meetingIntentId = MeetingIntentId(2)
+        val meetingTitle = "meeting title"
         return listOf(
             listOf(proposedSlotID1.copy()) to ProposedMeeting(
                 meetingId, meetingIntentId, initiatorId, ofHours(1),
-                listOf(proposedSlotID1), validMeetingCode
+                listOf(proposedSlotID1), validMeetingCode, meetingTitle
             ),
 
             listOf(proposedSlotID1.copy(), proposedSlotID2.copy()) to ProposedMeeting(
                 meetingId, meetingIntentId, initiatorId, ofHours(1),
-                listOf(proposedSlotID1, proposedSlotID2), validMeetingCode
+                listOf(proposedSlotID1, proposedSlotID2), validMeetingCode, meetingTitle
             ),
 
             ).map { (proposedSlots, expected) ->
@@ -108,7 +109,7 @@ class MeetingTest {
             )
 
             dynamicTest("proposing slots $proposedSlots throws $expected") {
-                val proposedMeeting = initiatedMeeting.propose(meetingId, validMeetingCode, proposedSlots)
+                val proposedMeeting = initiatedMeeting.propose(meetingId, validMeetingCode, proposedSlots, meetingTitle)
 
                 val actual = proposedMeeting.assertDoesNotThrowOrNull()
                 assertEquals(expected, actual)
@@ -145,7 +146,7 @@ class MeetingTest {
         val meetingCode = MeetingCode("VGsUTGno")
 
         dynamicTest("proposing slots $proposedSlots throws $expected") {
-            val actual = initiatedMeeting.propose(meetingId, meetingCode, proposedSlots)
+            val actual = initiatedMeeting.propose(meetingId, meetingCode, proposedSlots, "meeting title")
             actual.assertThrows(expected)
         }
     }
@@ -153,10 +154,12 @@ class MeetingTest {
     @Test
     fun `confirm meeting`() {
         val slot = proposedSlotID1
+        val meetingTitle = "meeting title"
         val proposedMeeting = ProposedMeeting(
-            meetingId, meetingIntentId, initiatorId, ofHours(1), listOf(slot), validMeetingCode
+            meetingId, meetingIntentId, initiatorId, ofHours(1), listOf(slot),
+            validMeetingCode, meetingTitle
         )
-        val recipient = MeetingRecipient(null, null) // todo
+        val recipient = MeetingRecipient(UserId(11L), "recipient@meetsama.com")
         val slotToConfirm = proposedSlotID1.copy()
 
         val actual = proposedMeeting.confirm(slotToConfirm, recipient)
@@ -165,7 +168,7 @@ class MeetingTest {
         assertEquals(
             ConfirmedMeeting(
                 meetingId, initiatorId, ofHours(1), recipient,
-                slotToConfirm
+                slotToConfirm, meetingTitle
             ), actual.getOrNull()
         )
     }
@@ -174,7 +177,7 @@ class MeetingTest {
     fun `confirm meeting fails`() {
         val slot = proposedSlotID1
         val proposedMeeting = ProposedMeeting(
-            meetingId, meetingIntentId, initiatorId, ofHours(1), listOf(slot), validMeetingCode
+            meetingId, meetingIntentId, initiatorId, ofHours(1), listOf(slot), validMeetingCode, "meeting title"
         )
         val recipient = MeetingRecipient(null, null) // todo
 

@@ -1,6 +1,7 @@
 package com.sama.meeting.infrastructure
 
 import com.sama.common.BasePersistenceIT
+import com.sama.common.NotFoundException
 import com.sama.meeting.domain.ConfirmedMeeting
 import com.sama.meeting.domain.ExpiredMeeting
 import com.sama.meeting.domain.MeetingCode
@@ -22,6 +23,7 @@ import kotlin.test.assertNotEquals
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
 
@@ -68,7 +70,8 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
                     ZonedDateTime.now(clock).plusHours(4)
                 )
             ),
-            MeetingCode("VGsUTGno")
+            MeetingCode("VGsUTGno"),
+            "Meeting title"
         )
 
         // act
@@ -81,9 +84,10 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
     }
 
     @Test
-    fun `confirmed meeting persistance`() {
+    fun `confirmed meeting persistence`() {
         val meetingId = MeetingId(21)
         val meetingCode = MeetingCode("VGsUTGno")
+        val meetingTitle = "Meeting title"
         val initiatorId = UserId(1)
 
         // act
@@ -98,7 +102,8 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
                     ZonedDateTime.now(clock).plusHours(4)
                 )
             ),
-            meetingCode
+            meetingCode,
+            meetingTitle
         )
 
         underTest.save(proposedMeeting)
@@ -109,7 +114,8 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
             MeetingSlot(
                 ZonedDateTime.now(clock).plusHours(3),
                 ZonedDateTime.now(clock).plusHours(4)
-            )
+            ),
+            meetingTitle
         )
 
         // act
@@ -139,16 +145,30 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
                     ZonedDateTime.now(clock).plusHours(4)
                 )
             ),
-            meetingCode
+            meetingCode,
+            "Meeting title"
         )
 
         underTest.save(proposedMeeting)
 
         // act
         val persisted = underTest.findByCodeOrThrow(meetingCode)
+        val persistedForUpdate = underTest.findByCodeOrThrow(meetingCode, true)
 
         // verify
-        assertThat(persisted.meetingId).isEqualTo(meetingId)
+        assertThat(persisted).isEqualTo(proposedMeeting)
+        assertThat(persistedForUpdate).isEqualTo(proposedMeeting)
+    }
+
+    @Test
+    fun `find by code not found`() {
+        assertThrows<NotFoundException> {
+            underTest.findByCodeOrThrow(MeetingCode("non existant"))
+        }
+
+        assertThrows<NotFoundException> {
+            underTest.findByCodeOrThrow(MeetingCode("non existant"), true)
+        }
     }
 
     @Test
@@ -173,7 +193,8 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
                 ),
                 expected
             ),
-            MeetingCode("VGsUTGno")
+            MeetingCode("VGsUTGno"),
+            "Meeting title"
         )
         underTest.save(proposedMeeting)
 
@@ -205,7 +226,8 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
                     ZonedDateTime.now(clock).plusMinutes(61)
                 )
             ),
-            MeetingCode("one")
+            MeetingCode("one"),
+            "Meeting title"
         )
 
         val expiringMeetingId = MeetingId(21)
@@ -224,7 +246,8 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
                     ZonedDateTime.now(clock).plusMinutes(30)
                 )
             ),
-            MeetingCode("two")
+            MeetingCode("two"),
+            "Meeting title"
         )
         underTest.save(validMeeting)
         underTest.save(expiringMeeting)
@@ -250,7 +273,8 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
                     ZonedDateTime.now(clock).minusHours(4)
                 )
             ),
-            MeetingCode("VGsUTGno")
+            MeetingCode("VGsUTGno"),
+            "Meeting title"
         )
         underTest.save(expiringMeeting)
 

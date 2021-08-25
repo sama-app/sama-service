@@ -19,6 +19,7 @@ import com.sama.meeting.infrastructure.jpa.MeetingIntentJpaRepository
 import com.sama.meeting.infrastructure.jpa.MeetingJpaRepository
 import com.sama.meeting.infrastructure.jpa.MeetingRecipientEntity
 import com.sama.meeting.infrastructure.jpa.findByCodeOrThrow
+import com.sama.meeting.infrastructure.jpa.findLockedByCodeOrThrow
 import com.sama.users.domain.UserId
 import com.sama.users.infrastructure.toUserId
 import java.time.Duration
@@ -42,7 +43,7 @@ class MeetingRepositoryImpl(
     }
 
     override fun findByCodeOrThrow(code: MeetingCode, forUpdate: Boolean): Meeting {
-        val meetingEntity = if (forUpdate) meetingJpaRepository.findByCodeForUpdateOrThrow(code.code)
+        val meetingEntity = if (forUpdate) meetingJpaRepository.findLockedByCodeOrThrow(code.code)
         else meetingJpaRepository.findByCodeOrThrow(code.code)
 
         val intentEntity = meetingIntentJpaRepository.findByIdOrThrow(meetingEntity.meetingIntentId!!)
@@ -98,7 +99,8 @@ class MeetingRepositoryImpl(
                     meetingIntentEntity.initiatorId!!.toUserId(),
                     Duration.ofMinutes(meetingIntentEntity.durationMinutes!!),
                     proposedSlots,
-                    meetingEntity.code!!.toMeetingCode()
+                    meetingEntity.code!!.toMeetingCode(),
+                    meetingEntity.title!!
                 )
             }
             MeetingStatus.CONFIRMED -> ConfirmedMeeting(
@@ -106,8 +108,8 @@ class MeetingRepositoryImpl(
                 meetingIntentEntity.initiatorId!!.toUserId(),
                 Duration.ofMinutes(meetingIntentEntity.durationMinutes!!),
                 meetingEntity.meetingRecipient!!.toDomainObject(),
-                meetingEntity.confirmedSlot!!
-
+                meetingEntity.confirmedSlot!!,
+                meetingEntity.title!!
             )
             MeetingStatus.REJECTED -> RejectedMeeting(meetingEntity.id!!.toMeetingId())
             MeetingStatus.EXPIRED -> ExpiredMeeting(meetingEntity.id!!.toMeetingId())

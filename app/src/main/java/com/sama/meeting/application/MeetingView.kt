@@ -26,6 +26,7 @@ class MeetingView(
         return ProposedMeetingDTO(
             slots,
             initiator,
+            proposedMeeting.meetingTitle,
             appLinks
         )
     }
