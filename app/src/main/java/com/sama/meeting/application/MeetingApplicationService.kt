@@ -4,6 +4,7 @@ import com.sama.calendar.application.CalendarEventConsumer
 import com.sama.calendar.application.EventApplicationService
 import com.sama.common.ApplicationService
 import com.sama.common.NotFoundException
+import com.sama.common.afterCommit
 import com.sama.common.toMinutes
 import com.sama.comms.application.CommsEventConsumer
 import com.sama.meeting.domain.ConfirmedMeeting
@@ -138,11 +139,12 @@ class MeetingApplicationService(
 
         meetingRepository.save(confirmedMeeting)
 
-        // "manual" event publishing
-        val event = MeetingConfirmedEvent(confirmedMeeting)
-        calendarEventConsumer.onMeetingConfirmed(event)
-        commsEventConsumer.onMeetingConfirmed(event)
-
+        afterCommit {
+            // "manual" event publishing
+            val event = MeetingConfirmedEvent(confirmedMeeting)
+            calendarEventConsumer.onMeetingConfirmed(event)
+            commsEventConsumer.onMeetingConfirmed(event)
+        }
         return true
     }
 
