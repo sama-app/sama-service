@@ -5,7 +5,10 @@ import com.sama.meeting.domain.MeetingSlot
 import com.sama.meeting.domain.MeetingStatus
 import com.sama.users.domain.UserId
 import java.time.ZonedDateTime
+import java.util.Optional
+import javax.persistence.LockModeType
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Lock
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
@@ -16,7 +19,14 @@ interface MeetingJpaRepository : JpaRepository<MeetingEntity, Long> {
     @Query("select nextval('sama.meeting_id_seq')", nativeQuery = true)
     fun nextIdentity(): Long
 
+    override fun findById(id: Long): Optional<MeetingEntity>
+
     fun findByCode(code: String): MeetingEntity?
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select m from MeetingEntity m where m.code = ?1")
+    fun findByCodeForUpdateOrThrow(code: String) = findByCode(code)
+        ?: throw NotFoundException(MeetingEntity::class, "code", code)
 
     @Query(
         "SELECT m.id " +

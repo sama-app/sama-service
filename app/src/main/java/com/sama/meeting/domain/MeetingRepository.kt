@@ -11,7 +11,9 @@ interface MeetingRepository : Repository<Meeting, MeetingId> {
 
     fun findByIdOrThrow(meetingId: MeetingId): Meeting
 
-    fun findByCodeOrThrow(code: MeetingCode): Meeting
+    fun findByCodeOrThrow(code: MeetingCode) = findByCodeOrThrow(code ,false)
+
+    fun findByCodeOrThrow(code: MeetingCode, forUpdate: Boolean): Meeting
 
     fun findAllExpiring(expiryDateTime: ZonedDateTime): Collection<ExpiredMeeting>
 
