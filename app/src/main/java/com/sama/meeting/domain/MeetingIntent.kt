@@ -12,7 +12,7 @@ data class MeetingIntent(
     val duration: Duration,
     val timezone: ZoneId,
     val suggestedSlots: List<MeetingSlot>,
-    val code: MeetingIntentCode? = null
+    val code: MeetingIntentCode? = null,
 ) {
     private val minimumDuration: Duration = Duration.ofMinutes(15)
 
@@ -20,20 +20,20 @@ data class MeetingIntent(
         if (duration < minimumDuration) {
             throw InvalidDurationException(duration)
         }
-        validateSlots(suggestedSlots)
+        suggestedSlots.validate()
     }
 
     fun propose(
         meetingId: MeetingId,
         meetingCode: MeetingCode,
         proposedSlots: List<MeetingSlot>,
-        meetingTitle: String
+        meetingTitle: String,
     ): Result<ProposedMeeting> {
         if (proposedSlots.isEmpty()) {
             return Result.failure(InvalidMeetingProposalException("No slots proposed"))
         }
 
-        kotlin.runCatching { validateSlots(proposedSlots) }
+        kotlin.runCatching { proposedSlots.validate() }
             .onFailure { return Result.failure(it) }
 
         return Result.success(
@@ -42,15 +42,29 @@ data class MeetingIntent(
                 meetingIntentId,
                 initiatorId,
                 duration,
-                proposedSlots,
+                proposedSlots.combineContinuous(),
                 meetingCode,
                 meetingTitle
             )
         )
     }
 
-    private fun validateSlots(slots: List<MeetingSlot>) {
-        slots.firstOrNull { it.duration() < duration }
+    private fun List<MeetingSlot>.combineContinuous(): List<MeetingSlot> {
+        return fold(mutableListOf())
+        { acc, slot ->
+            val prevSlot = acc.lastOrNull()
+            if (prevSlot != null && prevSlot.endDateTime.isEqual(slot.startDateTime)) {
+                acc.removeLast()
+                acc.add(MeetingSlot(prevSlot.startDateTime, slot.endDateTime))
+            } else {
+                acc.add(slot)
+            }
+            acc
+        }
+    }
+
+    private fun List<MeetingSlot>.validate() {
+        firstOrNull { it.duration() < duration }
             ?.run { throw InvalidMeetingSlotException(this) }
     }
 }

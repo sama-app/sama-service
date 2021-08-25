@@ -94,9 +94,15 @@ class MeetingTest {
                 listOf(proposedSlotID1), validMeetingCode, meetingTitle
             ),
 
-            listOf(proposedSlotID1.copy(), proposedSlotID2.copy()) to ProposedMeeting(
+            listOf(proposedSlotID1.copy(), proposedSlotID3.copy()) to ProposedMeeting(
                 meetingId, meetingIntentId, initiatorId, ofHours(1),
-                listOf(proposedSlotID1, proposedSlotID2), validMeetingCode, meetingTitle
+                listOf(proposedSlotID1, proposedSlotID3), validMeetingCode, meetingTitle
+            ),
+
+            listOf(proposedSlotID1.copy(), proposedSlotID2.copy(), proposedSlotID3.copy()) to ProposedMeeting(
+                meetingId, meetingIntentId, initiatorId, ofHours(1),
+                listOf(MeetingSlot(proposedSlotID1.startDateTime, proposedSlotID3.endDateTime)),
+                validMeetingCode, meetingTitle
             ),
 
             ).map { (proposedSlots, expected) ->
@@ -141,7 +147,11 @@ class MeetingTest {
     ).map { (proposedSlots, expected) ->
 
         val initiatedMeeting = MeetingIntent(
-            meetingIntentId, initiatorId, ofHours(1), systemDefault(), listOf(proposedSlotID1.copy(), proposedSlotID2.copy())
+            meetingIntentId,
+            initiatorId,
+            ofHours(1),
+            systemDefault(),
+            listOf(proposedSlotID1.copy(), proposedSlotID2.copy())
         )
         val meetingCode = MeetingCode("VGsUTGno")
 
