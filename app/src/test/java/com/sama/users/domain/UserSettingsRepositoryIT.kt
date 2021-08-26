@@ -9,21 +9,25 @@ import java.util.Locale
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.mock.mockito.MockBean
+import org.springframework.security.crypto.encrypt.TextEncryptor
 import org.springframework.test.context.ContextConfiguration
 
 @ContextConfiguration(classes = [UserRepositoryImpl::class, UserSettingsRepositoryImpl::class])
 class UserSettingsRepositoryIT : BasePersistenceIT<UserSettingsRepository>() {
+
+    @MockBean
+    private lateinit var textEncryptor: TextEncryptor
 
     @Autowired
     private lateinit var userRepository: UserRepository
 
     @Test
     fun save() {
-        val userId = UserId(1)
-        userRepository.save(UserDetails(id = userId, email = "test@meetsama.com", fullName = "test", active = true))
+        val user = userRepository.save(UserDetails(email = "test@meetsama.com", fullName = "test", active = true))
 
         val toPersist = UserSettings(
-            userId, Locale.ENGLISH, ZoneId.of("UTC"), true,
+            user.id!!, Locale.ENGLISH, ZoneId.of("UTC"), true,
             mapOf(
                 DayOfWeek.TUESDAY to WorkingHours.nineToFive(),
                 DayOfWeek.FRIDAY to WorkingHours.nineToFive()
@@ -31,7 +35,7 @@ class UserSettingsRepositoryIT : BasePersistenceIT<UserSettingsRepository>() {
         )
         underTest.save(toPersist)
 
-        val actual = underTest.findByIdOrThrow(userId)
+        val actual = underTest.findByIdOrThrow(user.id!!)
         assertThat(actual).isEqualTo(toPersist)
     }
 

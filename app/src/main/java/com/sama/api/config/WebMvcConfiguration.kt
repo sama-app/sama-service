@@ -3,23 +3,37 @@ package com.sama.api.config
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.sama.api.common.ApiError
-import com.sama.common.*
+import com.sama.common.DomainEntityStatusException
+import com.sama.common.DomainIntegrityException
+import com.sama.common.DomainInvalidActionException
+import com.sama.common.DomainValidationException
+import com.sama.common.NotFoundException
 import com.sama.integration.google.GoogleInsufficientPermissionsException
 import com.sama.integration.google.GoogleInvalidCredentialsException
 import com.sama.users.domain.InactiveUserException
+import java.time.ZoneId
+import java.time.zone.ZoneRulesException
+import java.util.TimeZone
+import java.util.function.Predicate
+import java.util.regex.Pattern
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Import
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
-import org.springframework.http.HttpStatus.*
+import org.springframework.http.HttpStatus.BAD_REQUEST
+import org.springframework.http.HttpStatus.CONFLICT
+import org.springframework.http.HttpStatus.FORBIDDEN
+import org.springframework.http.HttpStatus.GONE
+import org.springframework.http.HttpStatus.NOT_FOUND
+import org.springframework.http.HttpStatus.UNAUTHORIZED
+import org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY
 import org.springframework.http.ResponseEntity
 import org.springframework.http.converter.HttpMessageConverter
 import org.springframework.http.converter.StringHttpMessageConverter
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter
 import org.springframework.mobile.device.DeviceResolverHandlerInterceptor
-import org.springframework.security.authentication.InsufficientAuthenticationException
 import org.springframework.security.core.AuthenticationException
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
@@ -31,11 +45,6 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler
-import java.time.ZoneId
-import java.time.zone.ZoneRulesException
-import java.util.*
-import java.util.function.Predicate
-import java.util.regex.Pattern
 
 
 @Configuration
@@ -43,7 +52,7 @@ import java.util.regex.Pattern
 @EnableWebMvc
 class WebMvcConfiguration(
     private val userIdAttributeResolver: UserIdAttributeResolver,
-    @Value("\${sama.api.cors.allowed-origins}") private val corsAllowedOrigins: List<String>
+    @Value("\${sama.api.cors.allowed-origins}") private val corsAllowedOrigins: List<String>,
 ) : WebMvcConfigurer {
     private val headerBlacklist = listOf("authorization", "cookie")
     private val urlBlacklist = Pattern.compile("/__mon/*")
@@ -93,7 +102,9 @@ class WebMvcConfiguration(
 }
 
 @ControllerAdvice
-class GlobalWebMvcExceptionHandler : ResponseEntityExceptionHandler() {
+class GlobalWebMvcExceptionHandler(
+    @Value("\${sama.api.error.include-message}") private val includeErrorMessage: Boolean,
+) : ResponseEntityExceptionHandler() {
 
     @ExceptionHandler(value = [ZoneRulesException::class, IllegalArgumentException::class])
     @ResponseStatus(BAD_REQUEST)
@@ -118,7 +129,7 @@ class GlobalWebMvcExceptionHandler : ResponseEntityExceptionHandler() {
     @ExceptionHandler(value = [NotFoundException::class])
     @ResponseStatus(NOT_FOUND)
     fun handleNotFound(ex: NotFoundException, request: WebRequest) =
-        handleExceptionInternal(ex, null,HttpHeaders(), NOT_FOUND, request)
+        handleExceptionInternal(ex, null, HttpHeaders(), NOT_FOUND, request)
 
     @ExceptionHandler(value = [DomainIntegrityException::class])
     @ResponseStatus(CONFLICT)
@@ -133,12 +144,12 @@ class GlobalWebMvcExceptionHandler : ResponseEntityExceptionHandler() {
     @ExceptionHandler(value = [DomainInvalidActionException::class])
     @ResponseStatus(UNPROCESSABLE_ENTITY)
     fun handleDomainInvalidAction(ex: DomainInvalidActionException, request: WebRequest) =
-        handleExceptionInternal(ex, null,HttpHeaders(), UNPROCESSABLE_ENTITY, request)
+        handleExceptionInternal(ex, null, HttpHeaders(), UNPROCESSABLE_ENTITY, request)
 
     override fun handleExceptionInternal(
-        ex: Exception, body: Any?, headers: HttpHeaders, status: HttpStatus, request: WebRequest
+        ex: Exception, body: Any?, headers: HttpHeaders, status: HttpStatus, request: WebRequest,
     ): ResponseEntity<Any> {
-        val apiError = ApiError.create(status, ex, request)
+        val apiError = ApiError.create(status, ex, request, includeErrorMessage)
         logger.info("Response [code=${apiError.status}, reason=${apiError.reason}, message=${apiError.message}]")
 
         return super.handleExceptionInternal(

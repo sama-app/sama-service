@@ -1,5 +1,6 @@
 server:
   port: 3000
+  shutdown: graceful
   servlet:
     context-path: /
   error:
@@ -22,6 +23,7 @@ spring:
     driver-class-name: org.postgresql.Driver
     url: jdbc:postgresql://${spring.datasource.host}:${spring.datasource.port}/${spring.datasource.database-name}
     hikari:
+      poolName: Hikari
       minimum-idle: 10
       maximum-pool-size: 40
       connection-timeout: 10000
@@ -54,8 +56,44 @@ management:
     enabled-by-default: true
     web:
       base-path: /__mon
+      server:
+        request:
+          autotime:
+            enabled: true
       exposure:
-        include: "*"
+        include:
+          ['configprops', 'env', 'health', 'info', 'logfile', 'loggers', 'prometheus', 'threaddump', 'caches']
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  info:
+    git:
+      enabled: true
+      mode: simple
+  health:
+    db:
+      enabled: true
+    diskspace:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+        step: 60
+    enable:
+      http: true
+      jvm: true
+      logback: true
+      process: true
+      system: true
+    distribution:
+      percentiles-histogram:
+        all: true
+      percentiles:
+        all: 0, 0.5, 0.75, 0.95, 0.99, 1.0
+    tags:
+      application: ${spring.application.name}
 
 logging.level:
     org.springframework.jdbc.core: DEBUG
@@ -67,9 +105,12 @@ springdoc:
     path: /api/swagger-ui.html
 
 sama:
-  api.cors:
+  api:
+    cors:
       allowed-origins: |
         *
+    error:
+      include-message: true
   auth.jwt:
     access:
       signing-secret: dummy-access-secret-for-development
