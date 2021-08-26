@@ -71,4 +71,4 @@ integration:
 sentry:
   environment: prod
   debug: false
-  traces-sample-rate: 0.3
+  traces-sample-rate: 0.01
