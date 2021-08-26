@@ -3,6 +3,7 @@ services:
   sama-db:
     container_name: sama-db
     image: postgres:13-alpine
+    command: postgres -c 'max_connections=40'
     ports:
       - "5432:5432"
     environment:

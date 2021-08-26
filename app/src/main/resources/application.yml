@@ -21,6 +21,12 @@ spring:
     password: password
     driver-class-name: org.postgresql.Driver
     url: jdbc:postgresql://${spring.datasource.host}:${spring.datasource.port}/${spring.datasource.database-name}
+    hikari:
+      minimum-idle: 10
+      maximum-pool-size: 40
+      connection-timeout: 10000
+      idle-timeout: 10000
+      max-lifetime: 1000
   jpa:
     show-sql: false
     hibernate:

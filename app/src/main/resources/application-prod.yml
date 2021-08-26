@@ -10,6 +10,9 @@ spring:
     database-name: sama
     username: sama
     password: "dummy-value-this-is-loaded-from-AWS-SM"
+    hikari:
+      minimum-idle: 20
+      maximum-pool-size: 80
   jpa:
     show-sql: false
   cache:
