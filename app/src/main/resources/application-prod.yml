@@ -13,6 +13,7 @@ spring:
     hikari:
       minimum-idle: 20
       maximum-pool-size: 80
+      auto-commit: false
   jpa:
     show-sql: false
   cache:
@@ -30,10 +31,13 @@ springdoc:
     enabled: false
 
 sama:
-  api.cors:
-    allowed-origins: |
-      https://web.meetsama.com,
-      https://app.meetsama.com
+  api:
+    cors:
+      allowed-origins: |
+        https://web.meetsama.com,
+        https://app.meetsama.com
+    error:
+      include-message: false
   auth.jwt:
     access:
       signing-secret: "dummy-value-this-is-loaded-from-AWS-SM"

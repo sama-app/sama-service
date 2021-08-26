@@ -5,10 +5,15 @@ import com.sama.users.infrastructure.UserRepositoryImpl
 import java.util.UUID
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.springframework.boot.test.mock.mockito.MockBean
+import org.springframework.security.crypto.encrypt.TextEncryptor
 import org.springframework.test.context.ContextConfiguration
 
 @ContextConfiguration(classes = [UserRepositoryImpl::class])
 class UserRepositoryIT : BasePersistenceIT<UserRepository>() {
+
+    @MockBean
+    private lateinit var textEncryptor: TextEncryptor
 
     @Test
     fun `save user details`() {

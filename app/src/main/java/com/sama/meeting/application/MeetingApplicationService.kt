@@ -19,12 +19,15 @@ import com.sama.meeting.domain.MeetingIntentRepository
 import com.sama.meeting.domain.MeetingRecipient
 import com.sama.meeting.domain.MeetingRepository
 import com.sama.meeting.domain.MeetingSlot
+import com.sama.meeting.domain.MeetingSlotUnavailableException
+import com.sama.meeting.domain.MeetingStatus
 import com.sama.meeting.domain.ProposedMeeting
 import com.sama.slotsuggestion.application.SlotSuggestionRequest
 import com.sama.slotsuggestion.application.SlotSuggestionService
 import com.sama.users.application.InternalUserService
 import com.sama.users.domain.UserId
 import io.sentry.spring.tracing.SentryTransaction
+import java.lang.RuntimeException
 import java.time.Clock
 import java.time.ZonedDateTime
 import org.springframework.scheduling.annotation.Scheduled

@@ -66,10 +66,10 @@ class UserSettingsApplicationServiceTest : BaseApplicationTest() {
         val userId = initiator().id!!
         underTest.createUserSettings(userId)
 
-//        val newTimeZone = ZoneId.of("Europe/Vilnius")
-//        underTest.updateTimeZone(userId, UpdateTimeZoneCommand(newTimeZone))
-//
-//        assertThat(underTest.find(userId).timeZone).isEqualTo(newTimeZone)
+        val newTimeZone = ZoneId.of("Europe/Vilnius")
+        underTest.updateTimeZone(userId, UpdateTimeZoneCommand(newTimeZone))
+
+        assertThat(underTest.find(userId).timeZone).isEqualTo(newTimeZone)
 
         val newWorkingHours = listOf(DayWorkingHoursDTO(MONDAY, LocalTime.of(10, 0), LocalTime.of(12, 0)))
         underTest.updateWorkingHours(userId, UpdateWorkingHoursCommand(newWorkingHours))
