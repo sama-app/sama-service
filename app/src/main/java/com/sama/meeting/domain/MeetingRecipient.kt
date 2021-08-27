@@ -13,8 +13,8 @@ data class MeetingRecipient(val recipientId: UserId?, val email: String?) {
             return MeetingRecipient(user.id, user.email)
         }
 
-        fun fromUserId(userId: UserId): MeetingRecipient {
-            return MeetingRecipient(userId, null)
+        fun fromUser(userId: UserId, email: String): MeetingRecipient {
+            return MeetingRecipient(userId, email)
         }
 
         fun fromEmail(email: String): MeetingRecipient {

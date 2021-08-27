@@ -4,7 +4,6 @@ import com.sama.calendar.application.CalendarEventConsumer
 import com.sama.calendar.application.EventApplicationService
 import com.sama.common.ApplicationService
 import com.sama.common.NotFoundException
-import com.sama.common.afterCommit
 import com.sama.common.toMinutes
 import com.sama.comms.application.CommsEventConsumer
 import com.sama.meeting.domain.ConfirmedMeeting
@@ -19,15 +18,12 @@ import com.sama.meeting.domain.MeetingIntentRepository
 import com.sama.meeting.domain.MeetingRecipient
 import com.sama.meeting.domain.MeetingRepository
 import com.sama.meeting.domain.MeetingSlot
-import com.sama.meeting.domain.MeetingSlotUnavailableException
-import com.sama.meeting.domain.MeetingStatus
 import com.sama.meeting.domain.ProposedMeeting
 import com.sama.slotsuggestion.application.SlotSuggestionRequest
 import com.sama.slotsuggestion.application.SlotSuggestionService
 import com.sama.users.application.InternalUserService
 import com.sama.users.domain.UserId
 import io.sentry.spring.tracing.SentryTransaction
-import java.lang.RuntimeException
 import java.time.Clock
 import java.time.ZonedDateTime
 import org.springframework.scheduling.annotation.Scheduled
@@ -140,7 +136,8 @@ class MeetingApplicationService(
                 MeetingRecipient.fromEmail(command.recipientEmail)
             }
         } else {
-            MeetingRecipient.fromUserId(userId!!)
+            val user = userService.find(userId!!)
+            MeetingRecipient.fromUser(userId, user.email)
         }
 
         val confirmedMeeting = proposedMeeting
@@ -149,12 +146,10 @@ class MeetingApplicationService(
 
         meetingRepository.save(confirmedMeeting)
 
-        afterCommit {
-            // "manual" event publishing
-            val event = MeetingConfirmedEvent(confirmedMeeting)
-            calendarEventConsumer.onMeetingConfirmed(event)
-            commsEventConsumer.onMeetingConfirmed(event)
-        }
+        // "manual" event publishing
+        val event = MeetingConfirmedEvent(confirmedMeeting)
+        calendarEventConsumer.onMeetingConfirmed(event)
+        commsEventConsumer.onMeetingConfirmed(event)
         return true
     }
 
