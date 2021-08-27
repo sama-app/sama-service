@@ -3,16 +3,18 @@ package com.sama.meeting.infrastructure
 import com.sama.common.Factory
 import com.sama.common.findByIdOrThrow
 import com.sama.meeting.domain.ConfirmedMeeting
+import com.sama.meeting.domain.EmailRecipient
 import com.sama.meeting.domain.ExpiredMeeting
+import com.sama.meeting.domain.MeetingRecipient
 import com.sama.meeting.domain.Meeting
 import com.sama.meeting.domain.MeetingCode
 import com.sama.meeting.domain.MeetingId
-import com.sama.meeting.domain.MeetingRecipient
 import com.sama.meeting.domain.MeetingRepository
 import com.sama.meeting.domain.MeetingSlot
 import com.sama.meeting.domain.MeetingStatus
 import com.sama.meeting.domain.ProposedMeeting
 import com.sama.meeting.domain.RejectedMeeting
+import com.sama.meeting.domain.UserRecipient
 import com.sama.meeting.infrastructure.jpa.MeetingEntity
 import com.sama.meeting.infrastructure.jpa.MeetingIntentEntity
 import com.sama.meeting.infrastructure.jpa.MeetingIntentJpaRepository
@@ -126,6 +128,10 @@ fun String.toMeetingCode(): MeetingCode {
 }
 
 fun MeetingRecipientEntity.toDomainObject(): MeetingRecipient {
-    return MeetingRecipient(this.recipientId?.toUserId(), this.email)
+    if (recipientId != null) {
+        return UserRecipient.of(recipientId.toUserId(), email!!)
+    } else {
+        return EmailRecipient.of(email!!)
+    }
 }
 

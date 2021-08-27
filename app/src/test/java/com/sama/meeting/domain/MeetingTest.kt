@@ -3,11 +3,6 @@ package com.sama.meeting.domain
 import com.sama.common.assertDoesNotThrowOrNull
 import com.sama.common.assertThrows
 import com.sama.users.domain.UserId
-import org.junit.jupiter.api.Assertions.assertThrows
-import org.junit.jupiter.api.DynamicTest
-import org.junit.jupiter.api.DynamicTest.dynamicTest
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestFactory
 import java.time.Duration.ofHours
 import java.time.Duration.ofMinutes
 import java.time.LocalDate
@@ -16,6 +11,11 @@ import java.time.ZoneId.systemDefault
 import java.time.ZonedDateTime
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.DynamicTest
+import org.junit.jupiter.api.DynamicTest.dynamicTest
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestFactory
 
 class MeetingTest {
     private val validMeetingCode = MeetingCode("VGsUTGno")
@@ -169,7 +169,7 @@ class MeetingTest {
             meetingId, meetingIntentId, initiatorId, ofHours(1), listOf(slot),
             validMeetingCode, meetingTitle
         )
-        val recipient = MeetingRecipient(UserId(11L), "recipient@meetsama.com")
+        val recipient = UserRecipient.of(UserId(11L), "recipient@meetsama.com")
         val slotToConfirm = proposedSlotID1.copy()
 
         val actual = proposedMeeting.confirm(slotToConfirm, recipient)
@@ -189,7 +189,7 @@ class MeetingTest {
         val proposedMeeting = ProposedMeeting(
             meetingId, meetingIntentId, initiatorId, ofHours(1), listOf(slot), validMeetingCode, "meeting title"
         )
-        val recipient = MeetingRecipient(null, null) // todo
+        val recipient = EmailRecipient.of("test@meetsama.com")
 
         val slotToConfirm = proposedSlotID2.copy()
         val actual = proposedMeeting.confirm(slotToConfirm, recipient)

@@ -7,11 +7,11 @@ import com.sama.meeting.domain.ExpiredMeeting
 import com.sama.meeting.domain.MeetingCode
 import com.sama.meeting.domain.MeetingId
 import com.sama.meeting.domain.MeetingIntentId
-import com.sama.meeting.domain.MeetingRecipient
 import com.sama.meeting.domain.MeetingRepository
 import com.sama.meeting.domain.MeetingSlot
 import com.sama.meeting.domain.MeetingStatus
 import com.sama.meeting.domain.ProposedMeeting
+import com.sama.meeting.domain.UserRecipient
 import com.sama.meeting.infrastructure.jpa.MeetingIntentEntity
 import com.sama.meeting.infrastructure.jpa.MeetingIntentJpaRepository
 import com.sama.users.domain.UserId
@@ -110,7 +110,7 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
 
         val confirmedMeeting = ConfirmedMeeting(
             meetingId, initiatorId, Duration.ofMinutes(60),
-            MeetingRecipient(UserId(2), "test@meetsama.com"),
+            UserRecipient.of(UserId(2), "test@meetsama.com"),
             MeetingSlot(
                 ZonedDateTime.now(clock).plusHours(3),
                 ZonedDateTime.now(clock).plusHours(4)
