@@ -94,7 +94,7 @@ class MeetingApplicationServiceTest : BaseApplicationTest() {
             )
         ).thenReturn(FetchEventsDTO(emptyList(), emptyList()))
 
-        val meetingProposal = underTest.loadMeetingProposal(meetingInvitationDTO.meetingCode)
+        val meetingProposal = underTest.loadMeetingProposal(null, meetingInvitationDTO.meetingCode)
 
         // confirm meeting
         underTest.confirmMeeting(
@@ -193,7 +193,7 @@ class MeetingApplicationServiceTest : BaseApplicationTest() {
             proposedSlotStart.zone
         )).thenReturn(FetchEventsDTO(emptyList(), emptyList()))
 
-        val meetingProposal = underTest.loadMeetingProposal(meetingInvitationDTO.meetingCode)
+        val meetingProposal = underTest.loadMeetingProposal(null, meetingInvitationDTO.meetingCode)
         assertThat(meetingProposal.title).isEqualTo(meetingTitle) // verify new title is here
 
         // confirm meeting
@@ -267,7 +267,7 @@ class MeetingApplicationServiceTest : BaseApplicationTest() {
         ).thenReturn(
             FetchEventsDTO(emptyList(), listOf(EventDTO(proposedSlotStart, proposedSlotTwoEnd, false, "Title")))
         )
-        val meetingProposal = underTest.loadMeetingProposal(meetingInvitationDTO.meetingCode)
+        val meetingProposal = underTest.loadMeetingProposal(null, meetingInvitationDTO.meetingCode)
 
         // no proposed slots available
         assertThat(meetingProposal.proposedSlots).isEmpty()
@@ -279,7 +279,7 @@ class MeetingApplicationServiceTest : BaseApplicationTest() {
                 meetingInvitationDTO.meetingCode,
                 ConfirmMeetingCommand(
                     proposedSlot,
-                    "recipient@meetsama.com"
+                    recipient().email
                 )
             )
         }
@@ -335,10 +335,11 @@ class MeetingApplicationServiceTest : BaseApplicationTest() {
         )
             .thenReturn(FetchEventsDTO(emptyList(), emptyList()))
 
-        val meetingProposal = underTest.loadMeetingProposal(meetingInvitationDTO.meetingCode)
-
         // confirm meeting
         asRecipient {
+            val meetingProposal = underTest.loadMeetingProposal(recipient().id!!, meetingInvitationDTO.meetingCode)
+            assertThat(meetingProposal.isOwnMeeting).isFalse()
+
             underTest.confirmMeeting(
                 recipient().id!!,
                 meetingInvitationDTO.meetingCode,
@@ -353,10 +354,77 @@ class MeetingApplicationServiceTest : BaseApplicationTest() {
         verify(commsEventConsumer).onMeetingConfirmed(any())
     }
 
+
+    @Test
+    fun `setup sama-non-sama meeting with yourself`() {
+        // create meeting intent
+        val meetingIntentDTO = asInitiator {
+            val suggestedSlotStart = ZonedDateTime.now(clock).plusHours(1)
+            val suggestedSlotEnd = suggestedSlotStart.plusHours(2)
+            whenever(
+                slotSuggestionService.suggestSlots(
+                    it.id!!,
+                    SlotSuggestionRequest(ofMinutes(60), clock.zone, 3)
+                )
+            ).thenReturn(
+                SlotSuggestionResponse(listOf(SlotSuggestion(suggestedSlotStart, suggestedSlotEnd, 1.0)))
+            )
+
+            underTest.initiateMeeting(
+                it.id!!, InitiateMeetingCommand(
+                    60, clock.zone, 3
+                )
+            )
+        }
+
+        // propose meeting
+        val proposedSlotStart = ZonedDateTime.now(clock).plusHours(2)
+        val proposedSlotEnd = proposedSlotStart.plusHours(3)
+        val proposedSlot = MeetingSlotDTO(proposedSlotStart, proposedSlotEnd)
+        val meetingInvitationDTO = asInitiator {
+            underTest.proposeMeeting(
+                it.id!!,
+                ProposeMeetingCommand(
+                    meetingIntentDTO.meetingIntentCode,
+                    listOf(proposedSlot)
+                )
+            )
+        }
+
+        // load proposal from meeting code with initiator's calendar non-blocked
+        whenever(
+            eventApplicationService.fetchEvents(
+                initiator().id!!,
+                proposedSlotStart.toLocalDate(),
+                proposedSlotEnd.toLocalDate(),
+                proposedSlotStart.zone
+            )
+        )
+            .thenReturn(FetchEventsDTO(emptyList(), emptyList()))
+
+        // confirm meeting
+        asInitiator {
+            val meetingProposal = underTest.loadMeetingProposal(initiator().id!!, meetingInvitationDTO.meetingCode)
+            assertThat(meetingProposal.isOwnMeeting).isTrue()
+
+            underTest.confirmMeeting(
+                initiator().id!!,
+                meetingInvitationDTO.meetingCode,
+                ConfirmMeetingCommand(
+                    meetingProposal.proposedSlots[0],
+                    recipient().email
+                )
+            )
+        }
+
+        verify(calendarEventConsumer).onMeetingConfirmed(any())
+        verify(commsEventConsumer).onMeetingConfirmed(any())
+    }
+
     @Test
     fun `load meeting proposal from non-existent code`() {
         assertThrows<NotFoundException> {
-            underTest.loadMeetingProposal(MeetingCode("VGsUTGno"))
+            underTest.loadMeetingProposal(null, MeetingCode("VGsUTGno"))
         }
     }
 
@@ -405,7 +473,7 @@ class MeetingApplicationServiceTest : BaseApplicationTest() {
         underTest.expireMeetings()
 
         assertThrows<NotFoundException> {
-            underTest.loadMeetingProposal(meetingInvitationDTO.meetingCode)
+            underTest.loadMeetingProposal(null, meetingInvitationDTO.meetingCode)
         }
     }
 }

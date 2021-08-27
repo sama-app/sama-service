@@ -101,7 +101,7 @@ class MeetingApplicationService(
     }
 
     @Transactional(readOnly = true)
-    fun loadMeetingProposal(meetingCode: MeetingCode): ProposedMeetingDTO {
+    fun loadMeetingProposal(userId: UserId?, meetingCode: MeetingCode): ProposedMeetingDTO {
         val proposedMeeting = findProposedMeetingOrThrow(meetingCode)
 
         val (start, end) = proposedMeeting.proposedSlotsRange()
@@ -111,7 +111,7 @@ class MeetingApplicationService(
         )
         val availableSlots = proposedMeeting.availableSlots(blockingCalendarEvents.events, clock)
 
-        return meetingView.render(proposedMeeting, availableSlots)
+        return meetingView.render(userId, proposedMeeting, availableSlots)
     }
 
     @Transactional
