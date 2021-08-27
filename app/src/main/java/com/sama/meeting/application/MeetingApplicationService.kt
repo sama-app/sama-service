@@ -7,6 +7,7 @@ import com.sama.common.NotFoundException
 import com.sama.common.toMinutes
 import com.sama.comms.application.CommsEventConsumer
 import com.sama.meeting.domain.ConfirmedMeeting
+import com.sama.meeting.domain.EmailRecipient
 import com.sama.meeting.domain.ExpiredMeeting
 import com.sama.meeting.domain.InvalidMeetingStatusException
 import com.sama.meeting.domain.MeetingAlreadyConfirmedException
@@ -15,10 +16,10 @@ import com.sama.meeting.domain.MeetingCodeGenerator
 import com.sama.meeting.domain.MeetingConfirmedEvent
 import com.sama.meeting.domain.MeetingIntent
 import com.sama.meeting.domain.MeetingIntentRepository
-import com.sama.meeting.domain.MeetingRecipient
 import com.sama.meeting.domain.MeetingRepository
 import com.sama.meeting.domain.MeetingSlot
 import com.sama.meeting.domain.ProposedMeeting
+import com.sama.meeting.domain.UserRecipient
 import com.sama.slotsuggestion.application.SlotSuggestionRequest
 import com.sama.slotsuggestion.application.SlotSuggestionService
 import com.sama.users.application.InternalUserService
@@ -131,13 +132,13 @@ class MeetingApplicationService(
         val meetingRecipient = if (command.recipientEmail != null) {
             try {
                 userService.findInternalByEmail(command.recipientEmail)
-                    .let { MeetingRecipient.fromUser(it) }
+                    .let { UserRecipient.ofUser(it) }
             } catch (e: NotFoundException) {
-                MeetingRecipient.fromEmail(command.recipientEmail)
+                EmailRecipient.of(command.recipientEmail)
             }
         } else {
             val user = userService.find(userId!!)
-            MeetingRecipient.fromUser(userId, user.email)
+            UserRecipient.of(userId, user.email)
         }
 
         val confirmedMeeting = proposedMeeting

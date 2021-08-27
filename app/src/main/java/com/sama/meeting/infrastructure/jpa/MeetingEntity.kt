@@ -2,10 +2,12 @@ package com.sama.meeting.infrastructure.jpa
 
 import com.sama.common.Factory
 import com.sama.meeting.domain.ConfirmedMeeting
+import com.sama.meeting.domain.EmailRecipient
 import com.sama.meeting.domain.MeetingId
 import com.sama.meeting.domain.MeetingSlot
 import com.sama.meeting.domain.MeetingStatus
 import com.sama.meeting.domain.ProposedMeeting
+import com.sama.meeting.domain.UserRecipient
 import java.time.Instant
 import java.time.ZonedDateTime
 import javax.persistence.AttributeOverride
@@ -58,10 +60,10 @@ class MeetingEntity {
 
     fun applyChanges(confirmedMeeting: ConfirmedMeeting): MeetingEntity {
         this.status = confirmedMeeting.status
-        this.meetingRecipient = MeetingRecipientEntity(
-            confirmedMeeting.meetingRecipient.recipientId?.id,
-            confirmedMeeting.meetingRecipient.email
-        )
+        this.meetingRecipient = when (val recipient = confirmedMeeting.meetingRecipient) {
+            is EmailRecipient -> MeetingRecipientEntity(null, recipient.email)
+            is UserRecipient -> MeetingRecipientEntity(recipient.recipientId.id, recipient.email)
+        }
         this.confirmedSlot = confirmedMeeting.slot
         val now = Instant.now()
         this.confirmedAt = now
