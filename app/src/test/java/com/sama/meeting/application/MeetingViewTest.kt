@@ -17,7 +17,6 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
-import java.util.UUID
 import kotlin.test.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -70,6 +69,7 @@ class MeetingViewTest {
         val _10am = _9am.plusHours(1)
         val _11am = _9am.plusHours(2)
 
+        val currentUserId = UserId(10)
         val initiatorId = UserId(1)
         val initiator = UserPublicDTO(UserPublicId.random(), "test", "test@meetsama.com")
         whenever(userService.find(initiatorId))
@@ -83,8 +83,9 @@ class MeetingViewTest {
         )
         val availableSlots = listOf(MeetingSlot(_10am, _11am))
         val actual = underTest.render(
+            currentUserId,
             ProposedMeeting(
-                MeetingId(21),  MeetingIntentId(11), initiatorId,
+                MeetingId(21), MeetingIntentId(11), initiatorId,
                 Duration.ofMinutes(15),
                 proposedSlots,
                 meetingCode,
@@ -102,6 +103,48 @@ class MeetingViewTest {
                 initiator.fullName,
                 initiator.email
             ),
+            isOwnMeeting = false,
+            title = meetingTitle,
+            appLinks = MeetingAppLinksDTO(
+                iosAppDownloadLink = "https://meetsamatest.page.link/?link=$expectedUrl&param1=value1&param2=value2"
+            )
+        )
+
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun `render own meeting`() {
+        val currentUserId = UserId(1)
+        val initiatorId = UserId(1)
+        val initiator = UserPublicDTO(UserPublicId.random(), "test", "test@meetsama.com")
+        whenever(userService.find(initiatorId))
+            .thenReturn(initiator)
+        val meetingTitle = "Meeting with test"
+
+        // act
+        val actual = underTest.render(
+            currentUserId,
+            ProposedMeeting(
+                MeetingId(21), MeetingIntentId(11), initiatorId,
+                Duration.ofMinutes(15),
+                emptyList(),
+                meetingCode,
+                meetingTitle
+            ),
+            AvailableSlots(emptyList())
+        )
+
+        // verify
+        val expectedUrl = "$scheme://$host/${meetingCode.code}"
+        val expected = ProposedMeetingDTO(
+            proposedSlots = emptyList(),
+            initiator = UserPublicDTO(
+                initiator.userId,
+                initiator.fullName,
+                initiator.email
+            ),
+            isOwnMeeting = true,
             title = meetingTitle,
             appLinks = MeetingAppLinksDTO(
                 iosAppDownloadLink = "https://meetsamatest.page.link/?link=$expectedUrl&param1=value1&param2=value2"

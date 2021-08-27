@@ -6,6 +6,7 @@ import com.sama.meeting.configuration.toUrl
 import com.sama.meeting.domain.AvailableSlots
 import com.sama.meeting.domain.ProposedMeeting
 import com.sama.users.application.UserService
+import com.sama.users.domain.UserId
 import org.springframework.stereotype.Component
 import org.springframework.web.util.UriComponentsBuilder
 
@@ -13,19 +14,25 @@ import org.springframework.web.util.UriComponentsBuilder
 class MeetingView(
     private val userService: UserService,
     private val urlConfiguration: MeetingUrlConfiguration,
-    private val appLinkConfiguration: MeetingAppLinkConfiguration
+    private val appLinkConfiguration: MeetingAppLinkConfiguration,
 ) {
 
-    fun render(proposedMeeting: ProposedMeeting, availableSlots: AvailableSlots): ProposedMeetingDTO {
+    fun render(
+        currentUserId: UserId?,
+        proposedMeeting: ProposedMeeting,
+        availableSlots: AvailableSlots,
+    ): ProposedMeetingDTO {
         val initiator = userService.find(proposedMeeting.initiatorId)
 
         val meetingUrl = proposedMeeting.meetingCode.toUrl(urlConfiguration)
+        val isOwnMeeting = currentUserId?.let { it == proposedMeeting.initiatorId }
         val appLinks = createAppLinks(meetingUrl)
 
         val slots = availableSlots.proposedSlots.map { it.toDTO() }
         return ProposedMeetingDTO(
             slots,
             initiator,
+            isOwnMeeting,
             proposedMeeting.meetingTitle,
             appLinks
         )

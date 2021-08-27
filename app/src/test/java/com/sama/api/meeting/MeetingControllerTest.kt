@@ -224,18 +224,20 @@ class MeetingControllerTest(@Autowired val mockMvc: MockMvc) {
 
     @Test
     fun `load meeting proposal`() {
-        val userId = UserPublicId.random()
+        val userPublicId = UserPublicId.random()
         val meetingCode = MeetingCode("code")
+        val isOwnMeeting = true
         val meetingTitle = "Meeting title"
         val proposedSlot = MeetingSlotDTO(
             ZonedDateTime.parse("2021-01-01T12:00:00Z"),
             ZonedDateTime.parse("2021-01-01T13:00:00Z"),
         )
-        whenever(meetingApplicationService.loadMeetingProposal(meetingCode))
+        whenever(meetingApplicationService.loadMeetingProposal(userId, meetingCode))
             .thenReturn(
                 ProposedMeetingDTO(
                     listOf(proposedSlot),
-                    UserPublicDTO(userId, "test", "test@meetsama.com"),
+                    UserPublicDTO(userPublicId, "test", "test@meetsama.com"),
+                    isOwnMeeting,
                     meetingTitle,
                     MeetingAppLinksDTO("http://download.me")
                 )
@@ -248,10 +250,11 @@ class MeetingControllerTest(@Autowired val mockMvc: MockMvc) {
                     "endDateTime": "2021-01-01T13:00:00Z"
                  }],
                 "initiator": {
-                    "userId": ${userId.id},
+                    "userId": "${userPublicId.id}",
                     "fullName": "test",
                     "email": "test@meetsama.com"
                 },
+                "isOwnMeeting": $isOwnMeeting,
                 "title": "$meetingTitle",
                 "appLinks": {
                     "iosAppDownloadLink": "http://download.me"
@@ -295,7 +298,7 @@ class MeetingControllerTest(@Autowired val mockMvc: MockMvc) {
     @Test
     fun `meeting already confirmed`() {
         val meetingCode = MeetingCode("VGsUTGno")
-        whenever(meetingApplicationService.loadMeetingProposal(meetingCode))
+        whenever(meetingApplicationService.loadMeetingProposal(null, meetingCode))
             .thenThrow(MeetingAlreadyConfirmedException(meetingCode))
 
         val expectedResponse = """
@@ -311,7 +314,7 @@ class MeetingControllerTest(@Autowired val mockMvc: MockMvc) {
 
     @Test
     fun `meeting status invalid`() {
-        whenever(meetingApplicationService.loadMeetingProposal(MeetingCode("VGsUTGno")))
+        whenever(meetingApplicationService.loadMeetingProposal(null, MeetingCode("VGsUTGno")))
             .thenThrow(InvalidMeetingStatusException(MeetingCode("VGsUTGno"), MeetingStatus.REJECTED))
 
         val expectedResponse = """

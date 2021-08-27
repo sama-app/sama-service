@@ -53,8 +53,8 @@ class MeetingController(
         "/api/meeting/by-code/{meetingCode}",
         produces = [APPLICATION_JSON_VALUE]
     )
-    fun loadMeetingProposal(@PathVariable meetingCode: MeetingCode) =
-        meetingApplicationService.loadMeetingProposal(meetingCode)
+    fun loadMeetingProposal(@AuthUserId userId: UserId?, @PathVariable meetingCode: MeetingCode) =
+        meetingApplicationService.loadMeetingProposal(userId, meetingCode)
 
     @Operation(
         summary = "Update meeting title to be used on the confirmed calendar event",
