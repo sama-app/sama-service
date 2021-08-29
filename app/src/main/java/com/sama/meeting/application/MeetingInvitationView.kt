@@ -26,9 +26,11 @@ class MeetingInvitationView(
 
     fun render(proposedMeeting: ProposedMeeting, zoneId: ZoneId): MeetingInvitationDTO {
         val meetingUrl = proposedMeeting.meetingCode.toUrl(meetingUrlConfiguration)
+        val sortedProposedSots = proposedMeeting.proposedSlots.sortedBy { it.startDateTime }
+
         val shareableMessage = meetingProposalMessageTemplate.execute(
             MeetingProposalMessageModel(
-                proposedMeeting.proposedSlots.map {
+                sortedProposedSots.map {
                     val start = startDateTimeFormatter.format(it.startDateTime.withZoneSameInstant(zoneId)).removeYear()
                     val end = endTimeFormatter.format(it.endDateTime.withZoneSameInstant(zoneId))
                     val timeZone = zoneId.toGmtString(it.startDateTime.toInstant())
@@ -42,7 +44,7 @@ class MeetingInvitationView(
 
         return MeetingInvitationDTO(
             MeetingDTO(
-                proposedMeeting.proposedSlots.map { it.toDTO() },
+                sortedProposedSots.map { it.toDTO() },
                 initiator,
                 proposedMeeting.meetingTitle
             ),
