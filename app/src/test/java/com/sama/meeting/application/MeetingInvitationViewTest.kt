@@ -74,8 +74,8 @@ class MeetingInvitationViewTest {
                 MeetingId(21), MeetingIntentId(11L), initiatorId,
                 Duration.ofMinutes(15),
                 listOf(
-                    MeetingSlot(_9am, _9am.plusMinutes(15)),
-                    MeetingSlot(_10am, _11am)
+                    MeetingSlot(_10am, _11am),
+                    MeetingSlot(_9am, _9am.plusMinutes(15))
                 ),
                 meetingCode,
                 meetingTitle
