@@ -1,0 +1,9 @@
+template: |
+  ## What’s Changed
+
+  $CHANGES
+
+name-template: Alpha $NEXT_MAJOR_VERSION
+tag-template: alpha-$NEXT_MAJOR_VERSION
+version-template: $MAJOR
+commitish: master
