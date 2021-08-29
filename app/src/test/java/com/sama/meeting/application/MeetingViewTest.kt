@@ -81,7 +81,7 @@ class MeetingViewTest {
             MeetingSlot(_9am, _9am.plusMinutes(15)),
             MeetingSlot(_10am, _11am)
         )
-        val availableSlots = listOf(MeetingSlot(_10am, _11am))
+        val slots = listOf(MeetingSlot(_10am, _11am))
         val actual = underTest.render(
             currentUserId,
             ProposedMeeting(
@@ -91,7 +91,7 @@ class MeetingViewTest {
                 meetingCode,
                 meetingTitle
             ),
-            AvailableSlots(availableSlots)
+            slots
         )
 
         // verify
@@ -132,7 +132,7 @@ class MeetingViewTest {
                 meetingCode,
                 meetingTitle
             ),
-            AvailableSlots(emptyList())
+            emptyList()
         )
 
         // verify
