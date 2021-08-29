@@ -104,14 +104,15 @@ class MeetingApplicationService(
     fun loadMeetingProposal(userId: UserId?, meetingCode: MeetingCode): ProposedMeetingDTO {
         val proposedMeeting = findProposedMeetingOrThrow(meetingCode)
 
-        val (start, end) = proposedMeeting.proposedSlotsRange()
-        val blockingCalendarEvents = eventApplicationService.fetchEvents(
-            proposedMeeting.initiatorId,
-            start.toLocalDate(), end.toLocalDate(), start.zone
-        )
-        val availableSlots = proposedMeeting.availableSlots(blockingCalendarEvents.events, clock)
+        // TODO: should we exclude blocked slots?
+        // val (start, end) = proposedMeeting.proposedSlotsRange()
+        // val blockingCalendarEvents = eventApplicationService.fetchEvents(
+        //     proposedMeeting.initiatorId,
+        //     start.toLocalDate(), end.toLocalDate(), start.zone
+        // )
+        // val availableSlots = proposedMeeting.availableSlots(emptyList(), clock)
 
-        return meetingView.render(userId, proposedMeeting, availableSlots)
+        return meetingView.render(userId, proposedMeeting, proposedMeeting.expandedSlots())
     }
 
     @Transactional

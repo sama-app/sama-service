@@ -27,7 +27,7 @@ data class ProposedMeeting(
     val duration: Duration,
     val proposedSlots: List<MeetingSlot>,
     val meetingCode: MeetingCode,
-    val meetingTitle: String
+    val meetingTitle: String,
 ) : Meeting {
     override val status = MeetingStatus.PROPOSED
     val slotInterval = Duration.ofMinutes(15)
@@ -67,14 +67,13 @@ data class ProposedMeeting(
     }
 }
 
-@DomainEntity
-data class AvailableSlots(val proposedSlots: List<MeetingSlot>) {
+data class AvailableSlots(val slots: List<MeetingSlot>) {
     companion object {
         fun of(proposedMeeting: ProposedMeeting, exclusions: Collection<EventDTO>, clock: Clock): AvailableSlots {
             val now = ZonedDateTime.now(clock)
             return proposedMeeting.expandedSlots()
                 .filter { slot ->
-                    slot.startDateTime.isAfter(now) && !exclusions.any { slot.overlaps(it) }
+                    slot.endDateTime.isAfter(now) && !exclusions.any { slot.overlaps(it) }
                 }
                 .let { AvailableSlots(it) }
         }
@@ -88,7 +87,7 @@ data class ConfirmedMeeting(
     val duration: Duration,
     val meetingRecipient: MeetingRecipient,
     val slot: MeetingSlot,
-    val meetingTitle: String
+    val meetingTitle: String,
 ) : Meeting {
     override val status = MeetingStatus.CONFIRMED
 }

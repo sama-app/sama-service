@@ -3,7 +3,7 @@ package com.sama.meeting.application
 import com.sama.meeting.configuration.MeetingAppLinkConfiguration
 import com.sama.meeting.configuration.MeetingUrlConfiguration
 import com.sama.meeting.configuration.toUrl
-import com.sama.meeting.domain.AvailableSlots
+import com.sama.meeting.domain.MeetingSlot
 import com.sama.meeting.domain.ProposedMeeting
 import com.sama.users.application.UserService
 import com.sama.users.domain.UserId
@@ -20,7 +20,7 @@ class MeetingView(
     fun render(
         currentUserId: UserId?,
         proposedMeeting: ProposedMeeting,
-        availableSlots: AvailableSlots,
+        slots: List<MeetingSlot>,
     ): ProposedMeetingDTO {
         val initiator = userService.find(proposedMeeting.initiatorId)
 
@@ -28,9 +28,8 @@ class MeetingView(
         val isOwnMeeting = currentUserId?.let { it == proposedMeeting.initiatorId }
         val appLinks = createAppLinks(meetingUrl)
 
-        val slots = availableSlots.proposedSlots.map { it.toDTO() }
         return ProposedMeetingDTO(
-            slots,
+            slots.map { it.toDTO() },
             initiator,
             isOwnMeeting,
             proposedMeeting.meetingTitle,
