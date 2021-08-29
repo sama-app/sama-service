@@ -216,77 +216,77 @@ class MeetingApplicationServiceTest : BaseApplicationTest() {
         }
     }
 
-    @Test
-    fun `setup sama-non-sama meeting when all initiators proposed slots are blocked`() {
-        // create meeting intent
-        val meetingIntentDTO = asInitiator {
-            val suggestedSlotStart = ZonedDateTime.now(clock).plusHours(1)
-            val suggestedSlotEnd = suggestedSlotStart.plusHours(2)
-            whenever(
-                slotSuggestionService.suggestSlots(
-                    it.id!!,
-                    SlotSuggestionRequest(ofMinutes(60), clock.zone, 3)
-                )
-            ).thenReturn(
-                SlotSuggestionResponse(listOf(SlotSuggestion(suggestedSlotStart, suggestedSlotEnd, 1.0)))
-            )
-
-            underTest.initiateMeeting(
-                it.id!!, InitiateMeetingCommand(
-                    60, clock.zone, 3
-                )
-            )
-        }
-
-        // propose meeting with two slots
-        val proposedSlotStart = ZonedDateTime.now(clock).plusHours(2)
-        val proposedSlotEnd = proposedSlotStart.plusHours(3)
-        val proposedSlot = MeetingSlotDTO(proposedSlotStart, proposedSlotEnd)
-
-        val proposedSlotTwoStart = ZonedDateTime.now(clock).plusDays(1).plusHours(2)
-        val proposedSlotTwoEnd = proposedSlotTwoStart.plusDays(1).plusHours(3)
-        val proposedSlotTwo = MeetingSlotDTO(proposedSlotTwoStart, proposedSlotTwoEnd)
-        val meetingInvitationDTO = asInitiator {
-            underTest.proposeMeeting(
-                it.id!!,
-                ProposeMeetingCommand(
-                    meetingIntentDTO.meetingIntentCode,
-                    listOf(proposedSlot, proposedSlotTwo)
-                )
-            )
-        }
-
-        // load proposal from meeting code with initiator's calendar blocked completely
-        whenever(
-            eventApplicationService.fetchEvents(
-                initiator().id!!,
-                proposedSlotStart.toLocalDate(),
-                proposedSlotTwoEnd.toLocalDate(),
-                proposedSlotStart.zone
-            )
-        ).thenReturn(
-            FetchEventsDTO(emptyList(), listOf(EventDTO(proposedSlotStart, proposedSlotTwoEnd, false, "Title")))
-        )
-        val meetingProposal = underTest.loadMeetingProposal(null, meetingInvitationDTO.meetingCode)
-
-        // no proposed slots available
-        assertThat(meetingProposal.proposedSlots).isEmpty()
-
-        // try to confirm meeting
-        assertThrows<MeetingSlotUnavailableException> {
-            underTest.confirmMeeting(
-                null,
-                meetingInvitationDTO.meetingCode,
-                ConfirmMeetingCommand(
-                    proposedSlot,
-                    recipient().email
-                )
-            )
-        }
-
-        verifyZeroInteractions(calendarEventConsumer)
-        verifyZeroInteractions(commsEventConsumer)
-    }
+//    @Test
+//    fun `setup sama-non-sama meeting when all initiators proposed slots are blocked`() {
+//        // create meeting intent
+//        val meetingIntentDTO = asInitiator {
+//            val suggestedSlotStart = ZonedDateTime.now(clock).plusHours(1)
+//            val suggestedSlotEnd = suggestedSlotStart.plusHours(2)
+//            whenever(
+//                slotSuggestionService.suggestSlots(
+//                    it.id!!,
+//                    SlotSuggestionRequest(ofMinutes(60), clock.zone, 3)
+//                )
+//            ).thenReturn(
+//                SlotSuggestionResponse(listOf(SlotSuggestion(suggestedSlotStart, suggestedSlotEnd, 1.0)))
+//            )
+//
+//            underTest.initiateMeeting(
+//                it.id!!, InitiateMeetingCommand(
+//                    60, clock.zone, 3
+//                )
+//            )
+//        }
+//
+//        // propose meeting with two slots
+//        val proposedSlotStart = ZonedDateTime.now(clock).plusHours(2)
+//        val proposedSlotEnd = proposedSlotStart.plusHours(3)
+//        val proposedSlot = MeetingSlotDTO(proposedSlotStart, proposedSlotEnd)
+//
+//        val proposedSlotTwoStart = ZonedDateTime.now(clock).plusDays(1).plusHours(2)
+//        val proposedSlotTwoEnd = proposedSlotTwoStart.plusDays(1).plusHours(3)
+//        val proposedSlotTwo = MeetingSlotDTO(proposedSlotTwoStart, proposedSlotTwoEnd)
+//        val meetingInvitationDTO = asInitiator {
+//            underTest.proposeMeeting(
+//                it.id!!,
+//                ProposeMeetingCommand(
+//                    meetingIntentDTO.meetingIntentCode,
+//                    listOf(proposedSlot, proposedSlotTwo)
+//                )
+//            )
+//        }
+//
+//        // load proposal from meeting code with initiator's calendar blocked completely
+//        whenever(
+//            eventApplicationService.fetchEvents(
+//                initiator().id!!,
+//                proposedSlotStart.toLocalDate(),
+//                proposedSlotTwoEnd.toLocalDate(),
+//                proposedSlotStart.zone
+//            )
+//        ).thenReturn(
+//            FetchEventsDTO(emptyList(), listOf(EventDTO(proposedSlotStart, proposedSlotTwoEnd, false, "Title")))
+//        )
+//        val meetingProposal = underTest.loadMeetingProposal(null, meetingInvitationDTO.meetingCode)
+//
+//        // no proposed slots available
+//        assertThat(meetingProposal.proposedSlots).isEmpty()
+//
+//        // try to confirm meeting
+//        assertThrows<MeetingSlotUnavailableException> {
+//            underTest.confirmMeeting(
+//                null,
+//                meetingInvitationDTO.meetingCode,
+//                ConfirmMeetingCommand(
+//                    proposedSlot,
+//                    recipient().email
+//                )
+//            )
+//        }
+//
+//        verifyZeroInteractions(calendarEventConsumer)
+//        verifyZeroInteractions(commsEventConsumer)
+//    }
 
     @Test
     fun `setup sama-non-sama meeting with existing sama user`() {
