@@ -114,7 +114,7 @@ class SyncGoogleCalendarService(
             val calendarService = googleServiceFactory.calendarService(userId)
             val inserted = calendarService.insert(calendarId, googleCalendarEvent)
 
-            syncUserCalendar(userId, calendarId, forceSync = true)
+            syncUserCalendar(userId, calendarId)
 
             inserted.toDomain(userId, calendarId, timeZone)
         } catch (e: Exception) {
@@ -135,24 +135,25 @@ class SyncGoogleCalendarService(
     fun syncUserCalendars() {
         val userCalendarsToSync = calendarSyncRepository.findSyncable(Instant.now())
         userCalendarsToSync.forEach {
-            syncUserCalendar(it.first, it.second, forceSync = false)
+            syncUserCalendar(it.first, it.second)
         }
     }
 
     @Transactional
-    private fun syncUserCalendar(userId: UserId, calendarId: GoogleCalendarId, forceSync: Boolean = false) {
+    private fun syncUserCalendar(userId: UserId, calendarId: GoogleCalendarId, forceFullSync: Boolean = false) {
         val calendarSync = calendarSyncRepository.findAndLock(userId, calendarId)
             ?: CalendarSync.new(userId, calendarId)
 
         logger.info("Syncing User#${userId.id} Calendar#${calendarId}...")
         val calendarService = googleServiceFactory.calendarService(userId)
         try {
-            val updatedSync = if (forceSync || calendarSync.needsFullSync(clock)) {
+            val updatedSync = if (forceFullSync || calendarSync.needsFullSync(clock)) {
                 val (startDate, endDate) = calendarSync.syncRange(clock)
                 val (events, timeZone, syncToken) = calendarService
                     .findAllEvents(calendarId, startDate, endDate)
 
                 val calendarEvents = events.toDomain(userId, calendarId, timeZone)
+                calendarEventRepository.deleteBy(userId, calendarId)
                 calendarEventRepository.saveAll(calendarEvents)
 
                 calendarSync.completeFull(syncToken!!, startDate, endDate)
