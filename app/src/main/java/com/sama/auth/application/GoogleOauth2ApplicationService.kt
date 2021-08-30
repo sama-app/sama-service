@@ -1,18 +1,18 @@
 package com.sama.auth.application
 
+import com.google.api.client.auth.oauth2.StoredCredential
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier
 import com.sama.common.ApplicationService
 import com.sama.integration.google.GoogleInsufficientPermissionsException
+import com.sama.integration.google.auth.GoogleCredentialDataStoreFactory
 import com.sama.integration.google.calendar.application.GoogleCalendarService
 import com.sama.integration.google.user.GoogleUserRepository
 import com.sama.users.application.GoogleOauth2Redirect
-import com.sama.users.application.RefreshCredentialsCommand
 import com.sama.users.application.RegisterUserCommand
 import com.sama.users.application.UpdateUserPublicDetailsCommand
 import com.sama.users.application.UserApplicationService
 import com.sama.users.application.UserSettingsApplicationService
-import com.sama.users.domain.GoogleCredential
 import com.sama.users.domain.UserAlreadyExistsException
 import org.apache.commons.logging.LogFactory
 import org.springframework.beans.factory.annotation.Value
@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service
 class GoogleOauth2ApplicationService(
     private val userApplicationService: UserApplicationService,
     private val userSettingsApplicationService: UserSettingsApplicationService,
+    private val googleCredentialStoreFactory: GoogleCredentialDataStoreFactory,
     private val googleAuthorizationCodeFlow: GoogleAuthorizationCodeFlow,
     private val googleIdTokenVerifier: GoogleIdTokenVerifier,
     private val googleUserRepository: GoogleUserRepository,
@@ -84,7 +85,7 @@ class GoogleOauth2ApplicationService(
             }
             val email = parsedIdToken.payload.email
             VerifiedGoogleOauth2Token(email,
-                GoogleCredential.plainText(it.accessToken, it.refreshToken, it.expiresInSeconds))
+                GoogleOauth2Credential(it.accessToken, it.refreshToken, it.expiresInSeconds))
         }.getOrThrow()
 
         // Step #2: Fetch extended user details
@@ -94,8 +95,15 @@ class GoogleOauth2ApplicationService(
         // settings or refresh credentials
         val userId = kotlin.runCatching {
             val userId = userApplicationService.registerUser(
-                RegisterUserCommand(verifiedToken.email, userDetails.fullName, verifiedToken.credential)
+                RegisterUserCommand(verifiedToken.email, userDetails.fullName)
             )
+            val credentialStore = googleCredentialStoreFactory.getDataStore<StoredCredential>(userId.id.toString())
+            credentialStore.set(userId.id.toString(), StoredCredential().apply {
+                accessToken = verifiedToken.credential.accessToken
+                refreshToken = verifiedToken.credential.refreshToken
+                expirationTimeMilliseconds = verifiedToken.credential.expirationTimeMs
+            })
+
             userSettingsApplicationService.createUserSettings(userId)
             googleCalendarService.enableCalendarSync(userId)
             userId
@@ -103,16 +111,16 @@ class GoogleOauth2ApplicationService(
             if (it !is UserAlreadyExistsException) {
                 throw it
             }
-            val userId = userApplicationService.refreshCredentials(
-                RefreshCredentialsCommand(
-                    verifiedToken.email,
-                    verifiedToken.credential
-                )
-            )
+            val userId = userApplicationService.findInternalByEmail(verifiedToken.email).id
 
-            userApplicationService.updatePublicDetails(
-                userId, UpdateUserPublicDetailsCommand(userDetails.fullName)
-            )
+            val credentialStore = googleCredentialStoreFactory.getDataStore<StoredCredential>(userId.id.toString())
+            credentialStore.set(userId.id.toString(), StoredCredential().apply {
+                accessToken = verifiedToken.credential.accessToken
+                refreshToken = verifiedToken.credential.refreshToken
+                expirationTimeMilliseconds = verifiedToken.credential.expirationTimeMs
+            })
+
+            userApplicationService.updatePublicDetails(userId, UpdateUserPublicDetailsCommand(userDetails.fullName))
             googleCalendarService.enableCalendarSync(userId)
 
             userId

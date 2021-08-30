@@ -1,11 +1,10 @@
 package com.sama.users.infrastructure.jpa
 
-import com.sama.common.ValueObject
 import java.time.Instant
-import java.util.*
-import javax.persistence.*
+import java.util.UUID
+import javax.persistence.Column
+import javax.persistence.Embeddable
 
-@ValueObject
 @Embeddable
 data class FirebaseCredential(
 
@@ -16,5 +15,5 @@ data class FirebaseCredential(
     val registrationToken: String,
 
     @Column(name = "updated_at", table = "user_firebase_credential")
-    val updatedAt: Instant
+    val updatedAt: Instant,
 )

@@ -5,6 +5,7 @@ import com.google.api.client.util.store.DataStoreFactory
 import com.sama.users.infrastructure.jpa.UserJpaRepository
 import java.io.Serializable
 import org.springframework.security.crypto.encrypt.TextEncryptor
+import org.springframework.stereotype.Component
 
 class GoogleCredentialDataStoreFactory(
     private val userRepository: UserJpaRepository,
