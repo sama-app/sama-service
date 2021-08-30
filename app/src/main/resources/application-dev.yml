@@ -43,6 +43,7 @@ integration:
 
   firebase:
     credentials: "dummy-value-this-is-loaded-from-AWS-SM"
+    api-key: "dummy-value-this-is-loaded-from-AWS-SM"
 
 sentry:
   environment: dev

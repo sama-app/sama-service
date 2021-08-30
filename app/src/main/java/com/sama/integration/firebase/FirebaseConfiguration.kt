@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
+import org.springframework.web.client.RestTemplate
 
 @Configuration
 class FirebaseConfiguration {
@@ -26,4 +27,13 @@ class FirebaseConfiguration {
 
         return FirebaseApp.initializeApp(options)
     }
+
+    @Bean
+    fun firebaseRestTemplate() = RestTemplate()
+
+    @Bean
+    fun firebaseDynamicLinkService(
+        @Value("\${integration.firebase.api-key}") apiKey: String,
+        dynamicLinkConfiguration: FirebaseDynamicLinkConfiguration,
+    ) = FirebaseDynamicLinkService(firebaseRestTemplate(), dynamicLinkConfiguration, apiKey)
 }

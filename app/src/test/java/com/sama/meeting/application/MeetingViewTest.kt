@@ -1,8 +1,7 @@
 package com.sama.meeting.application
 
-import com.sama.meeting.configuration.MeetingAppLinkConfiguration
+import com.sama.integration.firebase.DynamicLinkService
 import com.sama.meeting.configuration.MeetingUrlConfiguration
-import com.sama.meeting.domain.AvailableSlots
 import com.sama.meeting.domain.MeetingCode
 import com.sama.meeting.domain.MeetingId
 import com.sama.meeting.domain.MeetingIntentId
@@ -18,47 +17,38 @@ import java.time.LocalTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import kotlin.test.assertEquals
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import org.mockito.ArgumentMatchers.anyString
+import org.mockito.Mock
+import org.mockito.junit.jupiter.MockitoExtension
+import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.boot.test.context.TestConfiguration
-import org.springframework.boot.test.mock.mockito.MockBean
-import org.springframework.context.annotation.Bean
-import org.springframework.test.context.junit.jupiter.SpringExtension
 
 private const val scheme = "https"
 private const val host = "sama.com"
 private val meetingCode = MeetingCode("VGsUTGno")
 
-@TestConfiguration
-class MeetingViewTestConfiguration {
-    @Bean
-    fun meetingUrlConfiguration(): MeetingUrlConfiguration =
-        MeetingUrlConfiguration(10, scheme, host)
-
-    @Bean
-    fun meetingAppLinkConfiguration() =
-        MeetingAppLinkConfiguration(
-            "meetsamatest.page.link",
-            mapOf("param1" to "value1", "param2" to "value2", "emptyVal" to "")
-        )
-}
-
-@ExtendWith(SpringExtension::class)
-@SpringBootTest(
-    classes = [
-        MeetingView::class,
-        MeetingViewTestConfiguration::class
-    ]
-)
+@ExtendWith(MockitoExtension::class)
 class MeetingViewTest {
-    @MockBean
+    private val urlConfiguration = MeetingUrlConfiguration(10, scheme, host)
+
+    @Mock
     lateinit var userService: UserService
 
-    @Autowired
+    @Mock
+    lateinit var dynamicLinkService: DynamicLinkService
+
     lateinit var underTest: MeetingView
+
+    @BeforeEach
+    fun setup() {
+        underTest = MeetingView(
+            userService,
+            dynamicLinkService,
+            urlConfiguration)
+    }
 
     @Test
     fun render() {
@@ -75,6 +65,10 @@ class MeetingViewTest {
         whenever(userService.find(initiatorId))
             .thenReturn(initiator)
         val meetingTitle = "Meeting with test"
+
+        val dynamicUrl = "https://meetsamatest.page.link/dynamic"
+        whenever(dynamicLinkService.generate(anyString()))
+            .thenReturn(dynamicUrl)
 
         // act
         val proposedSlots = listOf(
@@ -105,10 +99,9 @@ class MeetingViewTest {
             ),
             isOwnMeeting = false,
             title = meetingTitle,
-            appLinks = MeetingAppLinksDTO(
-                iosAppDownloadLink = "https://meetsamatest.page.link/?link=$expectedUrl&param1=value1&param2=value2"
-            )
+            appLinks = MeetingAppLinksDTO(dynamicUrl)
         )
+        verify(dynamicLinkService).generate(expectedUrl)
 
         assertEquals(expected, actual)
     }
@@ -121,6 +114,10 @@ class MeetingViewTest {
         whenever(userService.find(initiatorId))
             .thenReturn(initiator)
         val meetingTitle = "Meeting with test"
+
+        val dynamicUrl = "https://meetsamatest.page.link/dynamic"
+        whenever(dynamicLinkService.generate(anyString()))
+            .thenReturn(dynamicUrl)
 
         // act
         val actual = underTest.render(
@@ -146,10 +143,9 @@ class MeetingViewTest {
             ),
             isOwnMeeting = true,
             title = meetingTitle,
-            appLinks = MeetingAppLinksDTO(
-                iosAppDownloadLink = "https://meetsamatest.page.link/?link=$expectedUrl&param1=value1&param2=value2"
-            )
+            appLinks = MeetingAppLinksDTO(dynamicUrl)
         )
+        verify(dynamicLinkService).generate(expectedUrl)
 
         assertEquals(expected, actual)
     }
