@@ -125,10 +125,10 @@ class SyncGoogleCalendarService(
     @Transactional
     override fun enableCalendarSync(userId: UserId, calendarId: GoogleCalendarId) {
         val calendarSync = calendarSyncRepository.find(userId, calendarId)
+            ?.forceSync()
             ?: CalendarSync.new(userId, calendarId)
         calendarSyncRepository.save(calendarSync)
     }
-
 
     @SentryTransaction(operation = "syncUserCalendars")
     @Scheduled(initialDelay = 60000, fixedRate = 15000)
