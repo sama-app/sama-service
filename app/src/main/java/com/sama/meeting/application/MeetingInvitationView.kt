@@ -1,5 +1,6 @@
 package com.sama.meeting.application
 
+import com.sama.common.View
 import com.sama.meeting.configuration.MeetingProposalMessageModel
 import com.sama.meeting.configuration.MeetingUrlConfiguration
 import com.sama.meeting.configuration.toUrl
@@ -15,6 +16,7 @@ import java.time.format.FormatStyle.SHORT
 import java.util.Locale
 import org.springframework.stereotype.Component
 
+@View
 @Component
 class MeetingInvitationView(
     private val userService: UserService,

@@ -1,5 +1,6 @@
 package com.sama.meeting.application
 
+import com.sama.common.View
 import com.sama.integration.firebase.DynamicLinkService
 import com.sama.meeting.configuration.MeetingUrlConfiguration
 import com.sama.meeting.configuration.toUrl
@@ -9,6 +10,7 @@ import com.sama.users.application.UserService
 import com.sama.users.domain.UserId
 import org.springframework.stereotype.Component
 
+@View
 @Component
 class MeetingView(
     private val userService: UserService,

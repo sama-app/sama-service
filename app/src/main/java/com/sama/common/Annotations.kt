@@ -6,6 +6,8 @@ import io.sentry.spring.tracing.SentrySpan
 annotation class ApplicationService
 @SentrySpan
 annotation class DomainRepository
+@SentrySpan
+annotation class View
 annotation class AggregateRoot
 annotation class Factory
 annotation class DomainEntity

@@ -1,10 +1,12 @@
 package com.sama.connection.application
 
+import com.sama.common.View
 import com.sama.connection.domain.ConnectionRequest
 import com.sama.users.application.UserService
 import com.sama.users.domain.UserId
 import org.springframework.stereotype.Component
 
+@View
 @Component
 class UserConnectionViews(private val userService: UserService) {
 
