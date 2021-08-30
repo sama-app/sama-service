@@ -5,16 +5,13 @@ import com.sama.api.config.AuthUserId
 import com.sama.auth.application.GoogleOauth2ApplicationService
 import com.sama.auth.application.GoogleSignFailureDTO
 import com.sama.auth.application.GoogleSignSuccessDTO
-import com.sama.slotsuggestion.application.HeatMapServiceV1
-import com.sama.slotsuggestion.application.HeatMapServiceV2
+import com.sama.slotsuggestion.application.HeatMapService
 import com.sama.slotsuggestion.application.SlotSuggestionRequest
 import com.sama.slotsuggestion.application.SlotSuggestionResponse
-import com.sama.slotsuggestion.application.SlotSuggestionServiceV1
 import com.sama.slotsuggestion.application.SlotSuggestionServiceV2
+import com.sama.slotsuggestion.domain.SlotSuggestionEngine
 import com.sama.slotsuggestion.domain.UserRepository
-import com.sama.slotsuggestion.domain.v1.WeightContext
-import com.sama.slotsuggestion.domain.v1.sigmoid
-import com.sama.slotsuggestion.domain.v2.SlotSuggestionEngine
+import com.sama.slotsuggestion.domain.sigmoid
 import com.sama.users.domain.UserId
 import java.time.Duration
 import java.time.LocalTime
@@ -35,10 +32,7 @@ import org.springframework.web.servlet.view.RedirectView
 class DebugViewController(
     private val googleOauth2ApplicationService: GoogleOauth2ApplicationService,
     private val userRepository: UserRepository,
-    private val heatMapService: HeatMapServiceV1,
-    private val heatMapServiceV2: HeatMapServiceV2,
-    private val weightContext: WeightContext,
-    private val slotSuggestionService: SlotSuggestionServiceV1,
+    private val heatMapServiceV2: HeatMapService,
     private val slotSuggestionServiceV2: SlotSuggestionServiceV2,
 ) {
 
@@ -129,7 +123,7 @@ class DebugViewController(
         }
 
         for (i in transposed.indices) {
-            val time = LocalTime.MIDNIGHT.plusMinutes(i * weightContext.intervalMinutes.toLong())
+            val time = LocalTime.MIDNIGHT.plusMinutes(i * heatMap.intervalMinutes)
             transposed[i] =
                 (mutableListOf(Cell("${time.hour}:${time.minute}", "#FFFFFF")) + transposed[i]).toMutableList()
         }
@@ -139,7 +133,7 @@ class DebugViewController(
     }
 
     @GetMapping("/api/__debug/user/suggestions", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun getTopSuggestions2(@AuthUserId userId: UserId): SlotSuggestionResponse {
+    fun getTopSuggestions(@AuthUserId userId: UserId): SlotSuggestionResponse {
         return slotSuggestionServiceV2.suggestSlots(
             userId, SlotSuggestionRequest(
                 Duration.ofMinutes(60),

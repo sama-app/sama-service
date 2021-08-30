@@ -7,6 +7,7 @@ import com.google.api.client.http.HttpTransport
 import com.google.api.client.http.apache.v2.ApacheHttpTransport
 import com.google.api.client.json.JsonFactory
 import com.google.api.client.json.gson.GsonFactory
+import com.sama.integration.google.auth.GoogleCredentialDataStoreFactory
 import com.sama.users.infrastructure.jpa.UserJpaRepository
 import java.io.StringReader
 import org.springframework.beans.factory.annotation.Value

@@ -1,5 +1,6 @@
-package com.sama.integration.google
+package com.sama.integration.google.user
 
+import com.sama.integration.google.GoogleServiceFactory
 import com.sama.users.domain.UserId
 import com.sama.users.domain.UserSettingsDefaults
 import com.sama.users.domain.UserSettingsDefaultsRepository

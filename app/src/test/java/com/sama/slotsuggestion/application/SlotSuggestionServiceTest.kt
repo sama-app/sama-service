@@ -1,10 +1,13 @@
 package com.sama.slotsuggestion.application
 
 import com.sama.common.datesUtil
+import com.sama.integration.google.calendar.application.GoogleCalendarService
+import com.sama.integration.google.calendar.application.SyncGoogleCalendarService
+import com.sama.integration.google.calendar.domain.AggregatedData
+import com.sama.integration.google.calendar.domain.CalendarEvent
+import com.sama.integration.google.calendar.domain.EventData
 import com.sama.meeting.application.MeetingDataService
 import com.sama.slotsuggestion.configuration.HeatMapConfiguration
-import com.sama.slotsuggestion.domain.Block
-import com.sama.slotsuggestion.domain.BlockRepository
 import com.sama.slotsuggestion.domain.User
 import com.sama.slotsuggestion.domain.UserRepository
 import com.sama.slotsuggestion.domain.WorkingHours
@@ -38,8 +41,8 @@ import org.springframework.test.context.junit.jupiter.SpringExtension
 
 
 interface Persona {
-    fun pastBlocks(): Collection<Block>
-    fun futureBlocks(): Collection<Block>
+    fun pastBlocks(): Collection<CalendarEvent>
+    fun futureBlocks(): Collection<CalendarEvent>
     fun workingHours(): Map<DayOfWeek, WorkingHours>
 }
 
@@ -53,24 +56,27 @@ private val nineToFive = listOf(MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY)
 
 private val userId = UserId(1)
 val nonCalendarUser = object : Persona {
-    override fun pastBlocks(): Collection<Block> = emptyList()
+    override fun pastBlocks(): Collection<CalendarEvent> = emptyList()
 
-    override fun futureBlocks(): Collection<Block> = emptyList()
+    override fun futureBlocks(): Collection<CalendarEvent> = emptyList()
 
     override fun workingHours(): Map<DayOfWeek, WorkingHours> = nineToFive
 }
 
 val fullyBlockedCalendarUser = object : Persona {
-    override fun pastBlocks(): Collection<Block> = emptyList()
+    override fun pastBlocks(): Collection<CalendarEvent> = emptyList()
 
-    override fun futureBlocks(): Collection<Block> = fixedDate
+    override fun futureBlocks(): Collection<CalendarEvent> = fixedDate
         .datesUtil(fixedDate.plusDays(14))
         .map {
-            Block(
+            CalendarEvent(
+                userId,
+                "primary",
+                "eventID",
                 ZonedDateTime.of(it, LocalTime.MIN, UTC),
                 ZonedDateTime.of(it, LocalTime.MAX, UTC),
-                allDay = false,
-                hasRecipients = true
+                EventData(allDay = false, attendeeCount = 2),
+                AggregatedData(recurrenceCount = 1)
             )
         }
         .toList()
@@ -102,8 +108,9 @@ class SlotSuggestionServiceTestConfiguration {
 @SpringBootTest(
     classes = [
         SlotSuggestionServiceV2::class,
-        HeatMapServiceV2::class,
+        HeatMapService::class,
         SlotSuggestionServiceTestConfiguration::class,
+        SyncGoogleCalendarService::class,
     ]
 )
 class SlotSuggestionServiceTest {
@@ -115,7 +122,7 @@ class SlotSuggestionServiceTest {
     lateinit var userRepository: UserRepository
 
     @MockBean
-    lateinit var blockRepository: BlockRepository
+    lateinit var googleCalendarService: GoogleCalendarService
 
     @Autowired
     lateinit var config: HeatMapConfiguration
@@ -164,11 +171,10 @@ class SlotSuggestionServiceTest {
 
         val now = ZonedDateTime.now(clock)
 
-        given(blockRepository.findAllBlocksCached(userId, now.minusDays(config.historicalDays), now))
-            .willReturn(persona.pastBlocks())
-
-        given(blockRepository.findAllBlocks(userId, now, now.plusDays(config.futureDays), false))
-            .willReturn(persona.futureBlocks())
-
+        given(googleCalendarService.findEvents(userId,
+            "primary",
+            now.minusDays(config.historicalDays),
+            now.plusDays(config.futureDays)))
+            .willReturn(persona.pastBlocks().plus(persona.futureBlocks()))
     }
 }

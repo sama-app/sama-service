@@ -13,7 +13,7 @@ import com.sama.meeting.domain.MeetingSlotUnavailableException
 import com.sama.slotsuggestion.application.SlotSuggestionRequest
 import com.sama.slotsuggestion.application.SlotSuggestionResponse
 import com.sama.slotsuggestion.application.SlotSuggestionService
-import com.sama.slotsuggestion.domain.v1.SlotSuggestion
+import com.sama.slotsuggestion.domain.SlotSuggestion
 import java.time.Clock
 import java.time.Duration.ofMinutes
 import java.time.ZonedDateTime

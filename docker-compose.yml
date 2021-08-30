@@ -10,6 +10,8 @@ services:
       POSTGRES_DB: sama
       POSTGRES_USER: sama
       POSTGRES_PASSWORD: password
+      TZ: 'UTC'
+      PGTZ: 'UTC'
 
   sama-service:
     container_name: sama-service

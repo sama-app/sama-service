@@ -7,6 +7,8 @@ import com.sama.users.domain.UserId
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
+import java.time.LocalDate
+import java.time.ZoneId
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.format.annotation.DateTimeFormat.ISO.DATE
 import org.springframework.http.HttpStatus
@@ -15,14 +17,10 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ResponseStatusException
-import java.time.LocalDate
-import java.time.ZoneId
 
 @Tag(name = "calendar")
 @RestController
-class EventController(
-    private val eventApplicationService: EventApplicationService
-) {
+class EventController(private val eventApplicationService: EventApplicationService) {
 
     @Operation(
         summary = "Retrieve user calendar blocks",

@@ -1,6 +1,6 @@
 package com.sama.slotsuggestion.application
 
-import com.sama.slotsuggestion.domain.v1.SlotSuggestion
+import com.sama.slotsuggestion.domain.SlotSuggestion
 import com.sama.users.domain.UserId
 import java.time.Duration
 import java.time.ZoneId

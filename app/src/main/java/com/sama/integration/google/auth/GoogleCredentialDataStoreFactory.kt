@@ -1,4 +1,4 @@
-package com.sama.integration.google
+package com.sama.integration.google.auth
 
 import com.google.api.client.util.store.DataStore
 import com.google.api.client.util.store.DataStoreFactory

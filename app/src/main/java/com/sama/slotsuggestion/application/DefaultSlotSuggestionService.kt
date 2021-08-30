@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service
 @Service
 @Primary
 class DefaultSlotSuggestionService(
-    private val slotSuggestionServiceV1: SlotSuggestionServiceV1,
     private val slotSuggestionServiceV2: SlotSuggestionServiceV2,
 ) : SlotSuggestionService {
     private var logger: Logger = LoggerFactory.getLogger(DefaultSlotSuggestionService::class.java)
@@ -19,7 +18,7 @@ class DefaultSlotSuggestionService(
             slotSuggestionServiceV2.suggestSlots(userId, request)
         } catch (e: Exception) {
             logger.error("slot suggestion v2 error", e)
-            slotSuggestionServiceV1.suggestSlots(userId, request)
+            return SlotSuggestionResponse(emptyList())
         }
     }
 }

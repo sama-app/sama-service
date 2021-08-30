@@ -2,6 +2,7 @@ package com.sama.common
 
 import org.springframework.data.repository.CrudRepository
 import java.time.Duration
+import java.time.Instant
 import java.time.LocalDate
 import java.util.*
 import kotlin.streams.asSequence

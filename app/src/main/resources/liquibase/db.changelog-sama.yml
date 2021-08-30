@@ -25,3 +25,5 @@ databaseChangeLog:
       file: classpath*:liquibase/change-sets/20210819105000-encrypted-google-tokens.yml
   - include:
       file: classpath*:liquibase/change-sets/20210825145000-add-meeting-title.yml
+  - include:
+      file: classpath*:liquibase/change-sets/20210827160000-google-calendar-sync.yml

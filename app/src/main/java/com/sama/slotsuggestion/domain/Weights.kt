@@ -1,10 +1,6 @@
-package com.sama.slotsuggestion.domain.v2
+package com.sama.slotsuggestion.domain
 
 import com.sama.meeting.application.MeetingSlotDTO
-import com.sama.slotsuggestion.domain.Block
-import com.sama.slotsuggestion.domain.WorkingHours
-import com.sama.slotsuggestion.domain.isNonWorkingDay
-import com.sama.slotsuggestion.domain.v1.SlotSuggestion
 import java.time.DayOfWeek
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -16,6 +12,7 @@ import java.util.function.Predicate
 import java.util.function.Predicate.not
 import kotlin.math.min
 import kotlin.math.pow
+import org.springframework.data.relational.core.query.Query.query
 
 interface Weigher {
     fun weight(heatMap: HeatMap): HeatMap
