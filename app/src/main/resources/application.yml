@@ -130,7 +130,7 @@ sama:
       fqdn: meetsamatest.page.link
       parameters:
         ibi: com.meetsama.app.dev # BundleID
-        ifl: itms-beta:// # TestFlight link
+        ifl: https://testflight.apple.com/join/F4cncGnA # TestFlight link (TODO: this is prod)
         isi: # AppStoreID empty for local / dev
         efr: 1 # Skip preview page
   landing:

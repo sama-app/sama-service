@@ -55,8 +55,8 @@ sama:
       fqdn: meetsama.page.link
       parameters:
         ibi: com.meetsama.app # BundleID
-        ifl: # Do not provide a custom Url
-        isi: TBD # AppStoreID
+        ifl: https://testflight.apple.com/join/F4cncGnA # TODO: removed when released
+        isi: # TODO: AppStoreID when released
         efr: 1 # Skip preview page
   landing:
     url: https://meetsama.com
