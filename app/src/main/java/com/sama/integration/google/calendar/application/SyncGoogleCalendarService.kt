@@ -22,7 +22,6 @@ import com.sama.integration.google.calendar.domain.findAllEvents
 import com.sama.integration.google.calendar.domain.insert
 import com.sama.integration.google.translatedGoogleException
 import com.sama.users.domain.UserId
-import io.sentry.spring.tracing.SentryTransaction
 import java.time.Clock
 import java.time.Instant
 import java.time.ZonedDateTime
@@ -133,7 +132,6 @@ class SyncGoogleCalendarService(
         calendarSyncRepository.save(calendarSync)
     }
 
-    @SentryTransaction(operation = "syncUserCalendars")
     @Scheduled(initialDelay = 60000, fixedRate = 15000)
     fun syncUserCalendars() {
         val userCalendarsToSync = calendarSyncRepository.findSyncable(Instant.now())
