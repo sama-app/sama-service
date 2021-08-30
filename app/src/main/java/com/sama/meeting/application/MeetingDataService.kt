@@ -15,8 +15,10 @@ class MeetingDataService(private val meetingRepository: MeetingRepository) {
     fun findProposedSlots(
         userId: UserId, startDateTime: ZonedDateTime, endDateTime: ZonedDateTime,
     ): List<MeetingSlotDTO> {
-        return meetingRepository.findAllProposedSlots(userId, startDateTime, endDateTime)
-            .map { it.toDTO() }
+        return emptyList()
+        // TODO: Fix poor performing query
+        // return meetingRepository.findAllProposedSlots(userId, startDateTime, endDateTime)
+        //    .map { it.toDTO() }
     }
 }
 
