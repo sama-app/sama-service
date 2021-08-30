@@ -1,11 +1,12 @@
 package com.sama.common
 
-import org.springframework.data.repository.CrudRepository
 import java.time.Duration
-import java.time.Instant
 import java.time.LocalDate
-import java.util.*
+import java.util.Objects
+import java.util.Optional
 import kotlin.streams.asSequence
+import org.springframework.data.repository.CrudRepository
+import org.threeten.extra.LocalDateRange
 
 fun <T : Any> Optional<T>.toNullable(): T? = this.orElse(null)
 
@@ -68,7 +69,7 @@ fun <T, R> Sequence<T>.chunkedBy(chunkCutOffPredicate: (T, T) -> Boolean, transf
 
 fun <T> chunkedByIterator(
     iterator: Iterator<T>,
-    chunkCutOffPredicate: (T, T) -> Boolean
+    chunkCutOffPredicate: (T, T) -> Boolean,
 ): Iterator<List<T>> {
     return iterator<List<T>> {
         val bufferInitialCapacity = 4
@@ -94,4 +95,16 @@ fun Long.toMinutes(): Duration = Duration.ofMinutes(this)
 
 fun LocalDate.datesUtil(endDate: LocalDate): Sequence<LocalDate> {
     return this.datesUntil(endDate).asSequence()
+}
+
+operator fun LocalDateRange.component1(): LocalDate = this.start
+operator fun LocalDateRange.component2(): LocalDate = this.end
+
+@JvmName("to")
+infix fun LocalDate.to(that: LocalDate): LocalDateRange = LocalDateRange.of(this, that)
+
+@JvmName("toNullable")
+infix fun LocalDate?.to(that: LocalDate?): LocalDateRange? {
+    return if (this == null || that == null) null
+    else LocalDateRange.of(this, that)
 }
