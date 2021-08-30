@@ -11,8 +11,7 @@ data class Block(
     val endDateTime: ZonedDateTime,
     val allDay: Boolean,
     val hasRecipients: Boolean,
-    val recurrenceCount: Int = 1,
-    val recurrenceRule: RecurrenceRule? = null,
+    val recurrenceCount: Int = 1
 ) {
 
     /**

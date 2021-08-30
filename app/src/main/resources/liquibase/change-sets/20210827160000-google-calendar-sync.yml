@@ -1,0 +1,193 @@
+databaseChangeLog:
+  - changeSet:
+      id: google-calendar-schema
+      author: balys
+      changes:
+        - sql:
+            sql: create schema if not exists gcal;
+      rollback:
+        - sql:
+            sql: drop schema gcal;
+
+  - changeSet:
+      id: add-google-calendar-events
+      author: balys
+      changes:
+        - createTable:
+            schemaName: gcal
+            tableName: calendar_sync
+            columns:
+              - column:
+                  name: id
+                  type: BIGSERIAL
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: PK_calendar_sync_id
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: calendar_id
+                  type: VARCHAR
+                  constraints:
+                    nullable: false
+              - column:
+                  name: next_sync_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: failed_sync_count
+                  type: INT
+                  defaultValue: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: sync_token
+                  type: VARCHAR
+              - column:
+                  name: synced_from
+                  type: DATE
+              - column:
+                  name: synced_to
+                  type: DATE
+              - column:
+                  name: last_synced
+                  type: TIMESTAMP
+
+        - createIndex:
+            schemaName: gcal
+            tableName: calendar_sync
+            columns:
+              - column:
+                  name: user_id
+              - column:
+                  name: calendar_id
+            indexName: IDX_calendar_sync#user_id#calendar_id
+            unique: true
+
+        - createIndex:
+            schemaName: gcal
+            tableName: calendar_sync
+            columns:
+              - column:
+                  name: next_sync_at
+            indexName: IDX_calendar_sync#next_sync_at
+
+        - addForeignKeyConstraint:
+            baseTableSchemaName: gcal
+            baseTableName: calendar_sync
+            baseColumnNames: user_id
+            constraintName: FK_calendar_sync_user_id
+            referencedTableSchemaName: sama
+            referencedTableName: user
+            referencedColumnNames: id
+            validate: true
+            onDelete: CASCADE
+
+        - createTable:
+            schemaName: gcal
+            tableName: event
+            columns:
+              - column:
+                  name: id
+                  type: VARCHAR
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: PK_event_id
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: calendar_id
+                  type: VARCHAR
+                  constraints:
+                    nullable: false
+              - column:
+                  name: start_date_time
+                  type: DATETIME
+                  constraints:
+                    nullable: false
+              - column:
+                  name: end_date_time
+                  type: DATETIME
+                  constraints:
+                    nullable: false
+              - column:
+                  name: event_data
+                  type: jsonb
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+
+        - createIndex:
+            schemaName: gcal
+            tableName: event
+            columns:
+              - column:
+                  name: user_id
+              - column:
+                  name: calendar_id
+              - column:
+                  name: start_date_time
+            indexName: IDX_user_id#calendar_id#start_date_time
+
+        - createIndex:
+            schemaName: gcal
+            tableName: event
+            columns:
+              - column:
+                  name: user_id
+              - column:
+                  name: calendar_id
+              - column:
+                  name: end_date_time
+            indexName: IDX_user_id#calendar_id#end_date_time
+
+        - createIndex:
+            schemaName: gcal
+            tableName: event
+            columns:
+              - column:
+                  name: user_id
+              - column:
+                  name: calendar_id
+            indexName: IDX_event#user_id#calendar_id
+
+        - addForeignKeyConstraint:
+            baseTableSchemaName: gcal
+            baseTableName: event
+            baseColumnNames: user_id
+            constraintName: FK_event_user_id
+            referencedTableSchemaName: sama
+            referencedTableName: user
+            referencedColumnNames: id
+            validate: true
+            onDelete: CASCADE
+
+
+
+  - changeSet:
+      id: google-calendar-sync-data
+      author: balys
+      changes:
+        - sql:
+            sql: >
+              INSERT INTO gcal.calendar_sync (user_id, calendar_id, next_sync_at)
+              (SELECT u.id, 'primary', now() FROM sama.user u)
+      rollback:
+        - sql:
+            sql: >
+              TRUNCATE TABLE gcal.calendar_sync;
+              TRUNCATE TABLE gcal.event;
+

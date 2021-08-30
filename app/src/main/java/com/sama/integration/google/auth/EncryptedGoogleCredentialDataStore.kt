@@ -1,9 +1,10 @@
-package com.sama.integration.google
+package com.sama.integration.google.auth
 
 import com.google.api.client.auth.oauth2.StoredCredential
 import com.google.api.client.util.store.AbstractDataStore
 import com.google.api.client.util.store.DataStore
 import com.sama.common.findByIdOrThrow
+import com.sama.integration.google.GoogleInvalidCredentialsException
 import com.sama.users.domain.GoogleCredential
 import com.sama.users.infrastructure.jpa.UserJpaRepository
 import com.sama.users.infrastructure.jpa.applyChanges

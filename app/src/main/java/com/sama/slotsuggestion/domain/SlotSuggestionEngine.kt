@@ -1,11 +1,17 @@
-package com.sama.slotsuggestion.domain.v2
+package com.sama.slotsuggestion.domain
 
 import com.sama.common.DomainService
-import com.sama.slotsuggestion.domain.v1.SlotSuggestion
-import com.sama.slotsuggestion.domain.v1.sigmoid
 import java.time.Duration
+import java.time.ZonedDateTime
 import kotlin.math.ceil
+import kotlin.math.exp
 
+data class SlotSuggestion(
+    val startDateTime: ZonedDateTime,
+    val endDateTime: ZonedDateTime,
+    val score: Double,
+    val slots: List<Slot> = emptyList(),
+)
 
 @DomainService
 data class SlotSuggestionEngine(

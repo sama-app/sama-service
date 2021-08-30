@@ -4,7 +4,8 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier
 import com.sama.common.ApplicationService
 import com.sama.integration.google.GoogleInsufficientPermissionsException
-import com.sama.integration.google.GoogleUserRepository
+import com.sama.integration.google.calendar.application.GoogleCalendarService
+import com.sama.integration.google.user.GoogleUserRepository
 import com.sama.users.application.GoogleOauth2Redirect
 import com.sama.users.application.RefreshCredentialsCommand
 import com.sama.users.application.RegisterUserCommand
@@ -25,7 +26,8 @@ class GoogleOauth2ApplicationService(
     private val googleAuthorizationCodeFlow: GoogleAuthorizationCodeFlow,
     private val googleIdTokenVerifier: GoogleIdTokenVerifier,
     private val googleUserRepository: GoogleUserRepository,
-    @Value("\${integration.google.scopes}") private val requiredGoogleOauthScopes: List<String>
+    private val googleCalendarService: GoogleCalendarService,
+    @Value("\${integration.google.scopes}") private val requiredGoogleOauthScopes: List<String>,
 ) {
     private val logger = LogFactory.getLog(javaClass)
 
@@ -81,7 +83,8 @@ class GoogleOauth2ApplicationService(
                 throw RuntimeException("Invalid Google ID token")
             }
             val email = parsedIdToken.payload.email
-            VerifiedGoogleOauth2Token(email, GoogleCredential.plainText(it.accessToken, it.refreshToken, it.expiresInSeconds))
+            VerifiedGoogleOauth2Token(email,
+                GoogleCredential.plainText(it.accessToken, it.refreshToken, it.expiresInSeconds))
         }.getOrThrow()
 
         // Step #2: Fetch extended user details
@@ -94,6 +97,7 @@ class GoogleOauth2ApplicationService(
                 RegisterUserCommand(verifiedToken.email, userDetails.fullName, verifiedToken.credential)
             )
             userSettingsApplicationService.createUserSettings(userId)
+            googleCalendarService.enableCalendarSync(userId)
             userId
         }.recover {
             if (it !is UserAlreadyExistsException) {
@@ -107,9 +111,9 @@ class GoogleOauth2ApplicationService(
             )
 
             userApplicationService.updatePublicDetails(
-                userId,
-                UpdateUserPublicDetailsCommand(userDetails.fullName)
+                userId, UpdateUserPublicDetailsCommand(userDetails.fullName)
             )
+            googleCalendarService.enableCalendarSync(userId)
 
             userId
         }.getOrThrow()

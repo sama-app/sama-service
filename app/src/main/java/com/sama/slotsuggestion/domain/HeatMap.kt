@@ -1,12 +1,16 @@
-package com.sama.slotsuggestion.domain.v2
+package com.sama.slotsuggestion.domain
 
 import com.sama.common.DomainEntity
 import com.sama.common.Factory
 import com.sama.common.chunkedBy
 import com.sama.common.datesUtil
-import com.sama.meeting.domain.MeetingSlot
 import com.sama.users.domain.UserId
-import java.time.*
+import java.time.DayOfWeek
+import java.time.Duration
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.ZoneId
 import java.util.function.Predicate
 import kotlin.math.pow
 
@@ -19,7 +23,6 @@ data class HeatMap(
     val intervalMinutes: Long,
     val slots: List<Slot>,
 ) {
-    val interval = Duration.ofMinutes(intervalMinutes)
 
     companion object {
         @Factory
@@ -136,7 +139,7 @@ fun GroupedSlotQueryResult.addFixedWeight(weight: Double, tag: () -> String): Tr
 fun GroupedSlotQueryResult.addParabolicWeight(
     baseWeight: Double,
     weightStep: Double,
-    tag: () -> String
+    tag: () -> String,
 ): TransformedSlots {
     return mapValue { chunk, slot ->
         val itemIdx = chunk.itemIdx.toDouble()
@@ -151,7 +154,7 @@ fun GroupedSlotQueryResult.addParabolicWeight(
 fun GroupedSlotQueryResult.addLinearWeight(
     startValue: Double = 0.0,
     endValue: Double = 0.0,
-    tag: () -> String
+    tag: () -> String,
 ): TransformedSlots {
     val valueDiff = endValue - startValue
     return mapValue { chunkInfo, slot ->

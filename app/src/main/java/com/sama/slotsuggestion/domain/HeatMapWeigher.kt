@@ -1,9 +1,6 @@
-package com.sama.slotsuggestion.domain.v2
+package com.sama.slotsuggestion.domain
 
 import com.sama.meeting.application.MeetingSlotDTO
-import com.sama.slotsuggestion.domain.Block
-import com.sama.slotsuggestion.domain.WorkingHours
-import com.sama.slotsuggestion.domain.v1.SlotSuggestion
 import java.time.DayOfWeek
 import java.time.ZoneId
 

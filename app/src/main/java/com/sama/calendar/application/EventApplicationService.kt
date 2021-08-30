@@ -1,9 +1,8 @@
 package com.sama.calendar.application
 
-import com.sama.calendar.domain.Event
-import com.sama.calendar.domain.EventRepository
 import com.sama.common.ApplicationService
-import com.sama.users.application.UserService
+import com.sama.integration.google.calendar.application.InsertGoogleCalendarEventCommand
+import com.sama.integration.google.calendar.application.SyncGoogleCalendarService
 import com.sama.users.domain.UserId
 import java.time.LocalDate
 import java.time.ZoneId
@@ -13,30 +12,27 @@ import org.springframework.stereotype.Service
 @ApplicationService
 @Service
 class EventApplicationService(
-    private val eventRepository: EventRepository,
-    private val userService: UserService,
+    private val googleCalendarService: SyncGoogleCalendarService,
     @Value("\${sama.landing.url}") private val samaWebUrl: String,
 ) {
 
     fun fetchEvents(userId: UserId, startDate: LocalDate, endDate: LocalDate, timezone: ZoneId) =
-        eventRepository.findAll(
-            userId,
-            startDate.atStartOfDay(timezone),
-            endDate.plusDays(1).atStartOfDay(timezone),
+        googleCalendarService.findEvents(
+            userId = userId,
+            startDateTime = startDate.atStartOfDay(timezone),
+            endDateTime = endDate.plusDays(1).atStartOfDay(timezone),
         )
-            .map { EventDTO(it.startDateTime, it.endDateTime, it.allDay, it.title) }
+            .map { EventDTO(it.startDateTime, it.endDateTime, it.eventData.allDay, it.eventData.title) }
             .let { FetchEventsDTO(it, it) }
 
 
-    fun createEvent(userId: UserId, command: CreateEventCommand) {
-        val block = Event(
-            command.startDateTime,
-            command.endDateTime,
-            false,
-            command.title,
+    fun createEvent(userId: UserId, command: CreateEventCommand): EventDTO {
+        val insertCommand = InsertGoogleCalendarEventCommand(
+            command.startDateTime, command.endDateTime, command.title,
             "Time for this meeting was created via <a href=$samaWebUrl>Sama app</a>",
-            command.recipientEmail,
+            command.recipientEmail
         )
-        eventRepository.save(userId, block)
+        return googleCalendarService.insertEvent(userId = userId, command = insertCommand)
+            .let { EventDTO(it.startDateTime, it.endDateTime, it.eventData.allDay, it.eventData.title) }
     }
 }
