@@ -6,6 +6,9 @@ import com.google.api.services.calendar.model.CreateConferenceRequest
 import com.google.api.services.calendar.model.EventAttendee
 import com.google.api.services.calendar.model.EventDateTime
 import com.sama.common.ApplicationService
+import com.sama.common.component1
+import com.sama.common.component2
+import com.sama.common.to
 import com.sama.integration.google.GoogleServiceFactory
 import com.sama.integration.google.GoogleSyncTokenInvalidatedException
 import com.sama.integration.google.calendar.domain.AggregatedData
@@ -125,8 +128,8 @@ class SyncGoogleCalendarService(
     @Transactional
     override fun enableCalendarSync(userId: UserId, calendarId: GoogleCalendarId) {
         val calendarSync = calendarSyncRepository.find(userId, calendarId)
-            ?.forceSync()
-            ?: CalendarSync.new(userId, calendarId)
+            ?.forceSync(clock)
+            ?: CalendarSync.new(userId, calendarId, clock)
         calendarSyncRepository.save(calendarSync)
     }
 
@@ -142,13 +145,13 @@ class SyncGoogleCalendarService(
     @Transactional
     private fun syncUserCalendar(userId: UserId, calendarId: GoogleCalendarId, forceFullSync: Boolean = false) {
         val calendarSync = calendarSyncRepository.findAndLock(userId, calendarId)
-            ?: CalendarSync.new(userId, calendarId)
+            ?: CalendarSync.new(userId, calendarId, clock)
 
         logger.info("Syncing User#${userId.id} Calendar#${calendarId}...")
         val calendarService = googleServiceFactory.calendarService(userId)
         try {
             val updatedSync = if (forceFullSync || calendarSync.needsFullSync(clock)) {
-                val (startDate, endDate) = calendarSync.syncRange(clock)
+                val (startDate, endDate) = CalendarSync.syncRange(clock)
                 val (events, timeZone, syncToken) = calendarService
                     .findAllEvents(calendarId, startDate, endDate)
 
@@ -156,7 +159,7 @@ class SyncGoogleCalendarService(
                 calendarEventRepository.deleteBy(userId, calendarId)
                 calendarEventRepository.saveAll(calendarEvents)
 
-                calendarSync.completeFull(syncToken!!, startDate, endDate)
+                calendarSync.completeFull(syncToken!!, startDate to endDate, clock)
             } else {
                 val (events, timeZone, newSyncToken) = calendarService
                     .findAllEvents(calendarId, calendarSync.syncToken!!)
@@ -165,7 +168,7 @@ class SyncGoogleCalendarService(
                 calendarEventRepository.saveAll(toAdd.toDomain(userId, calendarId, timeZone))
                 calendarEventRepository.deleteAll(toRemove.map { it.id })
 
-                calendarSync.complete(newSyncToken!!)
+                calendarSync.complete(newSyncToken!!, clock)
             }
 
             calendarSyncRepository.save(updatedSync)
@@ -173,11 +176,11 @@ class SyncGoogleCalendarService(
         } catch (e: Exception) {
             if (e is GoogleSyncTokenInvalidatedException) {
                 logger.error("Calendar sync token expired for User#${userId.id}", e)
-                val updated = calendarSync.reset()
+                val updated = calendarSync.reset(clock)
                 calendarEventRepository.deleteBy(userId, calendarId)
                 calendarSyncRepository.save(updated)
             } else {
-                val updated = calendarSync.fail()
+                val updated = calendarSync.fail(clock)
                 logger.error("Failed to sync Calendar for User#${userId.id} ${updated.failedSyncCount} times", e)
                 calendarSyncRepository.save(updated)
             }

@@ -1,5 +1,6 @@
 package com.sama.integration.google.calendar.infrastructure
 
+import com.sama.common.to
 import com.sama.integration.google.calendar.domain.CalendarSync
 import com.sama.integration.google.calendar.domain.CalendarSyncRepository
 import com.sama.integration.google.calendar.domain.GoogleCalendarId
@@ -84,8 +85,8 @@ class JdbcCalendarSyncRepository(private val jdbcTemplate: NamedParameterJdbcOpe
                 .addValue("next_sync_at", ofInstant(calendarSync.nextSyncAt, UTC))
                 .addValue("failed_sync_count", calendarSync.failedSyncCount)
                 .addValue("sync_token", calendarSync.syncToken)
-                .addValue("synced_from", calendarSync.syncedFrom)
-                .addValue("synced_to", calendarSync.syncedTo)
+                .addValue("synced_from", calendarSync.syncedRange?.start)
+                .addValue("synced_to", calendarSync.syncedRange?.end)
                 .addValue("last_synced", calendarSync.lastSynced?.let { ofInstant(it, UTC) })
         )
     }
@@ -97,8 +98,7 @@ class JdbcCalendarSyncRepository(private val jdbcTemplate: NamedParameterJdbcOpe
             rs.getTimestamp("next_sync_at")!!.toInstant(),
             rs.getInt("failed_sync_count"),
             rs.getString("sync_token"),
-            rs.getDate("synced_from")?.toLocalDate(),
-            rs.getDate("synced_to")?.toLocalDate(),
+            rs.getDate("synced_from")?.toLocalDate() to rs.getDate("synced_to")?.toLocalDate(),
             rs.getTimestamp("last_synced")?.toInstant()
         )
     }

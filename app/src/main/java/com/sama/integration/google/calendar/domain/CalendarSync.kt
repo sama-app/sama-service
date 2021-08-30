@@ -1,6 +1,7 @@
 package com.sama.integration.google.calendar.domain
 
 import com.google.common.math.IntMath.pow
+import com.sama.common.to
 import com.sama.users.domain.UserId
 import java.time.Clock
 import java.time.Duration
@@ -8,9 +9,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset.UTC
 import java.time.ZonedDateTime
-
-
-private val syncInterval: Duration = Duration.ofSeconds(60)
+import org.threeten.extra.LocalDateRange
 
 data class CalendarSync(
     val userId: UserId,
@@ -18,85 +17,96 @@ data class CalendarSync(
     val nextSyncAt: Instant,
     val failedSyncCount: Int,
     val syncToken: String? = null,
-    val syncedFrom: LocalDate? = null,
-    val syncedTo: LocalDate? = null,
+    val syncedRange: LocalDateRange? = null,
     val lastSynced: Instant? = null,
 ) {
 
     companion object {
-        fun new(userId: UserId, calendarId: GoogleCalendarId): CalendarSync {
+        val syncInterval: Duration = Duration.ofSeconds(60)
+        const val syncPastInMonths = 6L
+        const val syncFutureInMonths = 3L
+        const val fullSyncCutOffDays = 7L
+
+        fun new(userId: UserId, calendarId: GoogleCalendarId, clock: Clock): CalendarSync {
             return CalendarSync(
                 userId = userId,
                 calendarId = calendarId,
-                nextSyncAt = Instant.now(),
+                nextSyncAt = clock.instant(),
                 failedSyncCount = 0
             )
+        }
+
+        fun syncRange(clock: Clock): LocalDateRange {
+            val now = LocalDate.now(clock)
+            return now.minusMonths(syncPastInMonths) to now.plusMonths(syncFutureInMonths)
         }
     }
 
     fun needsFullSync(clock: Clock): Boolean {
-        val fullSyncCutOff = LocalDate.now(clock).plusMonths(3).minusWeeks(1)
-        return syncToken == null || (syncedTo?.isBefore(fullSyncCutOff) ?: true)
-    }
+        if (syncToken == null || syncedRange == null) {
+            return true
+        }
 
-    fun syncRange(clock: Clock): Pair<LocalDate, LocalDate> {
         val now = LocalDate.now(clock)
-        return now.minusMonths(6) to now.plusMonths(3)
+        val requiredRange = now.minusMonths(syncPastInMonths) to
+                now.plusMonths(syncFutureInMonths).minusDays(fullSyncCutOffDays)
+
+        return !syncedRange.encloses(requiredRange)
     }
 
     fun isSyncedFor(startDateTime: ZonedDateTime, endDateTime: ZonedDateTime, clock: Clock): Boolean {
-        if (needsFullSync(clock)) {
-            return false
-        }
-
         if (lastSynced!!.plus(syncInterval).isBefore(clock.instant())) {
             return false
         }
 
-        return !syncedFrom!!.atStartOfDay(UTC).isAfter(startDateTime)
-                && syncedTo!!.atStartOfDay(UTC).isAfter(endDateTime)
+        if (needsFullSync(clock)) {
+            return false
+        }
+
+        val requiredRange = startDateTime.withZoneSameInstant(UTC).toLocalDate() to
+                endDateTime.withZoneSameInstant(UTC).toLocalDate()
+
+        return syncedRange!!.encloses(requiredRange)
     }
 
-    fun completeFull(syncToken: String, syncedFrom: LocalDate, syncedTo: LocalDate): CalendarSync {
+    fun completeFull(syncToken: String, syncedRange: LocalDateRange, clock: Clock): CalendarSync {
         return copy(
-            nextSyncAt = Instant.now().plus(syncInterval),
+            nextSyncAt = clock.instant().plus(syncInterval),
             failedSyncCount = 0,
             syncToken = syncToken,
-            syncedFrom = syncedFrom,
-            syncedTo = syncedTo,
-            lastSynced = Instant.now()
+            syncedRange = syncedRange,
+            lastSynced = clock.instant()
         )
     }
 
-    fun complete(syncToken: String): CalendarSync {
+    fun complete(syncToken: String, clock: Clock): CalendarSync {
         return copy(
-            nextSyncAt = Instant.now().plus(syncInterval),
+            nextSyncAt = clock.instant().plus(syncInterval),
             failedSyncCount = 0,
             syncToken = syncToken,
-            lastSynced = Instant.now()
+            lastSynced = clock.instant()
         )
     }
 
-    fun fail(): CalendarSync {
+    fun fail(clock: Clock): CalendarSync {
         val failCount = failedSyncCount + 1
         val nextSyncDelay = syncInterval.multipliedBy(pow(failCount, 2).toLong())
         return copy(
             failedSyncCount = failCount,
-            nextSyncAt = Instant.now().plus(nextSyncDelay)
+            nextSyncAt = clock.instant().plus(nextSyncDelay)
         )
     }
 
-    fun forceSync(): CalendarSync {
-        return copy(nextSyncAt = Instant.now())
+    fun forceSync(clock: Clock): CalendarSync {
+        return copy(nextSyncAt = clock.instant())
     }
 
-    fun reset(): CalendarSync {
+    fun reset(clock: Clock): CalendarSync {
         return copy(
             syncToken = null,
-            syncedFrom = null,
-            syncedTo = null,
+            syncedRange = null,
             failedSyncCount = 0,
-            nextSyncAt = Instant.now()
+            nextSyncAt = clock.instant()
         )
     }
 }
