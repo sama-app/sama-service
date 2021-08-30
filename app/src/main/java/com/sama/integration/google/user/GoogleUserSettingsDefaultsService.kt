@@ -9,9 +9,8 @@ import org.apache.commons.lang3.LocaleUtils
 import org.springframework.stereotype.Component
 
 @Component
-class GoogleUserSettingsDefaultsRepository(
-    private val googleServiceFactory: GoogleServiceFactory
-) : UserSettingsDefaultsRepository {
+class GoogleUserSettingsDefaultsService(private val googleServiceFactory: GoogleServiceFactory) :
+    UserSettingsDefaultsRepository {
 
     override fun findByIdOrNull(userId: UserId): UserSettingsDefaults? {
         val settings = kotlin.runCatching {

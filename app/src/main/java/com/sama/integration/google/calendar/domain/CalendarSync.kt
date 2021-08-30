@@ -1,7 +1,6 @@
 package com.sama.integration.google.calendar.domain
 
 import com.google.common.math.IntMath.pow
-import com.sama.common.DomainRepository
 import com.sama.users.domain.UserId
 import java.time.Clock
 import java.time.Duration
@@ -9,16 +8,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset.UTC
 import java.time.ZonedDateTime
-import org.springframework.data.repository.Repository
 
-
-@DomainRepository
-interface CalendarSyncRepository : Repository<CalendarSync, Long> {
-    fun find(userId: UserId, calendarId: GoogleCalendarId): CalendarSync?
-    fun findAndLock(userId: UserId, calendarId: GoogleCalendarId): CalendarSync?
-    fun findSyncable(from: Instant): Collection<Pair<UserId, GoogleCalendarId>>
-    fun save(calendarSync: CalendarSync)
-}
 
 private val syncInterval: Duration = Duration.ofSeconds(60)
 
