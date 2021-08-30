@@ -160,6 +160,7 @@ integration:
         ifl: https://testflight.apple.com/join/F4cncGnA # TestFlight link (TODO: this is prod)
         isi: # AppStoreID empty for local / dev
         efr: 1 # Skip preview page
+        ofl: https://testflight.apple.com/join/F4cncGnA # TestFlight link (TODO: this is prod)
 
 sentry:
   dsn: https://b8c06b0aa478447bbdc330ad9fef42f1@o877832.ingest.sentry.io/5828928
