@@ -132,7 +132,7 @@ class SyncGoogleCalendarService(
         calendarSyncRepository.save(calendarSync)
     }
 
-    @Scheduled(initialDelay = 60000, fixedRate = 15000)
+    @Scheduled(initialDelay = 60000, fixedDelay = 15000)
     fun syncUserCalendars() {
         val userCalendarsToSync = calendarSyncRepository.findSyncable(Instant.now())
         userCalendarsToSync.forEach {
