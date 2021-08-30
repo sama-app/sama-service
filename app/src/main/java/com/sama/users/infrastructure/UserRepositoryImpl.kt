@@ -3,7 +3,6 @@ package com.sama.users.infrastructure
 import com.sama.common.findByIdOrThrow
 import com.sama.users.domain.UserDetails
 import com.sama.users.domain.UserDeviceRegistrations
-import com.sama.users.domain.UserGoogleCredential
 import com.sama.users.domain.UserId
 import com.sama.users.domain.UserPublicId
 import com.sama.users.domain.UserRepository
@@ -19,10 +18,7 @@ import org.springframework.security.crypto.encrypt.TextEncryptor
 import org.springframework.stereotype.Component
 
 @Component
-class UserRepositoryImpl(
-    private val userJpaRepository: UserJpaRepository,
-    private val googleTokenEncryptor: TextEncryptor
-) : UserRepository {
+class UserRepositoryImpl(private val userJpaRepository: UserJpaRepository) : UserRepository {
     override fun findByIdOrThrow(userId: UserId): UserDetails {
         return userJpaRepository.findByIdOrThrow(userId.id).toUserDetails()
     }
@@ -63,17 +59,10 @@ class UserRepositoryImpl(
             userEntity.toUserDetails()
         } else {
             var userEntity = userJpaRepository.findByIdOrThrow(userDetails.id.id)
-            userEntity= userEntity.applyChanges(userDetails)
+            userEntity = userEntity.applyChanges(userDetails)
             userEntity = userJpaRepository.save(userEntity)
             userEntity.toUserDetails()
         }
-    }
-
-    override fun save(userGoogleCredential: UserGoogleCredential): UserGoogleCredential {
-        var userEntity = userJpaRepository.findByIdOrThrow(userGoogleCredential.userId.id)
-        userEntity.applyChanges(userGoogleCredential.googleCredential.encrypt(googleTokenEncryptor))
-        userEntity = userJpaRepository.save(userEntity)
-        return userGoogleCredential.copy(googleCredential = userEntity.googleCredential!!)
     }
 
     override fun save(userDeviceRegistrations: UserDeviceRegistrations): UserDeviceRegistrations {

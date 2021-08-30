@@ -5,13 +5,12 @@ import com.google.api.client.util.store.AbstractDataStore
 import com.google.api.client.util.store.DataStore
 import com.sama.common.findByIdOrThrow
 import com.sama.integration.google.GoogleInvalidCredentialsException
-import com.sama.users.domain.GoogleCredential
+import com.sama.users.infrastructure.jpa.GoogleCredential
 import com.sama.users.infrastructure.jpa.UserJpaRepository
 import com.sama.users.infrastructure.jpa.applyChanges
 import org.apache.commons.logging.LogFactory
 import org.springframework.security.crypto.encrypt.TextEncryptor
 
-// TODO: Remove unencrypted values after all data has been migrated
 class EncryptedGoogleCredentialDataStore internal constructor(
     dataStoreId: String,
     private val userRepository: UserJpaRepository,
@@ -32,9 +31,9 @@ class EncryptedGoogleCredentialDataStore internal constructor(
             ?.let { googleCredential ->
                 val credential = StoredCredential()
                 credential.accessToken = googleCredential.accessTokenEncrypted
-                    ?.let { tokenEncryptor.decrypt(it) } ?: googleCredential.accessToken
+                    ?.let { tokenEncryptor.decrypt(it) }
                 credential.refreshToken = googleCredential.refreshTokenEncrypted
-                    ?.let { tokenEncryptor.decrypt(it) } ?: googleCredential.refreshToken
+                    ?.let { tokenEncryptor.decrypt(it) }
                 credential.expirationTimeMilliseconds = googleCredential.expirationTimeMs
                 credential
             }
@@ -64,6 +63,12 @@ class EncryptedGoogleCredentialDataStore internal constructor(
         return this
     }
 
+    private fun StoredCredential.isUsable(): Boolean {
+        // access token sent as null when credentials are invalidated or permissions
+        // are removed
+        return accessToken != null
+    }
+
     override fun values(): Collection<StoredCredential> {
         throw UnsupportedOperationException("Unsupported")
     }
@@ -74,11 +79,5 @@ class EncryptedGoogleCredentialDataStore internal constructor(
 
     override fun delete(id: String): DataStore<StoredCredential> {
         throw UnsupportedOperationException("Unsupported: modify GoogleCredentials directly via UserEntity")
-    }
-
-    private fun StoredCredential.isUsable(): Boolean {
-        // access token sent as null when credentials are invalidated or permissions
-        // are removed
-        return accessToken != null
     }
 }

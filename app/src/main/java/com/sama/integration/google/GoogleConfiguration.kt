@@ -47,12 +47,19 @@ class GoogleConfiguration() {
     }
 
     @Bean
+    fun googleCredentialDataStoreFactory(
+        userRepository: UserJpaRepository,
+        googleTokenEncryptor: TextEncryptor,
+    ): GoogleCredentialDataStoreFactory {
+        return GoogleCredentialDataStoreFactory(userRepository, googleTokenEncryptor)
+    }
+
+    @Bean
     @Profile("!ci")
     fun googleAuthorizationCodeFlow(
         @Value("\${integration.google.scopes}") scopes: List<String>,
-        tokenEncryptor: TextEncryptor,
         googleClientSecrets: GoogleClientSecrets,
-        userRepository: UserJpaRepository
+        googleCredentialDataStoreFactory: GoogleCredentialDataStoreFactory,
     ): GoogleAuthorizationCodeFlow {
         return GoogleAuthorizationCodeFlow.Builder(
             googleHttpTransport(),
@@ -60,7 +67,7 @@ class GoogleConfiguration() {
             googleClientSecrets,
             scopes
         )
-            .setDataStoreFactory(GoogleCredentialDataStoreFactory(userRepository, tokenEncryptor))
+            .setDataStoreFactory(googleCredentialDataStoreFactory)
             .setAccessType("offline")
             .setApprovalPrompt("auto")
             .build()
@@ -68,10 +75,7 @@ class GoogleConfiguration() {
 
     @Bean
     fun googleIdTokenVerifier(@Value("\${integration.google.client-id}") clientId: String): GoogleIdTokenVerifier {
-        return GoogleIdTokenVerifier.Builder(
-            googleHttpTransport(),
-            googleJsonFactory()
-        )
+        return GoogleIdTokenVerifier.Builder(googleHttpTransport(), googleJsonFactory())
             .setAudience(listOf(clientId))
             .build()
     }

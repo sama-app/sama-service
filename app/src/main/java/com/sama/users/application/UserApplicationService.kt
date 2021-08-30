@@ -5,7 +5,6 @@ import com.sama.users.configuration.AccessJwtConfiguration
 import com.sama.users.configuration.RefreshJwtConfiguration
 import com.sama.users.domain.InvalidRefreshTokenException
 import com.sama.users.domain.Jwt
-import com.sama.users.domain.UserGoogleCredential
 import com.sama.users.domain.UserId
 import com.sama.users.domain.UserJwtIssuer
 import com.sama.users.domain.UserPublicId
@@ -22,7 +21,7 @@ class UserApplicationService(
     private val userRepository: UserRepository,
     private val accessJwtConfiguration: AccessJwtConfiguration,
     private val refreshJwtConfiguration: RefreshJwtConfiguration,
-    private val clock: Clock
+    private val clock: Clock,
 ) : InternalUserService, UserService {
 
     @Transactional(readOnly = true)
@@ -47,16 +46,7 @@ class UserApplicationService(
             .validate()
             .let { userRepository.save(it) }
 
-        userRepository.save(UserGoogleCredential(userDetails.id!!, command.googleCredential))
-
-        return userDetails.id
-    }
-
-    @Transactional
-    fun refreshCredentials(command: RefreshCredentialsCommand): UserId {
-        val userDetails = userRepository.findByEmailOrThrow(command.email)
-        userRepository.save(UserGoogleCredential(userDetails.id!!, command.googleCredential))
-        return userDetails.id
+        return userDetails.id!!
     }
 
     @Transactional
