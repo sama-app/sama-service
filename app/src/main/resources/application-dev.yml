@@ -48,4 +48,4 @@ integration:
 sentry:
   environment: dev
   debug: false
-  traces-sample-rate: 0.01
+  traces-sample-rate: 0.1
