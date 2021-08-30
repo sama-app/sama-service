@@ -7,13 +7,14 @@ import com.sama.common.ApplicationService
 import com.sama.integration.google.GoogleInsufficientPermissionsException
 import com.sama.integration.google.auth.GoogleCredentialDataStoreFactory
 import com.sama.integration.google.calendar.application.GoogleCalendarService
-import com.sama.integration.google.user.GoogleUserRepository
+import com.sama.integration.google.user.GoogleUserService
 import com.sama.users.application.GoogleOauth2Redirect
 import com.sama.users.application.RegisterUserCommand
 import com.sama.users.application.UpdateUserPublicDetailsCommand
 import com.sama.users.application.UserApplicationService
 import com.sama.users.application.UserSettingsApplicationService
 import com.sama.users.domain.UserAlreadyExistsException
+import com.sama.users.domain.UserId
 import org.apache.commons.logging.LogFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
@@ -26,7 +27,7 @@ class GoogleOauth2ApplicationService(
     private val googleCredentialStoreFactory: GoogleCredentialDataStoreFactory,
     private val googleAuthorizationCodeFlow: GoogleAuthorizationCodeFlow,
     private val googleIdTokenVerifier: GoogleIdTokenVerifier,
-    private val googleUserRepository: GoogleUserRepository,
+    private val googleUserService: GoogleUserService,
     private val googleCalendarService: GoogleCalendarService,
     @Value("\${integration.google.scopes}") private val requiredGoogleOauthScopes: List<String>,
 ) {
@@ -89,45 +90,40 @@ class GoogleOauth2ApplicationService(
         }.getOrThrow()
 
         // Step #2: Fetch extended user details
-        val userDetails = googleUserRepository.findUsingToken(verifiedToken.credential.accessToken!!)
+        val googleUser = googleUserService.findUsingToken(verifiedToken.credential.accessToken!!)
 
         // Step #3: Register a user with
         // settings or refresh credentials
         val userId = kotlin.runCatching {
             val userId = userApplicationService.registerUser(
-                RegisterUserCommand(verifiedToken.email, userDetails.fullName)
+                RegisterUserCommand(verifiedToken.email, googleUser.fullName)
             )
-            val credentialStore = googleCredentialStoreFactory.getDataStore<StoredCredential>(userId.id.toString())
-            credentialStore.set(userId.id.toString(), StoredCredential().apply {
-                accessToken = verifiedToken.credential.accessToken
-                refreshToken = verifiedToken.credential.refreshToken
-                expirationTimeMilliseconds = verifiedToken.credential.expirationTimeMs
-            })
-
-            userSettingsApplicationService.createUserSettings(userId)
+            persistGoogleCredentials(userId, verifiedToken)
             googleCalendarService.enableCalendarSync(userId)
+            userSettingsApplicationService.createUserSettings(userId)
             userId
         }.recover {
             if (it !is UserAlreadyExistsException) {
                 throw it
             }
             val userId = userApplicationService.findInternalByEmail(verifiedToken.email).id
-
-            val credentialStore = googleCredentialStoreFactory.getDataStore<StoredCredential>(userId.id.toString())
-            credentialStore.set(userId.id.toString(), StoredCredential().apply {
-                accessToken = verifiedToken.credential.accessToken
-                refreshToken = verifiedToken.credential.refreshToken
-                expirationTimeMilliseconds = verifiedToken.credential.expirationTimeMs
-            })
-
-            userApplicationService.updatePublicDetails(userId, UpdateUserPublicDetailsCommand(userDetails.fullName))
+            persistGoogleCredentials(userId, verifiedToken)
             googleCalendarService.enableCalendarSync(userId)
-
+            userApplicationService.updatePublicDetails(userId, UpdateUserPublicDetailsCommand(googleUser.fullName))
             userId
         }.getOrThrow()
 
         // Step #4: Issue SAMA authentication tokens
         val (accessToken, refreshToken) = userApplicationService.issueTokens(userId)
         return GoogleSignSuccessDTO(accessToken, refreshToken)
+    }
+
+    private fun persistGoogleCredentials(userId: UserId, verifiedToken: VerifiedGoogleOauth2Token) {
+        val credentialStore = googleCredentialStoreFactory.getDataStore<StoredCredential>(userId.id.toString())
+        credentialStore.set(userId.id.toString(), StoredCredential().apply {
+            accessToken = verifiedToken.credential.accessToken
+            refreshToken = verifiedToken.credential.refreshToken
+            expirationTimeMilliseconds = verifiedToken.credential.expirationTimeMs
+        })
     }
 }
