@@ -1,7 +1,9 @@
 package com.sama.common
 
 import java.time.Duration
+import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneId
 import java.util.Objects
 import java.util.Optional
 import kotlin.streams.asSequence
@@ -107,4 +109,15 @@ infix fun LocalDate.to(that: LocalDate): LocalDateRange = LocalDateRange.of(this
 infix fun LocalDate?.to(that: LocalDate?): LocalDateRange? {
     return if (this == null || that == null) null
     else LocalDateRange.of(this, that)
+}
+
+fun ZoneId.toGmtString(atDate: Instant): String {
+    val offsetSeconds = this.rules.getOffset(atDate).totalSeconds
+    val plusSign = if (offsetSeconds > 0) "+" else ""
+    val offsetString = when {
+        offsetSeconds == 0 -> ""
+        offsetSeconds.mod(3600) == 0 -> "${offsetSeconds / 3600}"
+        else -> "${offsetSeconds.toFloat() / 3600}"
+    }
+    return "GMT$plusSign$offsetString"
 }
