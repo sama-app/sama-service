@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - changeSet:
+      id: cleanup-google-tokens
+      author: balys
+      changes:
+        - dropColumn:
+            schemaName: sama
+            tableName: user_google_credential
+            columns:
+              - column:
+                  name: google_access_token
+              - column:
+                  name: google_refresh_token
