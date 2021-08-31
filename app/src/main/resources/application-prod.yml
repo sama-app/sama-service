@@ -71,7 +71,7 @@ integration:
         ibi: com.meetsama.app # BundleID
         ifl: https://testflight.apple.com/join/F4cncGnA # TODO: removed when released
         isi: # TODO: AppStoreID when released
-        efr: 1 # Skip preview page
+        efr: 0 # Do not skip preview page
 
 sentry:
   environment: prod
