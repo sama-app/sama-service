@@ -168,7 +168,7 @@ class SyncGoogleCalendarService(
 
                 val (toAdd, toRemove) = events.partition { it.status in ACCEPTED_EVENT_STATUSES }
                 calendarEventRepository.saveAll(toAdd.toDomain(userId, calendarId, timeZone))
-                calendarEventRepository.deleteAll(toRemove.map { it.id })
+                calendarEventRepository.deleteAll(toRemove.map { it.toKey(userId, calendarId) })
 
                 calendarSync.complete(newSyncToken!!, clock)
             }

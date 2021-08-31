@@ -93,19 +93,17 @@ databaseChangeLog:
             tableName: event
             columns:
               - column:
-                  name: id
-                  type: VARCHAR
-                  constraints:
-                    nullable: false
-                    primaryKey: true
-                    primaryKeyName: PK_event_id
-              - column:
                   name: user_id
                   type: BIGINT
                   constraints:
                     nullable: false
               - column:
                   name: calendar_id
+                  type: VARCHAR
+                  constraints:
+                    nullable: false
+              - column:
+                  name: event_id
                   type: VARCHAR
                   constraints:
                     nullable: false
@@ -130,6 +128,22 @@ databaseChangeLog:
                   constraints:
                     nullable: false
 
+        - addPrimaryKey:
+            schemaName: gcal
+            tableName: event
+            columnNames: user_id, calendar_id, event_id
+            constraintName: PK_event#user_id#calendar_id#event_id
+
+        - createIndex:
+            schemaName: gcal
+            tableName: event
+            columns:
+              - column:
+                  name: user_id
+              - column:
+                  name: calendar_id
+            indexName: IDX_event#user_id#calendar_id
+
         - createIndex:
             schemaName: gcal
             tableName: event
@@ -153,16 +167,6 @@ databaseChangeLog:
               - column:
                   name: end_date_time
             indexName: IDX_user_id#calendar_id#end_date_time
-
-        - createIndex:
-            schemaName: gcal
-            tableName: event
-            columns:
-              - column:
-                  name: user_id
-              - column:
-                  name: calendar_id
-            indexName: IDX_event#user_id#calendar_id
 
         - addForeignKeyConstraint:
             baseTableSchemaName: gcal
