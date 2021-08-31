@@ -13,7 +13,6 @@ spring:
     hikari:
       minimum-idle: 20
       maximum-pool-size: 80
-      auto-commit: false
   jpa:
     show-sql: false
   cache:
