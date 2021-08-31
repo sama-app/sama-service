@@ -60,9 +60,13 @@ class SyncGoogleCalendarService(
         }
         // Fallback to making an API request to GCal API
         else {
-            val calendarService = googleServiceFactory.calendarService(userId)
-            val (events, timeZone) = calendarService.findAllEvents(calendarId, startDateTime, endDateTime)
-            events.toDomain(userId, calendarId, timeZone)
+            try {
+                val calendarService = googleServiceFactory.calendarService(userId)
+                val (events, timeZone) = calendarService.findAllEvents(calendarId, startDateTime, endDateTime)
+                events.toDomain(userId, calendarId, timeZone)
+            } catch (e: Exception) {
+                throw translatedGoogleException(e)
+            }
         }
 
         // Compute aggregate values

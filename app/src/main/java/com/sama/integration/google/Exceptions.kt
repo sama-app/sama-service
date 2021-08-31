@@ -9,7 +9,7 @@ fun translatedGoogleException(ex: Throwable): Throwable {
         return when (ex.statusCode) {
             401 -> GoogleInvalidCredentialsException(ex)
             403 -> {
-                if (ex.details.details.find { it.reason == "rateLimitExceeded" } != null) {
+                if (ex.details?.details?.find { it?.reason == "rateLimitExceeded" } != null) {
                     GoogleApiRateLimitException(ex)
                 } else {
                     GoogleInsufficientPermissionsException(ex)

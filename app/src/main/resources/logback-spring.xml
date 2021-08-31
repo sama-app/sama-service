@@ -31,15 +31,16 @@
         </root>
         <logger level="info" name="com.sama"/>
         <logger level="debug" name="org.hibernate.SQL"/>
-        <logger level="info" name="com.google.api.client.http" />
+        <logger level="debug" name="com.google.api.client.http.HttpTransport"/>
     </springProfile>
 
     <springProfile name="dev">
         <root level="info">
             <appender-ref ref="ConsoleJson"/>
         </root>
-        <logger name="com.sama" level="debug"/>
+        <logger name="com.sama" level="info"/>
         <logger name="org.hibernate.SQL" level="debug"/>
+        <logger level="debug" name="com.google.api.client.http.HttpTransport"/>
     </springProfile>
 
     <springProfile name="prod">
