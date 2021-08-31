@@ -1,6 +1,7 @@
 package com.sama.meeting.application
 
 import com.sama.common.View
+import com.sama.common.toGmtString
 import com.sama.meeting.configuration.MeetingProposalMessageModel
 import com.sama.meeting.configuration.MeetingUrlConfiguration
 import com.sama.meeting.configuration.toUrl
@@ -58,14 +59,5 @@ class MeetingInvitationView(
 
     private fun String.removeYear(): String {
         return this.replace(Regex(", \\d{4},"), "")
-    }
-
-    private fun ZoneId.toGmtString(atDate: Instant): String {
-        val offsetSeconds = this.rules.getOffset(atDate).totalSeconds
-        return if (offsetSeconds.mod(3600) == 0) {
-            "GMT+${offsetSeconds / 3600}"
-        } else {
-            "GMT+${offsetSeconds.toFloat() / 3600}"
-        }
     }
 }
