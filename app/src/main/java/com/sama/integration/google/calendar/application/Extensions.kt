@@ -5,6 +5,7 @@ import com.sama.integration.google.calendar.domain.CalendarEvent
 import com.sama.integration.google.calendar.domain.EventData
 import com.sama.integration.google.calendar.domain.GoogleCalendarDateTime
 import com.sama.integration.google.calendar.domain.GoogleCalendarEvent
+import com.sama.integration.google.calendar.domain.GoogleCalendarEventKey
 import com.sama.integration.google.calendar.domain.GoogleCalendarId
 import com.sama.integration.google.calendar.domain.attendeeCount
 import com.sama.integration.google.calendar.domain.isAllDay
@@ -20,7 +21,6 @@ import java.util.TimeZone
 
 fun ZonedDateTime.toGoogleCalendarDateTime() =
     GoogleCalendarDateTime(Date.from(this.toInstant()), TimeZone.getTimeZone(this.zone))
-
 
 fun EventDateTime.toZonedDateTime(defaultZoneId: ZoneId): ZonedDateTime {
     if (this.date != null) {
@@ -43,7 +43,15 @@ fun Collection<GoogleCalendarEvent>.toDomain(
         .map { it.toDomain(userId, calendarId, timeZone) }
 }
 
+fun GoogleCalendarEvent.toKey(userId: UserId, calendarId: GoogleCalendarId): GoogleCalendarEventKey {
+    return GoogleCalendarEventKey(userId, calendarId, id)
+}
+
 fun GoogleCalendarEvent.toDomain(userId: UserId, calendarId: GoogleCalendarId, timeZone: ZoneId): CalendarEvent {
-    return CalendarEvent(userId, calendarId, id, start.toZonedDateTime(timeZone), end.toZonedDateTime(timeZone),
-        EventData(summary, isAllDay(), attendeeCount(), recurringEventId))
+    return CalendarEvent(
+        toKey(userId, calendarId),
+        start.toZonedDateTime(timeZone),
+        end.toZonedDateTime(timeZone),
+        EventData(summary, isAllDay(), attendeeCount(), recurringEventId)
+    )
 }

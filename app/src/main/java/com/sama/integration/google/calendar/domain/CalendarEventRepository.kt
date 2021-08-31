@@ -7,12 +7,12 @@ import org.springframework.data.repository.Repository
 
 @DomainRepository
 interface CalendarEventRepository : Repository<CalendarEvent, GoogleCalendarEventId> {
-    fun find(id: GoogleCalendarEventId): CalendarEvent?
+    fun find(eventKey: GoogleCalendarEventKey): CalendarEvent?
     fun findAll(userId: UserId, calendarId: GoogleCalendarId, from: ZonedDateTime, to: ZonedDateTime): List<CalendarEvent>
 
     fun save(event: CalendarEvent)
     fun saveAll(events: Collection<CalendarEvent>)
 
-    fun deleteAll(eventIds: Collection<GoogleCalendarEventId>)
+    fun deleteAll(eventKeys: Collection<GoogleCalendarEventKey>)
     fun deleteBy(userId: UserId, calendarId: GoogleCalendarId)
 }

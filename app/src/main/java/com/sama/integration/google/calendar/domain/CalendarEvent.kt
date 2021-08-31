@@ -4,10 +4,15 @@ import com.sama.users.domain.UserId
 import java.time.ZonedDateTime
 
 
-data class CalendarEvent(
+data class GoogleCalendarEventKey(
     val userId: UserId,
     val calendarId: GoogleCalendarId,
-    val googleEventId: GoogleCalendarEventId,
+    val eventId: GoogleCalendarEventId,
+)
+
+
+data class CalendarEvent(
+    val key: GoogleCalendarEventKey,
     val startDateTime: ZonedDateTime,
     val endDateTime: ZonedDateTime,
     val eventData: EventData,

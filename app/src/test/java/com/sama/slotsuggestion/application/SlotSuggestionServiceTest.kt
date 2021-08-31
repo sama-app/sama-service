@@ -6,6 +6,7 @@ import com.sama.integration.google.calendar.application.SyncGoogleCalendarServic
 import com.sama.integration.google.calendar.domain.AggregatedData
 import com.sama.integration.google.calendar.domain.CalendarEvent
 import com.sama.integration.google.calendar.domain.EventData
+import com.sama.integration.google.calendar.domain.GoogleCalendarEventKey
 import com.sama.meeting.application.MeetingDataService
 import com.sama.slotsuggestion.configuration.HeatMapConfiguration
 import com.sama.slotsuggestion.domain.User
@@ -70,9 +71,7 @@ val fullyBlockedCalendarUser = object : Persona {
         .datesUtil(fixedDate.plusDays(14))
         .map {
             CalendarEvent(
-                userId,
-                "primary",
-                "eventID",
+                GoogleCalendarEventKey(userId, "primary", "eventID"),
                 ZonedDateTime.of(it, LocalTime.MIN, UTC),
                 ZonedDateTime.of(it, LocalTime.MAX, UTC),
                 EventData(allDay = false, attendeeCount = 2),
