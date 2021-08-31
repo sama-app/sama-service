@@ -75,7 +75,11 @@ class MeetingRepositoryImpl(
     }
 
     override fun saveAllExpired(meetings: Collection<ExpiredMeeting>) {
-        meetingJpaRepository.updateStatus(MeetingStatus.EXPIRED, meetings.map { it.meetingId.id })
+        meetings.map { it.meetingId.id }
+            .chunked(1000)
+            .forEach {
+                meetingJpaRepository.updateStatus(MeetingStatus.EXPIRED, it)
+            }
     }
 
     override fun findAllProposedSlots(
