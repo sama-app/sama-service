@@ -55,11 +55,11 @@ data class CalendarSync(
     }
 
     fun isSyncedFor(startDateTime: ZonedDateTime, endDateTime: ZonedDateTime, clock: Clock): Boolean {
-        if (lastSynced!!.plus(syncInterval).isBefore(clock.instant())) {
+        if (needsFullSync(clock)) {
             return false
         }
 
-        if (needsFullSync(clock)) {
+        if (lastSynced!!.plus(syncInterval).isBefore(clock.instant())) {
             return false
         }
 
