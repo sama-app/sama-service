@@ -106,7 +106,7 @@ class JdbcCalendarEventRepository(
                 DELETE FROM gcal.event WHERE (user_id, calendar_id, event_id) in (:event_keys)
             """,
             MapSqlParameterSource().addValue("event_keys", eventKeys
-                .map { arrayOf(it.component1(), it.component2(), it.component3()) })
+                .map { arrayOf(it.userId.id, it.calendarId, it.eventId) })
         )
     }
 
