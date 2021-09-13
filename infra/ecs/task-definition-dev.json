@@ -1,0 +1,44 @@
+{
+  "containerDefinitions": [
+    {
+      "name": "sama-service",
+      "image": "216862985054.dkr.ecr.eu-central-1.amazonaws.com/sama-service:latest",
+      "cpu": 0,
+      "portMappings": [
+        {
+          "containerPort": 3000,
+          "hostPort": 3000,
+          "protocol": "tcp"
+        }
+      ],
+      "essential": true,
+      "environment": [
+        {
+          "name": "X_JAVA_OPTS",
+          "value": "-Dspring.profiles.active=dev"
+        }
+      ],
+      "mountPoints": [],
+      "volumesFrom": [],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "dev",
+          "awslogs-region": "eu-central-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ],
+  "family": "sama-service-dev",
+  "taskRoleArn": "arn:aws:iam::216862985054:role/sama-service-ecs-dev",
+  "executionRoleArn": "arn:aws:iam::216862985054:role/ecs-task-execution-dev",
+  "networkMode": "awsvpc",
+  "volumes": [],
+  "placementConstraints": [],
+  "requiresCompatibilities": [
+    "FARGATE"
+  ],
+  "cpu": "512",
+  "memory": "1024"
+}
