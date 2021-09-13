@@ -105,3 +105,42 @@ jobs:
       - name: Undeploy Green
         run: make destroy-green ENV=dev
         if: steps.current_deployment.outputs.COLOUR == 'green'
+
+  deploy-ecs:
+    runs-on: ubuntu-latest
+    needs: [app-build]
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-central-1
+
+      - name: Init Terraform
+        run: make ecs-terraform-init ENV=dev
+
+      - name: Validate Terraform
+        run: make ecs-terraform-validate
+
+      - name: Update Infra
+        run: make ecs-update-infra ENV=dev
+
+      - name: Render Amazon ECS task definition
+        id: render
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: infra/ecs/task-definition-dev.json
+          container-name: sama-service
+          image: 216862985054.dkr.ecr.eu-central-1.amazonaws.com/sama-service:latest
+
+      - name: Deploy to Amazon ECS service
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.render.outputs.task-definition }}
+          service: sama-service
+          cluster: ecs-dev
+          wait-for-service-stability: true

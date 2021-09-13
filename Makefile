@@ -26,39 +26,54 @@ webserver-upload-to-ecr:
 	docker tag sama-webserver:latest 216862985054.dkr.ecr.eu-central-1.amazonaws.com/sama-webserver:$(VERSION)
 	docker push 216862985054.dkr.ecr.eu-central-1.amazonaws.com/sama-webserver:$(VERSION)
 
-##################
-### Deployment ###
-##################
-terraform-init: terraform-init
-	@terraform -chdir=infra/terraform init -input=false
-	@terraform -chdir=infra/terraform workspace new $(ENV) ||:
+
+######################
+### Deployment ECS ###
+######################
+ecs-terraform-init:
+	@terraform -chdir=infra/ecs/terraform init -input=false
+	@terraform -chdir=infra/ecs/terraform workspace new $(ENV) ||:
+
+ecs-terraform-validate:
+	terraform -chdir=infra/ecs/terraform fmt -check
+
+ecs-update-infra:
+	@terraform -chdir=infra/ecs/terraform workspace select $(ENV)
+	terraform -chdir=infra/ecs/terraform apply -auto-approve
+
+######################
+### Deployment EC2 ###
+######################
+terraform-init:
+	@terraform -chdir=infra/ec2/terraform init -input=false
+	@terraform -chdir=infra/ec2/terraform workspace new $(ENV) ||:
 
 terraform-validate:
-	terraform -chdir=infra/terraform fmt -check
+	terraform -chdir=infra/ec2/terraform fmt -check
 
 current-deployment:
-	@terraform -chdir=infra/terraform workspace select $(ENV) > /dev/null
-	@terraform -chdir=infra/terraform show -json | \
+	@terraform -chdir=infra/ec2/terraform workspace select $(ENV) > /dev/null
+	@terraform -chdir=infra/ec2/terraform show -json | \
 	jq -r '.values.root_module.resources[] | select (.type == "aws_lb_listener_rule") | .values.action[].forward[].target_group[] | select (.weight == 100) | .arn' | \
 	grep -o -P '(?<=sama-service-).*(?=-tg-$(ENV))'
 
 deploy:
-	@terraform -chdir=infra/terraform workspace select $(ENV)
-	terraform -chdir=infra/terraform apply -auto-approve \
+	@terraform -chdir=infra/ec2/terraform workspace select $(ENV)
+	terraform -chdir=infra/ec2/terraform apply -auto-approve \
 		-var 'enable_green_env=true' \
 		-var 'enable_blue_env=true' \
 		-var 'traffic_distribution=split'
 
 destroy-blue:
-	@terraform -chdir=infra/terraform workspace select $(ENV)
-	terraform -chdir=infra/terraform apply -auto-approve \
+	@terraform -chdir=infra/ec2/terraform workspace select $(ENV)
+	terraform -chdir=infra/ec2/terraform apply -auto-approve \
 		-var 'enable_green_env=true' \
 		-var 'enable_blue_env=false' \
 		-var 'traffic_distribution=green'
 
 destroy-green:
-	@terraform -chdir=infra/terraform workspace select $(ENV)
-	terraform -chdir=infra/terraform apply -auto-approve \
+	@terraform -chdir=infra/ec2/terraform workspace select $(ENV)
+	terraform -chdir=infra/ec2/terraform apply -auto-approve \
 		-var 'enable_green_env=false' \
 		-var 'enable_blue_env=true' \
 		-var 'traffic_distribution=blue'
