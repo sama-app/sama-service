@@ -88,9 +88,6 @@ jobs:
 #      - name: Init Terraform
 #        run: make terraform-init ENV=dev
 #
-#      - name: Validate Terraform
-#        run: make terraform-validate
-#
 #      - name: Get Current Deployment Colour
 #        id: current_deployment
 #        run: echo ::set-output name=COLOUR::$(make current-deployment ENV=dev)
@@ -122,9 +119,6 @@ jobs:
 
       - name: Init Terraform
         run: make ecs-terraform-init ENV=dev
-
-      - name: Validate Terraform
-        run: make ecs-terraform-validate
 
       - name: Update Infra
         run: make ecs-update-infra ENV=dev
