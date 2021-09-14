@@ -107,13 +107,17 @@ resource "aws_ecs_task_definition" "sama_service" {
         startPeriod = 90
       }
       logConfiguration = {
-        logDriver = "awslogs",
+        logDriver = "awsfirelens"
         options = {
-          awslogs-group : terraform.workspace,
-          awslogs-region : "eu-central-1",
-          awslogs-stream-prefix : "ecs"
+          Name     = "newrelic"
+          apiKey   = "eu01xx251df55d793dd5a5d3416900aded02NRAL"
+          endpoint = "https://log-api.eu.newrelic.com/log/v1"
         }
-      },
+      }
+      dockerLabels = {
+        PROMETHEUS_EXPORTER_PATH = "/__mon/prometheus"
+        PROMETHEUS_EXPORTER_PORT = "3000"
+      }
     },
     {
       name      = "sama-webserver"
@@ -138,13 +142,32 @@ resource "aws_ecs_task_definition" "sama_service" {
         startPeriod = 15
       }
       logConfiguration = {
+        logDriver = "awsfirelens"
+        options = {
+          Name     = "newrelic"
+          apiKey   = "eu01xx251df55d793dd5a5d3416900aded02NRAL"
+          endpoint = "https://log-api.eu.newrelic.com/log/v1"
+        }
+      }
+    },
+    {
+      name      = "newrelic-logger"
+      essential = true
+      image     = "533243300146.dkr.ecr.eu-central-1.amazonaws.com/newrelic/logging-firelens-fluentbit"
+      firelensConfiguration = {
+        "type" = "fluentbit"
+        "options" : {
+          "enable-ecs-log-metadata" : "true"
+        }
+      }
+      logConfiguration = {
         logDriver = "awslogs",
         options = {
           awslogs-group : terraform.workspace,
           awslogs-region : "eu-central-1",
           awslogs-stream-prefix : "ecs"
         }
-      },
+      }
     }
   ])
 
@@ -261,8 +284,8 @@ resource "aws_appautoscaling_policy" "sama_service" {
     predefined_metric_specification {
       predefined_metric_type = "ECSServiceAverageCPUUtilization"
     }
-    target_value = 40
-    scale_in_cooldown = 60
+    target_value       = 40
+    scale_in_cooldown  = 60
     scale_out_cooldown = 60
   }
 }
@@ -311,6 +334,11 @@ resource "aws_iam_policy" "sama_service" {
         Resource : [
           local.env.secret_manager_secret_arn
         ]
+      },
+      {
+        Effect : "Allow",
+        Action : ["firehose:PutRecordBatch"],
+        Resource : ["*"]
       }
     ]
   })
