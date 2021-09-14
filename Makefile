@@ -41,6 +41,11 @@ ecs-update-infra:
 	@terraform -chdir=infra/ecs/terraform workspace select $(ENV)
 	terraform -chdir=infra/ecs/terraform apply -auto-approve
 
+ecs-pull-task-definition:
+	aws ecs describe-task-definition \
+		--task-definition sama-service-$(ENV) \
+		--query taskDefinition > task-definition.json
+
 ######################
 ### Deployment EC2 ###
 ######################
@@ -78,6 +83,9 @@ destroy-green:
 		-var 'enable_blue_env=true' \
 		-var 'traffic_distribution=blue'
 
+#################
+### Liquibase ###
+#################
 purge-db:
 	mvn liquibase:rollback -Dliquibase.rollbackCount=9999 -pl app
 
