@@ -13,7 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
 
 @ContextConfiguration(classes = [JdbcDiscoveredUserListRepository::class])
-class JdbcDiscoveredUserListRepositoryTest : BasePersistenceIT<JdbcDiscoveredUserListRepository>() {
+class JdbcDiscoveredUserListRepositoryIT : BasePersistenceIT<JdbcDiscoveredUserListRepository>() {
 
     @Autowired
     lateinit var userRepository: UserJpaRepository

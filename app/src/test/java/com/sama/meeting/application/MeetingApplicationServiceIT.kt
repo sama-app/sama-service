@@ -2,14 +2,12 @@ package com.sama.meeting.application
 
 import com.sama.calendar.application.CalendarEventConsumer
 import com.sama.calendar.application.EventApplicationService
-import com.sama.calendar.application.EventDTO
 import com.sama.calendar.application.FetchEventsDTO
-import com.sama.common.BaseApplicationTest
+import com.sama.common.BaseApplicationIntegrationTest
 import com.sama.common.NotFoundException
 import com.sama.comms.application.CommsEventConsumer
 import com.sama.meeting.domain.MeetingCode
 import com.sama.meeting.domain.MeetingConfirmedEvent
-import com.sama.meeting.domain.MeetingSlotUnavailableException
 import com.sama.slotsuggestion.application.SlotSuggestionRequest
 import com.sama.slotsuggestion.application.SlotSuggestionResponse
 import com.sama.slotsuggestion.application.SlotSuggestionService
@@ -23,13 +21,12 @@ import org.junit.jupiter.api.assertThrows
 import org.mockito.kotlin.any
 import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.verify
-import org.mockito.kotlin.verifyZeroInteractions
 import org.mockito.kotlin.whenever
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.security.access.AccessDeniedException
 
-class MeetingApplicationServiceTest : BaseApplicationTest() {
+class MeetingApplicationServiceIT : BaseApplicationIntegrationTest() {
 
     @MockBean
     lateinit var slotSuggestionService: SlotSuggestionService
