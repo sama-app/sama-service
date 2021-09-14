@@ -164,18 +164,18 @@ resource "aws_ecs_service" "sama_service" {
 
   capacity_provider_strategy {
     capacity_provider = "FARGATE"
-    weight = local.env.fargate_weight
-    base = local.env.fargate_instance_base
+    weight            = local.env.fargate_weight
+    base              = local.env.fargate_instance_base
   }
 
   capacity_provider_strategy {
     capacity_provider = "FARGATE_SPOT"
-    weight = local.env.fargate_spot_weight
-    base = local.env.fargate_spot_instance_base
+    weight            = local.env.fargate_spot_weight
+    base              = local.env.fargate_spot_instance_base
   }
 
   deployment_circuit_breaker {
-    enable = true
+    enable   = true
     rollback = true
   }
 
