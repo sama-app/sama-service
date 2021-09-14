@@ -94,6 +94,7 @@ jobs:
 #
 #      - name: Deploy
 #        run: make deploy ENV=dev
+#        timeout-minutes: 10
 #
 #      - name: Undeploy Blue
 #        run: make destroy-blue ENV=dev
@@ -149,3 +150,4 @@ jobs:
           service: sama-service
           cluster: ecs-dev
           wait-for-service-stability: true
+        timeout-minutes: 10

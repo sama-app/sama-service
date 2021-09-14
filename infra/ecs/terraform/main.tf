@@ -16,7 +16,7 @@ resource "aws_lb_target_group" "sama_service" {
   protocol             = "HTTP"
   port                 = 8080
   vpc_id               = data.aws_vpc.selected.id
-  deregistration_delay = 30
+  deregistration_delay = 10
   target_type          = "ip"
 
   health_check {
@@ -104,7 +104,7 @@ resource "aws_ecs_task_definition" "sama_service" {
         command     = ["CMD-SHELL", "wget -qO- http://localhost:3000/__mon/health  || exit 1"]
         interval    = 15
         retries     = 5
-        startPeriod = 120
+        startPeriod = 90
       }
       logConfiguration = {
         logDriver = "awslogs",
@@ -160,7 +160,7 @@ resource "aws_ecs_service" "sama_service" {
   task_definition                   = aws_ecs_task_definition.sama_service.arn
   desired_count                     = 0
   depends_on                        = [aws_iam_policy.sama_service]
-  health_check_grace_period_seconds = 180
+  health_check_grace_period_seconds = 150
 
   capacity_provider_strategy {
     capacity_provider = "FARGATE"
