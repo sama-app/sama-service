@@ -101,7 +101,7 @@ resource "aws_ecs_task_definition" "sama_service" {
         }
       ]
       healthCheck = {
-        command     = ["CMD-SHELL", "wget -qO- http://localhost:3000/__mon/health  || exit 1"]
+        command     = ["CMD-SHELL", "wget -qO- http://localhost:3000/__mon/health || exit 1"]
         interval    = 15
         retries     = 5
         startPeriod = 90
@@ -117,7 +117,7 @@ resource "aws_ecs_task_definition" "sama_service" {
     },
     {
       name      = "sama-webserver"
-      image     = "216862985054.dkr.ecr.eu-central-1.amazonaws.com/sama-webserver:test"
+      image     = "216862985054.dkr.ecr.eu-central-1.amazonaws.com/sama-webserver:latest"
       essential = true
       portMappings = [
         {
@@ -240,6 +240,31 @@ module "security_group" {
   ]
 
   tags = local.tags
+}
+
+resource "aws_appautoscaling_target" "sama_service" {
+  max_capacity       = 5
+  min_capacity       = 1
+  resource_id        = "service/${data.aws_ecs_cluster.selected.cluster_name}/${aws_ecs_service.sama_service.name}"
+  scalable_dimension = "ecs:service:DesiredCount"
+  service_namespace  = "ecs"
+}
+
+resource "aws_appautoscaling_policy" "sama_service" {
+  name               = "sama-service-ecs-${terraform.workspace}"
+  policy_type        = "TargetTrackingScaling"
+  resource_id        = aws_appautoscaling_target.sama_service.resource_id
+  scalable_dimension = aws_appautoscaling_target.sama_service.scalable_dimension
+  service_namespace  = aws_appautoscaling_target.sama_service.service_namespace
+
+  target_tracking_scaling_policy_configuration {
+    predefined_metric_specification {
+      predefined_metric_type = "ECSServiceAverageCPUUtilization"
+    }
+    target_value = 40
+    scale_in_cooldown = 60
+    scale_out_cooldown = 60
+  }
 }
 
 ###########
