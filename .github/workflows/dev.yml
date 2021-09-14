@@ -65,50 +65,50 @@ jobs:
       - name: Upload to ECR
         run: make webserver-upload-to-ecr VERSION=latest
 
-  deploy:
-    needs: [app-build, webserver-build]
-    runs-on: ubuntu-latest
-    if: "!contains(github.event.head_commit.message, '[deploy skip]')"
-
-    steps:
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: eu-central-1
-
-      - uses: actions/checkout@v2
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v1
-        with:
-          terraform_wrapper: false
-
-      - name: Init Terraform
-        run: make terraform-init ENV=dev
-
-      - name: Validate Terraform
-        run: make terraform-validate
-
-      - name: Get Current Deployment Colour
-        id: current_deployment
-        run: echo ::set-output name=COLOUR::$(make current-deployment ENV=dev)
-
-      - name: Deploy
-        run: make deploy ENV=dev
-
-      - name: Undeploy Blue
-        run: make destroy-blue ENV=dev
-        if: steps.current_deployment.outputs.COLOUR == 'blue'
-
-      - name: Undeploy Green
-        run: make destroy-green ENV=dev
-        if: steps.current_deployment.outputs.COLOUR == 'green'
+#  deploy-ec2:
+#    needs: [app-build, webserver-build]
+#    runs-on: ubuntu-latest
+#    if: "!contains(github.event.head_commit.message, '[deploy skip]')"
+#
+#    steps:
+#      - name: Configure AWS credentials
+#        uses: aws-actions/configure-aws-credentials@v1
+#        with:
+#          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#          aws-region: eu-central-1
+#
+#      - uses: actions/checkout@v2
+#
+#      - name: Setup Terraform
+#        uses: hashicorp/setup-terraform@v1
+#        with:
+#          terraform_wrapper: false
+#
+#      - name: Init Terraform
+#        run: make terraform-init ENV=dev
+#
+#      - name: Validate Terraform
+#        run: make terraform-validate
+#
+#      - name: Get Current Deployment Colour
+#        id: current_deployment
+#        run: echo ::set-output name=COLOUR::$(make current-deployment ENV=dev)
+#
+#      - name: Deploy
+#        run: make deploy ENV=dev
+#
+#      - name: Undeploy Blue
+#        run: make destroy-blue ENV=dev
+#        if: steps.current_deployment.outputs.COLOUR == 'blue'
+#
+#      - name: Undeploy Green
+#        run: make destroy-green ENV=dev
+#        if: steps.current_deployment.outputs.COLOUR == 'green'
 
   deploy-ecs:
     runs-on: ubuntu-latest
-    needs: [app-build]
+    needs: [app-build, webserver-build]
 
     steps:
       - uses: actions/checkout@v2
@@ -129,18 +129,29 @@ jobs:
       - name: Update Infra
         run: make ecs-update-infra ENV=dev
 
-      - name: Render Amazon ECS task definition
-        id: render
+      - name: Pull ECS task definition
+        run: make ecs-pull-task-definition ENV=dev
+
+      - name: Render sama-service task definition
+        id: render-service
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
-          task-definition: infra/ecs/task-definition-dev.json
+          task-definition: task-definition.json
           container-name: sama-service
           image: 216862985054.dkr.ecr.eu-central-1.amazonaws.com/sama-service:latest
+
+      - name: Render sama-webserver task definition
+        id: render-webserver
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: ${{ steps.render-service.outputs.task-definition }}
+          container-name: sama-webserver
+          image: 216862985054.dkr.ecr.eu-central-1.amazonaws.com/sama-webserver:latest
 
       - name: Deploy to Amazon ECS service
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
-          task-definition: ${{ steps.render.outputs.task-definition }}
+          task-definition: ${{ steps.render-webserver.outputs.task-definition }}
           service: sama-service
           cluster: ecs-dev
           wait-for-service-stability: true

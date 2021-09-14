@@ -79,7 +79,7 @@ resource "aws_lb_listener_rule" "sama-service" {
 
   condition {
     path_pattern {
-      values = ["/api/*"]
+      values = ["/api-ec2/*"]
     }
   }
   condition {
