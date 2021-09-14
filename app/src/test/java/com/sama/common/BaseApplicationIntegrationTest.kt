@@ -23,7 +23,7 @@ import org.testcontainers.junit.jupiter.Testcontainers
 @Testcontainers
 @ExtendWith(SpringExtension::class)
 @SpringBootTest(classes = [AppTestConfiguration::class, IntegrationOverrides::class])
-class BaseApplicationTest {
+class BaseApplicationIntegrationTest {
 
     companion object {
         @Container

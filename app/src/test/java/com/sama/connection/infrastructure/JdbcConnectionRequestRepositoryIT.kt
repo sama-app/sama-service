@@ -19,7 +19,7 @@ import org.springframework.test.context.ContextConfiguration
 
 
 @ContextConfiguration(classes = [JdbcConnectionRequestRepository::class])
-class JdbcConnectionRequestRepositoryTest : BasePersistenceIT<JdbcConnectionRequestRepository>() {
+class JdbcConnectionRequestRepositoryIT : BasePersistenceIT<JdbcConnectionRequestRepository>() {
     @Autowired
     lateinit var userRepository: UserJpaRepository
 

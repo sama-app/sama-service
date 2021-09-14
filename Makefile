@@ -2,7 +2,7 @@
 ### App ###
 ###########
 app-build:
-	@mvn --batch-mode clean install -Dspring.profiles.active=ci -pl app
+	@mvn --batch-mode clean install -DskipITs -Dspring.profiles.active=ci -pl app
 
 app-verify:
 	@mvn --batch-mode verify -Dspring.profiles.active=ci -pl app

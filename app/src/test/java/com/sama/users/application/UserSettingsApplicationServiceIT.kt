@@ -1,10 +1,8 @@
 package com.sama.users.application
 
-import com.sama.common.BaseApplicationTest
-import com.sama.users.domain.UserSettings
+import com.sama.common.BaseApplicationIntegrationTest
 import com.sama.users.domain.UserSettingsDefaults
 import com.sama.users.domain.UserSettingsDefaultsRepository
-import com.sama.users.domain.WorkingHours
 import java.time.DayOfWeek.FRIDAY
 import java.time.DayOfWeek.MONDAY
 import java.time.DayOfWeek.THURSDAY
@@ -21,7 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.MockBean
 
 
-class UserSettingsApplicationServiceTest : BaseApplicationTest() {
+class UserSettingsApplicationServiceIT : BaseApplicationIntegrationTest() {
 
     @MockBean
     lateinit var userSettingsDefaultsRepository: UserSettingsDefaultsRepository
