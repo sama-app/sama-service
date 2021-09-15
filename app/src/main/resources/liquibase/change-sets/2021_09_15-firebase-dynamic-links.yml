@@ -1,0 +1,27 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-firebase-dynamic-links
+      author: balys
+      changes:
+        - createTable:
+            schemaName: sama
+            tableName: firebase_dynamic_link
+            columns:
+              - column:
+                  name: key
+                  type: VARCHAR
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: PK_meeting_firebase_dynamic_link_key
+              - column:
+                  name: dynamic_link
+                  type: VARCHAR
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false

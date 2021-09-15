@@ -67,7 +67,7 @@ class MeetingViewTest {
         val meetingTitle = "Meeting with test"
 
         val dynamicUrl = "https://meetsamatest.page.link/dynamic"
-        whenever(dynamicLinkService.generate(anyString()))
+        whenever(dynamicLinkService.generate(anyString(), anyString()))
             .thenReturn(dynamicUrl)
 
         // act
@@ -101,7 +101,7 @@ class MeetingViewTest {
             title = meetingTitle,
             appLinks = MeetingAppLinksDTO(dynamicUrl)
         )
-        verify(dynamicLinkService).generate(expectedUrl)
+        verify(dynamicLinkService).generate(meetingCode.code, expectedUrl)
 
         assertEquals(expected, actual)
     }
@@ -116,7 +116,7 @@ class MeetingViewTest {
         val meetingTitle = "Meeting with test"
 
         val dynamicUrl = "https://meetsamatest.page.link/dynamic"
-        whenever(dynamicLinkService.generate(anyString()))
+        whenever(dynamicLinkService.generate(anyString(), anyString()))
             .thenReturn(dynamicUrl)
 
         // act
@@ -145,7 +145,7 @@ class MeetingViewTest {
             title = meetingTitle,
             appLinks = MeetingAppLinksDTO(dynamicUrl)
         )
-        verify(dynamicLinkService).generate(expectedUrl)
+        verify(dynamicLinkService).generate(meetingCode.code, expectedUrl)
 
         assertEquals(expected, actual)
     }

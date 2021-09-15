@@ -8,11 +8,12 @@ import org.springframework.web.client.RestTemplate
 import org.springframework.web.util.UriComponentsBuilder
 
 interface DynamicLinkService {
-    fun generate(linkUrl: String): String
+    fun generate(key: String, url: String): String
 }
 
 class FirebaseDynamicLinkService(
     private val restTemplate: RestTemplate,
+    private val firebaseDynamicLinkRepository: FirebaseDynamicLinkRepository,
     private val dynamicLinkConfiguration: FirebaseDynamicLinkConfiguration,
     firebaseApiKey: String,
 ) : DynamicLinkService {
@@ -23,29 +24,40 @@ class FirebaseDynamicLinkService(
         .queryParam("key", firebaseApiKey)
         .toUriString()
 
-    override fun generate(linkUrl: String): String {
+    override fun generate(key: String, url: String): String {
+        // Check if URL is pre-generated
+        val cachedShortLink = firebaseDynamicLinkRepository.find(key)
+        if (cachedShortLink != null) {
+            return cachedShortLink
+        }
+
         // Manually constructed Firebase Dynamic Link
         // https://firebase.google.com/docs/dynamic-links/create-manually#parameters
         val urlBuilder = UriComponentsBuilder.newInstance()
             .scheme("https")
             .host(dynamicLinkConfiguration.fqdn)
             .path("/")
-            .queryParam("link", linkUrl)
-        for ((key, value) in dynamicLinkConfiguration.parameters.entries) {
-            if (value.isEmpty()) continue
-            urlBuilder.queryParam(key, value)
+            .queryParam("link", url)
+        for ((k, v) in dynamicLinkConfiguration.parameters.entries) {
+            if (v.isEmpty()) continue
+            urlBuilder.queryParam(k, v)
         }
 
         val longDynamicLink = urlBuilder.build().toUriString()
 
         return try {
             // Attempt to shorten the Dynamic link to acquire Analytics as they
-            // do not work on manually constructed links
+            // do not work on manually constructed links. Store them for later
+            // querying.
             // https://firebase.google.com/docs/dynamic-links/create-links
             val request = HttpEntity(DynamicLinkShortenRequest(longDynamicLink))
             val response = restTemplate.postForObject(dynamicLinkApiUri,
                 request, DynamicLinkShortenResponse::class.java)
-            response.shortLink
+            val shortLink = response.shortLink
+
+            firebaseDynamicLinkRepository.save(key, shortLink)
+
+            shortLink
         } catch (e: Exception) {
             // If that didn't work, still return a long dynamic link
             logger.error("Could not generated short dynamic link", e)

@@ -26,7 +26,7 @@ class MeetingView(
 
         val meetingUrl = proposedMeeting.meetingCode.toUrl(urlConfiguration)
         val isOwnMeeting = currentUserId?.let { it == proposedMeeting.initiatorId }
-        val dynamicAppLink = dynamicLinkService.generate(meetingUrl)
+        val dynamicAppLink = dynamicLinkService.generate(proposedMeeting.meetingCode.code, meetingUrl)
 
         return ProposedMeetingDTO(
             slots.map { it.toDTO() },

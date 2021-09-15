@@ -35,5 +35,6 @@ class FirebaseConfiguration {
     fun firebaseDynamicLinkService(
         @Value("\${integration.firebase.api-key}") apiKey: String,
         dynamicLinkConfiguration: FirebaseDynamicLinkConfiguration,
-    ) = FirebaseDynamicLinkService(firebaseRestTemplate(), dynamicLinkConfiguration, apiKey)
+        dynamicLinkRepository: FirebaseDynamicLinkRepository,
+    ) = FirebaseDynamicLinkService(firebaseRestTemplate(), dynamicLinkRepository, dynamicLinkConfiguration, apiKey)
 }
