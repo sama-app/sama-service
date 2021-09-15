@@ -23,11 +23,8 @@ jobs:
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Tag Build image for production
-        run: make app-pull-image BUILD_VERSION=$(make version)
-
-      - name: Upload to ECR
-        run: make app-upload-to-ecr BUILD_VERSION=$(make version) VERSION=production
+      - name: Tag image for production
+        run: make app-tag-ecr-image BUILD_VERSION=$(make version) VERSION=production
 
   webserver-build:
     runs-on: ubuntu-latest
@@ -45,11 +42,8 @@ jobs:
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Tag Build image for production
-        run: make webserver-pull-image BUILD_VERSION=$(make version)
-
-      - name: Upload to ECR
-        run: make webserver-upload-to-ecr BUILD_VERSION=$(make version) VERSION=production
+      - name: Tag image for production
+        run: make webserver-tag-ecr-image BUILD_VERSION=$(make version) VERSION=production
 
   deploy-ecs:
     runs-on: ubuntu-latest

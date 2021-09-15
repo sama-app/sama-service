@@ -25,11 +25,8 @@ app-upload-to-ecr:
 		IMAGE=sama-service \
 		VERSION=$(VERSION)
 
-app-pull-image:
-	$(MAKE) pull-image \
-		IMAGE_URI=216862985054.dkr.ecr.eu-central-1.amazonaws.com/sama-service \
-		IMAGE=sama-service \
-		BUILD_VERSION=$(BUILD_VERSION)
+app-tag-ecr-image:
+	$(MAKE) tag-ecr-image IMAGE=sama-service TAG=$(BUILD_VERSION) NEW_TAG=$(VERSION)
 
 #################
 ### Webserver ###
@@ -46,12 +43,8 @@ webserver-upload-to-ecr:
 		IMAGE=sama-webserver \
 		VERSION=$(VERSION)
 
-webserver-pull-image:
-	$(MAKE) pull-image \
-		IMAGE_URI=216862985054.dkr.ecr.eu-central-1.amazonaws.com/sama-webserver \
-		IMAGE=sama-webserver \
-		BUILD_VERSION=$(BUILD_VERSION)
-
+webserver-tag-ecr-image:
+	$(MAKE) tag-ecr-image IMAGE=sama-webserver TAG=$(BUILD_VERSION) NEW_TAG=$(VERSION)
 
 ##################
 ### Versioning ###
@@ -66,9 +59,11 @@ container:
 	docker pull $(IMAGE_URI):latest || true
 	docker build -t $(IMAGE) $(SOURCE)
 
-pull-image:
-	docker pull $(IMAGE_URI):$(BUILD_VERSION)
-	docker tag $(IMAGE_URI):$(BUILD_VERSION) $(IMAGE):latest
+tag-ecr-image:
+	@echo "Tagging $(IMAGE):$(TAG) with $(NEW_TAG)"
+	@aws ecr batch-get-image --repository-name $(IMAGE) --image-ids imageTag=$(TAG) --query 'images[].imageManifest' --output text > manifest.json
+	@aws ecr put-image --repository-name $(IMAGE) --image-tag $(NEW_TAG) --image-manifest file://manifest.json
+	@rm manifest.json
 
 upload-to-ecr:
 	docker tag $(IMAGE):latest $(IMAGE_URI):$(VERSION)
