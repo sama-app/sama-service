@@ -24,5 +24,11 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
-      - name: Verify
-        run: make app-verify
+      - name: Build
+        run: make app-build
+
+      - name: Test
+        run: make app-test
+
+      - name: Integration Test
+        run: make app-integration-test
