@@ -9,6 +9,7 @@ app-test:
 
 app-integration-test:
 	@mvn --batch-mode -T 1C failsafe:integration-test
+	@mvn --batch-mode -T 1C failsafe:verify
 
 app-verify: app-test app-integration-test
 
