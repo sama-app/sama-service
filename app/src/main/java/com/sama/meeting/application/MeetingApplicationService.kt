@@ -100,7 +100,7 @@ class MeetingApplicationService(
         return initiatorName?.let { "Meeting with $it" } ?: "Meeting"
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     fun loadMeetingProposal(userId: UserId?, meetingCode: MeetingCode): ProposedMeetingDTO {
         val proposedMeeting = findProposedMeetingOrThrow(meetingCode)
 

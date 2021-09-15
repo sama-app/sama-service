@@ -29,3 +29,5 @@ databaseChangeLog:
       file: classpath*:liquibase/change-sets/20210827160000-google-calendar-sync.yml
   - include:
       file: classpath*:liquibase/change-sets/20210831145000-cleanup-google-tokens.yml
+  - include:
+      file: classpath*:liquibase/change-sets/2021_09_15-firebase-dynamic-links.yml
