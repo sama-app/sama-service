@@ -95,7 +95,7 @@ jobs:
         with:
           task-definition: ${{ steps.render-webserver.outputs.task-definition }}
           service: sama-service
-          cluster: ecs-dev
+          cluster: ecs-prod
           wait-for-service-stability: true
         timeout-minutes: 10
 
