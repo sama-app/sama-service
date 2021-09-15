@@ -2,10 +2,15 @@
 ### App ###
 ###########
 app-build:
-	@mvn --batch-mode clean install -DskipITs -Dspring.profiles.active=ci -pl app
+	@mvn --batch-mode -T 1C install -DskipTests -DskipITs -Dspring.profiles.active=ci -pl app
 
-app-verify:
-	@mvn --batch-mode verify -Dspring.profiles.active=ci -pl app
+app-test:
+	@mvn --batch-mode -T 1C surefire:test -DskipITs
+
+app-integration-test:
+	@mvn --batch-mode -T 1C failsafe:integration-test
+
+app-verify: app-test app-integration-test
 
 app-container: app-build
 	$(MAKE) container \
