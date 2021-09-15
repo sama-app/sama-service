@@ -8,24 +8,65 @@ app-verify:
 	@mvn --batch-mode verify -Dspring.profiles.active=ci -pl app
 
 app-container: app-build
-	docker pull 216862985054.dkr.ecr.eu-central-1.amazonaws.com/sama-service:latest || true
-	docker build -t sama-service app/
+	$(MAKE) container \
+		IMAGE_URI=216862985054.dkr.ecr.eu-central-1.amazonaws.com/sama-service \
+		IMAGE=sama-service \
+		SOURCE=app/
 
 app-upload-to-ecr:
-	docker tag sama-service:latest 216862985054.dkr.ecr.eu-central-1.amazonaws.com/sama-service:$(VERSION)
-	docker push 216862985054.dkr.ecr.eu-central-1.amazonaws.com/sama-service:$(VERSION)
+	$(MAKE) upload-to-ecr \
+		IMAGE_URI=216862985054.dkr.ecr.eu-central-1.amazonaws.com/sama-service \
+		IMAGE=sama-service \
+		VERSION=$(VERSION)
+
+app-pull-image:
+	$(MAKE) pull-image \
+		IMAGE_URI=216862985054.dkr.ecr.eu-central-1.amazonaws.com/sama-service \
+		IMAGE=sama-service \
+		BUILD_VERSION=$(BUILD_VERSION)
 
 #################
 ### Webserver ###
 #################
 webserver-container:
-	docker pull 216862985054.dkr.ecr.eu-central-1.amazonaws.com/sama-webserver:latest || true
-	docker build -t sama-webserver webserver/
+	$(MAKE) container \
+		IMAGE_URI=216862985054.dkr.ecr.eu-central-1.amazonaws.com/sama-webserver \
+		IMAGE=sama-webserver \
+		SOURCE=webserver/
 
 webserver-upload-to-ecr:
-	docker tag sama-webserver:latest 216862985054.dkr.ecr.eu-central-1.amazonaws.com/sama-webserver:$(VERSION)
-	docker push 216862985054.dkr.ecr.eu-central-1.amazonaws.com/sama-webserver:$(VERSION)
+	$(MAKE) upload-to-ecr \
+		IMAGE_URI=216862985054.dkr.ecr.eu-central-1.amazonaws.com/sama-webserver \
+		IMAGE=sama-webserver \
+		VERSION=$(VERSION)
 
+webserver-pull-image:
+	$(MAKE) pull-image \
+		IMAGE_URI=216862985054.dkr.ecr.eu-central-1.amazonaws.com/sama-webserver \
+		IMAGE=sama-webserver \
+		BUILD_VERSION=$(BUILD_VERSION)
+
+
+##################
+### Versioning ###
+##################
+version:
+	@echo -n "b-" && git rev-parse --short HEAD
+
+##############
+### Docker ###
+##############
+container:
+	docker pull $(IMAGE_URI):latest || true
+	docker build -t $(IMAGE) $(SOURCE)
+
+pull-image:
+	docker pull $(IMAGE_URI):$(BUILD_VERSION)
+	docker tag $(IMAGE_URI):$(BUILD_VERSION) $(IMAGE):latest
+
+upload-to-ecr:
+	docker tag $(IMAGE):latest $(IMAGE_URI):$(VERSION)
+	docker push $(IMAGE_URI):$(VERSION)
 
 ######################
 ### Deployment ECS ###
