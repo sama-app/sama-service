@@ -56,7 +56,6 @@ version:
 ### Docker ###
 ##############
 container:
-	docker pull $(IMAGE_URI):latest || true
 	docker build -t $(IMAGE) $(SOURCE)
 
 tag-ecr-image:
