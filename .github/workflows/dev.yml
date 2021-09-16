@@ -114,7 +114,7 @@ jobs:
           task-definition: ${{ steps.render-webserver.outputs.task-definition }}
           service: sama-service
           cluster: ecs-dev
-          wait-for-service-stability: true
+          wait-for-service-stability: false
         timeout-minutes: 10
 
 #  deploy-ec2:
