@@ -128,8 +128,22 @@ destroy-green:
 #################
 ### Liquibase ###
 #################
-purge-db:
-	mvn liquibase:rollback -Dliquibase.rollbackCount=9999 -pl app
+liquibase-run:
+	$(MAKE) liquibase-$(ENV) CMD='update'
 
-rollback-one:
-	mvn liquibase:rollback -Dliquibase.rollbackCount=1 -pl app
+liquibase-rollback:
+	$(MAKE) liquibase-$(ENV) CMD='rollback -Dliquibase.rollbackCount=1'
+
+liquibase-local:
+	$(MAKE) liquibase-cmd ENV=local
+
+liquibase-dev:
+	@ssh -i /home/balys/.ssh/sama-dev.pem -fT -L 15432:sama-dev.cp9s2aovpufd.eu-central-1.rds.amazonaws.com:5432 ubuntu@3.68.150.223 sleep 30
+	$(MAKE) liquibase-cmd ENV=dev
+
+liquibase-prod:
+	@ssh -i /home/balys/.ssh/sama-dev.pem -fT -L 15432:sama-prod.cp9s2aovpufd.eu-central-1.rds.amazonaws.com:5432 ubuntu@18.198.25.70 sleep 30
+	$(MAKE) liquibase-cmd ENV=prod
+
+liquibase-cmd:
+	@mvn liquibase:$(CMD) -Denv=$(ENV) -pl app

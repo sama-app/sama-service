@@ -474,7 +474,7 @@
                 <artifactId>liquibase-maven-plugin</artifactId>
                 <version>4.3.5</version>
                 <configuration>
-                    <propertyFile>src/main/resources/liquibase-plugin.properties</propertyFile>
+                    <propertyFile>src/main/resources/liquibase-plugin-${env}.properties</propertyFile>
                 </configuration>
             </plugin>
 

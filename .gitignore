@@ -42,3 +42,7 @@ override.tf.json
 *_override.tf.json
 .terraformrc
 terraform.rc
+
+### Liquibase ###
+app/src/main/resources/liquibase-plugin-dev.properties
+app/src/main/resources/liquibase-plugin-prod.properties
