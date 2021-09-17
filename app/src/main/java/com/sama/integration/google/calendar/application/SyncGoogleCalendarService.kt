@@ -28,6 +28,7 @@ import java.time.ZonedDateTime
 import java.util.UUID
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.dao.CannotAcquireLockException
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -146,8 +147,13 @@ class SyncGoogleCalendarService(
 
     @Transactional
     private fun syncUserCalendar(userId: UserId, calendarId: GoogleCalendarId, forceFullSync: Boolean = false) {
-        val calendarSync = calendarSyncRepository.findAndLock(userId, calendarId)
-            ?: CalendarSync.new(userId, calendarId, clock)
+        val calendarSync = try {
+            calendarSyncRepository.findAndLock(userId, calendarId)
+                ?: CalendarSync.new(userId, calendarId, clock)
+        } catch (e: CannotAcquireLockException) {
+            logger.info("User#${userId.id} Calendar#${calendarId} sync already in progress...")
+            return
+        }
 
         logger.info("Syncing User#${userId.id} Calendar#${calendarId}...")
         val calendarService = googleServiceFactory.calendarService(userId)
