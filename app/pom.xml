@@ -371,7 +371,7 @@
                         <plugin>jpa</plugin>
                         <plugin>spring</plugin>
                     </compilerPlugins>
-                    <jvmTarget>11</jvmTarget>
+                    <jvmTarget>16</jvmTarget>
                 </configuration>
                 <dependencies>
                     <dependency>
