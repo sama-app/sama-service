@@ -1,6 +1,7 @@
 package com.sama
 
 import io.undertow.UndertowOptions.ENABLE_HTTP2
+import java.time.Clock
 import org.springframework.boot.SpringApplication
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.autoconfigure.domain.EntityScan
@@ -13,7 +14,6 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories
 import org.springframework.scheduling.annotation.EnableScheduling
-import java.time.Clock
 
 
 @SpringBootApplication(
