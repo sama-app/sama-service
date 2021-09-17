@@ -15,6 +15,8 @@ spring:
       maximum-pool-size: 80
   jpa:
     show-sql: false
+  task:
+    scheduling.pool.size: 2
   cache:
     cache-names: blocks-by-user
     caffeine:

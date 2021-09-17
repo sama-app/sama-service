@@ -42,6 +42,8 @@ spring:
           time_zone: UTC
         temp:
           use_jdbc_metadata_defaults: false
+  task:
+    scheduling.pool.size: 1
   liquibase:
     enabled: true
     change-log: liquibase/db.changelog-sama.yml
