@@ -30,7 +30,7 @@ interface MeetingJpaRepository : JpaRepository<MeetingEntity, Long> {
         "SELECT m.id " +
                 "FROM MeetingEntity m JOIN MeetingProposedSlotEntity ps ON m.id = ps.meetingId " +
                 "WHERE m.status = 'PROPOSED' GROUP BY m.id " +
-                "HAVING max(ps.startDateTime) < :expiryDateTime"
+                "HAVING max(ps.endDateTime) < :expiryDateTime"
     )
     fun findAllIdsExpiring(@Param("expiryDateTime") expiryDateTime: ZonedDateTime): Collection<Long>
 
