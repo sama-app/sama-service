@@ -218,12 +218,12 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
             Duration.ofMinutes(60),
             listOf(
                 MeetingSlot(
-                    ZonedDateTime.now(clock).minusMinutes(30),
-                    ZonedDateTime.now(clock).plusMinutes(30)
+                    ZonedDateTime.now(clock).minusHours(2),
+                    ZonedDateTime.now(clock).minusHours(1)
                 ),
                 MeetingSlot(
-                    ZonedDateTime.now(clock).plusMinutes(1),
-                    ZonedDateTime.now(clock).plusMinutes(61)
+                    ZonedDateTime.now(clock).minusMinutes(30),
+                    ZonedDateTime.now(clock).plusMinutes(30)
                 )
             ),
             MeetingCode("one"),
@@ -242,8 +242,8 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
                     ZonedDateTime.now(clock).minusHours(1)
                 ),
                 MeetingSlot(
-                    ZonedDateTime.now(clock).minusMinutes(30),
-                    ZonedDateTime.now(clock).plusMinutes(30)
+                    ZonedDateTime.now(clock).minusMinutes(61),
+                    ZonedDateTime.now(clock).minusMinutes(1)
                 )
             ),
             MeetingCode("two"),
