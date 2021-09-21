@@ -22,16 +22,19 @@ class MeetingView(
         proposedMeeting: ProposedMeeting,
         slots: List<MeetingSlot>,
     ): ProposedMeetingDTO {
-        val initiator = userService.find(proposedMeeting.initiatorId)
+        val users = userService.findAll(listOfNotNull(proposedMeeting.initiatorId, proposedMeeting.recipientId))
 
         val meetingUrl = proposedMeeting.meetingCode.toUrl(urlConfiguration)
-        val isOwnMeeting = currentUserId?.let { it == proposedMeeting.initiatorId }
+        val isOwnMeeting = currentUserId?.let { it == proposedMeeting.initiatorId || it == proposedMeeting.recipientId }
+        val isReadOnly = !proposedMeeting.isModifiableBy(currentUserId)
         val dynamicAppLink = dynamicLinkService.generate(proposedMeeting.meetingCode.code, meetingUrl)
 
         return ProposedMeetingDTO(
             slots.map { it.toDTO() },
-            initiator,
+            users[proposedMeeting.initiatorId]!!,
+            users[proposedMeeting.recipientId],
             isOwnMeeting,
+            isReadOnly,
             proposedMeeting.meetingTitle,
             MeetingAppLinksDTO(dynamicAppLink)
         )

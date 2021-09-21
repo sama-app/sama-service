@@ -20,12 +20,14 @@ import com.sama.meeting.infrastructure.jpa.MeetingIntentEntity
 import com.sama.meeting.infrastructure.jpa.MeetingIntentJpaRepository
 import com.sama.meeting.infrastructure.jpa.MeetingJpaRepository
 import com.sama.meeting.infrastructure.jpa.MeetingRecipientEntity
+import com.sama.meeting.infrastructure.jpa.MeetingSlotStatus
 import com.sama.meeting.infrastructure.jpa.findByCodeOrThrow
 import com.sama.meeting.infrastructure.jpa.findLockedByCodeOrThrow
 import com.sama.users.domain.UserId
 import com.sama.users.infrastructure.toUserId
 import java.time.Duration
 import java.time.ZonedDateTime
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Component
 
 @Component
@@ -65,7 +67,12 @@ class MeetingRepositoryImpl(
                 meetingEntity.applyChanges(meeting)
             }
             is ProposedMeeting -> {
-                meetingEntity = MeetingEntity.new(meeting)
+                val entity = meetingJpaRepository.findByIdOrNull(meeting.meetingId.id)
+                if (entity == null) {
+                    meetingEntity = MeetingEntity.new(meeting)
+                } else {
+                    meetingEntity = entity.applyChanges(meeting)
+                }
             }
             is ExpiredMeeting -> throw UnsupportedOperationException()
             is RejectedMeeting -> throw UnsupportedOperationException()
@@ -97,14 +104,18 @@ class MeetingRepositoryImpl(
     ): Meeting {
         return when (meetingEntity.status!!) {
             MeetingStatus.PROPOSED -> {
-                val proposedSlots = meetingEntity.proposedSlots
-                    .map { MeetingSlot(it.startDateTime, it.endDateTime) }
+                val (proposedSlots, rejectedSlots) = meetingEntity.proposedSlots
+                    .partition { it.status == MeetingSlotStatus.PROPOSED }
+
                 ProposedMeeting(
                     meetingEntity.id!!.toMeetingId(),
                     meetingIntentEntity.id!!.toMeetingIntentId(),
-                    meetingIntentEntity.initiatorId!!.toUserId(),
                     Duration.ofMinutes(meetingIntentEntity.durationMinutes!!),
-                    proposedSlots,
+                    meetingIntentEntity.initiatorId!!.toUserId(),
+                    meetingEntity.meetingRecipient?.recipientId?.let { UserId(it) },
+                    meetingEntity.currentActor!!,
+                    proposedSlots.map { MeetingSlot(it.startDateTime, it.endDateTime) },
+                    rejectedSlots.map { MeetingSlot(it.startDateTime, it.endDateTime) },
                     meetingEntity.code!!.toMeetingCode(),
                     meetingEntity.title!!
                 )

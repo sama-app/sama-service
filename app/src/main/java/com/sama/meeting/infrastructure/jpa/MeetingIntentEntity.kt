@@ -4,7 +4,6 @@ import com.sama.common.AggregateRoot
 import com.sama.common.Factory
 import com.sama.meeting.domain.MeetingIntent
 import com.sama.meeting.domain.MeetingIntentId
-import com.sama.users.domain.UserId
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZonedDateTime
@@ -36,8 +35,9 @@ class MeetingIntentEntity {
             meetingEntity.id = meetingIntent.meetingIntentId.id
             meetingEntity.code = UUID.randomUUID()
             meetingEntity.initiatorId = meetingIntent.initiatorId.id
+            meetingEntity.recipientId = meetingIntent.recipientId?.id
             meetingEntity.durationMinutes = meetingIntent.duration.toMinutes()
-            meetingEntity.timezone = meetingIntent.timezone
+            meetingEntity.timezone = meetingIntent.recipientTimeZone
             val slots = meetingIntent.suggestedSlots.map {
                 MeetingSuggestedSlotEntity(
                     null,
@@ -86,7 +86,7 @@ class MeetingIntentEntity {
 
 @Entity
 @Table(schema = "sama", name = "meeting_suggested_slot")
-data class MeetingSuggestedSlotEntity(
+class MeetingSuggestedSlotEntity(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long? = null,
     private val meetingIntentId: MeetingIntentId,

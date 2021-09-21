@@ -38,7 +38,9 @@ fun MeetingSlotDTO.toValueObject(): MeetingSlot {
 data class ProposedMeetingDTO(
     val proposedSlots: List<MeetingSlotDTO>,
     val initiator: UserPublicDTO,
+    val recipient: UserPublicDTO?,
     val isOwnMeeting: Boolean?,
+    val isReadOnly: Boolean,
     val title: String,
     val appLinks: MeetingAppLinksDTO?
 )

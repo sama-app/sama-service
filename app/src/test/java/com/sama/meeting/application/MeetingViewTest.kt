@@ -2,6 +2,7 @@ package com.sama.meeting.application
 
 import com.sama.integration.firebase.DynamicLinkService
 import com.sama.meeting.configuration.MeetingUrlConfiguration
+import com.sama.meeting.domain.Actor
 import com.sama.meeting.domain.MeetingCode
 import com.sama.meeting.domain.MeetingId
 import com.sama.meeting.domain.MeetingIntentId
@@ -62,8 +63,8 @@ class MeetingViewTest {
         val currentUserId = UserId(10)
         val initiatorId = UserId(1)
         val initiator = UserPublicDTO(UserPublicId.random(), "test", "test@meetsama.com")
-        whenever(userService.find(initiatorId))
-            .thenReturn(initiator)
+        whenever(userService.findAll(listOf(initiatorId)))
+            .thenReturn(mapOf(initiatorId to initiator))
         val meetingTitle = "Meeting with test"
 
         val dynamicUrl = "https://meetsamatest.page.link/dynamic"
@@ -79,9 +80,12 @@ class MeetingViewTest {
         val actual = underTest.render(
             currentUserId,
             ProposedMeeting(
-                MeetingId(21), MeetingIntentId(11), initiatorId,
-                Duration.ofMinutes(15),
+                MeetingId(21), MeetingIntentId(11), Duration.ofMinutes(15),
+                initiatorId,
+                null,
+                Actor.RECIPIENT,
                 proposedSlots,
+                emptyList(),
                 meetingCode,
                 meetingTitle
             ),
@@ -97,6 +101,8 @@ class MeetingViewTest {
                 initiator.fullName,
                 initiator.email
             ),
+            recipient = null,
+            isReadOnly = false,
             isOwnMeeting = false,
             title = meetingTitle,
             appLinks = MeetingAppLinksDTO(dynamicUrl)
@@ -111,8 +117,8 @@ class MeetingViewTest {
         val currentUserId = UserId(1)
         val initiatorId = UserId(1)
         val initiator = UserPublicDTO(UserPublicId.random(), "test", "test@meetsama.com")
-        whenever(userService.find(initiatorId))
-            .thenReturn(initiator)
+        whenever(userService.findAll(listOf(initiatorId)))
+            .thenReturn(mapOf(initiatorId to initiator))
         val meetingTitle = "Meeting with test"
 
         val dynamicUrl = "https://meetsamatest.page.link/dynamic"
@@ -123,8 +129,11 @@ class MeetingViewTest {
         val actual = underTest.render(
             currentUserId,
             ProposedMeeting(
-                MeetingId(21), MeetingIntentId(11), initiatorId,
-                Duration.ofMinutes(15),
+                MeetingId(21), MeetingIntentId(11), Duration.ofMinutes(15),
+                initiatorId,
+                null,
+                Actor.RECIPIENT,
+                emptyList(),
                 emptyList(),
                 meetingCode,
                 meetingTitle
@@ -141,6 +150,8 @@ class MeetingViewTest {
                 initiator.fullName,
                 initiator.email
             ),
+            recipient = null,
+            isReadOnly = false,
             isOwnMeeting = true,
             title = meetingTitle,
             appLinks = MeetingAppLinksDTO(dynamicUrl)
