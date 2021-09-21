@@ -13,3 +13,9 @@ annotation class Factory
 annotation class DomainEntity
 annotation class DomainService
 annotation class ValueObject
+
+/**
+ * Indicates that the API should not be exposed publicly and likely
+ * has looser security requirements
+ */
+annotation class InternalApi

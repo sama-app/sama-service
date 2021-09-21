@@ -55,8 +55,17 @@ class JdbcUserConnectionRepositoryIT : BasePersistenceIT<JdbcUserConnectionRepos
     }
 
     @Test
-    fun delete() {
+    fun `save and check if connection exists`() {
+        val userConnection1 = UserConnection(userOne.id!!.toUserId(), userTwo.id!!.toUserId())
 
+        underTest.save(userConnection1)
+
+        assertThat(underTest.exists(userOne.id!!.toUserId(), userTwo.id!!.toUserId())).isTrue()
+        assertThat(underTest.exists(userOne.id!!.toUserId(), userThree.id!!.toUserId())).isFalse()
+    }
+
+    @Test
+    fun delete() {
         val userConnection1 = UserConnection(userOne.id!!.toUserId(), userTwo.id!!.toUserId())
         val userConnection2 = UserConnection(userOne.id!!.toUserId(), userThree.id!!.toUserId())
 

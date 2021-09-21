@@ -19,7 +19,6 @@ import java.time.Clock
 import java.time.Duration.ofMinutes
 import java.time.ZoneOffset.UTC
 import java.time.ZonedDateTime
-import liquibase.pro.packaged.n
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -716,7 +715,7 @@ class MeetingApplicationServiceIT : BaseApplicationIntegrationTest() {
         }
 
         // Connect with initiator and propose new slots
-        whenever(userConnectionService.createConnection(CreateConnectionCommand(recipient().id!!, initiator().id!!)))
+        whenever(userConnectionService.createUserConnection(CreateConnectionCommand(recipient().id!!, initiator().id!!)))
             .thenReturn(true)
 
         val meetingCode = meetingInvitationDTO.meetingCode

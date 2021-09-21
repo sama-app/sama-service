@@ -5,6 +5,7 @@ import com.sama.connection.domain.ConnectionRequest
 import com.sama.connection.domain.ConnectionRequestId
 import com.sama.connection.domain.ConnectionRequestRepository
 import com.sama.connection.domain.DiscoveredUserListRepository
+import com.sama.connection.domain.UserAlreadyConnectedException
 import com.sama.connection.domain.UserConnection
 import com.sama.connection.domain.UserConnectionRepository
 import com.sama.users.application.InternalUserService
@@ -26,7 +27,7 @@ class UserConnectionApplicationService(
 
     @Transactional(readOnly = true)
     override fun isConnected(userOneId: UserId, userTwoId: UserId): Boolean {
-        TODO("Not yet implemented")
+        return userConnectionRepository.exists(userOneId, userTwoId)
     }
 
     @Transactional(readOnly = true)
@@ -37,8 +38,15 @@ class UserConnectionApplicationService(
     }
 
     @Transactional
-    override fun createConnection(createConnectionCommand: CreateConnectionCommand): Boolean {
-        TODO("Not yet implemented")
+    override fun createUserConnection(createConnectionCommand: CreateConnectionCommand): Boolean {
+        val (userOneId, userTwoId) = createConnectionCommand
+        if (isConnected(userOneId, userTwoId)) {
+            throw UserAlreadyConnectedException(userOneId, userTwoId)
+        }
+
+        val userConnection = UserConnection(userOneId, userTwoId)
+        userConnectionRepository.save(userConnection)
+        return true
     }
 
     @Transactional(readOnly = true)

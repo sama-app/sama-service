@@ -7,8 +7,8 @@ import org.springframework.data.repository.Repository
 @DomainRepository
 interface UserConnectionRepository : Repository<UserConnection, UserId> {
     fun findConnectedUserIds(userId: UserId): Collection<UserId>
+    fun exists(userOneId: UserId, userTwoId: UserId): Boolean
 
     fun save(userConnection: UserConnection)
-
     fun delete(userConnection: UserConnection)
 }

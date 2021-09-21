@@ -7,6 +7,7 @@ import com.sama.common.toMinutes
 import com.sama.comms.application.CommsEventConsumer
 import com.sama.connection.application.CreateConnectionCommand
 import com.sama.connection.application.UserConnectionService
+import com.sama.connection.domain.UserAlreadyConnectedException
 import com.sama.meeting.domain.ConfirmedMeeting
 import com.sama.meeting.domain.EmailRecipient
 import com.sama.meeting.domain.ExpiredMeeting
@@ -197,7 +198,10 @@ class MeetingApplicationService(
         if (!proposedMeeting.isModifiableBy(userId)) {
             throw AccessDeniedException("User does not have access to modify Meeting#${meetingCode}")
         }
-        userConnectionService.createConnection(CreateConnectionCommand(userId, proposedMeeting.initiatorId))
+        try {
+            userConnectionService.createUserConnection(CreateConnectionCommand(userId, proposedMeeting.initiatorId))
+        } catch (ignored: UserAlreadyConnectedException) {
+        }
 
         val updated = proposedMeeting.claimAsRecipient(userId)
         meetingRepository.save(updated)

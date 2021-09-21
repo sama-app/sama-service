@@ -8,4 +8,4 @@ class InvalidConnectionRequest(val connectionRequestId: ConnectionRequestId) :
     DomainValidationException("Invalid ConnectionRequest#$connectionRequestId")
 
 class UserAlreadyConnectedException(val initiatorId: UserId, val recipientId: UserId) :
-    DomainIntegrityException("user_already_connected", "User#${initiatorId.id} is already connected to User#${recipientId.id}")
+    DomainIntegrityException("user_already_connected", "Users are already connected")

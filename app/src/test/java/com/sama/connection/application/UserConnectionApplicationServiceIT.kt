@@ -1,8 +1,10 @@
 package com.sama.connection.application
 
 import com.sama.common.BaseApplicationIntegrationTest
+import com.sama.connection.domain.UserAlreadyConnectedException
 import com.sama.users.application.UserPublicDTO
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.springframework.beans.factory.annotation.Autowired
@@ -38,6 +40,19 @@ class UserConnectionApplicationServiceIT : BaseApplicationIntegrationTest() {
                 .containsExactly(UserPublicDTO(initiator().publicId!!, initiator().fullName, initiator().email))
             assertThat(connectionRequests.pendingConnectionRequests).isEmpty()
         }
+
+        assertTrue { underTest.isConnected(initiator().id!!, recipient().id!!) }
+    }
+
+    @Test
+    fun `connect two users directly`() {
+        underTest.createUserConnection(CreateConnectionCommand(initiator().id!!, recipient().id!!))
+
+        assertThrows<UserAlreadyConnectedException> {
+            underTest.createUserConnection(CreateConnectionCommand(initiator().id!!, recipient().id!!))
+        }
+
+        assertTrue { underTest.isConnected(initiator().id!!, recipient().id!!) }
     }
 
     @Test
