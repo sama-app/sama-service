@@ -22,24 +22,34 @@ class UserConnectionApplicationService(
     private val userConnectionRepository: UserConnectionRepository,
     private val discoveredUserListRepository: DiscoveredUserListRepository,
     private val userConnectionViews: UserConnectionViews,
-) {
+) : UserConnectionService {
 
     @Transactional(readOnly = true)
-    fun findUserConnections(userId: UserId): UserConnectionsDTO {
+    override fun isConnected(userOneId: UserId, userTwoId: UserId): Boolean {
+        TODO("Not yet implemented")
+    }
+
+    @Transactional(readOnly = true)
+    override fun findUserConnections(userId: UserId): UserConnectionsDTO {
         val discoveredUsers = discoveredUserListRepository.findById(userId).discoveredUsers
         val connectedUsers = userConnectionRepository.findConnectedUserIds(userId)
         return userConnectionViews.renderUserConnections(discoveredUsers, connectedUsers)
     }
 
+    @Transactional
+    override fun createConnection(createConnectionCommand: CreateConnectionCommand): Boolean {
+        TODO("Not yet implemented")
+    }
+
     @Transactional(readOnly = true)
-    fun findConnectionRequests(userId: UserId): ConnectionRequestsDTO {
+    override fun findConnectionRequests(userId: UserId): ConnectionRequestsDTO {
         val initiatedConnectionRequests = connectionRequestRepository.findPendingByInitiatorId(userId)
         val pendingConnectionRequests = connectionRequestRepository.findPendingByRecipientId(userId)
         return userConnectionViews.renderConnectionRequests(initiatedConnectionRequests, pendingConnectionRequests)
     }
 
     @Transactional
-    fun createConnectionRequest(initiatorId: UserId, command: CreateConnectionRequestCommand): ConnectionRequestDTO {
+    override fun createConnectionRequest(initiatorId: UserId, command: CreateConnectionRequestCommand): ConnectionRequestDTO {
         val recipientId = userService.translatePublicId(command.recipientId)
 
         val connectionRequest = connectionRequestRepository.findPendingByUserIds(initiatorId, recipientId)
@@ -56,9 +66,8 @@ class UserConnectionApplicationService(
         return userConnectionViews.renderConnectionRequest(newConnectionRequest)
     }
 
-
     @Transactional
-    fun approveConnectionRequest(userId: UserId, connectionRequestId: ConnectionRequestId) {
+    override fun approveConnectionRequest(userId: UserId, connectionRequestId: ConnectionRequestId) {
         val connectionRequest = connectionRequestRepository.findByIdOrThrow(connectionRequestId)
         if (connectionRequest.recipientUserId != userId) {
             throw AccessDeniedException("User#${userId.id} does not have access to ConnectionRequest#$connectionRequestId")
@@ -72,7 +81,7 @@ class UserConnectionApplicationService(
     }
 
     @Transactional
-    fun rejectConnectionRequest(userId: UserId, connectionRequestId: ConnectionRequestId) {
+    override fun rejectConnectionRequest(userId: UserId, connectionRequestId: ConnectionRequestId) {
         val connectionRequest = connectionRequestRepository.findByIdOrThrow(connectionRequestId)
         if (connectionRequest.recipientUserId != userId) {
             throw AccessDeniedException("User#${userId.id} does not have access to ConnectionRequest#$connectionRequestId")
@@ -84,7 +93,7 @@ class UserConnectionApplicationService(
     }
 
     @Transactional
-    fun removeUserConnection(userId: UserId, command: RemoveUserConnectionCommand) {
+    override fun removeUserConnection(userId: UserId, command: RemoveUserConnectionCommand) {
         val recipientId = userService.translatePublicId(command.userId)
         userConnectionRepository.delete(UserConnection(userId, recipientId))
     }

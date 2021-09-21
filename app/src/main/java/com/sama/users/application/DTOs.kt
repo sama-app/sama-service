@@ -20,7 +20,8 @@ data class UserInternalDTO(
     var id: UserId,
     val publicId: UserPublicId,
     val fullName: String?,
-    val email: String
+    val email: String,
+    val settings: UserSettingsDTO
 )
 
 data class UserDeviceRegistrationsDTO(

@@ -3,6 +3,7 @@ package com.sama.api.meeting
 import com.sama.api.ApiTestConfiguration
 import com.sama.api.config.WebMvcConfiguration
 import com.sama.meeting.application.ConfirmMeetingCommand
+import com.sama.meeting.application.ConnectWithMeetingInitiatorCommand
 import com.sama.meeting.application.InitiateMeetingCommand
 import com.sama.meeting.application.MeetingAppLinksDTO
 import com.sama.meeting.application.MeetingApplicationService
@@ -11,6 +12,7 @@ import com.sama.meeting.application.MeetingIntentDTO
 import com.sama.meeting.application.MeetingInvitationDTO
 import com.sama.meeting.application.MeetingSlotDTO
 import com.sama.meeting.application.ProposeMeetingCommand
+import com.sama.meeting.application.ProposeNewMeetingSlotsCommand
 import com.sama.meeting.application.ProposedMeetingDTO
 import com.sama.meeting.application.UpdateMeetingTitleCommand
 import com.sama.meeting.domain.InvalidMeetingStatusException
@@ -72,8 +74,8 @@ class MeetingControllerTest(@Autowired val mockMvc: MockMvc) {
         val code = MeetingIntentCode.random()
 
         whenever(
-            meetingApplicationService.initiateMeeting(
-                userId, InitiateMeetingCommand(durationMinutes, timeZone, slotSuggestionCount)
+            meetingApplicationService.dispatchInitiateMeetingCommand(
+                userId, InitiateMeetingCommand(durationMinutes, timeZone)
             )
         ).thenReturn(
             MeetingIntentDTO(
@@ -123,15 +125,7 @@ class MeetingControllerTest(@Autowired val mockMvc: MockMvc) {
         """
             {
                 "durationMinutes": 14,
-                "timeZone": "Europe/Rome",
-                "suggestionSlotCount": 3
-            }
-        """,
-        """
-            {
-                "durationMinutes": 30,
-                "timeZone": "Europe/Rome",
-                "suggestionSlotCount": -1
+                "timeZone": "Europe/Rome"
             }
         """
     )
@@ -146,7 +140,6 @@ class MeetingControllerTest(@Autowired val mockMvc: MockMvc) {
                     .andExpect(status().isBadRequest)
             }
         }
-
 
     @Test
     fun `propose meeting`() {
@@ -221,12 +214,13 @@ class MeetingControllerTest(@Autowired val mockMvc: MockMvc) {
             .andExpect(content().json(expectedResponse))
     }
 
-
     @Test
     fun `load meeting proposal`() {
-        val userPublicId = UserPublicId.random()
+        val initiatorId = UserPublicId.random()
+        val recipientId = UserPublicId.random()
         val meetingCode = MeetingCode("code")
         val isOwnMeeting = true
+        val isReadOnly = true
         val meetingTitle = "Meeting title"
         val proposedSlot = MeetingSlotDTO(
             ZonedDateTime.parse("2021-01-01T12:00:00Z"),
@@ -236,7 +230,9 @@ class MeetingControllerTest(@Autowired val mockMvc: MockMvc) {
             .thenReturn(
                 ProposedMeetingDTO(
                     listOf(proposedSlot),
-                    UserPublicDTO(userPublicId, "test", "test@meetsama.com"),
+                    UserPublicDTO(initiatorId, "initiator", "initiator@meetsama.com"),
+                    UserPublicDTO(recipientId, "recipient", "recipient@meetsama.com"),
+                    isReadOnly,
                     isOwnMeeting,
                     meetingTitle,
                     MeetingAppLinksDTO("http://download.me")
@@ -250,10 +246,16 @@ class MeetingControllerTest(@Autowired val mockMvc: MockMvc) {
                     "endDateTime": "2021-01-01T13:00:00Z"
                  }],
                 "initiator": {
-                    "userId": "${userPublicId.id}",
-                    "fullName": "test",
-                    "email": "test@meetsama.com"
+                    "userId": "${initiatorId.id}",
+                    "fullName": "initiator",
+                    "email": "initiator@meetsama.com"
                 },
+                "recipient": {
+                    "userId": "${recipientId.id}",
+                    "fullName": "recipient",
+                    "email": "recipient@meetsama.com"
+                },
+                "isReadOnly": $isReadOnly,
                 "isOwnMeeting": $isOwnMeeting,
                 "title": "$meetingTitle",
                 "appLinks": {
@@ -293,6 +295,56 @@ class MeetingControllerTest(@Autowired val mockMvc: MockMvc) {
                 .header("Authorization", "Bearer $jwt"))
             .andExpect(status().isOk)
             .andExpect(content().string("true"))
+    }
+
+    @Test
+    fun `propose new meeting slots`() {
+        val meetingCode = MeetingCode("VGsUTGno")
+        val proposedSlot = MeetingSlotDTO(
+            ZonedDateTime.parse("2021-01-01T12:00:00Z[UTC]"),
+            ZonedDateTime.parse("2021-01-01T13:00:00Z[UTC]"),
+        )
+
+        whenever(meetingApplicationService.proposeNewMeetingSlots(
+            userId, meetingCode, ProposeNewMeetingSlotsCommand(listOf(proposedSlot)))
+        ).thenReturn(true)
+
+
+        val requestBody = """
+            {
+                "proposedSlots": [{
+                    "startDateTime": "2021-01-01T12:00:00Z",
+                    "endDateTime": "2021-01-01T13:00:00Z"
+                }]
+            }
+        """
+
+        mockMvc.perform(
+            post("/api/meeting/by-code/${meetingCode.code}/propose-new-slots")
+                .contentType(APPLICATION_JSON)
+                .content(requestBody)
+                .header("Authorization", "Bearer $jwt"))
+            .andExpect(status().isOk)
+            .andExpect(content().string("true"))
+    }
+
+    @Test
+    fun `connect with initiator`() {
+        val meetingCode = MeetingCode("VGsUTGno")
+        whenever(meetingApplicationService.connectWithInitiator(userId, meetingCode, ConnectWithMeetingInitiatorCommand))
+            .thenReturn(false)
+
+        val requestBody = """
+            {}
+        """
+
+        mockMvc.perform(
+            post("/api/meeting/by-code/${meetingCode.code}/connect")
+                .contentType(APPLICATION_JSON)
+                .content(requestBody)
+                .header("Authorization", "Bearer $jwt"))
+            .andExpect(status().isOk)
+            .andExpect(content().string("false"))
     }
 
     @Test
@@ -430,6 +482,8 @@ class MeetingControllerTest(@Autowired val mockMvc: MockMvc) {
         post("/api/meeting/1/propose") to UNAUTHORIZED,
         get("/api/meeting/by-code/some-code") to OK,
         post("/api/meeting/by-code/some-code/update-title") to UNAUTHORIZED,
+        post("/api/meeting/by-code/some-code/propose-new-slots") to UNAUTHORIZED,
+        post("/api/meeting/by-code/some-code/connect") to UNAUTHORIZED,
         post("/api/meeting/by-code/some-code/confirm")
             .contentType(APPLICATION_JSON) to BAD_REQUEST, // no payload
     )

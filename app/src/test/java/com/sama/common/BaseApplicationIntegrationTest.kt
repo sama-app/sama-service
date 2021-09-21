@@ -5,6 +5,13 @@ import com.sama.IntegrationOverrides
 import com.sama.api.config.security.UserPrincipal
 import com.sama.users.domain.UserDetails
 import com.sama.users.domain.UserRepository
+import com.sama.users.domain.UserSettings
+import com.sama.users.domain.UserSettingsRepository
+import java.time.ZoneId
+import java.time.ZoneOffset
+import java.time.ZoneOffset.UTC
+import java.util.Locale
+import java.util.Locale.ENGLISH
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.extension.ExtendWith
@@ -46,6 +53,9 @@ class BaseApplicationIntegrationTest {
     @Autowired
     lateinit var userRepository: UserRepository
 
+    @Autowired
+    lateinit var userSettingsRepository: UserSettingsRepository
+
 
     // test data
     private lateinit var initiatorUser: UserDetails
@@ -60,6 +70,9 @@ class BaseApplicationIntegrationTest {
                 active = true
             )
         )
+        userSettingsRepository.save(UserSettings(initiatorUser.id!!,
+            ENGLISH, UTC, true, emptyMap()))
+
         recipientUser = userRepository.save(
             UserDetails(
                 email = "recipient@meetsama.com",
@@ -67,6 +80,8 @@ class BaseApplicationIntegrationTest {
                 active = true
             )
         )
+        userSettingsRepository.save(UserSettings(recipientUser.id!!,
+            ENGLISH, UTC, true, emptyMap()))
     }
 
     @AfterEach

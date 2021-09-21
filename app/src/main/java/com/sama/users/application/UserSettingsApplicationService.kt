@@ -27,16 +27,7 @@ class UserSettingsApplicationService(
     @Transactional(readOnly = true)
     override fun find(userId: UserId): UserSettingsDTO {
         val userSettings = userSettingsRepository.findByIdOrThrow(userId)
-        return userSettings.let {
-            UserSettingsDTO(
-                it.locale,
-                it.timeZone,
-                it.format24HourTime,
-                it.dayWorkingHours
-                    .map { wh -> DayWorkingHoursDTO(wh.key, wh.value.startTime, wh.value.endTime) }
-                    .sortedBy { wh -> wh.dayOfWeek }
-            )
-        }
+        return userSettings.toDTO()
     }
 
     @Transactional
@@ -59,4 +50,15 @@ class UserSettingsApplicationService(
         userSettingsRepository.save(userSettings)
         return true
     }
+}
+
+fun UserSettings.toDTO(): UserSettingsDTO {
+    return UserSettingsDTO(
+        locale,
+        timeZone,
+        format24HourTime,
+        dayWorkingHours
+            .map { wh -> DayWorkingHoursDTO(wh.key, wh.value.startTime, wh.value.endTime) }
+            .sortedBy { wh -> wh.dayOfWeek }
+    )
 }

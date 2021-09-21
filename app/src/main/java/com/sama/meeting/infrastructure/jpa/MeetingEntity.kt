@@ -1,6 +1,7 @@
 package com.sama.meeting.infrastructure.jpa
 
 import com.sama.common.Factory
+import com.sama.meeting.domain.Actor
 import com.sama.meeting.domain.ConfirmedMeeting
 import com.sama.meeting.domain.EmailRecipient
 import com.sama.meeting.domain.MeetingId
@@ -26,6 +27,7 @@ import javax.persistence.Id
 import javax.persistence.JoinColumn
 import javax.persistence.OneToMany
 import javax.persistence.Table
+import liquibase.pro.packaged.it
 import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.annotation.LastModifiedDate
 
@@ -40,20 +42,20 @@ class MeetingEntity {
             entity.id = proposedMeeting.meetingId.id
             entity.code = proposedMeeting.meetingCode.code
             entity.meetingIntentId = proposedMeeting.meetingIntentId.id
+            entity.meetingRecipient = proposedMeeting.recipientId?.let { MeetingRecipientEntity(it.id, null) }
+            entity.currentActor = proposedMeeting.currentActor
             entity.createdAt = Instant.now()
             entity.updatedAt = Instant.now()
             entity.status = proposedMeeting.status
             entity.title = proposedMeeting.meetingTitle
-            val slots = proposedMeeting.proposedSlots.map {
-                MeetingProposedSlotEntity(
-                    null,
-                    proposedMeeting.meetingId,
-                    it.startDateTime,
-                    it.endDateTime,
-                    Instant.now()
-                )
+            val proposedSlots = proposedMeeting.proposedSlots.map {
+                it.toEntity(proposedMeeting.meetingId, MeetingSlotStatus.PROPOSED)
             }
-            entity.proposedSlots.addAll(slots)
+            val rejectedSlots = proposedMeeting.rejectedSlots.map {
+                it.toEntity(proposedMeeting.meetingId, MeetingSlotStatus.REJECTED)
+            }
+            entity.proposedSlots.addAll(proposedSlots)
+            entity.proposedSlots.addAll(rejectedSlots)
             return entity
         }
     }
@@ -65,6 +67,25 @@ class MeetingEntity {
             is UserRecipient -> MeetingRecipientEntity(recipient.recipientId.id, recipient.email)
         }
         this.confirmedSlot = confirmedMeeting.slot
+        val now = Instant.now()
+        this.confirmedAt = now
+        this.updatedAt = now
+        return this
+    }
+
+    fun applyChanges(proposedMeeting: ProposedMeeting): MeetingEntity {
+        title = proposedMeeting.meetingTitle
+        meetingRecipient = proposedMeeting.recipientId?.let { MeetingRecipientEntity(it.id, null) }
+        currentActor = proposedMeeting.currentActor
+        val proposedSlots = proposedMeeting.proposedSlots.map {
+            it.toEntity(proposedMeeting.meetingId, MeetingSlotStatus.PROPOSED)
+        }
+        val rejectedSlots = proposedMeeting.rejectedSlots.map {
+            it.toEntity(proposedMeeting.meetingId, MeetingSlotStatus.REJECTED)
+        }
+        this.proposedSlots.clear()
+        this.proposedSlots.addAll(proposedSlots)
+        this.proposedSlots.addAll(rejectedSlots)
         val now = Instant.now()
         this.confirmedAt = now
         this.updatedAt = now
@@ -86,6 +107,10 @@ class MeetingEntity {
 
     @Column(nullable = false)
     var title: String? = null
+
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    var currentActor: Actor? = null
 
     @OneToMany(cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(name = "meetingId", nullable = false, updatable = false, insertable = false)
@@ -116,15 +141,42 @@ class MeetingEntity {
 
 @Entity
 @Table(schema = "sama", name = "meeting_proposed_slot")
-data class MeetingProposedSlotEntity(
+class MeetingProposedSlotEntity(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long? = null,
+
+    @Column(nullable = false)
     private val meetingId: MeetingId,
+
+    @Column(nullable = false)
     var startDateTime: ZonedDateTime,
+
+    @Column(nullable = false)
     var endDateTime: ZonedDateTime,
+
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    var status: MeetingSlotStatus,
+
     @CreatedDate
+    @Column(nullable = false)
     var createdAt: Instant? = null,
 )
 
+enum class MeetingSlotStatus {
+    PROPOSED, REJECTED
+}
+
 @Embeddable
 data class MeetingRecipientEntity(val recipientId: Long?, val email: String?)
+
+private fun MeetingSlot.toEntity(meetingId: MeetingId, status: MeetingSlotStatus): MeetingProposedSlotEntity {
+    return MeetingProposedSlotEntity(
+        null,
+        meetingId,
+        startDateTime,
+        endDateTime,
+        status,
+        Instant.now()
+    )
+}

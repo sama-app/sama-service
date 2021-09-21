@@ -1,0 +1,39 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-meeting-actor
+      author: balys
+      changes:
+        - addColumn:
+            schemaName: sama
+            tableName: meeting
+            columns:
+              - column:
+                  name: current_actor
+                  type: VARCHAR
+                  defaultValue: 'RECIPIENT'
+                  constraints:
+                    nullable: false
+        - dropDefaultValue:
+            schemaName: sama
+            tableName: meeting
+            columnName: current_actor
+            columnDataType: VARCHAR
+  - changeSet:
+      id: add-rejected-slots
+      author: balys
+      changes:
+        - addColumn:
+            schemaName: sama
+            tableName: meeting_proposed_slot
+            columns:
+              - column:
+                  name: status
+                  type: VARCHAR
+                  defaultValue: 'PROPOSED'
+                  constraints:
+                    nullable: false
+        - dropDefaultValue:
+            schemaName: sama
+            tableName: meeting_proposed_slot
+            columnName: status
+            columnDataType: VARCHAR

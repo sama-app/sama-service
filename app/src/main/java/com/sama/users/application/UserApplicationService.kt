@@ -10,6 +10,7 @@ import com.sama.users.domain.UserJwtIssuer
 import com.sama.users.domain.UserPublicId
 import com.sama.users.domain.UserRegistration
 import com.sama.users.domain.UserRepository
+import com.sama.users.domain.UserSettingsRepository
 import java.time.Clock
 import java.util.UUID
 import org.springframework.stereotype.Service
@@ -19,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class UserApplicationService(
     private val userRepository: UserRepository,
+    private val userSettingsRepository: UserSettingsRepository,
     private val accessJwtConfiguration: AccessJwtConfiguration,
     private val refreshJwtConfiguration: RefreshJwtConfiguration,
     private val clock: Clock,
@@ -76,13 +78,17 @@ class UserApplicationService(
     }
 
     override fun findInternalByEmail(email: String): UserInternalDTO {
-        return userRepository.findByEmailOrThrow(email)
-            .let { UserInternalDTO(it.id!!, it.publicId!!, it.fullName, it.email) }
+        val user = userRepository.findByEmailOrThrow(email)
+        val userSettings = userSettingsRepository.findByIdOrThrow(user.id!!).toDTO()
+        return user
+            .let { UserInternalDTO(it.id!!, it.publicId!!, it.fullName, it.email, userSettings) }
     }
 
     override fun findInternalByPublicId(userPublicId: UserPublicId): UserInternalDTO {
-        return userRepository.findByPublicIdOrThrow(userPublicId)
-            .let { UserInternalDTO(it.id!!, it.publicId!!, it.fullName, it.email) }
+        val user = userRepository.findByPublicIdOrThrow(userPublicId)
+        val userSettings = userSettingsRepository.findByIdOrThrow(user.id!!).toDTO()
+        return user
+            .let { UserInternalDTO(it.id!!, it.publicId!!, it.fullName, it.email, userSettings) }
     }
 
     @Transactional

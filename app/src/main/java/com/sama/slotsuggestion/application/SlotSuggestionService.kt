@@ -13,6 +13,7 @@ data class SlotSuggestionRequest(
     val slotDuration: Duration,
     val recipientTimezone: ZoneId,
     val suggestionCount: Int,
+    val userIds: Collection<UserId> = emptyList(),
 )
 
 data class SlotSuggestionResponse(

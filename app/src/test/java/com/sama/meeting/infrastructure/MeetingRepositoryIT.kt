@@ -2,6 +2,7 @@ package com.sama.meeting.infrastructure
 
 import com.sama.common.BasePersistenceIT
 import com.sama.common.NotFoundException
+import com.sama.meeting.domain.Actor
 import com.sama.meeting.domain.ConfirmedMeeting
 import com.sama.meeting.domain.ExpiredMeeting
 import com.sama.meeting.domain.MeetingCode
@@ -62,14 +63,17 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
         val proposedMeeting = ProposedMeeting(
             meetingId,
             meetingIntentId,
-            UserId(1),
             Duration.ofMinutes(60),
+            UserId(1),
+            null,
+            Actor.RECIPIENT,
             listOf(
                 MeetingSlot(
                     ZonedDateTime.now(clock).plusHours(3),
                     ZonedDateTime.now(clock).plusHours(4)
                 )
             ),
+            emptyList(),
             MeetingCode("VGsUTGno"),
             "Meeting title"
         )
@@ -94,14 +98,17 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
         val proposedMeeting = ProposedMeeting(
             meetingId,
             meetingIntentId,
-            initiatorId,
             Duration.ofMinutes(60),
+            initiatorId,
+            null,
+            Actor.RECIPIENT,
             listOf(
                 MeetingSlot(
                     ZonedDateTime.now(clock).plusHours(3),
                     ZonedDateTime.now(clock).plusHours(4)
                 )
             ),
+            emptyList(),
             meetingCode,
             meetingTitle
         )
@@ -137,14 +144,17 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
         val proposedMeeting = ProposedMeeting(
             meetingId,
             meetingIntentId,
-            initiatorId,
             Duration.ofMinutes(60),
+            initiatorId,
+            null,
+            Actor.RECIPIENT,
             listOf(
                 MeetingSlot(
                     ZonedDateTime.now(clock).plusHours(3),
                     ZonedDateTime.now(clock).plusHours(4)
                 )
             ),
+            emptyList(),
             meetingCode,
             "Meeting title"
         )
@@ -184,8 +194,10 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
         val proposedMeeting = ProposedMeeting(
             validMeetingId,
             meetingIntentId,
-            initiatorId,
             Duration.ofMinutes(60),
+            initiatorId,
+            null,
+            Actor.RECIPIENT,
             listOf(
                 MeetingSlot(
                     ZonedDateTime.now(clock).minusMinutes(30),
@@ -193,6 +205,7 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
                 ),
                 expected
             ),
+            emptyList(),
             MeetingCode("VGsUTGno"),
             "Meeting title"
         )
@@ -214,8 +227,10 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
         val validMeeting = ProposedMeeting(
             validMeetingId,
             meetingIntentId,
-            UserId(1),
             Duration.ofMinutes(60),
+            UserId(1),
+            null,
+            Actor.RECIPIENT,
             listOf(
                 MeetingSlot(
                     ZonedDateTime.now(clock).minusHours(2),
@@ -226,6 +241,7 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
                     ZonedDateTime.now(clock).plusMinutes(30)
                 )
             ),
+            emptyList(),
             MeetingCode("one"),
             "Meeting title"
         )
@@ -234,8 +250,10 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
         val expiringMeeting = ProposedMeeting(
             expiringMeetingId,
             meetingIntentId,
-            UserId(1),
             Duration.ofMinutes(60),
+            UserId(1),
+            null,
+            Actor.RECIPIENT,
             listOf(
                 MeetingSlot(
                     ZonedDateTime.now(clock).minusHours(2),
@@ -246,6 +264,7 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
                     ZonedDateTime.now(clock).minusMinutes(1)
                 )
             ),
+            emptyList(),
             MeetingCode("two"),
             "Meeting title"
         )
@@ -265,14 +284,17 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
         val expiringMeeting = ProposedMeeting(
             expiringMeetingId,
             meetingIntentId,
-            UserId(1),
             Duration.ofMinutes(60),
+            UserId(1),
+            null,
+            Actor.RECIPIENT,
             listOf(
                 MeetingSlot(
                     ZonedDateTime.now(clock).minusHours(3),
                     ZonedDateTime.now(clock).minusHours(4)
                 )
             ),
+            emptyList(),
             MeetingCode("VGsUTGno"),
             "Meeting title"
         )

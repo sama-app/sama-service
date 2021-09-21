@@ -40,6 +40,7 @@ class MeetingIntentRepositoryImpl(private val meetingIntentJpaRepository: Meetin
             id!!.toMeetingIntentId(),
             initiatorId!!.toUserId(),
             Duration.ofMinutes(durationMinutes!!),
+            recipientId?.toUserId(),
             timezone!!,
             suggestedSlots.map { MeetingSlot(it.startDateTime, it.endDateTime) },
             code?.toMeetingIntentCode()

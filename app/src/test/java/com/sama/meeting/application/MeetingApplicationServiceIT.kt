@@ -6,6 +6,9 @@ import com.sama.calendar.application.FetchEventsDTO
 import com.sama.common.BaseApplicationIntegrationTest
 import com.sama.common.NotFoundException
 import com.sama.comms.application.CommsEventConsumer
+import com.sama.connection.application.CreateConnectionCommand
+import com.sama.connection.application.UserConnectionService
+import com.sama.meeting.domain.InvalidMeetingInitiationException
 import com.sama.meeting.domain.MeetingCode
 import com.sama.meeting.domain.MeetingConfirmedEvent
 import com.sama.slotsuggestion.application.SlotSuggestionRequest
@@ -14,7 +17,9 @@ import com.sama.slotsuggestion.application.SlotSuggestionService
 import com.sama.slotsuggestion.domain.SlotSuggestion
 import java.time.Clock
 import java.time.Duration.ofMinutes
+import java.time.ZoneOffset.UTC
 import java.time.ZonedDateTime
+import liquibase.pro.packaged.n
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -30,6 +35,9 @@ class MeetingApplicationServiceIT : BaseApplicationIntegrationTest() {
 
     @MockBean
     lateinit var slotSuggestionService: SlotSuggestionService
+
+    @MockBean
+    lateinit var userConnectionService: UserConnectionService
 
     @MockBean
     lateinit var eventApplicationService: EventApplicationService
@@ -60,9 +68,9 @@ class MeetingApplicationServiceIT : BaseApplicationIntegrationTest() {
                 SlotSuggestionResponse(listOf(SlotSuggestion(suggestedSlotStart, suggestedSlotEnd, 1.0)))
             )
 
-            underTest.initiateMeeting(
-                it.id!!, InitiateMeetingCommand(
-                    60, clock.zone, 3
+            underTest.initiateSamaNonSamaMeeting(
+                it.id!!, InitiateSamaNonSamaMeetingCommand(
+                    60, clock.zone
                 )
             )
         }
@@ -107,6 +115,260 @@ class MeetingApplicationServiceIT : BaseApplicationIntegrationTest() {
         verify(commsEventConsumer).onMeetingConfirmed(any())
     }
 
+
+    @Test
+    fun `setup sama-sama meeting`() {
+        // create meeting intent
+        val meetingIntentDTO = asInitiator {
+            whenever(
+                slotSuggestionService.suggestSlots(
+                    it.id!!, SlotSuggestionRequest(ofMinutes(60), UTC, 9,
+                        listOf(initiator().id!!, recipient().id!!))
+                )
+            ).thenReturn(
+                SlotSuggestionResponse(emptyList())
+            )
+
+            whenever(userConnectionService.isConnected(initiator().id!!, recipient().id!!))
+                .thenReturn(true)
+
+            underTest.initiateSamaToSamaMeeting(
+                it.id!!, InitiateSamaSamaMeetingCommand(
+                    60, recipient().publicId!!
+                )
+            )
+        }
+
+        // propose meeting
+        val proposedSlotStart = ZonedDateTime.now(clock).plusHours(2)
+        val proposedSlotEnd = proposedSlotStart.plusHours(1)
+        val proposedSlot = MeetingSlotDTO(proposedSlotStart, proposedSlotEnd)
+
+        val meetingInvitationDTO = asInitiator {
+            underTest.proposeMeeting(it.id!!, ProposeMeetingCommand(
+                meetingIntentDTO.meetingIntentCode,
+                listOf(proposedSlot)
+            ))
+        }
+
+        asRecipient {
+            underTest.confirmMeeting(it.id!!,
+                meetingInvitationDTO.meetingCode,
+                ConfirmMeetingCommand(proposedSlot, null))
+        }
+
+        verify(calendarEventConsumer).onMeetingConfirmed(any())
+        verify(commsEventConsumer).onMeetingConfirmed(any())
+    }
+
+    @Test
+    fun `setup sama-sama let recipient pick meeting`() {
+        // create meeting intent
+        val meetingIntentDTO = asInitiator {
+            whenever(
+                slotSuggestionService.suggestSlots(
+                    it.id!!, SlotSuggestionRequest(ofMinutes(60), UTC, 9,
+                        listOf(initiator().id!!, recipient().id!!))
+                )
+            ).thenReturn(
+                SlotSuggestionResponse(emptyList())
+            )
+
+            whenever(userConnectionService.isConnected(initiator().id!!, recipient().id!!))
+                .thenReturn(true)
+
+            underTest.initiateSamaToSamaMeeting(
+                it.id!!, InitiateSamaSamaMeetingCommand(
+                    60, recipient().publicId!!
+                )
+            )
+        }
+
+        val meetingInvitationDTO = asInitiator {
+            underTest.proposeMeeting(it.id!!, ProposeMeetingCommand(
+                meetingIntentDTO.meetingIntentCode,
+                emptyList()
+            ))
+        }
+
+        // propose new time
+        val now = ZonedDateTime.now(clock)
+        val meetingCode = meetingInvitationDTO.meetingCode
+        val proposedSlot = MeetingSlotDTO(now.plusHours(3), now.plusHours(4))
+        asRecipient {
+            underTest.proposeNewMeetingSlots(it.id!!,
+                meetingCode,
+                ProposeNewMeetingSlotsCommand(listOf(proposedSlot)))
+        }
+
+
+        asInitiator {
+            underTest.confirmMeeting(it.id!!, meetingCode, ConfirmMeetingCommand(proposedSlot, null))
+        }
+
+        verify(calendarEventConsumer).onMeetingConfirmed(any())
+        verify(commsEventConsumer).onMeetingConfirmed(any())
+    }
+
+    @Test
+    fun `setup sama-sama back and forth meeting`() {
+        // create meeting intent
+        val meetingIntentDTO = asInitiator {
+            whenever(
+                slotSuggestionService.suggestSlots(
+                    it.id!!, SlotSuggestionRequest(ofMinutes(60), UTC, 9,
+                        listOf(initiator().id!!, recipient().id!!))
+                )
+            ).thenReturn(
+                SlotSuggestionResponse(emptyList())
+            )
+
+            whenever(userConnectionService.isConnected(initiator().id!!, recipient().id!!))
+                .thenReturn(true)
+
+            underTest.initiateSamaToSamaMeeting(
+                it.id!!, InitiateSamaSamaMeetingCommand(
+                    60, recipient().publicId!!
+                )
+            )
+        }
+
+        // propose meeting
+        val now = ZonedDateTime.now(clock)
+        val proposedSlot = MeetingSlotDTO(now.plusHours(2), now.plusHours(3))
+
+        val meetingInvitationDTO = asInitiator {
+            underTest.proposeMeeting(it.id!!, ProposeMeetingCommand(
+                meetingIntentDTO.meetingIntentCode,
+                listOf(proposedSlot)
+            ))
+        }
+
+        // propose new time
+        val meetingCode = meetingInvitationDTO.meetingCode
+        val newProposedSlot = MeetingSlotDTO(now.plusHours(3), now.plusHours(4))
+        asRecipient {
+            underTest.proposeNewMeetingSlots(it.id!!,
+                meetingCode,
+                ProposeNewMeetingSlotsCommand(listOf(newProposedSlot)))
+        }
+
+        val newProposedSlot2 = MeetingSlotDTO(now.plusHours(4), now.plusHours(5))
+        asInitiator {
+            underTest.proposeNewMeetingSlots(it.id!!,
+                meetingCode,
+                ProposeNewMeetingSlotsCommand(listOf(newProposedSlot2)))
+        }
+
+        val newProposedSlot3 = MeetingSlotDTO(now.plusHours(5), now.plusHours(6))
+        asRecipient {
+            underTest.proposeNewMeetingSlots(it.id!!,
+                meetingCode,
+                ProposeNewMeetingSlotsCommand(listOf(newProposedSlot3)))
+        }
+
+        asInitiator {
+            underTest.confirmMeeting(it.id!!, meetingCode, ConfirmMeetingCommand(newProposedSlot3, null))
+        }
+
+        verify(calendarEventConsumer).onMeetingConfirmed(any())
+        verify(commsEventConsumer).onMeetingConfirmed(any())
+    }
+
+    @Test
+    fun `only connected users can setup sama-sama meeting`() {
+        whenever(userConnectionService.isConnected(initiator().id!!, recipient().id!!))
+            .thenReturn(false)
+        assertThrows<InvalidMeetingInitiationException> {
+            asInitiator {
+                underTest.initiateSamaToSamaMeeting(
+                    it.id!!, InitiateSamaSamaMeetingCommand(
+                        60, recipient().publicId!!
+                    )
+                )
+            }
+        }
+    }
+
+    @Test
+    fun `cannot modify sama-sama meeting when not current actor`() {
+        // create meeting intent
+        val meetingIntentDTO = asInitiator {
+            whenever(
+                slotSuggestionService.suggestSlots(
+                    it.id!!, SlotSuggestionRequest(ofMinutes(60), UTC, 9,
+                        listOf(initiator().id!!, recipient().id!!))
+                )
+            ).thenReturn(
+                SlotSuggestionResponse(emptyList())
+            )
+
+            whenever(userConnectionService.isConnected(initiator().id!!, recipient().id!!))
+                .thenReturn(true)
+
+            underTest.initiateSamaToSamaMeeting(
+                it.id!!, InitiateSamaSamaMeetingCommand(
+                    60, recipient().publicId!!
+                )
+            )
+        }
+
+        // propose meeting
+        val now = ZonedDateTime.now(clock)
+        val proposedSlot = MeetingSlotDTO(now.plusHours(2), now.plusHours(3))
+
+        val meetingInvitationDTO = asInitiator {
+            underTest.proposeMeeting(it.id!!, ProposeMeetingCommand(
+                meetingIntentDTO.meetingIntentCode,
+                listOf(proposedSlot)
+            ))
+        }
+
+        // propose new time
+        val meetingCode = meetingInvitationDTO.meetingCode
+        val newProposedSlot = MeetingSlotDTO(now.plusHours(3), now.plusHours(4))
+
+        assertThrows<AccessDeniedException> {
+            asInitiator {
+                underTest.proposeNewMeetingSlots(it.id!!,
+                    meetingCode,
+                    ProposeNewMeetingSlotsCommand(listOf(newProposedSlot)))
+            }
+        }
+
+        assertThrows<AccessDeniedException> {
+            asInitiator {
+                underTest.confirmMeeting(it.id!!,
+                    meetingCode,
+                    ConfirmMeetingCommand(newProposedSlot, null))
+            }
+        }
+
+        // switch actor
+        asRecipient {
+            underTest.proposeNewMeetingSlots(it.id!!,
+                meetingCode,
+                ProposeNewMeetingSlotsCommand(listOf(newProposedSlot)))
+        }
+
+        assertThrows<AccessDeniedException> {
+            asRecipient {
+                underTest.proposeNewMeetingSlots(it.id!!,
+                    meetingCode,
+                    ProposeNewMeetingSlotsCommand(listOf(newProposedSlot)))
+            }
+        }
+
+        assertThrows<AccessDeniedException> {
+            asRecipient {
+                underTest.confirmMeeting(it.id!!,
+                    meetingCode,
+                    ConfirmMeetingCommand(newProposedSlot, null))
+            }
+        }
+
+    }
+
     @Test
     fun `only initiator can propose meetings from their own intent`() {
         // create meeting intent
@@ -122,9 +384,9 @@ class MeetingApplicationServiceIT : BaseApplicationIntegrationTest() {
                 SlotSuggestionResponse(listOf(SlotSuggestion(suggestedSlotStart, suggestedSlotEnd, 1.0)))
             )
 
-            underTest.initiateMeeting(
-                it.id!!, InitiateMeetingCommand(
-                    60, clock.zone, 3
+            underTest.initiateSamaNonSamaMeeting(
+                it.id!!, InitiateSamaNonSamaMeetingCommand(
+                    60, clock.zone,
                 )
             )
         }
@@ -156,8 +418,8 @@ class MeetingApplicationServiceIT : BaseApplicationIntegrationTest() {
                 SlotSuggestionResponse(listOf(SlotSuggestion(suggestedSlotStart, suggestedSlotEnd, 1.0)))
             )
 
-            underTest.initiateMeeting(
-                it.id!!, InitiateMeetingCommand(60, clock.zone, 3)
+            underTest.initiateSamaNonSamaMeeting(
+                it.id!!, InitiateSamaNonSamaMeetingCommand(60, clock.zone)
             )
         }
 
@@ -300,9 +562,9 @@ class MeetingApplicationServiceIT : BaseApplicationIntegrationTest() {
                 SlotSuggestionResponse(listOf(SlotSuggestion(suggestedSlotStart, suggestedSlotEnd, 1.0)))
             )
 
-            underTest.initiateMeeting(
-                it.id!!, InitiateMeetingCommand(
-                    60, clock.zone, 3
+            underTest.initiateSamaNonSamaMeeting(
+                it.id!!, InitiateSamaNonSamaMeetingCommand(
+                    60, clock.zone,
                 )
             )
         }
@@ -367,9 +629,9 @@ class MeetingApplicationServiceIT : BaseApplicationIntegrationTest() {
                 SlotSuggestionResponse(listOf(SlotSuggestion(suggestedSlotStart, suggestedSlotEnd, 1.0)))
             )
 
-            underTest.initiateMeeting(
-                it.id!!, InitiateMeetingCommand(
-                    60, clock.zone, 3
+            underTest.initiateSamaNonSamaMeeting(
+                it.id!!, InitiateSamaNonSamaMeetingCommand(
+                    60, clock.zone,
                 )
             )
         }
@@ -419,6 +681,66 @@ class MeetingApplicationServiceIT : BaseApplicationIntegrationTest() {
     }
 
     @Test
+    fun `claim sama-non-sama meeting and connect`() {
+        // create meeting intent
+        val meetingIntentDTO = asInitiator {
+            val suggestedSlotStart = ZonedDateTime.now(clock).plusHours(1)
+            val suggestedSlotEnd = suggestedSlotStart.plusHours(2)
+            whenever(
+                slotSuggestionService.suggestSlots(
+                    it.id!!,
+                    SlotSuggestionRequest(ofMinutes(60), clock.zone, 3)
+                )
+            ).thenReturn(
+                SlotSuggestionResponse(listOf(SlotSuggestion(suggestedSlotStart, suggestedSlotEnd, 1.0)))
+            )
+
+            underTest.initiateSamaNonSamaMeeting(
+                it.id!!, InitiateSamaNonSamaMeetingCommand(
+                    60, clock.zone,
+                )
+            )
+        }
+
+        // propose meeting
+        val now = ZonedDateTime.now(clock)
+        val proposedSlot = MeetingSlotDTO(now.plusHours(2), now.plusHours(3))
+        val meetingInvitationDTO = asInitiator {
+            underTest.proposeMeeting(
+                it.id!!,
+                ProposeMeetingCommand(
+                    meetingIntentDTO.meetingIntentCode,
+                    listOf(proposedSlot)
+                )
+            )
+        }
+
+        // Connect with initiator and propose new slots
+        whenever(userConnectionService.createConnection(CreateConnectionCommand(recipient().id!!, initiator().id!!)))
+            .thenReturn(true)
+
+        val meetingCode = meetingInvitationDTO.meetingCode
+        val newProposedSlot = MeetingSlotDTO(now.plusHours(3), now.plusHours(4))
+        asRecipient {
+            underTest.connectWithInitiator(it.id!!,
+                meetingInvitationDTO.meetingCode, ConnectWithMeetingInitiatorCommand)
+
+            underTest.proposeNewMeetingSlots(it.id!!, meetingCode,
+                ProposeNewMeetingSlotsCommand(listOf(newProposedSlot)))
+        }
+
+        // confirm meeting
+        asInitiator {
+            underTest.confirmMeeting(it.id!!, meetingInvitationDTO.meetingCode,
+                ConfirmMeetingCommand(newProposedSlot, null)
+            )
+        }
+
+        verify(calendarEventConsumer).onMeetingConfirmed(any())
+        verify(commsEventConsumer).onMeetingConfirmed(any())
+    }
+
+    @Test
     fun `load meeting proposal from non-existent code`() {
         assertThrows<NotFoundException> {
             underTest.loadMeetingProposal(null, MeetingCode("VGsUTGno"))
@@ -445,9 +767,9 @@ class MeetingApplicationServiceIT : BaseApplicationIntegrationTest() {
                     )
                 )
 
-            underTest.initiateMeeting(
-                it.id!!, InitiateMeetingCommand(
-                    60, clock.zone, 3
+            underTest.initiateSamaNonSamaMeeting(
+                it.id!!, InitiateSamaNonSamaMeetingCommand(
+                    60, clock.zone,
                 )
             )
         }
