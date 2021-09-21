@@ -12,8 +12,8 @@ interface SlotSuggestionService {
 
 data class SlotSuggestionRequest(
     val slotDuration: Duration,
-    val recipientTimezone: ZoneId,
-    val suggestionCount: Int
+    val suggestionCount: Int,
+    val recipientTimezone: ZoneId
 )
 
 data class MultiUserSlotSuggestionRequest(

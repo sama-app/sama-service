@@ -36,17 +36,18 @@ data class MeetingIntent(
         proposedSlots.validate()
 
         return ProposedMeeting(
-                meetingId,
-                meetingIntentId,
-                duration,
-                initiatorId,
-                recipientId,
-                Actor.RECIPIENT,
-                proposedSlots.combineContinuous(),
-                emptyList(),
-                meetingCode,
-                meetingTitle
-            )
+            meetingId,
+            meetingIntentId,
+            duration,
+            initiatorId,
+            recipientId,
+            recipientTimeZone,
+            Actor.RECIPIENT,
+            proposedSlots.combineContinuous(),
+            emptyList(),
+            meetingCode,
+            meetingTitle
+        )
 
     }
 

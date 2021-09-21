@@ -66,8 +66,8 @@ class MeetingApplicationService(
 
         val request = SlotSuggestionRequest(
             command.durationMinutes.toMinutes(),
-            command.timeZone,
-            3
+            3,
+            command.timeZone
         )
         val suggestedSlots = slotSuggestionService.suggestSlots(initiatorId, request).suggestions
             .map { MeetingSlot(it.startDateTime, it.endDateTime) }
@@ -181,11 +181,37 @@ class MeetingApplicationService(
         return true
     }
 
+    @Transactional(readOnly = true)
+    fun getSlotSuggestions(userId: UserId, meetingCode: MeetingCode): MeetingSlotSuggestionDTO {
+        val proposedMeeting = findProposedMeetingOrThrow(meetingCode)
+        if (!proposedMeeting.isReadableBy(userId)) {
+            throw AccessDeniedException("User does not have access to Meeting#${meetingCode.code}")
+        }
+
+        val slotSuggestions = when (proposedMeeting.isSamaToSama()) {
+            true -> {
+                val request = MultiUserSlotSuggestionRequest(proposedMeeting.duration, 9,
+                    proposedMeeting.otherActorId(userId)!!)
+                slotSuggestionService.suggestSlots(userId, request)
+            }
+            false -> {
+                val request = SlotSuggestionRequest(proposedMeeting.duration, 3,
+                    proposedMeeting.recipientTimeZone!!)
+                slotSuggestionService.suggestSlots(userId, request)
+            }
+        }
+
+        val suggestedSlots = slotSuggestions.suggestions
+            .map { MeetingSlot(it.startDateTime, it.endDateTime) }
+
+        return MeetingSlotSuggestionDTO(suggestedSlots.toDTO())
+    }
+
     @Transactional
     fun updateMeetingTitle(userId: UserId, meetingCode: MeetingCode, command: UpdateMeetingTitleCommand): Boolean {
         val proposedMeeting = findProposedMeetingOrThrow(meetingCode)
         if (proposedMeeting.initiatorId != userId) {
-            throw AccessDeniedException("User does not have access to update Meeting#${meetingCode}")
+            throw AccessDeniedException("User does not have access to modify Meeting#${meetingCode}")
         }
 
         meetingRepository.save(proposedMeeting.updateTitle(command.title))

@@ -11,6 +11,7 @@ import com.sama.meeting.application.MeetingDTO
 import com.sama.meeting.application.MeetingIntentDTO
 import com.sama.meeting.application.MeetingInvitationDTO
 import com.sama.meeting.application.MeetingSlotDTO
+import com.sama.meeting.application.MeetingSlotSuggestionDTO
 import com.sama.meeting.application.ProposeMeetingCommand
 import com.sama.meeting.application.ProposeNewMeetingSlotsCommand
 import com.sama.meeting.application.ProposedMeetingDTO
@@ -272,6 +273,37 @@ class MeetingControllerTest(@Autowired val mockMvc: MockMvc) {
     }
 
     @Test
+    fun `get slot suggestions`() {
+        val meetingCode = MeetingCode("VGsUTGno")
+
+        whenever(meetingApplicationService.getSlotSuggestions(userId, meetingCode))
+            .thenReturn(
+                MeetingSlotSuggestionDTO(
+                    listOf(MeetingSlotDTO(
+                        ZonedDateTime.parse("2021-01-01T12:00:00Z"),
+                        ZonedDateTime.parse("2021-01-01T13:00:00Z"),
+                    )))
+            )
+
+        val expectedResponse = """
+            {
+                "suggestedSlots":[
+                    {
+                        "startDateTime": "2021-01-01T12:00:00Z",
+                        "endDateTime": "2021-01-01T13:00:00Z"
+                    }
+                ]
+            }
+        """
+        mockMvc.perform(
+            get("/api/meeting/by-code/${meetingCode.code}/suggestions")
+                .header("Authorization", "Bearer $jwt")
+        )
+            .andExpect(status().isOk)
+            .andExpect(content().json(expectedResponse))
+    }
+
+    @Test
     fun `update meeting title`() {
         val meetingCode = MeetingCode("VGsUTGno")
         val meetingTitle = "my fancy title"
@@ -331,7 +363,9 @@ class MeetingControllerTest(@Autowired val mockMvc: MockMvc) {
     @Test
     fun `connect with initiator`() {
         val meetingCode = MeetingCode("VGsUTGno")
-        whenever(meetingApplicationService.connectWithInitiator(userId, meetingCode, ConnectWithMeetingInitiatorCommand))
+        whenever(meetingApplicationService.connectWithInitiator(userId,
+            meetingCode,
+            ConnectWithMeetingInitiatorCommand))
             .thenReturn(false)
 
         val requestBody = """
@@ -481,6 +515,7 @@ class MeetingControllerTest(@Autowired val mockMvc: MockMvc) {
         post("/api/meeting/initiate") to UNAUTHORIZED,
         post("/api/meeting/1/propose") to UNAUTHORIZED,
         get("/api/meeting/by-code/some-code") to OK,
+        get("/api/meeting/by-code/some-code/suggestions") to UNAUTHORIZED,
         post("/api/meeting/by-code/some-code/update-title") to UNAUTHORIZED,
         post("/api/meeting/by-code/some-code/propose-new-slots") to UNAUTHORIZED,
         post("/api/meeting/by-code/some-code/connect") to UNAUTHORIZED,

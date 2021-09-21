@@ -6,6 +6,8 @@ import java.time.Duration.ofMinutes
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId.systemDefault
+import java.time.ZoneOffset
+import java.time.ZoneOffset.UTC
 import java.time.ZonedDateTime
 import kotlin.test.assertEquals
 import org.assertj.core.api.Assertions.assertThat
@@ -40,7 +42,8 @@ class MeetingTest {
 
     private val proposedMeetingID1 = ProposedMeeting(
         meetingId, meetingIntentId, ofMinutes(30), initiatorId,
-        null, Actor.RECIPIENT, listOf(proposedSlotID1), emptyList(), validMeetingCode, meetingTitle
+        null, null, Actor.RECIPIENT, listOf(proposedSlotID1),
+        emptyList(), validMeetingCode, meetingTitle
     )
 
     @TestFactory
@@ -90,8 +93,8 @@ class MeetingTest {
         val meetingTitle = meetingTitle
         return listOf(
             listOf(proposedSlotID1.copy()) to ProposedMeeting(
-                meetingId, meetingIntentId, ofHours(1), initiatorId,
-                null, Actor.RECIPIENT, listOf(proposedSlotID1), emptyList(), validMeetingCode, meetingTitle
+                meetingId, meetingIntentId, ofHours(1), initiatorId, null,
+                UTC, Actor.RECIPIENT, listOf(proposedSlotID1), emptyList(), validMeetingCode, meetingTitle
             ),
 
             listOf(proposedSlotID1.copy(), proposedSlotID3.copy()) to ProposedMeeting(
@@ -100,6 +103,7 @@ class MeetingTest {
                 ofHours(1),
                 initiatorId,
                 null,
+                UTC,
                 Actor.RECIPIENT,
                 listOf(proposedSlotID1, proposedSlotID3), emptyList(),
                 validMeetingCode,
@@ -112,6 +116,7 @@ class MeetingTest {
                 ofHours(1),
                 initiatorId,
                 null,
+                UTC,
                 Actor.RECIPIENT,
                 listOf(MeetingSlot(proposedSlotID1.startDateTime, proposedSlotID3.endDateTime)),
                 emptyList(),
@@ -125,7 +130,7 @@ class MeetingTest {
                 initiatorId,
                 ofHours(1),
                 null,
-                systemDefault(),
+                UTC,
                 listOf(suggestedSlotID1, suggestedSlotID2),
             )
 
@@ -165,7 +170,7 @@ class MeetingTest {
             initiatorId,
             ofHours(1),
             null,
-            systemDefault(),
+            UTC,
             listOf(proposedSlotID1.copy(), proposedSlotID2.copy())
         )
         val meetingCode = MeetingCode("VGsUTGno")
@@ -180,7 +185,7 @@ class MeetingTest {
     @Test
     fun `propose new slots`() {
         val proposedMeeting = ProposedMeeting(
-            meetingId, meetingIntentId, ofHours(1), initiatorId, null,
+            meetingId, meetingIntentId, ofHours(1), initiatorId, null, null,
             Actor.RECIPIENT, listOf(proposedSlotID1), emptyList(), validMeetingCode, meetingTitle
         )
 
@@ -193,7 +198,7 @@ class MeetingTest {
     @Test
     fun `propose previously rejected slots`() {
         val proposedMeeting = ProposedMeeting(
-            meetingId, meetingIntentId, ofHours(1), initiatorId, null,
+            meetingId, meetingIntentId, ofHours(1), initiatorId, null, null,
             Actor.RECIPIENT, listOf(proposedSlotID1), emptyList(), validMeetingCode, meetingTitle
         )
 
@@ -210,7 +215,7 @@ class MeetingTest {
         val slot = proposedSlotID1
         val meetingTitle = meetingTitle
         val proposedMeeting = ProposedMeeting(
-            meetingId, meetingIntentId, ofHours(1), initiatorId, null,
+            meetingId, meetingIntentId, ofHours(1), initiatorId, null, null,
             Actor.RECIPIENT, listOf(slot), emptyList(), validMeetingCode, meetingTitle
         )
         val recipient = UserRecipient.of(UserId(11L), "recipient@meetsama.com")
@@ -234,6 +239,7 @@ class MeetingTest {
             meetingIntentId,
             ofHours(1),
             initiatorId,
+            null,
             null,
             Actor.RECIPIENT,
             listOf(slot),

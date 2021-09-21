@@ -61,7 +61,7 @@ class MeetingApplicationServiceIT : BaseApplicationIntegrationTest() {
             val suggestedSlotEnd = suggestedSlotStart.plusHours(2)
             whenever(
                 slotSuggestionService.suggestSlots(
-                    it.id!!, SlotSuggestionRequest(ofMinutes(60), clock.zone, 3)
+                    it.id!!, SlotSuggestionRequest(ofMinutes(60), 3, clock.zone)
                 )
             ).thenReturn(
                 SlotSuggestionResponse(listOf(SlotSuggestion(suggestedSlotStart, suggestedSlotEnd, 1.0)))
@@ -349,6 +349,90 @@ class MeetingApplicationServiceIT : BaseApplicationIntegrationTest() {
     }
 
     @Test
+    fun `suggested slots for sama-non-sama meeting`() {
+        // create meeting intent
+        val meetingIntentDTO = asInitiator {
+            val suggestedSlotStart = ZonedDateTime.now(clock).plusHours(1)
+            val suggestedSlotEnd = suggestedSlotStart.plusHours(2)
+            whenever(
+                slotSuggestionService.suggestSlots(
+                    it.id!!,
+                    SlotSuggestionRequest(ofMinutes(60), 3, clock.zone)
+                )
+            ).thenReturn(
+                SlotSuggestionResponse(listOf(SlotSuggestion(suggestedSlotStart, suggestedSlotEnd, 1.0)))
+            )
+
+            underTest.initiateSamaNonSamaMeeting(
+                it.id!!, InitiateSamaNonSamaMeetingCommand(
+                    60, clock.zone,
+                )
+            )
+        }
+
+        // propose meeting
+        val now = ZonedDateTime.now(clock)
+        val proposedSlot = MeetingSlotDTO(now.plusHours(2), now.plusHours(3))
+
+        val meetingInvitationDTO = asInitiator {
+            underTest.proposeMeeting(it.id!!, ProposeMeetingCommand(
+                meetingIntentDTO.meetingIntentCode,
+                listOf(proposedSlot)
+            ))
+        }
+
+        val suggestedSlots = underTest.getSlotSuggestions(initiator().id!!, meetingInvitationDTO.meetingCode)
+        assertThat(suggestedSlots.suggestedSlots)
+            .containsAll(meetingIntentDTO.suggestedSlots)
+    }
+
+    @Test
+    fun `suggested slots for sama-sama meeting`() {
+
+        val suggestedSlotStart = ZonedDateTime.now(clock).plusHours(1)
+        val suggestedSlotEnd = suggestedSlotStart.plusHours(2)
+        whenever(slotSuggestionService.suggestSlots(initiator().id!!,
+            MultiUserSlotSuggestionRequest(ofMinutes(60), 9, recipient().id!!))
+        ).thenReturn(SlotSuggestionResponse(listOf(SlotSuggestion(suggestedSlotStart, suggestedSlotEnd, 1.0))))
+
+        whenever(slotSuggestionService.suggestSlots(recipient().id!!,
+            MultiUserSlotSuggestionRequest(ofMinutes(60), 9, initiator().id!!))
+        ).thenReturn(SlotSuggestionResponse(listOf(SlotSuggestion(suggestedSlotStart, suggestedSlotEnd, 1.0))))
+
+        // create meeting intent
+        val meetingIntentDTO = asInitiator {
+            whenever(userConnectionService.isConnected(initiator().id!!, recipient().id!!))
+                .thenReturn(true)
+
+            underTest.initiateSamaToSamaMeeting(
+                it.id!!, InitiateSamaSamaMeetingCommand(60, recipient().publicId!!)
+            )
+        }
+
+        // propose meeting
+        val now = ZonedDateTime.now(clock)
+        val proposedSlot = MeetingSlotDTO(now.plusHours(2), now.plusHours(3))
+
+        val meetingInvitationDTO = asInitiator {
+            underTest.proposeMeeting(it.id!!, ProposeMeetingCommand(
+                meetingIntentDTO.meetingIntentCode,
+                listOf(proposedSlot)
+            ))
+        }
+
+        val recipientSuggestedSlots = asRecipient {
+            underTest.getSlotSuggestions(it.id!!, meetingInvitationDTO.meetingCode)
+        }
+
+        val initiatorSuggestedSlots = asInitiator {
+            underTest.getSlotSuggestions(it.id!!, meetingInvitationDTO.meetingCode)
+        }
+
+        assertThat(recipientSuggestedSlots.suggestedSlots)
+            .containsAll(initiatorSuggestedSlots.suggestedSlots)
+    }
+
+    @Test
     fun `only initiator can propose meetings from their own intent`() {
         // create meeting intent
         val meetingIntentDTO = asInitiator {
@@ -357,7 +441,7 @@ class MeetingApplicationServiceIT : BaseApplicationIntegrationTest() {
             whenever(
                 slotSuggestionService.suggestSlots(
                     it.id!!,
-                    SlotSuggestionRequest(ofMinutes(60), clock.zone, 3)
+                    SlotSuggestionRequest(ofMinutes(60), 3, clock.zone)
                 )
             ).thenReturn(
                 SlotSuggestionResponse(listOf(SlotSuggestion(suggestedSlotStart, suggestedSlotEnd, 1.0)))
@@ -383,6 +467,7 @@ class MeetingApplicationServiceIT : BaseApplicationIntegrationTest() {
         }
     }
 
+
     @Test
     fun `setup sama-non-sama meeting with custom title`() {
         // create meeting intent
@@ -391,7 +476,7 @@ class MeetingApplicationServiceIT : BaseApplicationIntegrationTest() {
             val suggestedSlotEnd = suggestedSlotStart.plusHours(2)
             whenever(
                 slotSuggestionService.suggestSlots(
-                    it.id!!, SlotSuggestionRequest(ofMinutes(60), clock.zone, 3)
+                    it.id!!, SlotSuggestionRequest(ofMinutes(60), 3, clock.zone)
                 )
             ).thenReturn(
                 SlotSuggestionResponse(listOf(SlotSuggestion(suggestedSlotStart, suggestedSlotEnd, 1.0)))
@@ -535,7 +620,7 @@ class MeetingApplicationServiceIT : BaseApplicationIntegrationTest() {
             whenever(
                 slotSuggestionService.suggestSlots(
                     it.id!!,
-                    SlotSuggestionRequest(ofMinutes(60), clock.zone, 3)
+                    SlotSuggestionRequest(ofMinutes(60), 3, clock.zone)
                 )
             ).thenReturn(
                 SlotSuggestionResponse(listOf(SlotSuggestion(suggestedSlotStart, suggestedSlotEnd, 1.0)))
@@ -602,7 +687,7 @@ class MeetingApplicationServiceIT : BaseApplicationIntegrationTest() {
             whenever(
                 slotSuggestionService.suggestSlots(
                     it.id!!,
-                    SlotSuggestionRequest(ofMinutes(60), clock.zone, 3)
+                    SlotSuggestionRequest(ofMinutes(60), 3, clock.zone)
                 )
             ).thenReturn(
                 SlotSuggestionResponse(listOf(SlotSuggestion(suggestedSlotStart, suggestedSlotEnd, 1.0)))
@@ -668,7 +753,7 @@ class MeetingApplicationServiceIT : BaseApplicationIntegrationTest() {
             whenever(
                 slotSuggestionService.suggestSlots(
                     it.id!!,
-                    SlotSuggestionRequest(ofMinutes(60), clock.zone, 3)
+                    SlotSuggestionRequest(ofMinutes(60), 3, clock.zone)
                 )
             ).thenReturn(
                 SlotSuggestionResponse(listOf(SlotSuggestion(suggestedSlotStart, suggestedSlotEnd, 1.0)))
@@ -735,7 +820,7 @@ class MeetingApplicationServiceIT : BaseApplicationIntegrationTest() {
             whenever(
                 slotSuggestionService.suggestSlots(
                     it.id!!,
-                    SlotSuggestionRequest(ofMinutes(60), clock.zone, 3)
+                    SlotSuggestionRequest(ofMinutes(60), 3, clock.zone)
                 )
             )
                 .thenReturn(

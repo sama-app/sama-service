@@ -113,6 +113,7 @@ class MeetingRepositoryImpl(
                     Duration.ofMinutes(meetingIntentEntity.durationMinutes!!),
                     meetingIntentEntity.initiatorId!!.toUserId(),
                     meetingEntity.meetingRecipient?.recipientId?.let { UserId(it) },
+                    meetingIntentEntity.timezone,
                     meetingEntity.currentActor!!,
                     proposedSlots.map { MeetingSlot(it.startDateTime, it.endDateTime) },
                     rejectedSlots.map { MeetingSlot(it.startDateTime, it.endDateTime) },

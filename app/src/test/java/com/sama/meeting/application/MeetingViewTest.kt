@@ -83,6 +83,7 @@ class MeetingViewTest {
                 MeetingId(21), MeetingIntentId(11), Duration.ofMinutes(15),
                 initiatorId,
                 null,
+                null,
                 Actor.RECIPIENT,
                 proposedSlots,
                 emptyList(),
@@ -131,6 +132,7 @@ class MeetingViewTest {
             ProposedMeeting(
                 MeetingId(21), MeetingIntentId(11), Duration.ofMinutes(15),
                 initiatorId,
+                null,
                 null,
                 Actor.RECIPIENT,
                 emptyList(),

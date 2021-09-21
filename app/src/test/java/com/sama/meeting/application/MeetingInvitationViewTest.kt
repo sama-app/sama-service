@@ -72,6 +72,7 @@ class MeetingInvitationViewTest {
                 MeetingId(21), MeetingIntentId(11L), Duration.ofMinutes(15),
                 initiatorId,
                 null,
+                null,
                 Actor.RECIPIENT,
                 listOf(
                     MeetingSlot(_10am, _11am),

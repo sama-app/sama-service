@@ -7,8 +7,8 @@ import com.sama.meeting.domain.Actor.RECIPIENT
 import com.sama.users.domain.UserId
 import java.time.Clock
 import java.time.Duration
+import java.time.ZoneId
 import java.time.ZonedDateTime
-import liquibase.pro.packaged.it
 
 enum class MeetingStatus {
     PROPOSED,
@@ -34,6 +34,7 @@ data class ProposedMeeting(
     val duration: Duration,
     val initiatorId: UserId,
     val recipientId: UserId?,
+    val recipientTimeZone: ZoneId?,
     val currentActor: Actor,
     val proposedSlots: List<MeetingSlot>,
     val rejectedSlots: List<MeetingSlot>,
@@ -93,6 +94,14 @@ data class ProposedMeeting(
         val confirmedSlot = expandedSlots().find { it == slot }
             ?: throw MeetingSlotUnavailableException(meetingCode, slot)
         return ConfirmedMeeting(meetingId, initiatorId, duration, recipient, confirmedSlot, meetingTitle)
+    }
+
+    fun otherActorId(userId: UserId): UserId? {
+        return if (userId == initiatorId) {
+            recipientId
+        } else {
+            initiatorId
+        }
     }
 
     private fun currentActorId(): UserId? {
