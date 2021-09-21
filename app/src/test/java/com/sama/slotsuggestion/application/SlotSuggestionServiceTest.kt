@@ -106,7 +106,7 @@ class SlotSuggestionServiceTestConfiguration {
 @ExtendWith(SpringExtension::class)
 @SpringBootTest(
     classes = [
-        SlotSuggestionServiceV2::class,
+        HeatMapSlotSuggestionService::class,
         HeatMapService::class,
         SlotSuggestionServiceTestConfiguration::class,
         SyncGoogleCalendarService::class,
@@ -130,7 +130,7 @@ class SlotSuggestionServiceTest {
     lateinit var clock: Clock
 
     @Autowired
-    lateinit var underTest: SlotSuggestionServiceV2
+    lateinit var underTest: HeatMapSlotSuggestionService
 
     @Test
     fun `non calendar user gets two suggestions today and one next week`() {

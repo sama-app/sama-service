@@ -25,21 +25,23 @@ class HeatMapService(
     private val heatMapConfiguration: HeatMapConfiguration,
     private val clock: Clock,
 ) {
-    fun generate(initiatorId: UserId, recipientTimezone: ZoneId): HeatMap {
-        val user = userRepository.findById(initiatorId)
+
+    fun generate(userId: UserId, recipientTimeZone: ZoneId?): HeatMap {
+        val user = userRepository.findById(userId)
+        val targetTimeZone = recipientTimeZone ?: user.timeZone
 
         val today = LocalDate.now(clock.withZone(user.timeZone)).atStartOfDay(user.timeZone)
         val pastBlockStartDate = today.minusDays(heatMapConfiguration.historicalDays)
         val futureBlockEndDate = today.plusDays(heatMapConfiguration.futureDays)
 
         val (pastBlocks, futureBlocks) = googleCalendarService.findEvents(
-            userId = initiatorId,
+            userId = userId,
             startDateTime = pastBlockStartDate,
             endDateTime = futureBlockEndDate
         ).map { it.toBlock(user.timeZone) }
             .partition { it.startDateTime < today }
 
-        val futureProposedSlots = meetingDataService.findProposedSlots(initiatorId, today, futureBlockEndDate)
+        val futureProposedSlots = meetingDataService.findProposedSlots(userId, today, futureBlockEndDate)
 
         sentrySpan(method = "HeatMap.create") {
             val baseHeatMap = HeatMap.create(
@@ -56,7 +58,7 @@ class HeatMapService(
                 futureBlocks(futureBlocks)
                 futureProposedSlots(futureProposedSlots)
                 workingHours(user.workingHours)
-                recipientTimeZone(recipientTimezone)
+                recipientTimeZone(targetTimeZone)
                 recency()
             }
 
