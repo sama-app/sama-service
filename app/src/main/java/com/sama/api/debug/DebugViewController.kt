@@ -6,22 +6,19 @@ import com.sama.auth.application.GoogleOauth2ApplicationService
 import com.sama.auth.application.GoogleSignFailureDTO
 import com.sama.auth.application.GoogleSignSuccessDTO
 import com.sama.slotsuggestion.application.HeatMapService
-import com.sama.slotsuggestion.application.SlotSuggestionRequest
-import com.sama.slotsuggestion.application.SlotSuggestionResponse
-import com.sama.slotsuggestion.application.SlotSuggestionServiceV2
 import com.sama.slotsuggestion.domain.SlotSuggestionEngine
+import com.sama.slotsuggestion.domain.SuggestedSlotWeigher
+import com.sama.slotsuggestion.domain.ThisOrNextWeekTemplateWeigher
 import com.sama.slotsuggestion.domain.UserRepository
 import com.sama.slotsuggestion.domain.sigmoid
 import com.sama.users.domain.UserId
 import java.time.Duration
 import java.time.LocalTime
-import java.time.ZoneId
 import javax.servlet.http.Cookie
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 import kotlin.math.round
 import org.springframework.http.HttpStatus
-import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
@@ -32,8 +29,7 @@ import org.springframework.web.servlet.view.RedirectView
 class DebugViewController(
     private val googleOauth2ApplicationService: GoogleOauth2ApplicationService,
     private val userRepository: UserRepository,
-    private val heatMapServiceV2: HeatMapService,
-    private val slotSuggestionServiceV2: SlotSuggestionServiceV2,
+    private val heatMapService: HeatMapService,
 ) {
 
     @GetMapping("/api/__debug/auth/google-authorize")
@@ -68,18 +64,37 @@ class DebugViewController(
     data class Cell(val label: String, val colour: String, val hover: Set<Map.Entry<Any, Any>> = emptySet())
 
     @GetMapping("/api/__debug/user/heatmap")
-    fun renderUserHeapMap2(
+    fun renderUserHeatMap(
         @AuthUserId userId: UserId?,
         @RequestParam(defaultValue = "3") count: Int,
         model: MutableMap<String, Any>,
-    ): ModelAndView {
-        val user = userRepository.findById(userId!!)
-        val userTimeZone = user.timeZone
-        val recipientTimezone = userTimeZone
-        val baseHeatMap = heatMapServiceV2.generate(userId!!, recipientTimezone)
+    ) = createHeatMap(userId!!, null, count, model)
 
-        val (suggestedSlots, heatMap) = SlotSuggestionEngine(baseHeatMap)
-            .suggest(Duration.ofMinutes(60), count)
+    @GetMapping("/api/__debug/user/heatmap-overlay")
+    fun renderUserHeatMapOverlay(
+        @AuthUserId userId: UserId?,
+        @RequestParam recipientId: UserId,
+        @RequestParam(defaultValue = "3") count: Int,
+        model: MutableMap<String, Any>,
+    ) = createHeatMap(userId!!, recipientId, count, model)
+
+    private fun createHeatMap(
+        userId: UserId,
+        recipientId: UserId?,
+        count: Int,
+        model: MutableMap<String, Any>,
+    ): ModelAndView {
+        val user = userRepository.findById(userId)
+        val userTimeZone = user.timeZone
+        val baseHeatMap = heatMapService.generate(userId, null)
+        val recipientHeatMap = recipientId?.let { heatMapService.generate(it, null) }
+
+        val (suggestedSlots, heatMap) = SlotSuggestionEngine(baseHeatMap, recipientHeatMap)
+            .suggest(
+                Duration.ofMinutes(60), count,
+                listOf({ s -> SuggestedSlotWeigher(s) },
+                    { s -> ThisOrNextWeekTemplateWeigher(s) })
+            )
 
         val maxWeight = heatMap.slots.maxOf { it.totalWeight }
         val slotsByDate = heatMap.slots
@@ -112,7 +127,7 @@ class DebugViewController(
                     slot.influences.entries.plus(
                         mapOf(
                             "Recipient time:" to slot.startDateTime.atZone(userTimeZone)
-                                .withZoneSameInstant(recipientTimezone)
+                                .withZoneSameInstant(userTimeZone)
                                 .toLocalTime(),
                             "SIGMOID:" to sigmoid,
                             "SCORE:" to (suggestedSlot?.let { it.score.toString() } ?: "N/A")
@@ -130,17 +145,6 @@ class DebugViewController(
 
         model["vectors"] = transposed
         return ModelAndView("heatmap", model)
-    }
-
-    @GetMapping("/api/__debug/user/suggestions", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun getTopSuggestions(@AuthUserId userId: UserId): SlotSuggestionResponse {
-        return slotSuggestionServiceV2.suggestSlots(
-            userId, SlotSuggestionRequest(
-                Duration.ofMinutes(60),
-                ZoneId.systemDefault(),
-                10
-            )
-        )
     }
 
     fun percentageToColour(percentage: Int): String {

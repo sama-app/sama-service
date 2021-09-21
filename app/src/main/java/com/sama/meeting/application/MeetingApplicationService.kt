@@ -23,6 +23,7 @@ import com.sama.meeting.domain.MeetingRepository
 import com.sama.meeting.domain.MeetingSlot
 import com.sama.meeting.domain.ProposedMeeting
 import com.sama.meeting.domain.UserRecipient
+import com.sama.slotsuggestion.application.MultiUserSlotSuggestionRequest
 import com.sama.slotsuggestion.application.SlotSuggestionRequest
 import com.sama.slotsuggestion.application.SlotSuggestionService
 import com.sama.users.application.InternalUserService
@@ -91,11 +92,10 @@ class MeetingApplicationService(
             throw InvalidMeetingInitiationException("User is not connected to User#${command.recipientId.id}")
         }
 
-        val slotSuggestionRequest = SlotSuggestionRequest(
+        val slotSuggestionRequest = MultiUserSlotSuggestionRequest(
             command.durationMinutes.toMinutes(),
-            recipient.settings.timeZone,
             9,
-            listOf(initiatorId, recipient.id)
+            recipient.id
         )
         val suggestedSlots = slotSuggestionService.suggestSlots(initiatorId, slotSuggestionRequest).suggestions
             .map { MeetingSlot(it.startDateTime, it.endDateTime) }

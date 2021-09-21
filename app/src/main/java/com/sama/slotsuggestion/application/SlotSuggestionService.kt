@@ -7,13 +7,19 @@ import java.time.ZoneId
 
 interface SlotSuggestionService {
     fun suggestSlots(userId: UserId, request: SlotSuggestionRequest): SlotSuggestionResponse
+    fun suggestSlots(userId: UserId, request: MultiUserSlotSuggestionRequest): SlotSuggestionResponse
 }
 
 data class SlotSuggestionRequest(
     val slotDuration: Duration,
     val recipientTimezone: ZoneId,
+    val suggestionCount: Int
+)
+
+data class MultiUserSlotSuggestionRequest(
+    val slotDuration: Duration,
     val suggestionCount: Int,
-    val userIds: Collection<UserId> = emptyList(),
+    val recipientId: UserId,
 )
 
 data class SlotSuggestionResponse(

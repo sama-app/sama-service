@@ -11,13 +11,13 @@ import com.sama.connection.application.UserConnectionService
 import com.sama.meeting.domain.InvalidMeetingInitiationException
 import com.sama.meeting.domain.MeetingCode
 import com.sama.meeting.domain.MeetingConfirmedEvent
+import com.sama.slotsuggestion.application.MultiUserSlotSuggestionRequest
 import com.sama.slotsuggestion.application.SlotSuggestionRequest
 import com.sama.slotsuggestion.application.SlotSuggestionResponse
 import com.sama.slotsuggestion.application.SlotSuggestionService
 import com.sama.slotsuggestion.domain.SlotSuggestion
 import java.time.Clock
 import java.time.Duration.ofMinutes
-import java.time.ZoneOffset.UTC
 import java.time.ZonedDateTime
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -119,14 +119,9 @@ class MeetingApplicationServiceIT : BaseApplicationIntegrationTest() {
     fun `setup sama-sama meeting`() {
         // create meeting intent
         val meetingIntentDTO = asInitiator {
-            whenever(
-                slotSuggestionService.suggestSlots(
-                    it.id!!, SlotSuggestionRequest(ofMinutes(60), UTC, 9,
-                        listOf(initiator().id!!, recipient().id!!))
-                )
-            ).thenReturn(
-                SlotSuggestionResponse(emptyList())
-            )
+            whenever(slotSuggestionService
+                .suggestSlots(it.id!!, MultiUserSlotSuggestionRequest(ofMinutes(60), 9, recipient().id!!))
+            ).thenReturn(SlotSuggestionResponse(emptyList()))
 
             whenever(userConnectionService.isConnected(initiator().id!!, recipient().id!!))
                 .thenReturn(true)
@@ -164,14 +159,9 @@ class MeetingApplicationServiceIT : BaseApplicationIntegrationTest() {
     fun `setup sama-sama let recipient pick meeting`() {
         // create meeting intent
         val meetingIntentDTO = asInitiator {
-            whenever(
-                slotSuggestionService.suggestSlots(
-                    it.id!!, SlotSuggestionRequest(ofMinutes(60), UTC, 9,
-                        listOf(initiator().id!!, recipient().id!!))
-                )
-            ).thenReturn(
-                SlotSuggestionResponse(emptyList())
-            )
+            whenever(slotSuggestionService
+                .suggestSlots(it.id!!, MultiUserSlotSuggestionRequest(ofMinutes(60), 9, recipient().id!!)))
+                .thenReturn(SlotSuggestionResponse(emptyList()))
 
             whenever(userConnectionService.isConnected(initiator().id!!, recipient().id!!))
                 .thenReturn(true)
@@ -213,14 +203,9 @@ class MeetingApplicationServiceIT : BaseApplicationIntegrationTest() {
     fun `setup sama-sama back and forth meeting`() {
         // create meeting intent
         val meetingIntentDTO = asInitiator {
-            whenever(
-                slotSuggestionService.suggestSlots(
-                    it.id!!, SlotSuggestionRequest(ofMinutes(60), UTC, 9,
-                        listOf(initiator().id!!, recipient().id!!))
-                )
-            ).thenReturn(
-                SlotSuggestionResponse(emptyList())
-            )
+            whenever(slotSuggestionService
+                .suggestSlots(it.id!!, MultiUserSlotSuggestionRequest(ofMinutes(60), 9, recipient().id!!)))
+                .thenReturn(SlotSuggestionResponse(emptyList()))
 
             whenever(userConnectionService.isConnected(initiator().id!!, recipient().id!!))
                 .thenReturn(true)
@@ -293,14 +278,9 @@ class MeetingApplicationServiceIT : BaseApplicationIntegrationTest() {
     fun `cannot modify sama-sama meeting when not current actor`() {
         // create meeting intent
         val meetingIntentDTO = asInitiator {
-            whenever(
-                slotSuggestionService.suggestSlots(
-                    it.id!!, SlotSuggestionRequest(ofMinutes(60), UTC, 9,
-                        listOf(initiator().id!!, recipient().id!!))
-                )
-            ).thenReturn(
-                SlotSuggestionResponse(emptyList())
-            )
+            whenever(slotSuggestionService
+                .suggestSlots(it.id!!, MultiUserSlotSuggestionRequest(ofMinutes(60), 9, recipient().id!!)))
+                .thenReturn(SlotSuggestionResponse(emptyList()))
 
             whenever(userConnectionService.isConnected(initiator().id!!, recipient().id!!))
                 .thenReturn(true)
