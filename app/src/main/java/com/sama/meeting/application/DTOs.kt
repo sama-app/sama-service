@@ -40,7 +40,10 @@ data class ProposedMeetingDTO(
     val appLinks: MeetingAppLinksDTO?
 )
 
-data class MeetingSlotSuggestionDTO(val suggestedSlots: List<MeetingSlotDTO>)
+data class MeetingSlotSuggestionDTO(
+    val suggestedSlots: List<MeetingSlotDTO>,
+    val rejectedSlots: List<MeetingSlotDTO>
+)
 
 data class MeetingAppLinksDTO(val iosAppDownloadLink: String)
 

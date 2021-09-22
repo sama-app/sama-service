@@ -282,6 +282,10 @@ class MeetingControllerTest(@Autowired val mockMvc: MockMvc) {
                     listOf(MeetingSlotDTO(
                         ZonedDateTime.parse("2021-01-01T12:00:00Z"),
                         ZonedDateTime.parse("2021-01-01T13:00:00Z"),
+                    )),
+                    listOf(MeetingSlotDTO(
+                        ZonedDateTime.parse("2021-01-01T13:00:00Z"),
+                        ZonedDateTime.parse("2021-01-01T14:00:00Z"),
                     )))
             )
 
@@ -291,6 +295,12 @@ class MeetingControllerTest(@Autowired val mockMvc: MockMvc) {
                     {
                         "startDateTime": "2021-01-01T12:00:00Z",
                         "endDateTime": "2021-01-01T13:00:00Z"
+                    }
+                ],
+                "rejectedSlots": [
+                    {
+                        "startDateTime": "2021-01-01T13:00:00Z",
+                        "endDateTime": "2021-01-01T14:00:00Z"
                     }
                 ]
             }

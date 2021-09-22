@@ -410,26 +410,46 @@ class MeetingApplicationServiceIT : BaseApplicationIntegrationTest() {
         }
 
         // propose meeting
-        val now = ZonedDateTime.now(clock)
-        val proposedSlot = MeetingSlotDTO(now.plusHours(2), now.plusHours(3))
-
+        val suggestedSlot = meetingIntentDTO.suggestedSlots[0]
         val meetingInvitationDTO = asInitiator {
             underTest.proposeMeeting(it.id!!, ProposeMeetingCommand(
                 meetingIntentDTO.meetingIntentCode,
-                listOf(proposedSlot)
+                listOf(suggestedSlot)
             ))
         }
 
-        val recipientSuggestedSlots = asRecipient {
-            underTest.getSlotSuggestions(it.id!!, meetingInvitationDTO.meetingCode)
+        asRecipient {
+            val r = underTest.getSlotSuggestions(it.id!!, meetingInvitationDTO.meetingCode)
+            assertThat(r.suggestedSlots).containsExactly(suggestedSlot)
+            assertThat(r.rejectedSlots).isEmpty()
         }
 
-        val initiatorSuggestedSlots = asInitiator {
-            underTest.getSlotSuggestions(it.id!!, meetingInvitationDTO.meetingCode)
+        asInitiator {
+            val r = underTest.getSlotSuggestions(it.id!!, meetingInvitationDTO.meetingCode)
+            assertThat(r.suggestedSlots).containsExactly(suggestedSlot)
+            assertThat(r.rejectedSlots).isEmpty()
         }
 
-        assertThat(recipientSuggestedSlots.suggestedSlots)
-            .containsAll(initiatorSuggestedSlots.suggestedSlots)
+        // propose new slot should add it as rejected
+        val now = ZonedDateTime.now(clock)
+        val proposedSlot = MeetingSlotDTO(now.plusHours(2), now.plusHours(3))
+        asRecipient {
+            underTest.proposeNewMeetingSlots(it.id!!, meetingInvitationDTO.meetingCode,
+                ProposeNewMeetingSlotsCommand(listOf(proposedSlot))
+            )
+        }
+
+        asRecipient {
+            val r = underTest.getSlotSuggestions(it.id!!, meetingInvitationDTO.meetingCode)
+            assertThat(r.suggestedSlots).isEmpty()
+            assertThat(r.rejectedSlots).containsExactly(suggestedSlot)
+        }
+
+        asInitiator {
+            val r = underTest.getSlotSuggestions(it.id!!, meetingInvitationDTO.meetingCode)
+            assertThat(r.suggestedSlots).isEmpty()
+            assertThat(r.rejectedSlots).containsExactly(suggestedSlot)
+        }
     }
 
     @Test

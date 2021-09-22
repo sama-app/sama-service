@@ -201,10 +201,12 @@ class MeetingApplicationService(
             }
         }
 
+        val rejectedSlots = proposedMeeting.rejectedSlots
         val suggestedSlots = slotSuggestions.suggestions
             .map { MeetingSlot(it.startDateTime, it.endDateTime) }
+            .minus(rejectedSlots)
 
-        return MeetingSlotSuggestionDTO(suggestedSlots.toDTO())
+        return MeetingSlotSuggestionDTO(suggestedSlots.toDTO(), rejectedSlots.toDTO())
     }
 
     @Transactional
