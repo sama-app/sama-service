@@ -3,6 +3,7 @@ package com.sama.users.infrastructure
 import com.sama.common.findByIdOrThrow
 import com.sama.common.toNullable
 import com.sama.users.domain.UserId
+import com.sama.users.domain.UserPermission.PAST_EVENT_CONTACT_SCAN
 import com.sama.users.domain.UserSettings
 import com.sama.users.domain.UserSettingsRepository
 import com.sama.users.infrastructure.jpa.UserSettingsEntity
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Component
 @Component
 class UserSettingsRepositoryImpl(private val userSettingsJpaRepository: UserSettingsJpaRepository) :
     UserSettingsRepository {
+
     override fun findByIdOrThrow(userId: UserId): UserSettings {
         return userSettingsJpaRepository.findByIdOrThrow(userId.id).toDomainObject()
     }
@@ -35,6 +37,13 @@ fun UserSettingsEntity.toDomainObject(): UserSettings {
         locale!!,
         timezone!!,
         format24HourTime!!,
-        dayWorkingHours.mapValues { it.value.workingHours }
+        dayWorkingHours.mapValues { it.value.workingHours },
+        setOfNotNull(
+            if (pastEventContactScanEnabled!!) {
+                PAST_EVENT_CONTACT_SCAN
+            } else {
+                null
+            }
+        )
     )
 }

@@ -15,6 +15,7 @@ interface UserRepository : Repository<UserDetails, UserId> {
 
     fun findIdByPublicIdOrThrow(userPublicId: UserPublicId): UserId
     fun findIdByEmailOrThrow(email: String): UserId
+    fun findIdsByEmail(emails: Set<String>): Set<UserId>
 
     fun findDeviceRegistrationsByIdOrThrow(userId: UserId): UserDeviceRegistrations
 

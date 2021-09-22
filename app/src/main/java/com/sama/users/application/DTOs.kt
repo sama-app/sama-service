@@ -1,6 +1,7 @@
 package com.sama.users.application
 
 import com.sama.users.domain.UserId
+import com.sama.users.domain.UserPermission
 import com.sama.users.domain.UserPublicId
 import java.time.DayOfWeek
 import java.time.LocalTime
@@ -42,6 +43,7 @@ data class UserSettingsDTO(
     val timeZone: ZoneId,
     val format24HourTime: Boolean,
     val workingHours: List<DayWorkingHoursDTO>,
+    val grantedPermissions: Set<UserPermission>,
 )
 
 data class DayWorkingHoursDTO(

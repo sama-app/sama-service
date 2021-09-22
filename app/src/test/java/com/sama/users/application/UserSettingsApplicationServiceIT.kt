@@ -52,7 +52,8 @@ class UserSettingsApplicationServiceIT : BaseApplicationIntegrationTest() {
             ZoneId.of("Europe/Rome"),
             true,
             listOf(MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY)
-                .map { DayWorkingHoursDTO(it, LocalTime.of(9, 0), LocalTime.of(17, 0)) }
+                .map { DayWorkingHoursDTO(it, LocalTime.of(9, 0), LocalTime.of(17, 0)) },
+ emptySet()
         )
 
 
