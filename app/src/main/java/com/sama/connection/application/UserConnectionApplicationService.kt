@@ -1,17 +1,20 @@
 package com.sama.connection.application
 
 import com.sama.common.ApplicationService
+import com.sama.comms.application.CommsEventConsumer
 import com.sama.connection.domain.ConnectionRequest
 import com.sama.connection.domain.ConnectionRequestId
 import com.sama.connection.domain.ConnectionRequestRepository
 import com.sama.connection.domain.DiscoveredUserListRepository
 import com.sama.connection.domain.UserAlreadyConnectedException
+import com.sama.connection.domain.UserConnectedEvent
 import com.sama.connection.domain.UserConnection
 import com.sama.connection.domain.UserConnectionRepository
+import com.sama.connection.domain.UserConnectionRequestCreatedEvent
+import com.sama.connection.domain.UserConnectionRequestRejectedEvent
 import com.sama.users.application.InternalUserService
 import com.sama.users.domain.UserId
 import org.springframework.security.access.AccessDeniedException
-import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -22,6 +25,7 @@ class UserConnectionApplicationService(
     private val connectionRequestRepository: ConnectionRequestRepository,
     private val userConnectionRepository: UserConnectionRepository,
     private val discoveredUserListRepository: DiscoveredUserListRepository,
+    private val commsEventConsumer: CommsEventConsumer,
     private val userConnectionViews: UserConnectionViews,
 ) : UserConnectionService {
 
@@ -38,14 +42,18 @@ class UserConnectionApplicationService(
     }
 
     @Transactional
-    override fun createUserConnection(createConnectionCommand: CreateConnectionCommand): Boolean {
-        val (userOneId, userTwoId) = createConnectionCommand
-        if (isConnected(userOneId, userTwoId)) {
-            throw UserAlreadyConnectedException(userOneId, userTwoId)
+    override fun createUserConnection(userId: UserId, command: CreateUserConnectionCommand): Boolean {
+        val recipientId = command.recipientId
+        if (isConnected(userId, recipientId)) {
+            throw UserAlreadyConnectedException(userId, recipientId)
         }
 
-        val userConnection = UserConnection(userOneId, userTwoId)
+        val userConnection = UserConnection(userId, recipientId)
         userConnectionRepository.save(userConnection)
+
+        val event = UserConnectedEvent(userId, userConnection)
+        commsEventConsumer.onUserConnected(event)
+
         return true
     }
 
@@ -57,20 +65,24 @@ class UserConnectionApplicationService(
     }
 
     @Transactional
-    override fun createConnectionRequest(initiatorId: UserId, command: CreateConnectionRequestCommand): ConnectionRequestDTO {
+    override fun createConnectionRequest(userId: UserId, command: CreateConnectionRequestCommand): ConnectionRequestDTO {
         val recipientId = userService.translatePublicId(command.recipientId)
 
-        val connectionRequest = connectionRequestRepository.findPendingByUserIds(initiatorId, recipientId)
+        val connectionRequest = connectionRequestRepository.findPendingByUserIds(userId, recipientId)
         if (connectionRequest != null) {
             return userConnectionViews.renderConnectionRequest(connectionRequest)
         }
 
-        val connectedUserIds = userConnectionRepository.findConnectedUserIds(initiatorId)
+        if (isConnected(userId, recipientId)) {
+            throw UserAlreadyConnectedException(userId, recipientId)
+        }
 
-        val newConnectionRequest = ConnectionRequest.new(initiatorId, recipientId, connectedUserIds)
+        val newConnectionRequest = ConnectionRequest.new(userId, recipientId)
         connectionRequestRepository.save(newConnectionRequest)
 
-        // TODO: send comms
+        val event = UserConnectionRequestCreatedEvent(userId, newConnectionRequest)
+        commsEventConsumer.onConnectionRequestCreated(event)
+
         return userConnectionViews.renderConnectionRequest(newConnectionRequest)
     }
 
@@ -85,7 +97,9 @@ class UserConnectionApplicationService(
 
         userConnectionRepository.save(userConnection)
         connectionRequestRepository.save(approvedRequest)
-        // TODO: send comms
+
+        val event = UserConnectedEvent(userId, userConnection)
+        commsEventConsumer.onUserConnected(event)
     }
 
     @Transactional
@@ -97,7 +111,9 @@ class UserConnectionApplicationService(
 
         val rejectedRequest = connectionRequest.reject()
         connectionRequestRepository.save(rejectedRequest)
-        // TODO: send comms?
+
+        val event = UserConnectionRequestRejectedEvent(userId, rejectedRequest)
+        commsEventConsumer.onConnectionRequestRejected(event)
     }
 
     @Transactional

@@ -13,6 +13,7 @@ annotation class Factory
 annotation class DomainEntity
 annotation class DomainService
 annotation class ValueObject
+annotation class DomainEvent
 
 /**
  * Indicates that the API should not be exposed publicly and likely

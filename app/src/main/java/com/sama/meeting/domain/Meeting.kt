@@ -62,9 +62,9 @@ data class ProposedMeeting(
         }
     }
 
-    fun isSamaToSama(): Boolean {
-        return recipientId != null
-    }
+    fun isInvitation() = proposedSlots.isEmpty()
+
+    fun isSamaToSama() = recipientId != null
 
     fun updateTitle(title: String): ProposedMeeting {
         return copy(meetingTitle = title)

@@ -14,9 +14,9 @@ import org.springframework.stereotype.Component
 class FirebaseNotificationSender(private val userService: UserService) : NotificationSender {
     private var logger: Logger = LoggerFactory.getLogger(FirebaseNotificationSender::class.java)
 
-    override fun send(userId: UserId, notification: Notification): Boolean {
+    override fun send(receiverUserId: UserId, notification: Notification): Boolean {
         return kotlin.runCatching {
-            val token = userService.findUserDeviceRegistrations(userId).firebaseDeviceRegistration
+            val token = userService.findUserDeviceRegistrations(receiverUserId).firebaseDeviceRegistration
                 ?.registrationToken
                 ?: throw RuntimeException("No Firebase device registration found")
 
@@ -33,8 +33,8 @@ class FirebaseNotificationSender(private val userService: UserService) : Notific
 
             FirebaseMessaging.getInstance().send(message)
         }
-            .onSuccess { logger.debug("Notification sent to User#${userId.id}") }
-            .onFailure { logger.warn("Could not send Firebase notification to User#${userId.id}", it) }
+            .onSuccess { logger.debug("Notification sent to User#${receiverUserId.id}") }
+            .onFailure { logger.warn("Could not send Firebase notification to User#${receiverUserId.id}", it) }
             .isSuccess
     }
 }

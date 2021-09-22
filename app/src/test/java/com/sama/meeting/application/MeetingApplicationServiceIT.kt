@@ -6,7 +6,7 @@ import com.sama.calendar.application.FetchEventsDTO
 import com.sama.common.BaseApplicationIntegrationTest
 import com.sama.common.NotFoundException
 import com.sama.comms.application.CommsEventConsumer
-import com.sama.connection.application.CreateConnectionCommand
+import com.sama.connection.application.CreateUserConnectionCommand
 import com.sama.connection.application.UserConnectionService
 import com.sama.meeting.domain.InvalidMeetingInitiationException
 import com.sama.meeting.domain.MeetingCode
@@ -695,7 +695,7 @@ class MeetingApplicationServiceIT : BaseApplicationIntegrationTest() {
         }
 
         // Connect with initiator and propose new slots
-        whenever(userConnectionService.createUserConnection(CreateConnectionCommand(recipient().id!!, initiator().id!!)))
+        whenever(userConnectionService.createUserConnection(recipient().id!!, CreateUserConnectionCommand(initiator().id!!)))
             .thenReturn(true)
 
         val meetingCode = meetingInvitationDTO.meetingCode
