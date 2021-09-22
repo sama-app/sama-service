@@ -31,7 +31,8 @@ class UserSettingsRepositoryIT : BasePersistenceIT<UserSettingsRepository>() {
             mapOf(
                 DayOfWeek.TUESDAY to WorkingHours.nineToFive(),
                 DayOfWeek.FRIDAY to WorkingHours.nineToFive()
-            )
+            ),
+ emptySet()
         )
         underTest.save(toPersist)
 

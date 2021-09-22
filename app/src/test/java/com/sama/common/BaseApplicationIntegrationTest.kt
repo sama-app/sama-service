@@ -7,10 +7,7 @@ import com.sama.users.domain.UserDetails
 import com.sama.users.domain.UserRepository
 import com.sama.users.domain.UserSettings
 import com.sama.users.domain.UserSettingsRepository
-import java.time.ZoneId
-import java.time.ZoneOffset
 import java.time.ZoneOffset.UTC
-import java.util.Locale
 import java.util.Locale.ENGLISH
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -71,7 +68,7 @@ class BaseApplicationIntegrationTest {
             )
         )
         userSettingsRepository.save(UserSettings(initiatorUser.id!!,
-            ENGLISH, UTC, true, emptyMap()))
+            ENGLISH, UTC, true, emptyMap(), emptySet()))
 
         recipientUser = userRepository.save(
             UserDetails(
@@ -81,7 +78,7 @@ class BaseApplicationIntegrationTest {
             )
         )
         userSettingsRepository.save(UserSettings(recipientUser.id!!,
-            ENGLISH, UTC, true, emptyMap()))
+            ENGLISH, UTC, true, emptyMap(), emptySet()))
     }
 
     @AfterEach

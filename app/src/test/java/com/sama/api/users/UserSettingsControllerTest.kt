@@ -3,11 +3,15 @@ package com.sama.api.users
 import com.sama.api.ApiTestConfiguration
 import com.sama.api.config.WebMvcConfiguration
 import com.sama.users.application.DayWorkingHoursDTO
+import com.sama.users.application.GrantUserPermissionsCommand
+import com.sama.users.application.RevokeUserPermissionsCommand
 import com.sama.users.application.UpdateTimeZoneCommand
 import com.sama.users.application.UpdateWorkingHoursCommand
 import com.sama.users.application.UserSettingsApplicationService
 import com.sama.users.application.UserSettingsDTO
 import com.sama.users.domain.UserId
+import com.sama.users.domain.UserPermission
+import com.sama.users.domain.UserPermission.PAST_EVENT_CONTACT_SCAN
 import java.time.DayOfWeek.MONDAY
 import java.time.DayOfWeek.TUESDAY
 import java.time.DayOfWeek.WEDNESDAY
@@ -43,7 +47,7 @@ import org.springframework.test.web.servlet.result.isEqualTo
 )
 @AutoConfigureMockMvc
 class UserSettingsControllerTest(
-    @Autowired val mockMvc: MockMvc
+    @Autowired val mockMvc: MockMvc,
 ) {
     @MockBean
     lateinit var userSettingsApplicationService: UserSettingsApplicationService
@@ -65,7 +69,8 @@ class UserSettingsControllerTest(
                     listOf(
                         DayWorkingHoursDTO(MONDAY, LocalTime.of(10, 0), LocalTime.of(12, 0)),
                         DayWorkingHoursDTO(WEDNESDAY, LocalTime.of(13, 0), LocalTime.of(17, 30))
-                    )
+                    ),
+                    setOf(PAST_EVENT_CONTACT_SCAN)
                 )
             )
 
@@ -85,7 +90,8 @@ class UserSettingsControllerTest(
                     "startTime": "13:00:00",
                     "endTime": "17:30:00"
                 }
-            ]
+            ],
+            "grantedPermissions": [ "PAST_EVENT_CONTACT_SCAN" ]
         }
         """
 
@@ -151,10 +157,54 @@ class UserSettingsControllerTest(
             .andExpect(content().string("true"))
     }
 
+    @Test
+    fun `grant permissions`() {
+        whenever(userSettingsApplicationService.grantPermissions(userId,
+            GrantUserPermissionsCommand(setOf(PAST_EVENT_CONTACT_SCAN))))
+            .thenReturn(true)
+
+        val requestBody = """
+            {
+                "permissions": [ "PAST_EVENT_CONTACT_SCAN" ]
+            }
+        """
+        mockMvc.perform(
+            post("/api/user/me/grant-permissions")
+                .contentType(APPLICATION_JSON)
+                .header("Authorization", "Bearer $jwt")
+                .content(requestBody)
+        )
+            .andExpect(status().isOk)
+            .andExpect(content().string("true"))
+    }
+
+    @Test
+    fun `revoke permissions`() {
+        whenever(userSettingsApplicationService.revokePermissions(userId,
+            RevokeUserPermissionsCommand(setOf(PAST_EVENT_CONTACT_SCAN))))
+            .thenReturn(true)
+
+        val requestBody = """
+            {
+                "permissions": [ "PAST_EVENT_CONTACT_SCAN" ]
+            }
+        """
+        mockMvc.perform(
+            post("/api/user/me/revoke-permissions")
+                .contentType(APPLICATION_JSON)
+                .header("Authorization", "Bearer $jwt")
+                .content(requestBody)
+        )
+            .andExpect(status().isOk)
+            .andExpect(content().string("true"))
+    }
+
     @TestFactory
     fun `endpoint authorization without jwt`() = listOf(
         post("/api/user/me/update-working-hours") to HttpStatus.UNAUTHORIZED,
         post("/api/user/me/update-time-zone") to HttpStatus.UNAUTHORIZED,
+        post("/api/user/me/grant-permissions") to HttpStatus.UNAUTHORIZED,
+        post("/api/user/me/revoke-permissions") to HttpStatus.UNAUTHORIZED,
         get("/api/user/me/settings") to HttpStatus.UNAUTHORIZED,
     )
         .mapIndexed { idx, (request, expectedStatus) ->

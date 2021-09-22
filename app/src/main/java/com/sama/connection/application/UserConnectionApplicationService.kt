@@ -57,6 +57,26 @@ class UserConnectionApplicationService(
         return true
     }
 
+    @Transactional
+    override fun removeUserConnection(userId: UserId, command: RemoveUserConnectionCommand) {
+        val recipientId = userService.translatePublicId(command.userId)
+        userConnectionRepository.delete(UserConnection(userId, recipientId))
+    }
+
+    override fun addDiscoveredUsers(userId: UserId, command: AddDiscoveredUsersCommand): Boolean {
+        val discoveredUsers = discoveredUserListRepository.findById(userId)
+        val discoveredUserIds = userService.findIdsByEmail(command.userEmails)
+
+        val (updated, newUserIds) = discoveredUsers.addDiscoveredUsers(discoveredUserIds)
+
+        if (newUserIds.isNotEmpty()) {
+            discoveredUserListRepository.save(updated)
+            // TODO: Send notification?
+            return true
+        }
+        return false
+    }
+
     @Transactional(readOnly = true)
     override fun findConnectionRequests(userId: UserId): ConnectionRequestsDTO {
         val initiatedConnectionRequests = connectionRequestRepository.findPendingByInitiatorId(userId)
@@ -114,11 +134,5 @@ class UserConnectionApplicationService(
 
         val event = UserConnectionRequestRejectedEvent(userId, rejectedRequest)
         commsEventConsumer.onConnectionRequestRejected(event)
-    }
-
-    @Transactional
-    override fun removeUserConnection(userId: UserId, command: RemoveUserConnectionCommand) {
-        val recipientId = userService.translatePublicId(command.userId)
-        userConnectionRepository.delete(UserConnection(userId, recipientId))
     }
 }
