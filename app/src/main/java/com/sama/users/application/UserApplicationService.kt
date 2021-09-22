@@ -89,7 +89,6 @@ class UserApplicationService(
     fun registerDevice(userId: UserId, command: RegisterDeviceCommand): Boolean {
         val changes = userRepository.findDeviceRegistrationsByIdOrThrow(userId)
             .register(command.deviceId, command.firebaseRegistrationToken)
-            .getOrThrow()
         userRepository.save(changes)
         return true
     }
@@ -98,8 +97,6 @@ class UserApplicationService(
     fun unregisterDevice(userId: UserId, command: UnregisterDeviceCommand): Boolean {
         val changes = userRepository.findDeviceRegistrationsByIdOrThrow(userId)
             .unregister(command.deviceId)
-            .getOrThrow()
-
         userRepository.save(changes)
         return true
     }
