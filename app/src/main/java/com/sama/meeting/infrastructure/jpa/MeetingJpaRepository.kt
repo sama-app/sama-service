@@ -36,7 +36,8 @@ interface MeetingJpaRepository : JpaRepository<MeetingEntity, Long> {
 
     @Query(
         "SELECT new com.sama.meeting.domain.MeetingSlot(mps.startDateTime, mps.endDateTime) " +
-                "FROM MeetingEntity m JOIN MeetingIntentEntity mi ON m.meetingIntentId = mi.id " +
+                "FROM MeetingEntity m " +
+                "JOIN MeetingIntentEntity mi ON m.meetingIntentId = mi.id " +
                 "JOIN MeetingProposedSlotEntity mps ON m.id = mps.meetingId " +
                 "WHERE mi.initiatorId = :initiatorId AND " +
                 "   mps.startDateTime > :fromDateTime AND " +
