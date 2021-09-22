@@ -2,6 +2,7 @@ package com.sama.users.infrastructure.jpa
 
 import com.sama.common.Factory
 import com.sama.users.domain.UserId
+import com.sama.users.domain.UserPermission
 import com.sama.users.domain.UserSettings
 import com.sama.users.domain.WorkingHours
 import com.sama.users.infrastructure.toUserId
@@ -36,6 +37,9 @@ class UserSettingsEntity(
 
     @Column(name = "format_24_hour_time")
     var format24HourTime: Boolean? = null
+
+    @Column(name = "past_event_contact_scan_enabled")
+    var pastEventContactScanEnabled: Boolean? = null
 
     @OneToMany(cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(name = "userId", nullable = false, updatable = false, insertable = false)
@@ -83,6 +87,7 @@ fun UserSettingsEntity.applyChanges(userSettings: UserSettings): UserSettingsEnt
     }
     this.dayWorkingHours.entries
         .removeIf { it.key !in userSettings.dayWorkingHours.keys }
+    this.pastEventContactScanEnabled = userSettings.grantedPermissions.contains(UserPermission.PAST_EVENT_CONTACT_SCAN)
     this.updatedAt = Instant.now()
     return this
 }

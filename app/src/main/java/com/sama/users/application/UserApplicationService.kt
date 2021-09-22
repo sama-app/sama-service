@@ -77,6 +77,10 @@ class UserApplicationService(
         return userRepository.findIdByPublicIdOrThrow(userPublicId)
     }
 
+    override fun findIdsByEmail(emails: Set<String>): Set<UserId> {
+        return userRepository.findIdsByEmail(emails)
+    }
+
     override fun findInternalByEmail(email: String): UserInternalDTO {
         val user = userRepository.findByEmailOrThrow(email)
         val userSettings = userSettingsRepository.findByIdOrThrow(user.id!!).toDTO()

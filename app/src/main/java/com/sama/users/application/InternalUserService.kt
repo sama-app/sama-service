@@ -9,6 +9,9 @@ interface InternalUserService: UserService {
     fun translatePublicId(userPublicId: UserPublicId): UserId
 
     @InternalApi
+    fun findIdsByEmail(emails: Set<String>): Set<UserId>
+
+    @InternalApi
     fun findInternalByEmail(email: String): UserInternalDTO
 
     @InternalApi

@@ -50,6 +50,24 @@ class UserSettingsApplicationService(
         userSettingsRepository.save(userSettings)
         return true
     }
+
+    @Transactional
+    fun grantPermissions(userId: UserId, command: GrantUserPermissionsCommand): Boolean {
+        val userSettings = userSettingsRepository.findByIdOrThrow(userId)
+            .grantPermissions(command.permissions)
+
+        userSettingsRepository.save(userSettings)
+        return true
+    }
+
+    @Transactional
+    fun revokePermissions(userId: UserId, command: RevokeUserPermissionsCommand): Boolean {
+        val userSettings = userSettingsRepository.findByIdOrThrow(userId)
+            .revokePermissions(command.permissions)
+
+        userSettingsRepository.save(userSettings)
+        return true
+    }
 }
 
 fun UserSettings.toDTO(): UserSettingsDTO {
@@ -59,6 +77,7 @@ fun UserSettings.toDTO(): UserSettingsDTO {
         format24HourTime,
         dayWorkingHours
             .map { wh -> DayWorkingHoursDTO(wh.key, wh.value.startTime, wh.value.endTime) }
-            .sortedBy { wh -> wh.dayOfWeek }
+            .sortedBy { wh -> wh.dayOfWeek },
+        grantedPermissions
     )
 }

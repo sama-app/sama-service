@@ -10,6 +10,8 @@ interface UserConnectionService {
     @InternalApi
     fun createUserConnection(userId: UserId, command: CreateUserConnectionCommand): Boolean
     fun removeUserConnection(userId: UserId, command: RemoveUserConnectionCommand)
+    @InternalApi
+    fun addDiscoveredUsers(userId: UserId, command: AddDiscoveredUsersCommand): Boolean
 
     fun findConnectionRequests(userId: UserId): ConnectionRequestsDTO
     fun createConnectionRequest(userId: UserId, command: CreateConnectionRequestCommand): ConnectionRequestDTO

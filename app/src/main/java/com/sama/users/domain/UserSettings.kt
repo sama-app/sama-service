@@ -17,6 +17,7 @@ data class UserSettings(
     val timeZone: ZoneId,
     val format24HourTime: Boolean,
     val dayWorkingHours: Map<DayOfWeek, WorkingHours>,
+    val grantedPermissions: Set<UserPermission>,
 ) {
 
     @Factory
@@ -28,7 +29,8 @@ data class UserSettings(
                 timeZone = defaults?.timezone ?: ZoneId.of("Etc/GMT"),
                 format24HourTime = defaults?.format24HourTime ?: false,
                 dayWorkingHours = defaults?.workingHours ?: listOf(MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY)
-                    .associateWith { WorkingHours.nineToFive() }
+                    .associateWith { WorkingHours.nineToFive() },
+                grantedPermissions = emptySet()
             )
         }
 
@@ -41,13 +43,21 @@ data class UserSettings(
     fun updateTimeZone(timeZone: ZoneId): UserSettings {
         return copy(timeZone = timeZone)
     }
+
+    fun grantPermissions(permissions: Set<UserPermission>): UserSettings {
+        return copy(grantedPermissions = grantedPermissions + permissions)
+    }
+
+    fun revokePermissions(permissions: Set<UserPermission>): UserSettings {
+        return copy(grantedPermissions = grantedPermissions - permissions)
+    }
 }
 
 @ValueObject
 @Embeddable
 data class WorkingHours(
     val startTime: LocalTime,
-    val endTime: LocalTime
+    val endTime: LocalTime,
 ) {
     init {
         if (!startTime.isBefore(endTime)) {
@@ -63,4 +73,8 @@ data class WorkingHours(
             )
         }
     }
+}
+
+enum class UserPermission {
+    PAST_EVENT_CONTACT_SCAN
 }

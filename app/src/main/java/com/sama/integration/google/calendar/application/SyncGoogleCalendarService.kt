@@ -9,6 +9,8 @@ import com.sama.common.ApplicationService
 import com.sama.common.component1
 import com.sama.common.component2
 import com.sama.common.to
+import com.sama.connection.application.AddDiscoveredUsersCommand
+import com.sama.connection.application.UserConnectionService
 import com.sama.integration.google.GoogleServiceFactory
 import com.sama.integration.google.GoogleSyncTokenInvalidatedException
 import com.sama.integration.google.calendar.domain.AggregatedData
@@ -21,7 +23,10 @@ import com.sama.integration.google.calendar.domain.GoogleCalendarId
 import com.sama.integration.google.calendar.domain.findAllEvents
 import com.sama.integration.google.calendar.domain.insert
 import com.sama.integration.google.translatedGoogleException
+import com.sama.users.application.UserSettingsService
 import com.sama.users.domain.UserId
+import com.sama.users.domain.UserPermission
+import com.sama.users.domain.UserPermission.PAST_EVENT_CONTACT_SCAN
 import java.time.Clock
 import java.time.Instant
 import java.time.ZonedDateTime
@@ -40,6 +45,8 @@ class SyncGoogleCalendarService(
     private val googleServiceFactory: GoogleServiceFactory,
     private val calendarSyncRepository: CalendarSyncRepository,
     private val calendarEventRepository: CalendarEventRepository,
+    private val userSettingsService: UserSettingsService,
+    private val userConnectionService: UserConnectionService,
     private val clock: Clock,
 ) : GoogleCalendarService {
     private var logger: Logger = LoggerFactory.getLogger(SyncGoogleCalendarService::class.java)
@@ -155,7 +162,10 @@ class SyncGoogleCalendarService(
             return
         }
 
-        logger.info("Syncing User#${userId.id} Calendar#${calendarId}...")
+        val grantedPermissions = userSettingsService.find(userId).grantedPermissions
+        val pastEventContactScanEnabled = grantedPermissions.contains(PAST_EVENT_CONTACT_SCAN)
+
+        logger.info("Syncing User#${userId.id} Calendar#${calendarId}... Granted permissions: $grantedPermissions")
         val calendarService = googleServiceFactory.calendarService(userId)
         try {
             val updatedSync = if (forceFullSync || calendarSync.needsFullSync(clock)) {
@@ -167,6 +177,11 @@ class SyncGoogleCalendarService(
                 calendarEventRepository.deleteBy(userId, calendarId)
                 calendarEventRepository.saveAll(calendarEvents)
 
+                if (pastEventContactScanEnabled) {
+                    val attendeeEmails = events.attendeeEmails()
+                    userConnectionService.addDiscoveredUsers(userId, AddDiscoveredUsersCommand(attendeeEmails))
+                }
+
                 calendarSync.completeFull(syncToken!!, startDate to endDate, clock)
             } else {
                 val (events, timeZone, newSyncToken) = calendarService
@@ -175,6 +190,11 @@ class SyncGoogleCalendarService(
                 val (toAdd, toRemove) = events.partition { it.status in ACCEPTED_EVENT_STATUSES }
                 calendarEventRepository.saveAll(toAdd.toDomain(userId, calendarId, timeZone))
                 calendarEventRepository.deleteAll(toRemove.map { it.toKey(userId, calendarId) })
+
+                if (pastEventContactScanEnabled) {
+                    val attendeeEmails = events.attendeeEmails()
+                    userConnectionService.addDiscoveredUsers(userId, AddDiscoveredUsersCommand(attendeeEmails))
+                }
 
                 calendarSync.complete(newSyncToken!!, clock)
             }

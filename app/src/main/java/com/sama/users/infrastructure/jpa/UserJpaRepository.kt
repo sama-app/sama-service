@@ -20,6 +20,9 @@ interface UserJpaRepository : JpaRepository<UserEntity, Long> {
     @Query("select u.id from UserEntity u where email = ?1")
     fun findIdByEmail(email: String): Long?
 
+    @Query("select u.id from UserEntity u where email IN (?1)")
+    fun findIdsByEmail(emails: Set<String>): Set<Long>
+
     @Query("select u.id from UserEntity u where publicId = ?1")
     fun findIdByPublicId(userPublicId: UUID): Long?
 }

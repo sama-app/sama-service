@@ -14,6 +14,7 @@ import com.sama.users.infrastructure.jpa.findByPublicIdOrThrow
 import com.sama.users.infrastructure.jpa.findIdByEmailOrThrow
 import com.sama.users.infrastructure.jpa.findIdByPublicIdOrThrow
 import java.util.UUID
+import liquibase.pro.packaged.it
 import org.springframework.security.crypto.encrypt.TextEncryptor
 import org.springframework.stereotype.Component
 
@@ -46,6 +47,13 @@ class UserRepositoryImpl(private val userJpaRepository: UserJpaRepository) : Use
 
     override fun findIdByEmailOrThrow(email: String): UserId {
         return userJpaRepository.findIdByEmailOrThrow(email).toUserId()
+    }
+
+    override fun findIdsByEmail(emails: Set<String>): Set<UserId> {
+        if (emails.isEmpty()) {
+            return emptySet()
+        }
+        return userJpaRepository.findIdsByEmail(emails).mapTo(mutableSetOf()) { it.toUserId() }
     }
 
     override fun findIdByPublicIdOrThrow(userPublicId: UserPublicId): UserId {

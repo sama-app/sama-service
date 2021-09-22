@@ -1,6 +1,8 @@
 package com.sama.api.users
 
 import com.sama.api.config.AuthUserId
+import com.sama.users.application.GrantUserPermissionsCommand
+import com.sama.users.application.RevokeUserPermissionsCommand
 import com.sama.users.application.UpdateTimeZoneCommand
 import com.sama.users.application.UpdateWorkingHoursCommand
 import com.sama.users.application.UserSettingsApplicationService
@@ -18,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController
 @Tag(name = "user")
 @RestController
 class UserSettingsController(
-    private val userSettingsApplicationService: UserSettingsApplicationService
+    private val userSettingsApplicationService: UserSettingsApplicationService,
 ) {
 
     @Operation(
@@ -43,7 +45,6 @@ class UserSettingsController(
     fun updateWorkingHours(@AuthUserId userId: UserId?, @RequestBody command: UpdateWorkingHoursCommand) =
         userSettingsApplicationService.updateWorkingHours(userId!!, command)
 
-
     @Operation(
         summary = "Update user time zone",
         security = [SecurityRequirement(name = "user-auth")]
@@ -54,4 +55,26 @@ class UserSettingsController(
     )
     fun updateTimeZone(@AuthUserId userId: UserId?, @RequestBody command: UpdateTimeZoneCommand) =
         userSettingsApplicationService.updateTimeZone(userId!!, command)
+
+    @Operation(
+        summary = "Grant Sama permissions to enable features",
+        security = [SecurityRequirement(name = "user-auth")]
+    )
+    @PostMapping(
+        "/api/user/me/grant-permissions",
+        consumes = [APPLICATION_JSON_VALUE]
+    )
+    fun grantPermissions(@AuthUserId userId: UserId?, @RequestBody command: GrantUserPermissionsCommand) =
+        userSettingsApplicationService.grantPermissions(userId!!, command)
+
+    @Operation(
+        summary = "Revoke Sama permissions disabling some features",
+        security = [SecurityRequirement(name = "user-auth")]
+    )
+    @PostMapping(
+        "/api/user/me/revoke-permissions",
+        consumes = [APPLICATION_JSON_VALUE]
+    )
+    fun revokePermissions(@AuthUserId userId: UserId?, @RequestBody command: RevokeUserPermissionsCommand) =
+        userSettingsApplicationService.revokePermissions(userId!!, command)
 }

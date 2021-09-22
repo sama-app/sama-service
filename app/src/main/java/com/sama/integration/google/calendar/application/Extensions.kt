@@ -1,6 +1,7 @@
 package com.sama.integration.google.calendar.application
 
 import com.google.api.services.calendar.model.EventDateTime
+import com.sama.connection.domain.CalendarContact
 import com.sama.integration.google.calendar.domain.CalendarEvent
 import com.sama.integration.google.calendar.domain.EventData
 import com.sama.integration.google.calendar.domain.GoogleCalendarDateTime
@@ -41,6 +42,15 @@ fun Collection<GoogleCalendarEvent>.toDomain(
 ): List<CalendarEvent> {
     return filter { it.status in ACCEPTED_EVENT_STATUSES }
         .map { it.toDomain(userId, calendarId, timeZone) }
+}
+
+fun Collection<GoogleCalendarEvent>.attendeeEmails(): Set<String> {
+    return asSequence() // more efficient
+        .mapNotNull { it.attendees }
+        .flatten()
+        .distinct()
+        .map { it.email }
+        .toSet()
 }
 
 fun GoogleCalendarEvent.toKey(userId: UserId, calendarId: GoogleCalendarId): GoogleCalendarEventKey {
