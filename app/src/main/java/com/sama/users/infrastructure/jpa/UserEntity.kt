@@ -78,10 +78,16 @@ class UserEntity(email: String) {
     }
 }
 
-
 fun UserEntity.applyChanges(user: UserDeviceRegistrations): UserEntity {
-    this.firebaseCredential = if (user.deviceId != null && user.firebaseRegistrationToken != null) {
-        FirebaseCredential(user.deviceId, user.firebaseRegistrationToken, Instant.now())
+    firebaseCredential = if (user.isRegistered) {
+        if (firebaseCredential?.deviceId == user.deviceId) {
+            firebaseCredential!!.copy(
+                registrationToken = user.firebaseRegistrationToken!!,
+                updatedAt = Instant.now()
+            )
+        } else {
+            FirebaseCredential(user.deviceId!!, user.firebaseRegistrationToken!!, Instant.now())
+        }
     } else {
         null
     }

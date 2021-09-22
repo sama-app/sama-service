@@ -66,6 +66,10 @@ class UserRepositoryImpl(private val userJpaRepository: UserJpaRepository) : Use
     }
 
     override fun save(userDeviceRegistrations: UserDeviceRegistrations): UserDeviceRegistrations {
+        userDeviceRegistrations.deviceId?.run {
+            userJpaRepository.deleteFirebaseCredential(this)
+        }
+
         var userEntity = userJpaRepository.findByIdOrThrow(userDeviceRegistrations.userId.id)
         userEntity = userEntity.applyChanges(userDeviceRegistrations)
         userEntity = userJpaRepository.save(userEntity)
