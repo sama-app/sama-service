@@ -5,5 +5,5 @@ import com.sama.users.domain.UserId
 
 @DomainRepository
 interface CommsUserRepository {
-    fun findById(userId: UserId): CommsUser
+    fun find(userId: UserId): CommsUser
 }

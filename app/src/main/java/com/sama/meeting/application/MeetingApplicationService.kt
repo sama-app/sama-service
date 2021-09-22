@@ -5,7 +5,7 @@ import com.sama.common.ApplicationService
 import com.sama.common.NotFoundException
 import com.sama.common.toMinutes
 import com.sama.comms.application.CommsEventConsumer
-import com.sama.connection.application.CreateConnectionCommand
+import com.sama.connection.application.CreateUserConnectionCommand
 import com.sama.connection.application.UserConnectionService
 import com.sama.connection.domain.UserAlreadyConnectedException
 import com.sama.meeting.domain.ConfirmedMeeting
@@ -19,6 +19,8 @@ import com.sama.meeting.domain.MeetingCodeGenerator
 import com.sama.meeting.domain.MeetingConfirmedEvent
 import com.sama.meeting.domain.MeetingIntent
 import com.sama.meeting.domain.MeetingIntentRepository
+import com.sama.meeting.domain.NewMeetingSlotsProposedEvent
+import com.sama.meeting.domain.MeetingProposedEvent
 import com.sama.meeting.domain.MeetingRepository
 import com.sama.meeting.domain.MeetingSlot
 import com.sama.meeting.domain.ProposedMeeting
@@ -130,7 +132,8 @@ class MeetingApplicationService(
             .also { meetingRepository.save(it) }
 
 
-        // TODO: send notification if sama-sama
+        val event = MeetingProposedEvent(userId, proposedMeeting)
+        commsEventConsumer.onMeetingProposed(event)
 
         return meetingInvitationView.render(proposedMeeting, meetingIntent.recipientTimeZone)
     }
@@ -177,7 +180,8 @@ class MeetingApplicationService(
 
         meetingRepository.save(updated)
 
-        // TODO: send notification to next actor
+        val event = NewMeetingSlotsProposedEvent(userId, proposedMeeting)
+        commsEventConsumer.onNewMeetingSlotsProposed(event)
         return true
     }
 
@@ -199,7 +203,7 @@ class MeetingApplicationService(
             throw AccessDeniedException("User does not have access to modify Meeting#${meetingCode}")
         }
         try {
-            userConnectionService.createUserConnection(CreateConnectionCommand(userId, proposedMeeting.initiatorId))
+            userConnectionService.createUserConnection(userId, CreateUserConnectionCommand(proposedMeeting.initiatorId))
         } catch (ignored: UserAlreadyConnectedException) {
         }
 
@@ -240,7 +244,7 @@ class MeetingApplicationService(
         meetingRepository.save(confirmedMeeting)
 
         // "manual" event publishing
-        val event = MeetingConfirmedEvent(confirmedMeeting)
+        val event = MeetingConfirmedEvent(userId, confirmedMeeting)
         calendarEventConsumer.onMeetingConfirmed(event)
         commsEventConsumer.onMeetingConfirmed(event)
         return true

@@ -1,13 +1,17 @@
 package com.sama.connection.application
 
 import com.sama.common.BaseApplicationIntegrationTest
+import com.sama.comms.application.CommsEventConsumer
 import com.sama.connection.domain.UserAlreadyConnectedException
 import com.sama.users.application.UserPublicDTO
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import org.mockito.kotlin.anyOrNull
+import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.security.access.AccessDeniedException
 
 class UserConnectionApplicationServiceIT : BaseApplicationIntegrationTest() {
@@ -15,15 +19,22 @@ class UserConnectionApplicationServiceIT : BaseApplicationIntegrationTest() {
     @Autowired
     lateinit var underTest: UserConnectionApplicationService
 
+    @MockBean
+    lateinit var commsEventConsumer: CommsEventConsumer
+
     @Test
     fun `connect two users via request`() {
         val connectionRequest = asInitiator {
             underTest.createConnectionRequest(it.id!!, CreateConnectionRequestCommand(recipient().publicId!!))
         }
 
+        verify(commsEventConsumer).onConnectionRequestCreated(anyOrNull())
+
         asRecipient {
             underTest.approveConnectionRequest(it.id!!, connectionRequest.connectionRequestId)
         }
+
+        verify(commsEventConsumer).onUserConnected(anyOrNull())
 
         asInitiator {
             val connections = underTest.findUserConnections(it.id!!)
@@ -46,13 +57,15 @@ class UserConnectionApplicationServiceIT : BaseApplicationIntegrationTest() {
 
     @Test
     fun `connect two users directly`() {
-        underTest.createUserConnection(CreateConnectionCommand(initiator().id!!, recipient().id!!))
+        underTest.createUserConnection(initiator().id!!, CreateUserConnectionCommand(recipient().id!!), )
 
         assertThrows<UserAlreadyConnectedException> {
-            underTest.createUserConnection(CreateConnectionCommand(initiator().id!!, recipient().id!!))
+            underTest.createUserConnection(initiator().id!!, CreateUserConnectionCommand(recipient().id!!), )
         }
 
         assertTrue { underTest.isConnected(initiator().id!!, recipient().id!!) }
+
+        verify(commsEventConsumer).onUserConnected(anyOrNull())
     }
 
     @Test
@@ -77,9 +90,13 @@ class UserConnectionApplicationServiceIT : BaseApplicationIntegrationTest() {
             underTest.createConnectionRequest(it.id!!, CreateConnectionRequestCommand(recipient().publicId!!))
         }
 
+        verify(commsEventConsumer).onConnectionRequestCreated(anyOrNull())
+
         asRecipient {
             underTest.rejectConnectionRequest(recipient().id!!, connectionRequest.connectionRequestId)
         }
+
+        verify(commsEventConsumer).onConnectionRequestRejected(anyOrNull())
 
         asInitiator {
             val connections = underTest.findUserConnections(it.id!!)

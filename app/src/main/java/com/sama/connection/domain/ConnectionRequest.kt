@@ -15,15 +15,12 @@ data class ConnectionRequest(
     val id: ConnectionRequestId,
     val initiatorUserId: UserId,
     val recipientUserId: UserId,
-    val status: ConnectionRequestStatus
+    val status: ConnectionRequestStatus,
 ) {
 
     companion object {
-        fun new(initiatorId: UserId, recipientId: UserId, connectedUserIds: Collection<UserId>): ConnectionRequest {
-            Preconditions.checkArgument(recipientId != initiatorId, "Cannot send connect request to oneself.")
-            if (recipientId in connectedUserIds) {
-                throw UserAlreadyConnectedException(initiatorId, recipientId)
-            }
+        fun new(initiatorId: UserId, recipientId: UserId): ConnectionRequest {
+            check(recipientId != initiatorId) { "Cannot send connect request to oneself" }
             return ConnectionRequest(UUID.randomUUID(), initiatorId, recipientId, PENDING)
         }
     }
