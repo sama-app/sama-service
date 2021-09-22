@@ -31,3 +31,5 @@ databaseChangeLog:
       file: classpath*:liquibase/change-sets/20210831145000-cleanup-google-tokens.yml
   - include:
       file: classpath*:liquibase/change-sets/2021_09_15-firebase-dynamic-links.yml
+  - include:
+      file: classpath*:liquibase/change-sets/2021_09_22-meeting-indices.yml
