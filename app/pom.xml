@@ -7,7 +7,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.4.5</version>
+        <version>2.5.4</version>
         <relativePath/>
     </parent>
 
@@ -17,9 +17,35 @@
     <name>sama-app</name>
     <description>Sama Backend</description>
     <properties>
+        <!-- Java / Kotlin -->
         <java.version>16</java.version>
-        <spring.cloud.version>2020.0.3</spring.cloud.version>
         <kotlin.version>1.5.21</kotlin.version>
+        <kotlin.coroutines.version>1.5.2</kotlin.coroutines.version>
+        <!-- Spring -->
+        <spring.cloud.version>2020.0.3</spring.cloud.version>
+        <spring.cloud.aws.version>2.3.0</spring.cloud.aws.version>
+        <springdoc.openapi.version>1.5.10</springdoc.openapi.version>
+        <!-- DB -->
+        <postgresql.version>42.2.18</postgresql.version>
+        <liquibase.version>4.3.5</liquibase.version>
+        <!-- Google -->
+        <google.api.client.version>1.32.1</google.api.client.version>
+        <google.api.services.oauth2.version>v2-rev20200213-1.32.1</google.api.services.oauth2.version>
+        <google.api.services.calendar.version>v3-rev20210804-1.32.1</google.api.services.calendar.version>
+        <firebase.sdk.version>8.0.0</firebase.sdk.version>
+        <!-- Misc -->
+        <logstash.logback.encoder.version>6.6</logstash.logback.encoder.version>
+        <jackson.version>2.12.4</jackson.version>
+        <sentry.version>5.2.0</sentry.version>
+        <java.jwt.version>3.15.0</java.jwt.version>
+        <jnanoid.version>2.0.0</jnanoid.version>
+        <lib.recur.version>0.12.2</lib.recur.version>
+        <commons.validator.version>1.7</commons.validator.version>
+        <threethen.extra.version>1.7.0</threethen.extra.version>
+        <!-- Testing -->
+        <mockito.kotlin.version>3.2.0</mockito.kotlin.version>
+        <testcontainers.version>1.15.2</testcontainers.version>
+        <junit-jupiter.version>5.7.1</junit-jupiter.version>
     </properties>
 
     <dependencyManagement>
@@ -34,21 +60,21 @@
             <dependency>
                 <groupId>io.awspring.cloud</groupId>
                 <artifactId>spring-cloud-aws-dependencies</artifactId>
-                <version>2.3.0</version>
+                <version>${spring.cloud.aws.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
             <dependency>
                 <groupId>org.testcontainers</groupId>
                 <artifactId>testcontainers-bom</artifactId>
-                <version>1.15.2</version>
+                <version>${testcontainers.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson</groupId>
                 <artifactId>jackson-bom</artifactId>
-                <version>2.12.3</version>
+                <version>${jackson.version}</version>
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>
@@ -124,12 +150,12 @@
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.2.18</version>
+            <version>${postgresql.version}</version>
         </dependency>
         <dependency>
             <groupId>org.liquibase</groupId>
             <artifactId>liquibase-core</artifactId>
-            <version>4.3.5</version>
+            <version>${liquibase.version}</version>
         </dependency>
 
         <!-- Caching -->
@@ -160,27 +186,27 @@
         <dependency>
             <groupId>com.auth0</groupId>
             <artifactId>java-jwt</artifactId>
-            <version>3.15.0</version>
+            <version>${java.jwt.version}</version>
         </dependency>
         <dependency>
             <groupId>com.aventrix.jnanoid</groupId>
             <artifactId>jnanoid</artifactId>
-            <version>2.0.0</version>
+            <version>${jnanoid.version}</version>
         </dependency>
         <dependency>
             <groupId>org.dmfs</groupId>
             <artifactId>lib-recur</artifactId>
-            <version>0.12.2</version>
+            <version>${lib.recur.version}</version>
         </dependency>
         <dependency>
             <groupId>commons-validator</groupId>
             <artifactId>commons-validator</artifactId>
-            <version>1.7</version>
+            <version>${commons.validator.version}</version>
         </dependency>
         <dependency>
             <groupId>org.threeten</groupId>
             <artifactId>threeten-extra</artifactId>
-            <version>1.7.0</version>
+            <version>${threethen.extra.version}</version>
         </dependency>
 
         <!-- Templating -->
@@ -201,24 +227,24 @@
         <dependency>
             <groupId>io.sentry</groupId>
             <artifactId>sentry-spring-boot-starter</artifactId>
-            <version>5.1.0</version>
+            <version>${sentry.version}</version>
         </dependency>
         <dependency>
             <groupId>io.sentry</groupId>
             <artifactId>sentry-logback</artifactId>
-            <version>5.1.0</version>
+            <version>${sentry.version}</version>
         </dependency>
         <dependency>
             <groupId>net.logstash.logback</groupId>
             <artifactId>logstash-logback-encoder</artifactId>
-            <version>6.6</version>
+            <version>${logstash.logback.encoder.version}</version>
         </dependency>
 
         <!-- Google -->
         <dependency>
             <groupId>com.google.api-client</groupId>
             <artifactId>google-api-client</artifactId>
-            <version>1.32.1</version>
+            <version>${google.api.client.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>com.google.guava</groupId>
@@ -229,22 +255,22 @@
         <dependency>
             <groupId>com.google.oauth-client</groupId>
             <artifactId>google-oauth-client-jetty</artifactId>
-            <version>1.31.5</version>
+            <version>${google.api.client.version}</version>
         </dependency>
         <dependency>
             <groupId>com.google.apis</groupId>
             <artifactId>google-api-services-oauth2</artifactId>
-            <version>v2-rev20200213-1.32.1</version>
+            <version>${google.api.services.oauth2.version}</version>
         </dependency>
         <dependency>
             <groupId>com.google.apis</groupId>
             <artifactId>google-api-services-calendar</artifactId>
-            <version>v3-rev20210804-1.32.1</version>
+            <version>${google.api.services.calendar.version}</version>
         </dependency>
         <dependency>
             <groupId>com.google.firebase</groupId>
             <artifactId>firebase-admin</artifactId>
-            <version>8.0.0</version>
+            <version>${firebase.sdk.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>com.google.guava</groupId>
@@ -280,13 +306,13 @@
         <dependency>
             <groupId>org.mockito.kotlin</groupId>
             <artifactId>mockito-kotlin</artifactId>
-            <version>3.2.0</version>
+            <version>${mockito.kotlin.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jetbrains.kotlinx</groupId>
             <artifactId>kotlinx-coroutines-core</artifactId>
-            <version>1.5.1-native-mt</version>
+            <version>${kotlin.coroutines.version}</version>
         </dependency>
 
         <!-- Testing -->
@@ -319,13 +345,13 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
-            <version>5.7.1</version>
+            <version>${junit-jupiter.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
-            <version>5.7.1</version>
+            <version>${junit-jupiter.version}</version>
             <scope>runtime</scope>
         </dependency>
 
@@ -333,22 +359,22 @@
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-ui</artifactId>
-            <version>1.5.8</version>
+            <version>${springdoc.openapi.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-kotlin</artifactId>
-            <version>1.5.8</version>
+            <version>${springdoc.openapi.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-webmvc-core</artifactId>
-            <version>1.5.8</version>
+            <version>${springdoc.openapi.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-data-rest</artifactId>
-            <version>1.5.8</version>
+            <version>${springdoc.openapi.version}</version>
         </dependency>
     </dependencies>
 
