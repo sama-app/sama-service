@@ -161,11 +161,11 @@ integration:
       api-url: "https://firebasedynamiclinks.googleapis.com/v1/shortLinks"
       fqdn: meetsamatest.page.link
       parameters:
-        ibi: com.meetsama.app.dev # BundleID
-        ifl: https://testflight.apple.com/join/F4cncGnA # TestFlight link (TODO: this is prod)
-        isi: # AppStoreID empty for local / dev
+        ibi: com.meetsama.sama.dev # BundleID
+        ifl: # TODO: dev app link
+        isi: 1586527998
         efr: 0 # Do not skip preview page
-        ofl: https://testflight.apple.com/join/F4cncGnA # TestFlight link (TODO: this is prod)
+        ofl: # TODO: Mac store link
 
 sentry:
   dsn: https://b8c06b0aa478447bbdc330ad9fef42f1@o877832.ingest.sentry.io/5828928
