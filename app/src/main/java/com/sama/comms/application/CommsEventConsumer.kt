@@ -11,6 +11,7 @@ import com.sama.meeting.domain.EmailRecipient
 import com.sama.meeting.domain.MeetingConfirmedEvent
 import com.sama.meeting.domain.MeetingProposedEvent
 import com.sama.meeting.domain.NewMeetingSlotsProposedEvent
+import com.sama.meeting.domain.SamaSamaProposedMeeting
 import com.sama.meeting.domain.UserRecipient
 import com.sama.users.domain.UserId
 import org.slf4j.Logger
@@ -27,7 +28,7 @@ class CommsEventConsumer(
 
     fun onMeetingProposed(event: MeetingProposedEvent) {
         val meeting = event.proposedMeeting
-        if (!meeting.isSamaToSama()) {
+        if (meeting !is SamaSamaProposedMeeting) {
             return
         }
 
@@ -36,7 +37,7 @@ class CommsEventConsumer(
         val sender = commsUserRepository.find(event.actorId)
 
         val notification = when {
-            meeting.isInvitation() -> notificationRenderer.renderMeetingInvitation(sender)
+            meeting.isInvitation -> notificationRenderer.renderMeetingInvitation(sender)
             else -> {
                 val slotDateTime = meeting.proposedSlots[0].startDateTime
                 notificationRenderer.renderMeetingProposed(sender, receiver, slotDateTime)
@@ -48,9 +49,6 @@ class CommsEventConsumer(
 
     fun onNewMeetingSlotsProposed(event: NewMeetingSlotsProposedEvent) {
         val meeting = event.proposedMeeting
-        if (!meeting.isSamaToSama()) {
-            return
-        }
 
         val receiver = receiverCommsUser(event.actorId, meeting.initiatorId, meeting.recipientId)
             ?: return
@@ -64,22 +62,29 @@ class CommsEventConsumer(
 
     fun onMeetingConfirmed(event: MeetingConfirmedEvent) {
         val confirmedMeeting = event.confirmedMeeting
-        val (recipientEmail, recipientId) = when (val recipient = confirmedMeeting.meetingRecipient) {
-            is EmailRecipient -> recipient.email to null
-            is UserRecipient -> recipient.email to recipient.recipientId
-        }
-
-        val receiver = receiverCommsUser(event.actorId, confirmedMeeting.initiatorId, recipientId)
-            ?: return
-        val sender = event.actorId?.let { commsUserRepository.find(it) }
-
         val slotDateTime = confirmedMeeting.slot.startDateTime
-        val notification = when (sender) {
-            null -> notificationRenderer.renderMeetingConfirmed(recipientEmail, receiver, slotDateTime)
-            else -> notificationRenderer.renderMeetingConfirmed(sender, receiver, slotDateTime)
-        }
+        val meetingRecipient = confirmedMeeting.recipient
 
-        notificationSender.send(receiver.userId, notification)
+        if (meetingRecipient is EmailRecipient) {
+            if (confirmedMeeting.initiatorId == event.actorId) {
+                return
+            }
+            val receiver = commsUserRepository.find(confirmedMeeting.initiatorId)
+            val notification = notificationRenderer.renderMeetingConfirmed(meetingRecipient.email, receiver, slotDateTime)
+
+            notificationSender.send(receiver.userId, notification)
+        } else if (meetingRecipient is UserRecipient) {
+            val receiver = receiverCommsUser(event.actorId, confirmedMeeting.initiatorId, meetingRecipient.recipientId)
+                ?: return
+            val sender = event.actorId?.let { commsUserRepository.find(it) }
+                ?: return
+            if (sender.userId == receiver.userId) {
+                return
+            }
+
+            val notification = notificationRenderer.renderMeetingConfirmed(sender, receiver, slotDateTime)
+            notificationSender.send(receiver.userId, notification)
+        }
     }
 
     fun onConnectionRequestCreated(event: UserConnectionRequestCreatedEvent) {

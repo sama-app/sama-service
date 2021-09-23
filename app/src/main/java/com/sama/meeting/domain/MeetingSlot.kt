@@ -1,11 +1,12 @@
 package com.sama.meeting.domain
 
 import com.sama.calendar.application.EventDTO
-import com.sama.calendar.domain.Event
 import com.sama.common.ValueObject
 import java.time.Duration
 import java.time.ZonedDateTime
 import javax.persistence.Embeddable
+
+val MEETING_SLOT_INTERVAL: Duration = Duration.ofMinutes(15)
 
 @Embeddable
 @ValueObject
