@@ -3,17 +3,22 @@ package com.sama.users.infrastructure.jpa
 import java.time.Instant
 import java.util.UUID
 import javax.persistence.Column
-import javax.persistence.Embeddable
+import javax.persistence.Entity
+import javax.persistence.Id
+import javax.persistence.Table
 
-@Embeddable
+@Entity
+@Table(schema = "sama", name = "user_firebase_credential")
 data class FirebaseCredential(
+    @Id
+    var deviceId: UUID,
 
-    @Column(name = "device_id", table = "user_firebase_credential")
-    val deviceId: UUID,
+    @Column
+    private val userId: Long,
 
-    @Column(name = "firebase_registration_token", table = "user_firebase_credential")
-    val registrationToken: String,
+    @Column(name = "firebase_registration_token")
+    var registrationToken: String,
 
-    @Column(name = "updated_at", table = "user_firebase_credential")
-    val updatedAt: Instant,
+    @Column
+    var updatedAt: Instant,
 )

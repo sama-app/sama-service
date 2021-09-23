@@ -25,8 +25,11 @@ interface UserJpaRepository : JpaRepository<UserEntity, Long> {
     fun findIdByPublicId(userPublicId: UUID): Long?
 
     @Modifying(clearAutomatically = true)
-    @Query("DELETE FROM sama.user_firebase_credential WHERE device_id = :deviceId", nativeQuery = true)
-    fun deleteFirebaseCredential(deviceId: UUID)
+    @Query(
+        "DELETE FROM sama.user_firebase_credential WHERE user_id != :ownerUserId AND device_id IN :deviceIds",
+        nativeQuery = true
+    )
+    fun deleteFirebaseCredentials(ownerUserId: Long, deviceIds: Collection<UUID>)
 }
 
 fun UserJpaRepository.findByEmailOrThrow(email: String) = findByEmail(email)

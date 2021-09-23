@@ -16,24 +16,27 @@ class FirebaseNotificationSender(private val userService: UserService) : Notific
 
     override fun send(userId: UserId, notification: Notification): Boolean {
         return kotlin.runCatching {
-            val token = userService.findUserDeviceRegistrations(userId).firebaseDeviceRegistration
-                ?.registrationToken
-                ?: throw RuntimeException("No Firebase device registration found")
+            val response = userService.findUserDeviceRegistrations(userId)
+            if (response.firebaseDeviceRegistrations.isEmpty()) {
+                throw RuntimeException("No Firebase device registrations found")
+            }
 
-            val message: Message = Message.builder()
-                .setNotification(
-                    com.google.firebase.messaging.Notification.builder()
-                        .setTitle(notification.title)
-                        .setBody(notification.body)
-                        .build()
-                )
-                .putAllData(notification.additionalData)
-                .setToken(token)
-                .build()
+            response.firebaseDeviceRegistrations.forEach {
+                val message = Message.builder()
+                    .setNotification(
+                        com.google.firebase.messaging.Notification.builder()
+                            .setTitle(notification.title)
+                            .setBody(notification.body)
+                            .build()
+                    )
+                    .putAllData(notification.additionalData)
+                    .setToken(it.registrationToken)
+                    .build()
+                FirebaseMessaging.getInstance().send(message)
+            }
 
-            FirebaseMessaging.getInstance().send(message)
         }
-            .onSuccess { logger.debug("Notification sent to User#${userId.id}") }
+            .onSuccess { logger.debug("Notifications sent to User#${userId.id}") }
             .onFailure { logger.warn("Could not send Firebase notification to User#${userId.id}", it) }
             .isSuccess
     }
