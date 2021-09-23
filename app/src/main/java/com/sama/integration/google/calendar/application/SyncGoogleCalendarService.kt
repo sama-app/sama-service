@@ -182,7 +182,8 @@ class SyncGoogleCalendarService(
             calendarSyncRepository.save(updatedSync)
             logger.info("Completed sync for User#${userId.id} Calendar#${calendarId}...")
         } catch (e: Exception) {
-            if (e is GoogleSyncTokenInvalidatedException) {
+            val ex = translatedGoogleException(e)
+            if (ex is GoogleSyncTokenInvalidatedException) {
                 logger.error("Calendar sync token expired for User#${userId.id}", e)
                 val updated = calendarSync.reset(clock)
                 calendarEventRepository.deleteBy(userId, calendarId)
