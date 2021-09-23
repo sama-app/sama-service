@@ -4,6 +4,7 @@ import com.sama.calendar.application.CalendarEventConsumer
 import com.sama.common.ApplicationService
 import com.sama.common.DomainValidationException
 import com.sama.common.NotFoundException
+import com.sama.common.checkAccess
 import com.sama.common.toMinutes
 import com.sama.comms.application.CommsEventConsumer
 import com.sama.connection.application.CreateUserConnectionCommand
@@ -37,7 +38,6 @@ import io.sentry.spring.tracing.SentryTransaction
 import java.time.Clock
 import java.time.ZonedDateTime
 import org.springframework.scheduling.annotation.Scheduled
-import org.springframework.security.access.AccessDeniedException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -122,9 +122,7 @@ class MeetingApplicationService(
     @Transactional
     fun proposeMeeting(userId: UserId, command: ProposeMeetingCommand): MeetingInvitationDTO {
         val meetingIntent = meetingIntentRepository.findByCodeOrThrow(command.meetingIntentCode)
-        if (!meetingIntent.isReadableBy(userId)) {
-            throw AccessDeniedException("User does not have access to MeetingIntent#${command.meetingIntentCode.code}")
-        }
+        checkAccess(meetingIntent.isReadableBy(userId)) { "User does not have access to read MeetingIntent#${meetingIntent.code}" }
 
         val meetingId = meetingRepository.nextIdentity()
         val meetingCode = meetingCodeGenerator.generate()
@@ -156,9 +154,7 @@ class MeetingApplicationService(
     @Transactional
     fun loadMeetingProposal(userId: UserId?, meetingCode: MeetingCode): ProposedMeetingDTO {
         val proposedMeeting = findProposedMeetingOrThrow(meetingCode)
-        if (!proposedMeeting.isReadableBy(userId)) {
-            throw AccessDeniedException("User does not have access to read Meeting#${meetingCode}")
-        }
+        checkAccess(proposedMeeting.isReadableBy(userId)) { "User does not have access to read Meeting#${meetingCode}" }
 
         return when (proposedMeeting) {
             is SamaNonSamaProposedMeeting -> meetingView.render(userId, proposedMeeting)
@@ -169,10 +165,8 @@ class MeetingApplicationService(
     @Transactional
     fun proposeNewMeetingSlots(userId: UserId, meetingCode: MeetingCode, command: ProposeNewMeetingSlotsCommand): Boolean {
         val proposedMeeting = findProposedMeetingOrThrow(meetingCode, true)
-        if (!proposedMeeting.isModifiableBy(userId)) {
-            throw AccessDeniedException("User does not have access to modify Meeting#${meetingCode}")
-        }
-        check(proposedMeeting is SamaSamaProposedMeeting)
+        checkAccess(proposedMeeting.isModifiableBy(userId)) { "User does not have access to modify Meeting#${meetingCode}" }
+        require(proposedMeeting is SamaSamaProposedMeeting)
 
         val updated = proposedMeeting
             .proposeNewSlots(command.proposedSlots.map { it.toValueObject() })
@@ -188,11 +182,13 @@ class MeetingApplicationService(
     fun updateMeetingTitle(userId: UserId, meetingCode: MeetingCode, command: UpdateMeetingTitleCommand): Boolean {
         val proposedMeeting = findProposedMeetingOrThrow(meetingCode)
         when (proposedMeeting) {
-            is SamaNonSamaProposedMeeting -> if (proposedMeeting.initiatorId != userId) {
-                throw AccessDeniedException("User does not have access to modify Meeting#${meetingCode}")
+            is SamaNonSamaProposedMeeting -> {
+                checkAccess(proposedMeeting.initiatorId == userId)
+                { "User does not have access to modify Meeting#${meetingCode}" }
             }
-            is SamaSamaProposedMeeting -> if (!proposedMeeting.isModifiableBy(userId)) {
-                throw AccessDeniedException("User does not have access to modify Meeting#${meetingCode}")
+            is SamaSamaProposedMeeting -> {
+                checkAccess(proposedMeeting.isModifiableBy(userId))
+                { "User does not have access to modify Meeting#${meetingCode}" }
             }
         }
 
@@ -203,10 +199,8 @@ class MeetingApplicationService(
     @Transactional
     fun connectWithInitiator(userId: UserId, meetingCode: MeetingCode, command: ConnectWithMeetingInitiatorCommand): Boolean {
         val proposedMeeting = findProposedMeetingOrThrow(meetingCode)
-        if (!proposedMeeting.isModifiableBy(userId)) {
-            throw AccessDeniedException("User does not have access to modify Meeting#${meetingCode}")
-        }
-        check(proposedMeeting is SamaNonSamaProposedMeeting)
+        checkAccess(proposedMeeting.isModifiableBy(userId)) { "User does not have access to modify Meeting#${meetingCode}" }
+        require(proposedMeeting is SamaNonSamaProposedMeeting)
 
         try {
             userConnectionService.createUserConnection(userId, CreateUserConnectionCommand(proposedMeeting.initiatorId))
@@ -221,9 +215,7 @@ class MeetingApplicationService(
     @Transactional
     fun confirmMeeting(userId: UserId?, meetingCode: MeetingCode, command: ConfirmMeetingCommand): Boolean {
         val proposedMeeting = findProposedMeetingOrThrow(meetingCode, true)
-        if (!proposedMeeting.isModifiableBy(userId)) {
-            throw AccessDeniedException("User does not have access to modify Meeting#${meetingCode}")
-        }
+        checkAccess(proposedMeeting.isModifiableBy(userId)) { "User does not have access to modify Meeting#${meetingCode}" }
 
         val confirmedSlot = command.slot.toValueObject()
 
