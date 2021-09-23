@@ -1,6 +1,7 @@
 package com.sama.connection.application
 
 import com.sama.common.ApplicationService
+import com.sama.common.checkAccess
 import com.sama.comms.application.CommsEventConsumer
 import com.sama.connection.domain.ConnectionRequest
 import com.sama.connection.domain.ConnectionRequestId
@@ -14,7 +15,6 @@ import com.sama.connection.domain.UserConnectionRequestCreatedEvent
 import com.sama.connection.domain.UserConnectionRequestRejectedEvent
 import com.sama.users.application.InternalUserService
 import com.sama.users.domain.UserId
-import org.springframework.security.access.AccessDeniedException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -109,9 +109,8 @@ class UserConnectionApplicationService(
     @Transactional
     override fun approveConnectionRequest(userId: UserId, connectionRequestId: ConnectionRequestId) {
         val connectionRequest = connectionRequestRepository.findByIdOrThrow(connectionRequestId)
-        if (connectionRequest.recipientUserId != userId) {
-            throw AccessDeniedException("User#${userId.id} does not have access to ConnectionRequest#$connectionRequestId")
-        }
+        checkAccess(connectionRequest.recipientUserId == userId)
+        { "User#${userId.id} does not have access to ConnectionRequest#$connectionRequestId" }
 
         val (approvedRequest, userConnection) = connectionRequest.approve()
 
@@ -125,9 +124,8 @@ class UserConnectionApplicationService(
     @Transactional
     override fun rejectConnectionRequest(userId: UserId, connectionRequestId: ConnectionRequestId) {
         val connectionRequest = connectionRequestRepository.findByIdOrThrow(connectionRequestId)
-        if (connectionRequest.recipientUserId != userId) {
-            throw AccessDeniedException("User#${userId.id} does not have access to ConnectionRequest#$connectionRequestId")
-        }
+        checkAccess(connectionRequest.recipientUserId == userId)
+        { "User#${userId.id} does not have access to ConnectionRequest#$connectionRequestId" }
 
         val rejectedRequest = connectionRequest.reject()
         connectionRequestRepository.save(rejectedRequest)
