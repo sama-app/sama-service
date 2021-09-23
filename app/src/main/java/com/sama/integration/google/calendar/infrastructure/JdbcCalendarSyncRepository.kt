@@ -57,9 +57,9 @@ class JdbcCalendarSyncRepository(private val jdbcTemplate: NamedParameterJdbcOpe
         }
     }
 
-    override fun findSyncable(time: Instant): Collection<Pair<UserId, GoogleCalendarId>> {
+    override fun findSyncable(from: Instant): Collection<Pair<UserId, GoogleCalendarId>> {
         val namedParameters: SqlParameterSource = MapSqlParameterSource()
-            .addValue("timestamp", ofInstant(time, UTC))
+            .addValue("timestamp", ofInstant(from, UTC))
 
         return jdbcTemplate.query(
             """

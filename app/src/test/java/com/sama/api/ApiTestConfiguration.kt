@@ -48,5 +48,5 @@ class ApiTestConfiguration {
         return Clock.fixed(fixedDate, ZoneId.systemDefault());
     }
 
-    fun anyPublicId() = Mockito.argThat { arg: Any -> true } as UserPublicId? ?: UserPublicId.random()
+    fun anyPublicId() = Mockito.argThat { _: Any -> true } as UserPublicId? ?: UserPublicId.random()
 }
