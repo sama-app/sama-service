@@ -1,8 +1,10 @@
 server:
-  port: 3000
-  shutdown: graceful
   servlet:
     context-path: /
+  port: 3000
+  http2.enabled: true
+  ssl.enabled: false
+  shutdown: graceful
   error:
     include-message: always
     include-stacktrace: always
