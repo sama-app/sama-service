@@ -2,12 +2,11 @@ package com.sama.meeting.application
 
 import com.sama.meeting.configuration.MeetingProposalMessageConfiguration
 import com.sama.meeting.configuration.MeetingUrlConfiguration
-import com.sama.meeting.domain.Actor
 import com.sama.meeting.domain.MeetingCode
 import com.sama.meeting.domain.MeetingId
 import com.sama.meeting.domain.MeetingIntentId
 import com.sama.meeting.domain.MeetingSlot
-import com.sama.meeting.domain.ProposedMeeting
+import com.sama.meeting.domain.SamaNonSamaProposedMeeting
 import com.sama.users.application.UserPublicDTO
 import com.sama.users.application.UserService
 import com.sama.users.domain.UserId
@@ -68,16 +67,13 @@ class MeetingInvitationViewTest {
             .thenReturn(initiator)
 
         val actual = underTest.render(
-            ProposedMeeting(
+            SamaNonSamaProposedMeeting(
                 MeetingId(21), MeetingIntentId(11L), Duration.ofMinutes(15),
                 initiatorId,
-                null,
-                Actor.RECIPIENT,
                 listOf(
                     MeetingSlot(_10am, _11am),
                     MeetingSlot(_9am, _9am.plusMinutes(15))
                 ),
-                emptyList(),
                 meetingCode,
                 meetingTitle
             ),

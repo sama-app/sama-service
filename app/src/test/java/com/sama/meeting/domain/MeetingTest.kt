@@ -22,6 +22,7 @@ class MeetingTest {
     private val meetingTitle = "meeting title"
     private val meetingId = MeetingId(11)
     private val initiatorId = UserId(21)
+    private val recipientId = UserId(22)
 
     private val _9am = ZonedDateTime.of(LocalDate.now(), LocalTime.of(9, 0), systemDefault())
     private val _915am = _9am.plus(ofMinutes(15))
@@ -38,9 +39,9 @@ class MeetingTest {
     private val proposedSlotID2 = MeetingSlot(_10am, _11am)
     private val proposedSlotID3 = MeetingSlot(_11am, _12pm)
 
-    private val proposedMeetingID1 = ProposedMeeting(
+    private val proposedMeetingID1 = SamaNonSamaProposedMeeting(
         meetingId, meetingIntentId, ofMinutes(30), initiatorId,
-        null, Actor.RECIPIENT, listOf(proposedSlotID1), emptyList(), validMeetingCode, meetingTitle
+        listOf(proposedSlotID1), validMeetingCode, meetingTitle
     )
 
     @TestFactory
@@ -89,32 +90,27 @@ class MeetingTest {
         val meetingIntentId = MeetingIntentId(2)
         val meetingTitle = meetingTitle
         return listOf(
-            listOf(proposedSlotID1.copy()) to ProposedMeeting(
+            listOf(proposedSlotID1.copy()) to SamaNonSamaProposedMeeting(
                 meetingId, meetingIntentId, ofHours(1), initiatorId,
-                null, Actor.RECIPIENT, listOf(proposedSlotID1), emptyList(), validMeetingCode, meetingTitle
+                listOf(proposedSlotID1),  validMeetingCode, meetingTitle
             ),
 
-            listOf(proposedSlotID1.copy(), proposedSlotID3.copy()) to ProposedMeeting(
+            listOf(proposedSlotID1.copy(), proposedSlotID3.copy()) to SamaNonSamaProposedMeeting(
                 meetingId,
                 meetingIntentId,
                 ofHours(1),
                 initiatorId,
-                null,
-                Actor.RECIPIENT,
-                listOf(proposedSlotID1, proposedSlotID3), emptyList(),
+                listOf(proposedSlotID1, proposedSlotID3),
                 validMeetingCode,
                 meetingTitle
             ),
 
-            listOf(proposedSlotID1.copy(), proposedSlotID2.copy(), proposedSlotID3.copy()) to ProposedMeeting(
+            listOf(proposedSlotID1.copy(), proposedSlotID2.copy(), proposedSlotID3.copy()) to SamaNonSamaProposedMeeting(
                 meetingId,
                 meetingIntentId,
                 ofHours(1),
                 initiatorId,
-                null,
-                Actor.RECIPIENT,
                 listOf(MeetingSlot(proposedSlotID1.startDateTime, proposedSlotID3.endDateTime)),
-                emptyList(),
                 validMeetingCode,
                 meetingTitle
             ),
@@ -149,7 +145,7 @@ class MeetingTest {
                 listOf(MeetingSlot(_9am, _930am)),
     ).map { (proposedMeeting, expected) ->
         dynamicTest("${proposedMeeting.proposedSlots} expanded") {
-            val actual = proposedMeeting.expandedSlots()
+            val actual = proposedMeeting.expandedSlots
             assertEquals(expected, actual)
         }
     }
@@ -179,8 +175,8 @@ class MeetingTest {
 
     @Test
     fun `propose new slots`() {
-        val proposedMeeting = ProposedMeeting(
-            meetingId, meetingIntentId, ofHours(1), initiatorId, null,
+        val proposedMeeting = SamaSamaProposedMeeting(
+            meetingId, meetingIntentId, ofHours(1), initiatorId, recipientId,
             Actor.RECIPIENT, listOf(proposedSlotID1), emptyList(), validMeetingCode, meetingTitle
         )
 
@@ -192,8 +188,8 @@ class MeetingTest {
 
     @Test
     fun `propose previously rejected slots`() {
-        val proposedMeeting = ProposedMeeting(
-            meetingId, meetingIntentId, ofHours(1), initiatorId, null,
+        val proposedMeeting = SamaSamaProposedMeeting(
+            meetingId, meetingIntentId, ofHours(1), initiatorId, recipientId,
             Actor.RECIPIENT, listOf(proposedSlotID1), emptyList(), validMeetingCode, meetingTitle
         )
 
@@ -209,19 +205,19 @@ class MeetingTest {
     fun `confirm meeting`() {
         val slot = proposedSlotID1
         val meetingTitle = meetingTitle
-        val proposedMeeting = ProposedMeeting(
-            meetingId, meetingIntentId, ofHours(1), initiatorId, null,
-            Actor.RECIPIENT, listOf(slot), emptyList(), validMeetingCode, meetingTitle
+        val proposedMeeting = SamaNonSamaProposedMeeting(
+            meetingId, meetingIntentId, ofHours(1), initiatorId,
+            listOf(slot), validMeetingCode, meetingTitle
         )
-        val recipient = UserRecipient.of(UserId(11L), "recipient@meetsama.com")
+        val recipient = UserRecipient.of(UserId(11L))
         val slotToConfirm = proposedSlotID1.copy()
 
         val actual = proposedMeeting.confirm(slotToConfirm, recipient)
 
         assertEquals(
             ConfirmedMeeting(
-                meetingId, initiatorId, ofHours(1), recipient,
-                slotToConfirm, meetingTitle
+                meetingId, initiatorId, recipient, slotToConfirm,
+                meetingTitle
             ), actual
         )
     }
@@ -229,17 +225,9 @@ class MeetingTest {
     @Test
     fun `confirm non-proposed slot fails`() {
         val slot = proposedSlotID1
-        val proposedMeeting = ProposedMeeting(
-            meetingId,
-            meetingIntentId,
-            ofHours(1),
-            initiatorId,
-            null,
-            Actor.RECIPIENT,
-            listOf(slot),
-            emptyList(),
-            validMeetingCode,
-            meetingTitle
+        val proposedMeeting = SamaNonSamaProposedMeeting(
+            meetingId, meetingIntentId, ofHours(1), initiatorId,
+            listOf(slot), validMeetingCode, meetingTitle
         )
         val recipient = EmailRecipient.of("test@meetsama.com")
 
