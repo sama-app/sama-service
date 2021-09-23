@@ -7,7 +7,8 @@ import com.sama.meeting.domain.EmailRecipient
 import com.sama.meeting.domain.MeetingId
 import com.sama.meeting.domain.MeetingSlot
 import com.sama.meeting.domain.MeetingStatus
-import com.sama.meeting.domain.ProposedMeeting
+import com.sama.meeting.domain.SamaNonSamaProposedMeeting
+import com.sama.meeting.domain.SamaSamaProposedMeeting
 import com.sama.meeting.domain.UserRecipient
 import java.time.Instant
 import java.time.ZonedDateTime
@@ -27,7 +28,6 @@ import javax.persistence.Id
 import javax.persistence.JoinColumn
 import javax.persistence.OneToMany
 import javax.persistence.Table
-import liquibase.pro.packaged.it
 import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.annotation.LastModifiedDate
 
@@ -37,15 +37,31 @@ class MeetingEntity {
 
     @Factory
     companion object {
-        fun new(proposedMeeting: ProposedMeeting): MeetingEntity {
+        fun new(proposedMeeting: SamaNonSamaProposedMeeting): MeetingEntity {
             val entity = MeetingEntity()
             entity.id = proposedMeeting.meetingId.id
             entity.code = proposedMeeting.meetingCode.code
             entity.meetingIntentId = proposedMeeting.meetingIntentId.id
-            entity.meetingRecipient = proposedMeeting.recipientId?.let { MeetingRecipientEntity(it.id, null) }
-            entity.currentActor = proposedMeeting.currentActor
+            entity.meetingRecipient = null
+            entity.currentActor = Actor.RECIPIENT
             entity.createdAt = Instant.now()
             entity.updatedAt = Instant.now()
+            entity.status = proposedMeeting.status
+            entity.title = proposedMeeting.meetingTitle
+            val proposedSlots = proposedMeeting.proposedSlots.map {
+                it.toEntity(proposedMeeting.meetingId, MeetingSlotStatus.PROPOSED)
+            }
+            entity.proposedSlots.addAll(proposedSlots)
+            return entity
+        }
+
+        fun new(proposedMeeting: SamaSamaProposedMeeting): MeetingEntity {
+            val entity = MeetingEntity()
+            entity.id = proposedMeeting.meetingId.id
+            entity.code = proposedMeeting.meetingCode.code
+            entity.meetingIntentId = proposedMeeting.meetingIntentId.id
+            entity.meetingRecipient = MeetingRecipientEntity(proposedMeeting.recipientId.id, null)
+            entity.currentActor = proposedMeeting.currentActor
             entity.status = proposedMeeting.status
             entity.title = proposedMeeting.meetingTitle
             val proposedSlots = proposedMeeting.proposedSlots.map {
@@ -56,26 +72,24 @@ class MeetingEntity {
             }
             entity.proposedSlots.addAll(proposedSlots)
             entity.proposedSlots.addAll(rejectedSlots)
+            val now = Instant.now()
+            entity.createdAt = now
+            entity.updatedAt = now
             return entity
         }
     }
 
-    fun applyChanges(confirmedMeeting: ConfirmedMeeting): MeetingEntity {
-        this.status = confirmedMeeting.status
-        this.meetingRecipient = when (val recipient = confirmedMeeting.meetingRecipient) {
-            is EmailRecipient -> MeetingRecipientEntity(null, recipient.email)
-            is UserRecipient -> MeetingRecipientEntity(recipient.recipientId.id, recipient.email)
-        }
-        this.confirmedSlot = confirmedMeeting.slot
+    fun applyChanges(proposedMeeting: SamaNonSamaProposedMeeting): MeetingEntity {
+        title = proposedMeeting.meetingTitle
         val now = Instant.now()
         this.confirmedAt = now
         this.updatedAt = now
         return this
     }
 
-    fun applyChanges(proposedMeeting: ProposedMeeting): MeetingEntity {
+    fun applyChanges(proposedMeeting: SamaSamaProposedMeeting): MeetingEntity {
         title = proposedMeeting.meetingTitle
-        meetingRecipient = proposedMeeting.recipientId?.let { MeetingRecipientEntity(it.id, null) }
+        meetingRecipient = MeetingRecipientEntity(proposedMeeting.recipientId.id, null)
         currentActor = proposedMeeting.currentActor
         val proposedSlots = proposedMeeting.proposedSlots.map {
             it.toEntity(proposedMeeting.meetingId, MeetingSlotStatus.PROPOSED)
@@ -86,6 +100,19 @@ class MeetingEntity {
         this.proposedSlots.clear()
         this.proposedSlots.addAll(proposedSlots)
         this.proposedSlots.addAll(rejectedSlots)
+        val now = Instant.now()
+        this.confirmedAt = now
+        this.updatedAt = now
+        return this
+    }
+
+    fun applyChanges(confirmedMeeting: ConfirmedMeeting): MeetingEntity {
+        this.status = confirmedMeeting.status
+        this.meetingRecipient = when (val recipient = confirmedMeeting.recipient) {
+            is EmailRecipient -> MeetingRecipientEntity(null, recipient.email)
+            is UserRecipient -> MeetingRecipientEntity(recipient.recipientId.id, null)
+        }
+        this.confirmedSlot = confirmedMeeting.slot
         val now = Instant.now()
         this.confirmedAt = now
         this.updatedAt = now
