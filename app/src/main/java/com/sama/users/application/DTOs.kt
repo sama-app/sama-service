@@ -24,7 +24,7 @@ data class UserInternalDTO(
 )
 
 data class UserDeviceRegistrationsDTO(
-    val firebaseDeviceRegistration: FirebaseDeviceRegistrationDTO?
+    val firebaseDeviceRegistrations: List<FirebaseDeviceRegistrationDTO>
 )
 
 data class FirebaseDeviceRegistrationDTO(

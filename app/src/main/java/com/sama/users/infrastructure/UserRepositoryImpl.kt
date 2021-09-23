@@ -1,6 +1,7 @@
 package com.sama.users.infrastructure
 
 import com.sama.common.findByIdOrThrow
+import com.sama.users.domain.DeviceRegistration
 import com.sama.users.domain.UserDetails
 import com.sama.users.domain.UserDeviceRegistrations
 import com.sama.users.domain.UserId
@@ -14,7 +15,6 @@ import com.sama.users.infrastructure.jpa.findByPublicIdOrThrow
 import com.sama.users.infrastructure.jpa.findIdByEmailOrThrow
 import com.sama.users.infrastructure.jpa.findIdByPublicIdOrThrow
 import java.util.UUID
-import org.springframework.security.crypto.encrypt.TextEncryptor
 import org.springframework.stereotype.Component
 
 @Component
@@ -65,13 +65,14 @@ class UserRepositoryImpl(private val userJpaRepository: UserJpaRepository) : Use
         }
     }
 
-    override fun save(userDeviceRegistrations: UserDeviceRegistrations): UserDeviceRegistrations {
-        userDeviceRegistrations.deviceId?.run {
-            userJpaRepository.deleteFirebaseCredential(this)
+    override fun save(user: UserDeviceRegistrations): UserDeviceRegistrations {
+        if (user.deviceRegistrations.isNotEmpty()) {
+            userJpaRepository.deleteFirebaseCredentials(user.userId.id,
+                user.deviceRegistrations.map { it.deviceId })
         }
 
-        var userEntity = userJpaRepository.findByIdOrThrow(userDeviceRegistrations.userId.id)
-        userEntity = userEntity.applyChanges(userDeviceRegistrations)
+        var userEntity = userJpaRepository.findByIdOrThrow(user.userId.id)
+        userEntity = userEntity.applyChanges(user)
         userEntity = userJpaRepository.save(userEntity)
         return userEntity.toDeviceRegistrations()
     }
@@ -94,8 +95,9 @@ fun UserEntity.toUserDetails(): UserDetails {
 fun UserEntity.toDeviceRegistrations(): UserDeviceRegistrations {
     return UserDeviceRegistrations(
         this.id!!.toUserId(),
-        this.firebaseCredential?.deviceId,
-        this.firebaseCredential?.registrationToken
+        this.firebaseCredentials.mapTo(mutableSetOf()) {
+            DeviceRegistration(it.deviceId, it.registrationToken)
+        }
     )
 }
 

@@ -32,11 +32,25 @@ class UserRepositoryIT : BasePersistenceIT<UserRepository>() {
     fun `save device registrations`() {
         val userId = underTest.save(UserDetails(email = "test@meetsama.com", fullName = "Test", active = true)).id!!
 
-        val toPersist = UserDeviceRegistrations(userId, UUID.randomUUID(), "some -token")
+        val toPersist = UserDeviceRegistrations(
+            userId, setOf(
+                DeviceRegistration(UUID.randomUUID(), "some-token"),
+                DeviceRegistration(UUID.randomUUID(), "some-token2")
+            )
+        )
         underTest.save(toPersist)
 
-        val actual = underTest.findDeviceRegistrationsByIdOrThrow(userId)
+        var actual = underTest.findDeviceRegistrationsByIdOrThrow(userId)
         assertThat(actual).isEqualTo(toPersist)
+
+        val updated = UserDeviceRegistrations(
+            userId,
+            setOf(DeviceRegistration(UUID.randomUUID(), "some-token3"))
+        )
+        underTest.save(updated)
+
+        actual = underTest.findDeviceRegistrationsByIdOrThrow(userId)
+        assertThat(actual).isEqualTo(updated)
     }
 
     @Test

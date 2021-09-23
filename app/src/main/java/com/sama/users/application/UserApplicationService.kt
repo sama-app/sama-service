@@ -60,15 +60,9 @@ class UserApplicationService(
     @Transactional(readOnly = true)
     override fun findUserDeviceRegistrations(userId: UserId): UserDeviceRegistrationsDTO {
         return userRepository.findDeviceRegistrationsByIdOrThrow(userId)
-            .let {
-                UserDeviceRegistrationsDTO(
-                    if (it.deviceId != null && it.firebaseRegistrationToken != null) {
-                        FirebaseDeviceRegistrationDTO(it.deviceId, it.firebaseRegistrationToken)
-                    } else {
-                        null
-                    }
-                )
-            }
+            .deviceRegistrations
+            .map { FirebaseDeviceRegistrationDTO(it.deviceId, it.firebaseRegistrationToken) }
+            .let { UserDeviceRegistrationsDTO(it) }
     }
 
     override fun translatePublicId(userPublicId: UserPublicId): UserId {
