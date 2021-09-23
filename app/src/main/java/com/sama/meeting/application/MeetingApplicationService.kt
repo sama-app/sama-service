@@ -2,6 +2,7 @@ package com.sama.meeting.application
 
 import com.sama.calendar.application.CalendarEventConsumer
 import com.sama.common.ApplicationService
+import com.sama.common.DomainValidationException
 import com.sama.common.NotFoundException
 import com.sama.common.toMinutes
 import com.sama.comms.application.CommsEventConsumer
@@ -13,17 +14,20 @@ import com.sama.meeting.domain.EmailRecipient
 import com.sama.meeting.domain.ExpiredMeeting
 import com.sama.meeting.domain.InvalidMeetingInitiationException
 import com.sama.meeting.domain.InvalidMeetingStatusException
+import com.sama.meeting.domain.Meeting
 import com.sama.meeting.domain.MeetingAlreadyConfirmedException
 import com.sama.meeting.domain.MeetingCode
 import com.sama.meeting.domain.MeetingCodeGenerator
 import com.sama.meeting.domain.MeetingConfirmedEvent
 import com.sama.meeting.domain.MeetingIntent
 import com.sama.meeting.domain.MeetingIntentRepository
-import com.sama.meeting.domain.NewMeetingSlotsProposedEvent
 import com.sama.meeting.domain.MeetingProposedEvent
 import com.sama.meeting.domain.MeetingRepository
 import com.sama.meeting.domain.MeetingSlot
+import com.sama.meeting.domain.NewMeetingSlotsProposedEvent
 import com.sama.meeting.domain.ProposedMeeting
+import com.sama.meeting.domain.SamaNonSamaProposedMeeting
+import com.sama.meeting.domain.SamaSamaProposedMeeting
 import com.sama.meeting.domain.UserRecipient
 import com.sama.slotsuggestion.application.SlotSuggestionRequest
 import com.sama.slotsuggestion.application.SlotSuggestionService
@@ -131,7 +135,6 @@ class MeetingApplicationService(
             .propose(meetingId, meetingCode, proposedSlots, meetingTitle)
             .also { meetingRepository.save(it) }
 
-
         val event = MeetingProposedEvent(userId, proposedMeeting)
         commsEventConsumer.onMeetingProposed(event)
 
@@ -145,7 +148,7 @@ class MeetingApplicationService(
             ?.let { userService.find(it) }
             ?.let { it.fullName ?: it.email }
         return when {
-            meetingIntent.isSamaToSama() -> "$initiatorName / $recipientName"
+            meetingIntent.isSamaSama -> "$initiatorName / $recipientName"
             else -> "Meeting with $initiatorName"
         }
     }
@@ -157,15 +160,10 @@ class MeetingApplicationService(
             throw AccessDeniedException("User does not have access to read Meeting#${meetingCode}")
         }
 
-        // TODO: should we exclude blocked slots?
-        // val (start, end) = proposedMeeting.proposedSlotsRange()
-        // val blockingCalendarEvents = eventApplicationService.fetchEvents(
-        //     proposedMeeting.initiatorId,
-        //     start.toLocalDate(), end.toLocalDate(), start.zone
-        // )
-        // val availableSlots = proposedMeeting.availableSlots(emptyList(), clock)
-
-        return meetingView.render(userId, proposedMeeting, proposedMeeting.expandedSlots())
+        return when (proposedMeeting) {
+            is SamaNonSamaProposedMeeting -> meetingView.render(userId, proposedMeeting)
+            is SamaSamaProposedMeeting -> meetingView.render(userId, proposedMeeting)
+        }
     }
 
     @Transactional
@@ -174,6 +172,7 @@ class MeetingApplicationService(
         if (!proposedMeeting.isModifiableBy(userId)) {
             throw AccessDeniedException("User does not have access to modify Meeting#${meetingCode}")
         }
+        check(proposedMeeting is SamaSamaProposedMeeting)
 
         val updated = proposedMeeting
             .proposeNewSlots(command.proposedSlots.map { it.toValueObject() })
@@ -188,8 +187,13 @@ class MeetingApplicationService(
     @Transactional
     fun updateMeetingTitle(userId: UserId, meetingCode: MeetingCode, command: UpdateMeetingTitleCommand): Boolean {
         val proposedMeeting = findProposedMeetingOrThrow(meetingCode)
-        if (proposedMeeting.initiatorId != userId) {
-            throw AccessDeniedException("User does not have access to update Meeting#${meetingCode}")
+        when (proposedMeeting) {
+            is SamaNonSamaProposedMeeting -> if (proposedMeeting.initiatorId != userId) {
+                throw AccessDeniedException("User does not have access to modify Meeting#${meetingCode}")
+            }
+            is SamaSamaProposedMeeting -> if (!proposedMeeting.isModifiableBy(userId)) {
+                throw AccessDeniedException("User does not have access to modify Meeting#${meetingCode}")
+            }
         }
 
         meetingRepository.save(proposedMeeting.updateTitle(command.title))
@@ -202,6 +206,8 @@ class MeetingApplicationService(
         if (!proposedMeeting.isModifiableBy(userId)) {
             throw AccessDeniedException("User does not have access to modify Meeting#${meetingCode}")
         }
+        check(proposedMeeting is SamaNonSamaProposedMeeting)
+
         try {
             userConnectionService.createUserConnection(userId, CreateUserConnectionCommand(proposedMeeting.initiatorId))
         } catch (ignored: UserAlreadyConnectedException) {
@@ -219,27 +225,19 @@ class MeetingApplicationService(
             throw AccessDeniedException("User does not have access to modify Meeting#${meetingCode}")
         }
 
-        val meetingRecipient = when {
-            proposedMeeting.isSamaToSama() -> {
-                val user = userService.find(proposedMeeting.recipientId!!)
-                UserRecipient.of(proposedMeeting.recipientId, user.email)
+        val confirmedSlot = command.slot.toValueObject()
+
+        val confirmedMeeting = when (proposedMeeting) {
+            is SamaSamaProposedMeeting -> {
+                proposedMeeting.confirm(confirmedSlot)
             }
-            command.recipientEmail != null -> {
-                try {
-                    val user = userService.findInternalByEmail(command.recipientEmail)
-                    UserRecipient.ofUser(user)
-                } catch (e: NotFoundException) {
-                    EmailRecipient.of(command.recipientEmail)
-                }
-            }
-            else -> {
-                val user = userService.find(userId!!)
-                UserRecipient.of(userId, user.email)
+
+            is SamaNonSamaProposedMeeting -> {
+                val recipient = meetingRecipient(command.recipientEmail, userId)
+                    ?: throw DomainValidationException("Missing recipient details")
+                proposedMeeting.confirm(confirmedSlot, recipient)
             }
         }
-
-        val confirmedMeeting = proposedMeeting
-            .confirm(command.slot.toValueObject(), meetingRecipient)
 
         meetingRepository.save(confirmedMeeting)
 
@@ -250,11 +248,24 @@ class MeetingApplicationService(
         return true
     }
 
+    private fun meetingRecipient(recipientEmail: String?, userId: UserId?) = when {
+        recipientEmail != null -> {
+            try {
+                val user = userService.findInternalByEmail(recipientEmail)
+                UserRecipient.of(user.id)
+            } catch (e: NotFoundException) {
+                EmailRecipient.of(recipientEmail)
+            }
+        }
+        userId != null -> UserRecipient.of(userId)
+        else -> null
+    }
+
     private fun findProposedMeetingOrThrow(meetingCode: MeetingCode, forUpdate: Boolean = false) =
         when (val meeting = meetingRepository.findByCodeOrThrow(meetingCode, forUpdate)) {
             is ProposedMeeting -> meeting
             is ConfirmedMeeting -> throw MeetingAlreadyConfirmedException(meetingCode)
-            is ExpiredMeeting -> throw NotFoundException(ProposedMeeting::class, meetingCode)
+            is ExpiredMeeting -> throw NotFoundException(Meeting::class, meetingCode)
             else -> throw InvalidMeetingStatusException(meetingCode, meeting.status)
         }
 

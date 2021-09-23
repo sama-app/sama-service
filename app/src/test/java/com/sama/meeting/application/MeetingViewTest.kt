@@ -2,12 +2,11 @@ package com.sama.meeting.application
 
 import com.sama.integration.firebase.DynamicLinkService
 import com.sama.meeting.configuration.MeetingUrlConfiguration
-import com.sama.meeting.domain.Actor
 import com.sama.meeting.domain.MeetingCode
 import com.sama.meeting.domain.MeetingId
 import com.sama.meeting.domain.MeetingIntentId
 import com.sama.meeting.domain.MeetingSlot
-import com.sama.meeting.domain.ProposedMeeting
+import com.sama.meeting.domain.SamaNonSamaProposedMeeting
 import com.sama.users.application.UserPublicDTO
 import com.sama.users.application.UserService
 import com.sama.users.domain.UserId
@@ -43,6 +42,13 @@ class MeetingViewTest {
 
     lateinit var underTest: MeetingView
 
+    private val _9am = ZonedDateTime.of(
+        LocalDate.of(2021, 7, 7),
+        LocalTime.of(9, 0), ZoneId.of("UTC")
+    )
+    private val _10am = _9am.plusHours(1)
+    private val _11am = _9am.plusHours(2)
+
     @BeforeEach
     fun setup() {
         underTest = MeetingView(
@@ -53,18 +59,11 @@ class MeetingViewTest {
 
     @Test
     fun render() {
-        val _9am = ZonedDateTime.of(
-            LocalDate.of(2021, 7, 7),
-            LocalTime.of(9, 0), ZoneId.of("UTC")
-        )
-        val _10am = _9am.plusHours(1)
-        val _11am = _9am.plusHours(2)
-
         val currentUserId = UserId(10)
         val initiatorId = UserId(1)
         val initiator = UserPublicDTO(UserPublicId.random(), "test", "test@meetsama.com")
-        whenever(userService.findAll(listOf(initiatorId)))
-            .thenReturn(mapOf(initiatorId to initiator))
+        whenever(userService.find(initiatorId))
+            .thenReturn(initiator)
         val meetingTitle = "Meeting with test"
 
         val dynamicUrl = "https://meetsamatest.page.link/dynamic"
@@ -72,24 +71,18 @@ class MeetingViewTest {
             .thenReturn(dynamicUrl)
 
         // act
-        val proposedSlots = listOf(
-            MeetingSlot(_9am, _9am.plusMinutes(15)),
-            MeetingSlot(_10am, _11am)
-        )
-        val slots = listOf(MeetingSlot(_10am, _11am))
+        val proposedSlots = listOf(MeetingSlot(_10am, _11am))
         val actual = underTest.render(
             currentUserId,
-            ProposedMeeting(
-                MeetingId(21), MeetingIntentId(11), Duration.ofMinutes(15),
+            SamaNonSamaProposedMeeting(
+                MeetingId(21),
+                MeetingIntentId(11),
+                Duration.ofHours(1),
                 initiatorId,
-                null,
-                Actor.RECIPIENT,
                 proposedSlots,
-                emptyList(),
                 meetingCode,
                 meetingTitle
-            ),
-            slots
+            )
         )
 
         // verify
@@ -117,8 +110,8 @@ class MeetingViewTest {
         val currentUserId = UserId(1)
         val initiatorId = UserId(1)
         val initiator = UserPublicDTO(UserPublicId.random(), "test", "test@meetsama.com")
-        whenever(userService.findAll(listOf(initiatorId)))
-            .thenReturn(mapOf(initiatorId to initiator))
+        whenever(userService.find(initiatorId))
+            .thenReturn(initiator)
         val meetingTitle = "Meeting with test"
 
         val dynamicUrl = "https://meetsamatest.page.link/dynamic"
@@ -128,23 +121,21 @@ class MeetingViewTest {
         // act
         val actual = underTest.render(
             currentUserId,
-            ProposedMeeting(
-                MeetingId(21), MeetingIntentId(11), Duration.ofMinutes(15),
+            SamaNonSamaProposedMeeting(
+                MeetingId(21),
+                MeetingIntentId(11),
+                Duration.ofHours(1),
                 initiatorId,
-                null,
-                Actor.RECIPIENT,
-                emptyList(),
-                emptyList(),
+                listOf(MeetingSlot(_10am, _11am)),
                 meetingCode,
                 meetingTitle
-            ),
-            emptyList()
+            )
         )
 
         // verify
         val expectedUrl = "$scheme://$host/${meetingCode.code}"
         val expected = ProposedMeetingDTO(
-            proposedSlots = emptyList(),
+            proposedSlots = listOf(MeetingSlotDTO(_10am, _11am)),
             initiator = UserPublicDTO(
                 initiator.userId,
                 initiator.fullName,

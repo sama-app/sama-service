@@ -11,7 +11,8 @@ import com.sama.meeting.domain.MeetingIntentId
 import com.sama.meeting.domain.MeetingRepository
 import com.sama.meeting.domain.MeetingSlot
 import com.sama.meeting.domain.MeetingStatus
-import com.sama.meeting.domain.ProposedMeeting
+import com.sama.meeting.domain.SamaNonSamaProposedMeeting
+import com.sama.meeting.domain.SamaSamaProposedMeeting
 import com.sama.meeting.domain.UserRecipient
 import com.sama.meeting.infrastructure.jpa.MeetingIntentEntity
 import com.sama.meeting.infrastructure.jpa.MeetingIntentJpaRepository
@@ -60,12 +61,39 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
     @Test
     fun `proposed meeting persistence`() {
         val meetingId = MeetingId(21)
-        val proposedMeeting = ProposedMeeting(
+        val proposedMeeting = SamaNonSamaProposedMeeting(
             meetingId,
             meetingIntentId,
             Duration.ofMinutes(60),
             UserId(1),
-            null,
+            listOf(
+                MeetingSlot(
+                    ZonedDateTime.now(clock).plusHours(3),
+                    ZonedDateTime.now(clock).plusHours(4)
+                )
+            ),
+            MeetingCode("VGsUTGno"),
+            "Meeting title"
+        )
+
+        // act
+        underTest.save(proposedMeeting)
+        val persisted = underTest.findByIdOrThrow(proposedMeeting.meetingId)
+
+        // verify
+        assertThat(persisted).usingRecursiveComparison()
+            .isEqualTo(proposedMeeting)
+    }
+
+    @Test
+    fun `sama-sama proposed meeting persistence`() {
+        val meetingId = MeetingId(21)
+        val proposedMeeting = SamaSamaProposedMeeting(
+            meetingId,
+            meetingIntentId,
+            Duration.ofMinutes(60),
+            UserId(1),
+            UserId(2),
             Actor.RECIPIENT,
             listOf(
                 MeetingSlot(
@@ -95,20 +123,17 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
         val initiatorId = UserId(1)
 
         // act
-        val proposedMeeting = ProposedMeeting(
+        val proposedMeeting = SamaNonSamaProposedMeeting(
             meetingId,
             meetingIntentId,
             Duration.ofMinutes(60),
             initiatorId,
-            null,
-            Actor.RECIPIENT,
             listOf(
                 MeetingSlot(
                     ZonedDateTime.now(clock).plusHours(3),
                     ZonedDateTime.now(clock).plusHours(4)
                 )
             ),
-            emptyList(),
             meetingCode,
             meetingTitle
         )
@@ -116,8 +141,7 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
         underTest.save(proposedMeeting)
 
         val confirmedMeeting = ConfirmedMeeting(
-            meetingId, initiatorId, Duration.ofMinutes(60),
-            UserRecipient.of(UserId(2), "test@meetsama.com"),
+            meetingId, initiatorId, UserRecipient.of(UserId(2)),
             MeetingSlot(
                 ZonedDateTime.now(clock).plusHours(3),
                 ZonedDateTime.now(clock).plusHours(4)
@@ -141,12 +165,44 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
         val initiatorId = UserId(1)
 
         // act
-        val proposedMeeting = ProposedMeeting(
+        val proposedMeeting = SamaNonSamaProposedMeeting(
             meetingId,
             meetingIntentId,
             Duration.ofMinutes(60),
             initiatorId,
-            null,
+            listOf(
+                MeetingSlot(
+                    ZonedDateTime.now(clock).plusHours(3),
+                    ZonedDateTime.now(clock).plusHours(4)
+                )
+            ),
+            meetingCode,
+            "Meeting title"
+        )
+
+        underTest.save(proposedMeeting)
+
+        // act
+        val persisted = underTest.findByCodeOrThrow(meetingCode)
+
+        // verify
+        assertThat(persisted).isEqualTo(proposedMeeting)
+    }
+
+    @Test
+    fun `find sama-sama by code`() {
+        val meetingId = MeetingId(21)
+        val meetingCode = MeetingCode("VGsUTGno")
+        val initiatorId = UserId(1)
+        val recipientId = UserId(2)
+
+        // act
+        val proposedMeeting = SamaSamaProposedMeeting(
+            meetingId,
+            meetingIntentId,
+            Duration.ofMinutes(60),
+            initiatorId,
+            recipientId,
             Actor.RECIPIENT,
             listOf(
                 MeetingSlot(
@@ -163,11 +219,9 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
 
         // act
         val persisted = underTest.findByCodeOrThrow(meetingCode)
-        val persistedForUpdate = underTest.findByCodeOrThrow(meetingCode, true)
 
         // verify
         assertThat(persisted).isEqualTo(proposedMeeting)
-        assertThat(persistedForUpdate).isEqualTo(proposedMeeting)
     }
 
     @Test
@@ -191,13 +245,11 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
             ZonedDateTime.now(clock).plusDays(1).plusMinutes(61)
         )
 
-        val proposedMeeting = ProposedMeeting(
+        val proposedMeeting = SamaNonSamaProposedMeeting(
             validMeetingId,
             meetingIntentId,
             Duration.ofMinutes(60),
             initiatorId,
-            null,
-            Actor.RECIPIENT,
             listOf(
                 MeetingSlot(
                     ZonedDateTime.now(clock).minusMinutes(30),
@@ -205,7 +257,6 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
                 ),
                 expected
             ),
-            emptyList(),
             MeetingCode("VGsUTGno"),
             "Meeting title"
         )
@@ -224,13 +275,11 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
     @Test
     fun `find expiring`() {
         val validMeetingId = MeetingId(22)
-        val validMeeting = ProposedMeeting(
+        val validMeeting = SamaNonSamaProposedMeeting(
             validMeetingId,
             meetingIntentId,
             Duration.ofMinutes(60),
             UserId(1),
-            null,
-            Actor.RECIPIENT,
             listOf(
                 MeetingSlot(
                     ZonedDateTime.now(clock).minusHours(2),
@@ -241,19 +290,16 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
                     ZonedDateTime.now(clock).plusMinutes(30)
                 )
             ),
-            emptyList(),
             MeetingCode("one"),
             "Meeting title"
         )
 
         val expiringMeetingId = MeetingId(21)
-        val expiringMeeting = ProposedMeeting(
+        val expiringMeeting = SamaNonSamaProposedMeeting(
             expiringMeetingId,
             meetingIntentId,
             Duration.ofMinutes(60),
             UserId(1),
-            null,
-            Actor.RECIPIENT,
             listOf(
                 MeetingSlot(
                     ZonedDateTime.now(clock).minusHours(2),
@@ -264,7 +310,6 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
                     ZonedDateTime.now(clock).minusMinutes(1)
                 )
             ),
-            emptyList(),
             MeetingCode("two"),
             "Meeting title"
         )
@@ -281,20 +326,17 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
     @Test
     fun `save all expired`() {
         val expiringMeetingId = MeetingId(21)
-        val expiringMeeting = ProposedMeeting(
+        val expiringMeeting = SamaNonSamaProposedMeeting(
             expiringMeetingId,
             meetingIntentId,
             Duration.ofMinutes(60),
             UserId(1),
-            null,
-            Actor.RECIPIENT,
             listOf(
                 MeetingSlot(
-                    ZonedDateTime.now(clock).minusHours(3),
-                    ZonedDateTime.now(clock).minusHours(4)
+                    ZonedDateTime.now(clock).minusHours(4),
+                    ZonedDateTime.now(clock).minusHours(3)
                 )
             ),
-            emptyList(),
             MeetingCode("VGsUTGno"),
             "Meeting title"
         )

@@ -15,10 +15,10 @@ data class MeetingIntent(
     val suggestedSlots: List<MeetingSlot>,
     val code: MeetingIntentCode? = null,
 ) {
-    private val minimumDuration: Duration = Duration.ofMinutes(15)
+    val isSamaSama = recipientId != null
 
     init {
-        if (duration < minimumDuration) {
+        if (duration < MEETING_SLOT_INTERVAL) {
             throw InvalidDurationException(duration)
         }
         suggestedSlots.validate()
@@ -30,28 +30,29 @@ data class MeetingIntent(
         proposedSlots: List<MeetingSlot>,
         meetingTitle: String,
     ): ProposedMeeting {
-        if (!isSamaToSama() && proposedSlots.isEmpty()) {
-            throw InvalidMeetingProposalException("No slots proposed")
-        }
-        proposedSlots.validate()
-
-        return ProposedMeeting(
+        return when (isSamaSama) {
+            true -> SamaSamaProposedMeeting(
                 meetingId,
                 meetingIntentId,
                 duration,
                 initiatorId,
-                recipientId,
+                recipientId!!,
                 Actor.RECIPIENT,
                 proposedSlots.combineContinuous(),
                 emptyList(),
                 meetingCode,
                 meetingTitle
             )
-
-    }
-
-    fun isSamaToSama(): Boolean {
-        return recipientId != null
+            false -> SamaNonSamaProposedMeeting(
+                meetingId,
+                meetingIntentId,
+                duration,
+                initiatorId,
+                proposedSlots.combineContinuous(),
+                meetingCode,
+                meetingTitle
+            )
+        }
     }
 
     fun isReadableBy(userId: UserId?): Boolean {
