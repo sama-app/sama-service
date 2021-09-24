@@ -12,7 +12,6 @@ import java.util.function.Predicate
 import java.util.function.Predicate.not
 import kotlin.math.min
 import kotlin.math.pow
-import org.springframework.data.relational.core.query.Query.query
 
 interface Weigher {
     fun weight(heatMap: HeatMap): HeatMap
@@ -162,13 +161,30 @@ class SearchBoundaryWeigher : Weigher {
 }
 
 class RecencyWeigher : Weigher {
+    companion object {
+        private const val hoursToBlockFromNow = 4L
+        private const val currentTimeValue = -1000.0
+
+        private const val startValue = 0.0
+        private const val endValue = -20.0
+    }
+
     override fun weight(heatMap: HeatMap): HeatMap {
+        var result = heatMap
+        // block out time from now + X hours
+        val currentDateTimeBlockEnd = LocalDateTime.now(heatMap.userTimeZone).plusHours(hoursToBlockFromNow)
+        result = result.query { to(currentDateTimeBlockEnd) }
+            .addFixedWeight(currentTimeValue) { "Suggestion too close to now" }
+            .save(result)
+
+        // gradually add weights for the future
         val startDate = heatMap.startDate.plusDays(3)
-        return heatMap
+        result = result
             .query { fromDate(startDate) }
             .grouped()
-            .addLinearWeight(startValue = 0.0, endValue = -20.0) { "recency " }
-            .save(heatMap)
+            .addLinearWeight(startValue = startValue, endValue = endValue) { "Prefer more recent times " }
+            .save(result)
+        return result
     }
 }
 

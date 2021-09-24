@@ -39,8 +39,16 @@ data class SlotQuery(
         fromDateTime = zonedDateTime.withZoneSameInstant(zoneId).toLocalDateTime()
     }
 
+    fun from(localDateTime: LocalDateTime) {
+        fromDateTime = localDateTime
+    }
+
     fun to(zonedDateTime: ZonedDateTime, zoneId: ZoneId) {
         toDateTime = zonedDateTime.withZoneSameInstant(zoneId).toLocalDateTime()
+    }
+
+    fun to(localDateTime: LocalDateTime) {
+        toDateTime = localDateTime
     }
 
     fun fromDate(localDate: LocalDate) {
