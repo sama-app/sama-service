@@ -33,3 +33,5 @@ databaseChangeLog:
       file: classpath*:liquibase/change-sets/2021_09_15-firebase-dynamic-links.yml
   - include:
       file: classpath*:liquibase/change-sets/2021_09_22-meeting-indices.yml
+  - include:
+      file: classpath*:liquibase/change-sets/2021_09_24-google-calendar-list-sync.yml

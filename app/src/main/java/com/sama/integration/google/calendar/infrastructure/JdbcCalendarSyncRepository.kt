@@ -37,6 +37,34 @@ class JdbcCalendarSyncRepository(private val jdbcTemplate: NamedParameterJdbcOpe
         }
     }
 
+    override fun findAll(userId: UserId): Collection<CalendarSync> {
+        val namedParameters: SqlParameterSource = MapSqlParameterSource()
+            .addValue("user_id", userId.id)
+
+        return jdbcTemplate.query(
+            """
+               SELECT * FROM gcal.calendar_sync cs 
+               WHERE cs.user_id = :user_id
+            """,
+            namedParameters,
+            rowMapper
+        )
+    }
+
+    override fun findAllCalendarIds(userId: UserId): Collection<GoogleCalendarId> {
+        val namedParameters: SqlParameterSource = MapSqlParameterSource()
+            .addValue("user_id", userId.id)
+
+        return jdbcTemplate.queryForList(
+            """
+                       SELECT calendar_id FROM gcal.calendar_sync cs 
+                       WHERE cs.user_id = :user_id
+                    """,
+            namedParameters,
+            GoogleCalendarId::class.java
+        )
+    }
+
     override fun findAndLock(userId: UserId, calendarId: GoogleCalendarId): CalendarSync? {
         val namedParameters: SqlParameterSource = MapSqlParameterSource()
             .addValue("user_id", userId.id)
@@ -88,6 +116,18 @@ class JdbcCalendarSyncRepository(private val jdbcTemplate: NamedParameterJdbcOpe
                 .addValue("synced_from", calendarSync.syncedRange?.start)
                 .addValue("synced_to", calendarSync.syncedRange?.end)
                 .addValue("last_synced", calendarSync.lastSynced?.let { ofInstant(it, UTC) })
+        )
+    }
+
+    override fun delete(userId: UserId, calendarId: GoogleCalendarId) {
+        jdbcTemplate.update(
+            """
+                DELETE FROM gcal.calendar_sync cs
+                WHERE cs.user_id = :user_id AND cs.calendar_id = :calendar_id
+            """,
+            MapSqlParameterSource()
+                .addValue("user_id", userId.id)
+                .addValue("calendar_id", calendarId)
         )
     }
 

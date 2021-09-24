@@ -18,13 +18,13 @@ class CalendarSyncTest {
 
     private val nonSynced = CalendarSync.new(UserId(1L), "primary", fixedClock)
     private val fullySynced = nonSynced
-        .completeFull("token", syncedRange, fixedClock)
+        .complete("token", syncedRange, fixedClock)
 
     private val partiallySyncedStart = nonSynced
-        .completeFull("token", fixedDate to fixedDate.plusYears(6), fixedClock)
+        .complete("token", fixedDate to fixedDate.plusYears(6), fixedClock)
 
     private val partiallySyncedEnd = nonSynced
-        .completeFull("token", fixedDate.minusYears(6) to fixedDate, fixedClock)
+        .complete("token", fixedDate.minusYears(6) to fixedDate, fixedClock)
 
 
     @TestFactory

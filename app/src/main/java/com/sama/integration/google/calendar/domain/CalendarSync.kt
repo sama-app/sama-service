@@ -69,7 +69,7 @@ data class CalendarSync(
         return syncedRange!!.encloses(requiredRange)
     }
 
-    fun completeFull(syncToken: String, syncedRange: LocalDateRange, clock: Clock): CalendarSync {
+    fun complete(syncToken: String, syncedRange: LocalDateRange, clock: Clock): CalendarSync {
         return copy(
             nextSyncAt = clock.instant().plus(syncInterval),
             failedSyncCount = 0,
@@ -80,12 +80,7 @@ data class CalendarSync(
     }
 
     fun complete(syncToken: String, clock: Clock): CalendarSync {
-        return copy(
-            nextSyncAt = clock.instant().plus(syncInterval),
-            failedSyncCount = 0,
-            syncToken = syncToken,
-            lastSynced = clock.instant()
-        )
+        return complete(syncToken, syncedRange!!, clock)
     }
 
     fun fail(clock: Clock): CalendarSync {

@@ -1,8 +1,11 @@
 package com.sama.integration.google.calendar.application
 
 import com.google.api.services.calendar.model.EventDateTime
+import com.sama.integration.google.calendar.domain.Calendar
 import com.sama.integration.google.calendar.domain.CalendarEvent
+import com.sama.integration.google.calendar.domain.CalendarList
 import com.sama.integration.google.calendar.domain.EventData
+import com.sama.integration.google.calendar.domain.GoogleCalendar
 import com.sama.integration.google.calendar.domain.GoogleCalendarDateTime
 import com.sama.integration.google.calendar.domain.GoogleCalendarEvent
 import com.sama.integration.google.calendar.domain.GoogleCalendarEventKey
@@ -18,6 +21,11 @@ import java.time.ZonedDateTime
 import java.util.Date
 import java.util.TimeZone
 
+/**
+ * Google Calendar defined constant for the primary calendar
+ */
+const val PRIMARY_CALENDAR_ID = "primary"
+val ACCEPTED_EVENT_STATUSES = listOf("confirmed", "tentative")
 
 fun ZonedDateTime.toGoogleCalendarDateTime() =
     GoogleCalendarDateTime(Date.from(this.toInstant()), TimeZone.getTimeZone(this.zone))
@@ -33,8 +41,6 @@ fun EventDateTime.toZonedDateTime(defaultZoneId: ZoneId): ZonedDateTime {
     }
     throw IllegalArgumentException("invalid EventDateTime")
 }
-
-val ACCEPTED_EVENT_STATUSES = listOf("confirmed", "tentative")
 
 fun Collection<GoogleCalendarEvent>.toDomain(
     userId: UserId, calendarId: GoogleCalendarId, timeZone: ZoneId,
@@ -53,5 +59,25 @@ fun GoogleCalendarEvent.toDomain(userId: UserId, calendarId: GoogleCalendarId, t
         start.toZonedDateTime(timeZone),
         end.toZonedDateTime(timeZone),
         EventData(summary, isAllDay(), attendeeCount(), recurringEventId)
+    )
+}
+
+fun Collection<GoogleCalendar>.toDomain(userId: UserId): CalendarList {
+    val calendars = associate { it.calendarId() to it.toDomain() }
+    return CalendarList(userId, calendars)
+}
+
+fun GoogleCalendar.calendarId(): String {
+    val primary = primary ?: false
+    return if (primary) PRIMARY_CALENDAR_ID else id
+}
+
+fun GoogleCalendar.toDomain(): Calendar {
+    val isOwner = accessRole == "owner"
+    val primary = primary ?: false
+    return Calendar(
+        ZoneId.of(timeZone),
+        selected ?: primary,
+        isOwner
     )
 }
