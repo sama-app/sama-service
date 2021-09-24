@@ -1,0 +1,130 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-google-calendar-list
+      author: balys
+      changes:
+        - createTable:
+            schemaName: gcal
+            tableName: calendar_list_sync
+            columns:
+              - column:
+                  name: id
+                  type: BIGSERIAL
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: PK_calendar_list_sync_id
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: google_account_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: next_sync_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: failed_sync_count
+                  type: INT
+                  defaultValue: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: sync_token
+                  type: VARCHAR
+              - column:
+                  name: last_synced
+                  type: TIMESTAMP
+
+        - createIndex:
+            schemaName: gcal
+            tableName: calendar_list_sync
+            columns:
+              - column:
+                  name: user_id
+              - column:
+                  name: google_account_id
+            indexName: IDX_calendar_list_sync#user_id#BIGINT
+            unique: true
+
+        - createIndex:
+            schemaName: gcal
+            tableName: calendar_list_sync
+            columns:
+              - column:
+                  name: next_sync_at
+            indexName: IDX_calendar_list_sync#next_sync_at
+
+        - addForeignKeyConstraint:
+            baseTableSchemaName: gcal
+            baseTableName: calendar_list_sync
+            baseColumnNames: user_id
+            constraintName: FK_calendar_list_sync_user_id
+            referencedTableSchemaName: sama
+            referencedTableName: user
+            referencedColumnNames: id
+            validate: true
+            onDelete: CASCADE
+
+        - createTable:
+            schemaName: gcal
+            tableName: calendar_list
+            columns:
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: google_account_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: calendars
+                  type: jsonb
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+
+        - addPrimaryKey:
+            schemaName: gcal
+            tableName: calendar_list
+            columnNames: user_id, google_account_id
+            constraintName: PK_calendar_list#user_id#google_account_id
+
+        - addForeignKeyConstraint:
+            baseTableSchemaName: gcal
+            baseTableName: calendar_list
+            baseColumnNames: user_id
+            constraintName: FK_calendar_list_user_id
+            referencedTableSchemaName: sama
+            referencedTableName: user
+            referencedColumnNames: id
+            validate: true
+            onDelete: CASCADE
+
+  - changeSet:
+      id: google-calendar-list-sync-data
+      author: balys
+      changes:
+        - sql:
+            sql: >
+              INSERT INTO gcal.calendar_list_sync (user_id, google_account_id, next_sync_at)
+              (SELECT u.id, u.id, now() FROM sama.user u)
+      rollback:
+        - sql:
+            sql: >
+              TRUNCATE TABLE gcal.calendar_list_sync;
+              TRUNCATE TABLE gcal.calendar_list;
+
