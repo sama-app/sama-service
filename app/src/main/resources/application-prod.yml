@@ -70,8 +70,8 @@ integration:
       fqdn: meetsama.page.link
       parameters:
         ibi: com.meetsama.sama # BundleID
-        ifl: https://testflight.apple.com/join/F4cncGnA # TODO: Remove once AppStore is live
-        isi: 1586527998
+        ifl: # Overrides `isi` if specified
+        isi: 1586527998 # AppStore ID
         efr: 0 # Do not skip preview page
         ofl: # TODO: Mac store link
 
