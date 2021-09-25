@@ -1,6 +1,7 @@
 package com.sama.comms.infrastructure
 
 import com.google.firebase.messaging.FirebaseMessaging
+import com.google.firebase.messaging.FirebaseMessagingException
 import com.google.firebase.messaging.Message
 import com.sama.comms.domain.Notification
 import com.sama.comms.domain.NotificationSender
@@ -14,30 +15,31 @@ import org.springframework.stereotype.Component
 class FirebaseNotificationSender(private val userService: UserService) : NotificationSender {
     private var logger: Logger = LoggerFactory.getLogger(FirebaseNotificationSender::class.java)
 
-    override fun send(userId: UserId, notification: Notification): Boolean {
-        return kotlin.runCatching {
-            val response = userService.findUserDeviceRegistrations(userId)
-            if (response.firebaseDeviceRegistrations.isEmpty()) {
-                throw RuntimeException("No Firebase device registrations found")
-            }
+    override fun send(userId: UserId, notification: Notification) {
 
-            response.firebaseDeviceRegistrations.forEach {
-                val message = Message.builder()
-                    .setNotification(
-                        com.google.firebase.messaging.Notification.builder()
-                            .setTitle(notification.title)
-                            .setBody(notification.body)
-                            .build()
-                    )
-                    .putAllData(notification.additionalData)
-                    .setToken(it.registrationToken)
-                    .build()
-                FirebaseMessaging.getInstance().send(message)
-            }
-
+        val response = userService.findUserDeviceRegistrations(userId)
+        if (response.firebaseDeviceRegistrations.isEmpty()) {
+            throw RuntimeException("No Firebase device registrations found")
         }
-            .onSuccess { logger.debug("Notifications sent to User#${userId.id}") }
-            .onFailure { logger.warn("Could not send Firebase notification to User#${userId.id}", it) }
-            .isSuccess
+
+        response.firebaseDeviceRegistrations.forEach {
+            val message = Message.builder()
+                .setNotification(
+                    com.google.firebase.messaging.Notification.builder()
+                        .setTitle(notification.title)
+                        .setBody(notification.body)
+                        .build()
+                )
+                .putAllData(notification.additionalData)
+                .setToken(it.registrationToken)
+                .build()
+            try {
+                FirebaseMessaging.getInstance().send(message)
+                logger.debug("Notifications sent to User#${userId.id}  Device#${it.deviceId}")
+            } catch (e: Exception) {
+                val code = if (e is FirebaseMessagingException) e.messagingErrorCode.toString() else "OTHER"
+                logger.warn("Could not send Firebase notification to User#${userId.id} Device#${it.deviceId}: $code", e)
+            }
+        }
     }
 }
