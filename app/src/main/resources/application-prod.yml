@@ -23,7 +23,7 @@ spring:
       spec: maximumSize=1000,expireAfterAccess=12h
 
 logging.level:
-  org.springframework.jdbc.core: DEBUG
+  org.springframework.jdbc.core: WARN
 
 springdoc:
   api-docs:
