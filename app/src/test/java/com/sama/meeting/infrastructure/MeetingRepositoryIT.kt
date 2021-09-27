@@ -20,6 +20,8 @@ import com.sama.users.domain.UserId
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
+import java.time.ZoneOffset
+import java.time.ZoneOffset.UTC
 import java.time.ZonedDateTime
 import kotlin.test.assertNotEquals
 import org.assertj.core.api.Assertions.assertThat
@@ -41,7 +43,7 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
         this.id = meetingIntentId.id
         this.initiatorId = 1L
         this.durationMinutes = 60
-        this.timezone = ZoneId.systemDefault()
+        this.timezone = UTC
         this.createdAt = Instant.now()
         this.updatedAt = Instant.now()
     }

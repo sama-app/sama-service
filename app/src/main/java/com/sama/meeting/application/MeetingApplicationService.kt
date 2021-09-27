@@ -72,8 +72,8 @@ class MeetingApplicationService(
 
         val request = SlotSuggestionRequest(
             command.durationMinutes.toMinutes(),
-            command.timeZone,
-            3
+            3,
+            command.timeZone
         )
         val suggestedSlots = slotSuggestionService.suggestSlots(initiatorId, request).suggestions
             .map { MeetingSlot(it.startDateTime, it.endDateTime) }
@@ -176,6 +176,26 @@ class MeetingApplicationService(
         val event = NewMeetingSlotsProposedEvent(userId, proposedMeeting)
         commsEventConsumer.onNewMeetingSlotsProposed(event)
         return true
+    }
+
+    @Transactional(readOnly = true)
+    fun getSlotSuggestions(userId: UserId, meetingCode: MeetingCode): MeetingSlotSuggestionDTO {
+        val proposedMeeting = findProposedMeetingOrThrow(meetingCode)
+        checkAccess(proposedMeeting.isReadableBy(userId))
+        { "User does not have access to Meeting#${meetingCode.code}" }
+
+        check(proposedMeeting is SamaSamaProposedMeeting)
+
+        val recipientId = checkNotNull(proposedMeeting.otherActorId(userId))
+        val request = MultiUserSlotSuggestionRequest(proposedMeeting.duration, 9, recipientId)
+        val slotSuggestions = slotSuggestionService.suggestSlots(userId, request)
+
+        val rejectedSlots = proposedMeeting.rejectedSlots
+        val suggestedSlots = slotSuggestions.suggestions
+            .map { MeetingSlot(it.startDateTime, it.endDateTime) }
+            .minus(rejectedSlots)
+
+        return MeetingSlotSuggestionDTO(suggestedSlots.toDTO(), rejectedSlots.toDTO())
     }
 
     @Transactional

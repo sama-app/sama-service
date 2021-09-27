@@ -6,6 +6,8 @@ import java.time.Duration.ofMinutes
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId.systemDefault
+import java.time.ZoneOffset
+import java.time.ZoneOffset.UTC
 import java.time.ZonedDateTime
 import kotlin.test.assertEquals
 import org.assertj.core.api.Assertions.assertThat
@@ -121,7 +123,7 @@ class MeetingTest {
                 initiatorId,
                 ofHours(1),
                 null,
-                systemDefault(),
+                UTC,
                 listOf(suggestedSlotID1, suggestedSlotID2),
             )
 
@@ -161,7 +163,7 @@ class MeetingTest {
             initiatorId,
             ofHours(1),
             null,
-            systemDefault(),
+            UTC,
             listOf(proposedSlotID1.copy(), proposedSlotID2.copy())
         )
         val meetingCode = MeetingCode("VGsUTGno")

@@ -137,7 +137,7 @@ class SlotSuggestionServiceTest {
         setupPersona(nonCalendarUser)
 
         val suggestions =
-            underTest.suggestSlots(userId, SlotSuggestionRequest(Duration.ofHours(1), ZoneId.of("UTC"), 3))
+            underTest.suggestSlots(userId, SlotSuggestionRequest(Duration.ofHours(1), 3, ZoneId.of("UTC")))
 
         assertThat(suggestions.suggestions).hasSize(3)
 
@@ -153,7 +153,7 @@ class SlotSuggestionServiceTest {
         setupPersona(fullyBlockedCalendarUser)
 
         val suggestions =
-            underTest.suggestSlots(userId, SlotSuggestionRequest(Duration.ofHours(1), ZoneId.of("UTC"), 3))
+            underTest.suggestSlots(userId, SlotSuggestionRequest(Duration.ofHours(1), 3, ZoneId.of("UTC")))
 
         assertThat(suggestions.suggestions).hasSize(3)
 

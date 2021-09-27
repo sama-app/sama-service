@@ -2,6 +2,7 @@ package com.sama.meeting.application
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.sama.meeting.domain.MeetingIntentCode
+import com.sama.meeting.domain.MeetingSlot
 import com.sama.users.domain.UserPublicId
 import java.time.ZoneId
 import javax.validation.constraints.Min
@@ -55,3 +56,7 @@ data class ConfirmMeetingCommand(
     val slot: MeetingSlotDTO,
     val recipientEmail: String?,
 )
+
+fun MeetingSlotDTO.toValueObject(): MeetingSlot {
+    return MeetingSlot(this.startDateTime, this.endDateTime)
+}

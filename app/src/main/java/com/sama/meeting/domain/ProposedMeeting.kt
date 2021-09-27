@@ -121,6 +121,12 @@ data class SamaSamaProposedMeeting(
         )
     }
 
+    fun otherActorId(userId: UserId) = when (userId) {
+        initiatorId -> recipientId
+        recipientId -> initiatorId
+        else -> null
+    }
+
     private fun currentActorId() = when (currentActor) {
         Actor.INITIATOR -> initiatorId
         Actor.RECIPIENT -> recipientId

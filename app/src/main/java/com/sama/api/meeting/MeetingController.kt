@@ -93,6 +93,15 @@ class MeetingController(
     fun loadMeetingProposal(@AuthUserId userId: UserId?, @PathVariable meetingCode: MeetingCode) =
         meetingApplicationService.loadMeetingProposal(userId, meetingCode)
 
+
+    @Operation(summary = "Get slot suggestions for a proposed meeting")
+    @GetMapping(
+        "/api/meeting/by-code/{meetingCode}/suggestions",
+        produces = [APPLICATION_JSON_VALUE]
+    )
+    fun getSlotSuggestions(@AuthUserId userId: UserId?, @PathVariable meetingCode: MeetingCode) =
+        meetingApplicationService.getSlotSuggestions(userId!!, meetingCode)
+
     @Operation(
         summary = "Update meeting title to be used on the confirmed calendar event",
         security = [SecurityRequirement(name = "user-auth")]
