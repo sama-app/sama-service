@@ -1,6 +1,7 @@
 package com.sama.integration.google.calendar.domain
 
 import com.sama.common.to
+import com.sama.integration.google.auth.domain.GoogleAccountId
 import com.sama.users.domain.UserId
 import java.time.Clock
 import java.time.Duration
@@ -16,7 +17,7 @@ class CalendarSyncTest {
     private val fixedClock = Clock.fixed(fixedDate.atStartOfDay().toInstant(UTC), UTC)
     private val syncedRange = CalendarSync.syncRange(fixedClock)
 
-    private val nonSynced = CalendarSync.new(UserId(1L), "primary", fixedClock)
+    private val nonSynced = CalendarSync.new(GoogleAccountId(1L), "primary", fixedClock)
     private val fullySynced = nonSynced
         .complete("token", syncedRange, fixedClock)
 

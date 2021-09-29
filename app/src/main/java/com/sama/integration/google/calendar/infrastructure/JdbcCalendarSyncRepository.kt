@@ -1,6 +1,8 @@
 package com.sama.integration.google.calendar.infrastructure
 
 import com.sama.common.to
+import com.sama.integration.google.auth.domain.GoogleAccountId
+import com.sama.integration.google.auth.infrastructure.toGoogleAccountId
 import com.sama.integration.google.calendar.domain.CalendarSync
 import com.sama.integration.google.calendar.domain.CalendarSyncRepository
 import com.sama.integration.google.calendar.domain.GoogleCalendarId
@@ -18,16 +20,16 @@ import org.springframework.stereotype.Component
 
 @Component
 class JdbcCalendarSyncRepository(private val jdbcTemplate: NamedParameterJdbcOperations) : CalendarSyncRepository {
-    override fun find(userId: UserId, calendarId: GoogleCalendarId): CalendarSync? {
+    override fun find(accountId: GoogleAccountId, calendarId: GoogleCalendarId): CalendarSync? {
         val namedParameters: SqlParameterSource = MapSqlParameterSource()
-            .addValue("user_id", userId.id)
+            .addValue("account_id", accountId.id)
             .addValue("calendar_id", calendarId)
 
         return try {
             jdbcTemplate.queryForObject(
                 """
                    SELECT * FROM gcal.calendar_sync cs 
-                   WHERE cs.user_id = :user_id AND cs.calendar_id = :calendar_id
+                   WHERE cs.google_account_id = :account_id AND cs.calendar_id = :calendar_id
                 """,
                 namedParameters,
                 rowMapper
@@ -37,44 +39,62 @@ class JdbcCalendarSyncRepository(private val jdbcTemplate: NamedParameterJdbcOpe
         }
     }
 
-    override fun findAll(userId: UserId): Collection<CalendarSync> {
+    override fun findAll(accountId: GoogleAccountId): Collection<CalendarSync> {
         val namedParameters: SqlParameterSource = MapSqlParameterSource()
-            .addValue("user_id", userId.id)
+            .addValue("account_id", accountId.id)
 
         return jdbcTemplate.query(
             """
                SELECT * FROM gcal.calendar_sync cs 
-               WHERE cs.user_id = :user_id
+               WHERE cs.google_account_id = :account_id
             """,
             namedParameters,
             rowMapper
         )
     }
 
-    override fun findAllCalendarIds(userId: UserId): Collection<GoogleCalendarId> {
+    override fun findAll(accountIds: Set<GoogleAccountId>): Collection<CalendarSync> {
+        if (accountIds.isEmpty()) {
+            return emptyList()
+        }
+
         val namedParameters: SqlParameterSource = MapSqlParameterSource()
-            .addValue("user_id", userId.id)
+            .addValue("account_ids", accountIds.map { it.id })
+
+        return jdbcTemplate.query(
+            """
+               SELECT * FROM gcal.calendar_sync cs 
+               WHERE cs.google_account_id in (:account_ids)
+            """,
+            namedParameters,
+            rowMapper
+        )
+    }
+
+    override fun findAllCalendarIds(accountId: GoogleAccountId): Collection<GoogleCalendarId> {
+        val namedParameters: SqlParameterSource = MapSqlParameterSource()
+            .addValue("account_id", accountId.id)
 
         return jdbcTemplate.queryForList(
             """
                        SELECT calendar_id FROM gcal.calendar_sync cs 
-                       WHERE cs.user_id = :user_id
+                       WHERE cs.google_account_id = :account_id
                     """,
             namedParameters,
             GoogleCalendarId::class.java
         )
     }
 
-    override fun findAndLock(userId: UserId, calendarId: GoogleCalendarId): CalendarSync? {
+    override fun findAndLock(accountId: GoogleAccountId, calendarId: GoogleCalendarId): CalendarSync? {
         val namedParameters: SqlParameterSource = MapSqlParameterSource()
-            .addValue("user_id", userId.id)
+            .addValue("account_id", accountId.id)
             .addValue("calendar_id", calendarId)
 
         return try {
             jdbcTemplate.queryForObject(
                 """
                    SELECT * FROM gcal.calendar_sync cs 
-                   WHERE cs.user_id = :user_id AND cs.calendar_id = :calendar_id
+                   WHERE cs.google_account_id = :account_id AND cs.calendar_id = :calendar_id
                    FOR UPDATE NOWAIT
                 """,
                 namedParameters,
@@ -85,30 +105,31 @@ class JdbcCalendarSyncRepository(private val jdbcTemplate: NamedParameterJdbcOpe
         }
     }
 
-    override fun findSyncable(from: Instant): Collection<Pair<UserId, GoogleCalendarId>> {
+    override fun findSyncable(from: Instant): Collection<Pair<GoogleAccountId, GoogleCalendarId>> {
         val namedParameters: SqlParameterSource = MapSqlParameterSource()
             .addValue("timestamp", ofInstant(from, UTC))
 
         return jdbcTemplate.query(
             """
-               SELECT user_id, calendar_id FROM gcal.calendar_sync cs 
+               SELECT google_account_id, calendar_id FROM gcal.calendar_sync cs 
                WHERE cs.next_sync_at < :timestamp
             """,
             namedParameters
-        ) { rs, _ -> rs.getLong("user_id").toUserId() to rs.getString("calendar_id") }
+        ) { rs, _ -> rs.getLong("google_account_id").toGoogleAccountId() to rs.getString("calendar_id") }
     }
 
     override fun save(calendarSync: CalendarSync) {
         jdbcTemplate.update(
             """
-                INSERT INTO gcal.calendar_sync (user_id, calendar_id, next_sync_at, failed_sync_count, sync_token, synced_from, synced_to, last_synced)  
-                VALUES (:user_id, :calendar_id, :next_sync_at, :failed_sync_count, :sync_token, :synced_from, :synced_to, :last_synced)
-                ON CONFLICT (user_id, calendar_id) DO UPDATE 
+                INSERT INTO gcal.calendar_sync (google_account_id, calendar_id, next_sync_at, failed_sync_count, sync_token, synced_from, synced_to, last_synced)  
+                VALUES (:account_id, :calendar_id, :next_sync_at, :failed_sync_count, :sync_token, 
+                        :synced_from, :synced_to, :last_synced)
+                ON CONFLICT (google_account_id, calendar_id) DO UPDATE 
                 SET next_sync_at = :next_sync_at, failed_sync_count = :failed_sync_count, sync_token = :sync_token, 
                     synced_from = :synced_from, synced_to = :synced_to, last_synced = :last_synced
             """,
             MapSqlParameterSource()
-                .addValue("user_id", calendarSync.userId.id)
+                .addValue("account_id", calendarSync.accountId.id)
                 .addValue("calendar_id", calendarSync.calendarId)
                 .addValue("next_sync_at", ofInstant(calendarSync.nextSyncAt, UTC))
                 .addValue("failed_sync_count", calendarSync.failedSyncCount)
@@ -119,21 +140,21 @@ class JdbcCalendarSyncRepository(private val jdbcTemplate: NamedParameterJdbcOpe
         )
     }
 
-    override fun delete(userId: UserId, calendarId: GoogleCalendarId) {
+    override fun delete(accountId: GoogleAccountId, calendarId: GoogleCalendarId) {
         jdbcTemplate.update(
             """
                 DELETE FROM gcal.calendar_sync cs
-                WHERE cs.user_id = :user_id AND cs.calendar_id = :calendar_id
+                WHERE cs.google_account_id = :account_id AND cs.calendar_id = :calendar_id
             """,
             MapSqlParameterSource()
-                .addValue("user_id", userId.id)
+                .addValue("account_id", accountId.id)
                 .addValue("calendar_id", calendarId)
         )
     }
 
     private val rowMapper: (ResultSet, rowNum: Int) -> CalendarSync = { rs, _ ->
         CalendarSync(
-            rs.getLong("user_id").toUserId(),
+            rs.getLong("google_account_id").toGoogleAccountId(),
             rs.getString("calendar_id"),
             rs.getTimestamp("next_sync_at")!!.toInstant(),
             rs.getInt("failed_sync_count"),

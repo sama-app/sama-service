@@ -9,7 +9,8 @@ import com.google.api.client.json.JsonFactory
 import com.google.api.services.calendar.Calendar
 import com.google.api.services.oauth2.Oauth2
 import com.sama.SamaApplication
-import com.sama.users.domain.UserId
+import com.sama.integration.google.auth.domain.GoogleAccountId
+import com.sama.integration.google.auth.domain.toStorageKey
 import org.springframework.stereotype.Component
 
 @Component
@@ -19,16 +20,9 @@ class GoogleServiceFactory(
     private val jsonFactory: JsonFactory,
 ) {
 
-    fun calendarService(userId: UserId): Calendar {
-        val credential = googleAuthorizationCodeFlow.loadCredential(userId.id.toString())
+    fun calendarService(accountId: GoogleAccountId): Calendar {
+        val credential = googleAuthorizationCodeFlow.loadCredential(accountId.toStorageKey())
         return Calendar.Builder(googleHttpTransport, jsonFactory, httpRequestInitializer(credential))
-            .setApplicationName(SamaApplication::class.simpleName)
-            .build()
-    }
-
-    fun oauth2Service(userId: UserId): Oauth2 {
-        val credential = googleAuthorizationCodeFlow.loadCredential(userId.id.toString())
-        return Oauth2.Builder(googleHttpTransport, jsonFactory, httpRequestInitializer(credential))
             .setApplicationName(SamaApplication::class.simpleName)
             .build()
     }

@@ -30,7 +30,7 @@ class UserSettingsApplicationServiceIT : BaseApplicationIntegrationTest() {
     @BeforeEach
     fun setupUserSettingsDefaults() {
         val userId = initiator().id!!
-        whenever(userSettingsDefaultsRepository.findByIdOrNull(userId))
+        whenever(userSettingsDefaultsRepository.findById(userId))
             .thenReturn(
                 UserSettingsDefaults(
                     Locale.ENGLISH,

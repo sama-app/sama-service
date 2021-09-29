@@ -1,7 +1,9 @@
 package com.sama.integration.google
 
 import com.google.api.client.googleapis.json.GoogleJsonResponseException
+import com.sama.common.DomainIntegrityException
 import com.sama.common.HasReason
+import com.sama.users.domain.UserId
 
 // https://developers.google.com/calendar/api/guides/errors
 fun translatedGoogleException(ex: Throwable): Throwable {
@@ -45,3 +47,6 @@ class GoogleApiRateLimitException(originalEx: GoogleJsonResponseException) :
 
 class GoogleUnhandledException(originalEx: GoogleJsonResponseException) :
     GoogleException("Bad request to Google Calendar: ${originalEx.message}", originalEx)
+
+class NoPrimaryGoogleAccountException(userId: UserId) :
+    DomainIntegrityException("no_primary_google_account", "Could not find primary Google Account for User#${userId.id}")

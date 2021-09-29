@@ -2,6 +2,7 @@ package com.sama.integration.google.calendar.domain
 
 import com.google.common.math.IntMath.pow
 import com.sama.common.to
+import com.sama.integration.google.auth.domain.GoogleAccountId
 import com.sama.users.domain.UserId
 import java.time.Clock
 import java.time.Duration
@@ -12,7 +13,7 @@ import java.time.ZonedDateTime
 import org.threeten.extra.LocalDateRange
 
 data class CalendarSync(
-    val userId: UserId,
+    val accountId: GoogleAccountId,
     val calendarId: GoogleCalendarId,
     val nextSyncAt: Instant,
     val failedSyncCount: Int,
@@ -27,9 +28,9 @@ data class CalendarSync(
         const val syncFutureInMonths = 3L
         const val fullSyncCutOffDays = 7L
 
-        fun new(userId: UserId, calendarId: GoogleCalendarId, clock: Clock): CalendarSync {
+        fun new(accountId: GoogleAccountId, calendarId: GoogleCalendarId, clock: Clock): CalendarSync {
             return CalendarSync(
-                userId = userId,
+                accountId = accountId,
                 calendarId = calendarId,
                 nextSyncAt = clock.instant(),
                 failedSyncCount = 0

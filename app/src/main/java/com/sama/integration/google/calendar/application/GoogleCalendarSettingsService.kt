@@ -1,6 +1,8 @@
-package com.sama.integration.google.user
+package com.sama.integration.google.calendar.application
 
 import com.sama.integration.google.GoogleServiceFactory
+import com.sama.integration.google.auth.application.GoogleAccountService
+import com.sama.integration.google.auth.domain.GoogleAccountRepository
 import com.sama.users.domain.UserId
 import com.sama.users.domain.UserSettingsDefaults
 import com.sama.users.domain.UserSettingsDefaultsRepository
@@ -9,12 +11,15 @@ import org.apache.commons.lang3.LocaleUtils
 import org.springframework.stereotype.Component
 
 @Component
-class GoogleUserSettingsDefaultsService(private val googleServiceFactory: GoogleServiceFactory) :
-    UserSettingsDefaultsRepository {
+class GoogleCalendarSettingsService(
+    private val googleAccountRepository: GoogleAccountRepository,
+    private val googleServiceFactory: GoogleServiceFactory
+) : UserSettingsDefaultsRepository {
 
-    override fun findByIdOrNull(userId: UserId): UserSettingsDefaults? {
+    override fun findById(userId: UserId): UserSettingsDefaults? {
         val settings = kotlin.runCatching {
-            googleServiceFactory.calendarService(userId).settings()
+            val googleAccountId = googleAccountRepository.findByUserIdAndPrimary(userId)!!
+            googleServiceFactory.calendarService(googleAccountId).settings()
                 .list().execute().items
                 .associate { Pair(it.id, it.value) }
         }.getOrNull()

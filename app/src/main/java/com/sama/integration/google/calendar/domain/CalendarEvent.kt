@@ -1,10 +1,11 @@
 package com.sama.integration.google.calendar.domain
 
+import com.sama.integration.google.auth.domain.GoogleAccountId
 import com.sama.users.domain.UserId
 import java.time.ZonedDateTime
 
 data class GoogleCalendarEventKey(
-    val userId: UserId,
+    val accountId: GoogleAccountId,
     val calendarId: GoogleCalendarId,
     val eventId: GoogleCalendarEventId,
 )

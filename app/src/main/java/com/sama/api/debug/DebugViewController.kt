@@ -3,7 +3,7 @@ package com.sama.api.debug
 import com.google.api.client.http.GenericUrl
 import com.sama.api.config.AuthUserId
 import com.sama.auth.application.GoogleOauth2ApplicationService
-import com.sama.auth.application.GoogleSignFailureDTO
+import com.sama.auth.application.GoogleSignErrorDTO
 import com.sama.auth.application.GoogleSignSuccessDTO
 import com.sama.slotsuggestion.application.HeatMapService
 import com.sama.slotsuggestion.application.SlotSuggestionRequest
@@ -38,7 +38,13 @@ class DebugViewController(
 
     @GetMapping("/api/__debug/auth/google-authorize")
     fun googleAuthorize(request: HttpServletRequest): RedirectView {
-        val googleOAuth2Redirect = googleOauth2ApplicationService.beginGoogleWebOauth2(redirectUri(request))
+        val googleOAuth2Redirect = googleOauth2ApplicationService.generateAuthorizationUrl(redirectUri(request))
+        return RedirectView(googleOAuth2Redirect.authorizationUrl)
+    }
+
+    @GetMapping("/api/__debug/auth/link-google-account")
+    fun linkGoogleAccount(@AuthUserId userId: UserId?, request: HttpServletRequest): RedirectView {
+        val googleOAuth2Redirect = googleOauth2ApplicationService.generateAuthorizationUrl(redirectUri(request), userId)
         return RedirectView(googleOAuth2Redirect.authorizationUrl)
     }
 
@@ -48,10 +54,11 @@ class DebugViewController(
         response: HttpServletResponse,
         @RequestParam(required = false) code: String?,
         @RequestParam(required = false) error: String?,
+        @RequestParam(required = false) state: String?,
     ) {
         val redirectUri = redirectUri(request)
 
-        val result = googleOauth2ApplicationService.processGoogleWebOauth2(redirectUri, code, error)
+        val result = googleOauth2ApplicationService.processGoogleWebOauth2(redirectUri, code, error, state)
         when (result) {
             is GoogleSignSuccessDTO -> {
                 val cookie = Cookie("sama.access", result.accessToken)
@@ -61,7 +68,7 @@ class DebugViewController(
                 response.addCookie(cookie)
                 response.sendRedirect("/api/__debug/user/heatmap?count=3")
             }
-            is GoogleSignFailureDTO -> response.status = HttpStatus.FORBIDDEN.value()
+            is GoogleSignErrorDTO -> response.status = HttpStatus.FORBIDDEN.value()
         }
     }
 

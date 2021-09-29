@@ -8,7 +8,6 @@ import java.time.Instant
 import java.util.UUID
 import javax.persistence.CascadeType
 import javax.persistence.Column
-import javax.persistence.Embedded
 import javax.persistence.Entity
 import javax.persistence.FetchType
 import javax.persistence.GeneratedValue
@@ -16,9 +15,6 @@ import javax.persistence.GenerationType.IDENTITY
 import javax.persistence.Id
 import javax.persistence.JoinColumn
 import javax.persistence.OneToMany
-import javax.persistence.PrimaryKeyJoinColumn
-import javax.persistence.SecondaryTable
-import javax.persistence.SecondaryTables
 import javax.persistence.Table
 import org.hibernate.annotations.Generated
 import org.hibernate.annotations.GenerationTime.INSERT
@@ -28,14 +24,6 @@ import org.springframework.data.annotation.LastModifiedDate
 @AggregateRoot
 @Entity
 @Table(schema = "sama", name = "user")
-@SecondaryTables(
-    value = [
-        SecondaryTable(
-            schema = "sama", name = "user_google_credential",
-            pkJoinColumns = [PrimaryKeyJoinColumn(name = "user_id")]
-        )
-    ]
-)
 class UserEntity(email: String) {
 
     @Factory
@@ -65,9 +53,6 @@ class UserEntity(email: String) {
 
     @Column(nullable = false)
     var active: Boolean? = null
-
-    @Embedded
-    var googleCredential: GoogleCredential? = null
 
     @OneToMany(cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(name = "userId", nullable = false, updatable = false, insertable = false)
@@ -103,12 +88,6 @@ fun UserEntity.applyChanges(user: UserDeviceRegistrations): UserEntity {
                     Instant.now()
                 )
         })
-    return this
-}
-
-fun UserEntity.applyChanges(googleCredential: GoogleCredential): UserEntity {
-    this.googleCredential = this.googleCredential?.merge(googleCredential)
-        ?: googleCredential.copy(updatedAt = Instant.now())
     return this
 }
 

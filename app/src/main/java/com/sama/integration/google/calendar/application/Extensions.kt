@@ -1,6 +1,7 @@
 package com.sama.integration.google.calendar.application
 
 import com.google.api.services.calendar.model.EventDateTime
+import com.sama.integration.google.auth.domain.GoogleAccountId
 import com.sama.integration.google.calendar.domain.Calendar
 import com.sama.integration.google.calendar.domain.CalendarEvent
 import com.sama.integration.google.calendar.domain.CalendarList
@@ -43,28 +44,28 @@ fun EventDateTime.toZonedDateTime(defaultZoneId: ZoneId): ZonedDateTime {
 }
 
 fun Collection<GoogleCalendarEvent>.toDomain(
-    userId: UserId, calendarId: GoogleCalendarId, timeZone: ZoneId,
+    accountId: GoogleAccountId, calendarId: GoogleCalendarId, timeZone: ZoneId,
 ): List<CalendarEvent> {
     return filter { it.status in ACCEPTED_EVENT_STATUSES }
-        .map { it.toDomain(userId, calendarId, timeZone) }
+        .map { it.toDomain(accountId, calendarId, timeZone) }
 }
 
-fun GoogleCalendarEvent.toKey(userId: UserId, calendarId: GoogleCalendarId): GoogleCalendarEventKey {
-    return GoogleCalendarEventKey(userId, calendarId, id)
+fun GoogleCalendarEvent.toKey(accountId: GoogleAccountId, calendarId: GoogleCalendarId): GoogleCalendarEventKey {
+    return GoogleCalendarEventKey(accountId, calendarId, id)
 }
 
-fun GoogleCalendarEvent.toDomain(userId: UserId, calendarId: GoogleCalendarId, timeZone: ZoneId): CalendarEvent {
+fun GoogleCalendarEvent.toDomain(accountId: GoogleAccountId, calendarId: GoogleCalendarId, timeZone: ZoneId): CalendarEvent {
     return CalendarEvent(
-        toKey(userId, calendarId),
+        toKey(accountId, calendarId),
         start.toZonedDateTime(timeZone),
         end.toZonedDateTime(timeZone),
         EventData(summary, isAllDay(), attendeeCount(), recurringEventId)
     )
 }
 
-fun Collection<GoogleCalendar>.toDomain(userId: UserId): CalendarList {
+fun Collection<GoogleCalendar>.toDomain(accountId: GoogleAccountId): CalendarList {
     val calendars = associate { it.calendarId() to it.toDomain() }
-    return CalendarList(userId, calendars)
+    return CalendarList(accountId, calendars)
 }
 
 fun GoogleCalendar.calendarId(): String {

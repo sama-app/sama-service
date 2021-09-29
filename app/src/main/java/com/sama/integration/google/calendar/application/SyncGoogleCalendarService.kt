@@ -7,6 +7,10 @@ import com.google.api.services.calendar.model.EventAttendee
 import com.google.api.services.calendar.model.EventDateTime
 import com.sama.common.ApplicationService
 import com.sama.integration.google.GoogleServiceFactory
+import com.sama.integration.google.NoPrimaryGoogleAccountException
+import com.sama.integration.google.auth.application.GoogleAccountService
+import com.sama.integration.google.auth.domain.GoogleAccountId
+import com.sama.integration.google.auth.domain.GoogleAccountRepository
 import com.sama.integration.google.calendar.domain.AggregatedData
 import com.sama.integration.google.calendar.domain.CalendarEvent
 import com.sama.integration.google.calendar.domain.CalendarEventRepository
@@ -23,6 +27,7 @@ import java.time.Clock
 import java.time.Instant
 import java.time.ZonedDateTime
 import java.util.UUID
+import liquibase.pro.packaged.it
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 
@@ -30,6 +35,7 @@ import org.springframework.stereotype.Service
 @ApplicationService
 class SyncGoogleCalendarService(
     private val googleServiceFactory: GoogleServiceFactory,
+    private val googleAccountRepository: GoogleAccountRepository,
     private val calendarEventRepository: CalendarEventRepository,
     private val calendarListSyncRepository: CalendarListSyncRepository,
     private val calendarSyncRepository: CalendarSyncRepository,
@@ -44,22 +50,28 @@ class SyncGoogleCalendarService(
         startDateTime: ZonedDateTime,
         endDateTime: ZonedDateTime,
     ): List<CalendarEvent> {
-        val calendarSyncs = calendarSyncRepository.findAll(userId)
+        val accountIds = googleAccountRepository.findAllByUserId(userId)
+            .filter { it.linked }
+            .map { it.id!! }
+            .toSet()
+        val calendarSyncs = calendarSyncRepository.findAll(accountIds)
 
         val calendarEvents = if (calendarSyncs.isNotEmpty()) {
             calendarSyncs
                 .map { sync ->
                     val isSynced = sync.isSyncedFor(startDateTime, endDateTime, clock)
                     if (isSynced) {
-                        calendarEventRepository.findAll(userId, sync.calendarId, startDateTime, endDateTime)
+                        calendarEventRepository.findAll(sync.accountId, sync.calendarId, startDateTime, endDateTime)
                     } else {
-                        forceLoadCalendarEvents(userId, sync.calendarId, startDateTime, endDateTime)
+                        forceLoadCalendarEvents(sync.accountId, sync.calendarId, startDateTime, endDateTime)
                     }
                 }
                 .flatten()
         } else {
-            // If there aren't any synced calendars, load the primary one
-            forceLoadCalendarEvents(userId, PRIMARY_CALENDAR_ID, startDateTime, endDateTime)
+            // If there aren't any synced calendars, load the primary calendar for all accounts
+            accountIds
+                .map { forceLoadCalendarEvents(it, PRIMARY_CALENDAR_ID, startDateTime, endDateTime) }
+                .flatten()
         }
 
         // Compute aggregate values
@@ -77,25 +89,21 @@ class SyncGoogleCalendarService(
     }
 
     private fun forceLoadCalendarEvents(
-        userId: UserId,
+        accountId: GoogleAccountId,
         calendarId: GoogleCalendarId,
         startDateTime: ZonedDateTime,
         endDateTime: ZonedDateTime
     ) = try {
-        val calendarService = googleServiceFactory.calendarService(userId)
+        val calendarService = googleServiceFactory.calendarService(accountId)
         val (events, timeZone) = calendarService.findAllEvents(calendarId, startDateTime, endDateTime)
-        events.toDomain(userId, PRIMARY_CALENDAR_ID, timeZone)
+        events.toDomain(accountId, PRIMARY_CALENDAR_ID, timeZone)
     } catch (e: Exception) {
         throw translatedGoogleException(e)
     }
 
     // https://developers.google.com/calendar/api/v3/reference/events/insert
     // https://developers.google.com/calendar/api/v3/reference/events/insert#request-body
-    override fun insertEvent(
-        userId: UserId,
-        calendarId: GoogleCalendarId,
-        command: InsertGoogleCalendarEventCommand
-    ): CalendarEvent {
+    override fun insertEvent(userId: UserId, command: InsertGoogleCalendarEventCommand): CalendarEvent {
         return try {
             val timeZone = command.startDateTime.zone
             val googleCalendarEvent = GoogleCalendarEvent().apply {
@@ -123,19 +131,19 @@ class SyncGoogleCalendarService(
                 }
             }
 
-            val calendarService = googleServiceFactory.calendarService(userId)
+            val primaryAccountId = googleAccountRepository.findByUserIdAndPrimary(userId)
+                ?: throw NoPrimaryGoogleAccountException(userId)
+            val calendarId = PRIMARY_CALENDAR_ID
+
+            val calendarService = googleServiceFactory.calendarService(primaryAccountId)
             val inserted = calendarService.insert(calendarId, googleCalendarEvent)
 
-            googleCalendarSyncer.syncUserCalendar(userId, calendarId)
+            googleCalendarSyncer.syncUserCalendar(primaryAccountId, calendarId)
 
-            inserted.toDomain(userId, calendarId, timeZone)
+            inserted.toDomain(primaryAccountId, calendarId, timeZone)
         } catch (e: Exception) {
             throw translatedGoogleException(e)
         }
-    }
-
-    override fun enableCalendarSync(userId: UserId) {
-        googleCalendarSyncer.enableCalendarListSync(userId)
     }
 
     @Scheduled(initialDelay = 30000, fixedDelay = 25000)
@@ -152,8 +160,8 @@ class SyncGoogleCalendarService(
     fun syncUserCalendars() {
         sentrySpan(method = "syncUserCalendars") {
             val userCalendarsToSync = calendarSyncRepository.findSyncable(Instant.now())
-            userCalendarsToSync.forEach { (userId, calendarId) ->
-                googleCalendarSyncer.syncUserCalendar(userId, calendarId)
+            userCalendarsToSync.forEach { (accountId, calendarId) ->
+                googleCalendarSyncer.syncUserCalendar(accountId, calendarId)
             }
         }
     }

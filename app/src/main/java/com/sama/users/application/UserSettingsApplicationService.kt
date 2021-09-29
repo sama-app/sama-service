@@ -18,7 +18,7 @@ class UserSettingsApplicationService(
 
     @Transactional
     fun createUserSettings(userId: UserId): Boolean {
-        val userSettingsDefaults = userSettingsDefaultsRepository.findByIdOrNull(userId)
+        val userSettingsDefaults = userSettingsDefaultsRepository.findById(userId)
         val userSettings = UserSettings.createWithDefaults(userId, userSettingsDefaults)
         userSettingsRepository.save(userSettings)
         return true

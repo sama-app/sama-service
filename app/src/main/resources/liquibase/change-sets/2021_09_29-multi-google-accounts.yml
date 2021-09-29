@@ -1,0 +1,247 @@
+databaseChangeLog:
+  - property:
+      name: uuid_function_public
+      value: public.uuid_generate_v4()
+      dbms: postgresql
+
+  - changeSet:
+      id: add-multi-google-account
+      author: balys
+      changes:
+        - createTable:
+            schemaName: sama
+            tableName: user_google_account
+            columns:
+              - column:
+                  name: id
+                  type: BIGSERIAL
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: PK_user_google_account_id
+              - column:
+                  name: public_id
+                  type: UUID
+                  defaultValueComputed: ${uuid_function_public}
+                  constraints:
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: email
+                  type: VARCHAR
+                  constraints:
+                    nullable: false
+              - column:
+                  name: primary
+                  type: BOOL
+                  constraints:
+                    nullable: false
+              - column:
+                  name: linked
+                  type: BOOL
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+
+        - createIndex:
+            schemaName: sama
+            tableName: user_google_account
+            columns:
+              - column:
+                  name: public_id
+            indexName: IDX_user_google_account_public_id
+
+        - createIndex:
+            schemaName: sama
+            tableName: user_google_account
+            columns:
+              - column:
+                  name: user_id
+            indexName: IDX_user_google_account_user_id
+
+        - addForeignKeyConstraint:
+            baseTableSchemaName: sama
+            baseTableName: user_google_account
+            baseColumnNames: user_id
+            constraintName: FK_user_google_account_user_id
+            referencedTableSchemaName: sama
+            referencedTableName: user
+            referencedColumnNames: id
+            validate: true
+            onDelete: CASCADE
+
+  - changeSet:
+      id: multi-google-account-data
+      author: balys
+      changes:
+        - sql:
+            sql: >
+              INSERT INTO sama.user_google_account (id, user_id, email, linked, "primary", created_at, updated_at)
+              (SELECT u.id, u.id, u.email, true, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP FROM sama.user u);
+              SELECT setval('sama.user_google_account_id_seq', 1000, true);
+      rollback:
+        - sql:
+            sql: >
+              TRUNCATE TABLE sama.user_google_account;
+
+  - changeSet:
+      id: switch-to-google-account
+      author: balys
+      changes:
+        - createIndex:
+            schemaName: gcal
+            tableName: calendar_list_sync
+            columns:
+              - column:
+                  name: google_account_id
+            indexName: IDX_calendar_list_sync#google_account_id
+            unique: true
+
+        - addForeignKeyConstraint:
+            baseTableSchemaName: gcal
+            baseTableName: calendar_list_sync
+            baseColumnNames: google_account_id
+            constraintName: FK_calendar_list_sync_google_account_id
+            referencedTableSchemaName: sama
+            referencedTableName: user_google_account
+            referencedColumnNames: id
+            validate: true
+            onDelete: CASCADE
+
+        - dropPrimaryKey:
+            schemaName: gcal
+            tableName: calendar_list
+            constraintName: PK_calendar_list#user_id#google_account_id
+            dropIndex: true
+
+        - addPrimaryKey:
+            schemaName: gcal
+            tableName: calendar_list
+            columnNames: google_account_id
+            constraintName: PK_calendar_list#google_account_id
+            validate: true
+
+        - addForeignKeyConstraint:
+            baseTableSchemaName: gcal
+            baseTableName: calendar_list
+            baseColumnNames: google_account_id
+            constraintName: FK_calendar_list_google_account_id
+            referencedTableSchemaName: sama
+            referencedTableName: user_google_account
+            referencedColumnNames: id
+            validate: true
+            onDelete: CASCADE
+
+        - dropForeignKeyConstraint:
+            baseTableSchemaName: gcal
+            baseTableName: calendar_sync
+            constraintName: FK_calendar_sync_user_id
+
+        - addForeignKeyConstraint:
+            baseTableSchemaName: gcal
+            baseTableName: calendar_sync
+            baseColumnNames: user_id
+            constraintName: FK_calendar_sync_google_account_id
+            referencedTableSchemaName: sama
+            referencedTableName: user_google_account
+            referencedColumnNames: id
+            validate: true
+            onDelete: CASCADE
+
+        - dropForeignKeyConstraint:
+            baseTableSchemaName: gcal
+            baseTableName: event
+            constraintName: FK_event_user_id
+
+        - addForeignKeyConstraint:
+            baseTableSchemaName: gcal
+            baseTableName: event
+            baseColumnNames: user_id
+            constraintName: FK_calendar_sync_google_account_id
+            referencedTableSchemaName: sama
+            referencedTableName: user_google_account
+            referencedColumnNames: id
+            validate: true
+            onDelete: CASCADE
+
+        - dropForeignKeyConstraint:
+            baseTableSchemaName: gcal
+            baseTableName: calendar_list
+            constraintName: FK_calendar_list_user_id
+        - dropColumn:
+            schemaName: gcal
+            tableName: calendar_list
+            columnName: user_id
+
+        - dropForeignKeyConstraint:
+            baseTableSchemaName: gcal
+            baseTableName: calendar_list_sync
+            constraintName: FK_calendar_list_sync_user_id
+        - dropIndex:
+            schemaName: gcal
+            tableName: calendar_list_sync
+            indexName: IDX_calendar_list_sync#user_id#BIGINT
+        - dropColumn:
+            schemaName: gcal
+            tableName: calendar_list_sync
+            columnName: user_id
+
+        - renameColumn:
+            schemaName: gcal
+            tableName: calendar_sync
+            oldColumnName: user_id
+            newColumnName: google_account_id
+        - sql:
+            sql: >
+              ALTER INDEX gcal."IDX_calendar_sync#user_id#calendar_id" RENAME TO "IDX_calendar_sync#google_account_id#calendar_id";
+
+        - renameColumn:
+            schemaName: gcal
+            tableName: event
+            oldColumnName: user_id
+            newColumnName: google_account_id
+        - sql:
+            sql: >
+              ALTER INDEX gcal."IDX_event#user_id#calendar_id" RENAME TO "IDX_event#google_account_id#calendar_id";
+              ALTER INDEX gcal."IDX_user_id#calendar_id#end_date_time" RENAME TO "IDX_google_account_id#calendar_id#end_date_time";
+              ALTER INDEX gcal."IDX_user_id#calendar_id#start_date_time" RENAME TO "IDX_google_account_id#calendar_id#start_date_time";
+              ALTER TABLE gcal.event RENAME CONSTRAINT "PK_event#user_id#calendar_id#event_id" TO "PK_event#google_account_id#calendar_id#event_id";
+
+        - renameColumn:
+            schemaName: sama
+            tableName: user_google_credential
+            oldColumnName: user_id
+            newColumnName: google_account_id
+        - dropForeignKeyConstraint:
+            baseTableSchemaName: sama
+            baseTableName: user_google_credential
+            constraintName: FK_user_google_credential_user_id
+
+        - addForeignKeyConstraint:
+            baseTableSchemaName: sama
+            baseTableName: user_google_credential
+            baseColumnNames: google_account_id
+            constraintName: FK_user_google_account_google_account_id
+            referencedTableSchemaName: sama
+            referencedTableName: user_google_account
+            referencedColumnNames: id
+            validate: true
+            onDelete: CASCADE
+
+        - sql:
+            sql: >
+              ALTER TABLE sama.user_google_credential RENAME CONSTRAINT "user_google_credential_user_id_key" TO "UQ_user_google_credential#google_account_id";
+

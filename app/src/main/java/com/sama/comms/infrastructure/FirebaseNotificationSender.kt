@@ -7,6 +7,7 @@ import com.sama.comms.domain.Notification
 import com.sama.comms.domain.NotificationSender
 import com.sama.users.application.UserService
 import com.sama.users.domain.UserId
+import liquibase.pro.packaged.it
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
@@ -19,7 +20,8 @@ class FirebaseNotificationSender(private val userService: UserService) : Notific
 
         val response = userService.findUserDeviceRegistrations(userId)
         if (response.firebaseDeviceRegistrations.isEmpty()) {
-            throw RuntimeException("No Firebase device registrations found")
+            logger.warn("No Firebase device registrations found for User#${userId.id}")
+            return
         }
 
         response.firebaseDeviceRegistrations.forEach {

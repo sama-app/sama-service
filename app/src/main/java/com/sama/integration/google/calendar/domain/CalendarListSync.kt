@@ -1,13 +1,14 @@
 package com.sama.integration.google.calendar.domain
 
 import com.google.common.math.IntMath.pow
+import com.sama.integration.google.auth.domain.GoogleAccountId
 import com.sama.users.domain.UserId
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 
 data class CalendarListSync(
-    val userId: UserId,
+    val accountId: GoogleAccountId,
     val nextSyncAt: Instant,
     val failedSyncCount: Int,
     val syncToken: String? = null,
@@ -16,9 +17,9 @@ data class CalendarListSync(
     companion object {
         val syncInterval: Duration = Duration.ofMinutes(5)
 
-        fun new(userId: UserId, clock: Clock): CalendarListSync {
+        fun new(accountId: GoogleAccountId, clock: Clock): CalendarListSync {
             return CalendarListSync(
-                userId = userId,
+                accountId = accountId,
                 nextSyncAt = clock.instant(),
                 failedSyncCount = 0
             )

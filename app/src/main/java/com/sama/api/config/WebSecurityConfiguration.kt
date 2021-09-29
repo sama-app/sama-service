@@ -15,6 +15,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.servlet.HandlerExceptionResolver
 import java.time.Clock
 import javax.servlet.http.HttpServletResponse
+import liquibase.pro.packaged.it
 
 
 @Configuration
@@ -43,10 +44,12 @@ class WebSecurityConfiguration(
             .antMatchers(HttpMethod.GET, "/api/docs/**", "/api/swagger-ui.html", "/api/swagger-ui/**").permitAll()
             // Google OAuth2
             .antMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
+            .antMatchers(HttpMethod.POST, "/api/auth/link-google-account").authenticated()
             .antMatchers(HttpMethod.GET, "/api/auth/**").permitAll()
             .antMatchers(HttpMethod.GET, "/api/meeting/by-code/*").permitAll()
             .antMatchers(HttpMethod.POST, "/api/meeting/by-code/*/confirm").permitAll()
             .antMatchers(HttpMethod.GET, "/api/__debug/auth/**").permitAll()
+            .antMatchers(HttpMethod.GET, "/api/__debug/auth/link-google-account").authenticated()
             // Actuator
             .antMatchers(HttpMethod.GET, "/__mon/**").permitAll()
             // All other requests require authentication

@@ -3,7 +3,7 @@ package com.sama.api.auth
 import com.sama.api.ApiTestConfiguration
 import com.sama.api.config.WebMvcConfiguration
 import com.sama.auth.application.GoogleOauth2ApplicationService
-import com.sama.auth.application.GoogleSignFailureDTO
+import com.sama.auth.application.GoogleSignErrorDTO
 import com.sama.auth.application.GoogleSignSuccessDTO
 import com.sama.integration.google.GoogleInsufficientPermissionsException
 import com.sama.users.application.GoogleOauth2Redirect
@@ -106,7 +106,7 @@ class GoogleOauth2ControllerTest(
     @Test
     fun `google authorize returns the authorization url`() {
         val redirectUri = "https://accounts.google.com/o/oauth2/auth?access_type=offline"
-        whenever(googleOauth2ApplicationService.beginGoogleWebOauth2(any()))
+        whenever(googleOauth2ApplicationService.generateAuthorizationUrl(any()))
             .thenReturn(GoogleOauth2Redirect(redirectUri))
 
         val expectedJson = """
@@ -128,7 +128,7 @@ class GoogleOauth2ControllerTest(
         val accessToken = "access-jwt"
         val refreshToken = "refresh-jwt"
 
-        whenever((googleOauth2ApplicationService.processGoogleWebOauth2(any(), eq(code), isNull())))
+        whenever((googleOauth2ApplicationService.processGoogleWebOauth2(any(), eq(code), isNull(), isNull())))
             .thenReturn(GoogleSignSuccessDTO(accessToken, refreshToken))
 
         mockMvc.perform(
@@ -153,7 +153,7 @@ class GoogleOauth2ControllerTest(
         val accessToken = "access-jwt"
         val refreshToken = "refresh-jwt"
 
-        whenever((googleOauth2ApplicationService.processGoogleWebOauth2(any(), eq(code), isNull())))
+        whenever((googleOauth2ApplicationService.processGoogleWebOauth2(any(), eq(code), isNull(), isNull())))
             .thenReturn(GoogleSignSuccessDTO(accessToken, refreshToken))
 
         mockMvc.perform(get("/api/auth/google-oauth2").queryParam("code", code))
@@ -171,8 +171,8 @@ class GoogleOauth2ControllerTest(
     fun `google oauth2 callback error for mobile`() {
         val code = "google-error-code"
         val error = "error-message"
-        whenever((googleOauth2ApplicationService.processGoogleWebOauth2(any(), isNull(), eq(code))))
-            .thenReturn(GoogleSignFailureDTO(error))
+        whenever((googleOauth2ApplicationService.processGoogleWebOauth2(any(), isNull(), eq(code), isNull())))
+            .thenReturn(GoogleSignErrorDTO(error))
 
         mockMvc.perform(
             get("/api/auth/google-oauth2")
@@ -192,8 +192,8 @@ class GoogleOauth2ControllerTest(
     fun `google oauth2 callback error for desktop`() {
         val code = "google-error-code"
         val error = "error_message"
-        whenever((googleOauth2ApplicationService.processGoogleWebOauth2(any(), isNull(), eq(code))))
-            .thenReturn(GoogleSignFailureDTO(error))
+        whenever((googleOauth2ApplicationService.processGoogleWebOauth2(any(), isNull(), eq(code), isNull())))
+            .thenReturn(GoogleSignErrorDTO(error))
 
         mockMvc.perform(get("/api/auth/google-oauth2").queryParam("error", code))
             .andExpect(status().isFound)
