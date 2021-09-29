@@ -46,6 +46,7 @@ class GoogleOauth2ApplicationService(
         val authorizationUrl = googleAuthorizationCodeFlow.newAuthorizationUrl()
             .setRedirectUri(redirectUri)
         authorizationUrl.set("include_granted_scopes", true)
+        authorizationUrl.set("prompt", "select_account")
         return GoogleOauth2Redirect(authorizationUrl.build())
     }
 
