@@ -88,7 +88,7 @@ class UserApplicationService(
     }
 
     @Transactional
-    fun unregisterDevice(userId: UserId, command: UnregisterDeviceCommand): Boolean {
+    override fun unregisterDevice(userId: UserId, command: UnregisterDeviceCommand): Boolean {
         val changes = userRepository.findDeviceRegistrationsByIdOrThrow(userId)
             .unregister(command.deviceId)
         userRepository.save(changes)
