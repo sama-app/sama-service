@@ -58,7 +58,7 @@ class DebugViewController(
     ) {
         val redirectUri = redirectUri(request)
 
-        val result = googleOauth2ApplicationService.processGoogleWebOauth2(redirectUri, code, error, state)
+        val result = googleOauth2ApplicationService.processOauth2Callback(redirectUri, code, error, state)
         when (result) {
             is GoogleSignSuccessDTO -> {
                 val cookie = Cookie("sama.access", result.accessToken)

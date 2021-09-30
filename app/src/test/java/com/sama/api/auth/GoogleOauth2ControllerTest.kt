@@ -7,6 +7,7 @@ import com.sama.auth.application.GoogleSignErrorDTO
 import com.sama.auth.application.GoogleSignSuccessDTO
 import com.sama.integration.google.GoogleInsufficientPermissionsException
 import com.sama.users.application.GoogleOauth2Redirect
+import com.sama.users.domain.UserId
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.kotlin.any
@@ -20,7 +21,6 @@ import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.http.MediaType
 import org.springframework.test.context.junit.jupiter.SpringExtension
 import org.springframework.test.web.servlet.MockMvc
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
@@ -41,6 +41,12 @@ class GoogleOauth2ControllerTest(
 ) {
     @MockBean
     lateinit var googleOauth2ApplicationService: GoogleOauth2ApplicationService
+
+    private val userId = UserId(1)
+    private val jwt = "eyJraWQiOiJrZXktaWQiLCJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9." +
+            "eyJzdWIiOiJiYWx5c0B5b3Vyc2FtYS5jb20iLCJ1c2VyX2lkIjoiNjViOTc3ZWEtODk4MC00YjFhLWE2ZWUtZjhmY2MzZjFmYzI0Iiwi" +
+            "ZXhwIjoxNjIyNTA1NjYwLCJpYXQiOjE2MjI1MDU2MDAsImp0aSI6IjNlNWE3NTY3LWZmYmQtNDcxYi1iYTI2LTU2YjMwOTgwMWZlZSJ9." +
+            "hcAQ6f8kaeB43nzFibGYZE8QWHyz9OIdFg9zHSbe9Vk"
 
     private val mobileUserAgent = "" +
             "Mozilla/5.0 (iPhone; CPU iPhone OS 10_3 like Mac OS X) " +
@@ -106,7 +112,7 @@ class GoogleOauth2ControllerTest(
     @Test
     fun `google authorize returns the authorization url`() {
         val redirectUri = "https://accounts.google.com/o/oauth2/auth?access_type=offline"
-        whenever(googleOauth2ApplicationService.generateAuthorizationUrl(any()))
+        whenever(googleOauth2ApplicationService.generateAuthorizationUrl(any(), isNull()))
             .thenReturn(GoogleOauth2Redirect(redirectUri))
 
         val expectedJson = """
@@ -115,11 +121,38 @@ class GoogleOauth2ControllerTest(
         }
         """
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/api/auth/google-authorize"))
+        mockMvc.perform(post("/api/auth/google-authorize"))
             .andExpect(status().isOk)
             .andExpect(
                 content().json(expectedJson, true)
             )
+    }
+
+    @Test
+    fun `link google account`() {
+        val inputUrl = "http://localhost/api/auth/google-oauth2"
+        val redirectUri = "https://accounts.google.com/o/oauth2/auth?access_type=offline"
+        whenever(googleOauth2ApplicationService.generateAuthorizationUrl(inputUrl, userId))
+            .thenReturn(GoogleOauth2Redirect(redirectUri))
+
+        val expectedJson = """
+        {
+            "authorizationUrl": "${redirectUri}"
+        }
+        """
+
+        mockMvc.perform(
+            post("/api/auth/link-google-account")
+                .header("Authorization", "Bearer $jwt")
+        )
+            .andExpect(status().isOk)
+            .andExpect(content().json(expectedJson, true))
+    }
+
+    @Test
+    fun `link google account without authorization fails`() {
+        mockMvc.perform(post("/api/auth/link-google-account"))
+            .andExpect(status().isUnauthorized)
     }
 
     @Test
@@ -128,7 +161,7 @@ class GoogleOauth2ControllerTest(
         val accessToken = "access-jwt"
         val refreshToken = "refresh-jwt"
 
-        whenever((googleOauth2ApplicationService.processGoogleWebOauth2(any(), eq(code), isNull(), isNull())))
+        whenever((googleOauth2ApplicationService.processOauth2Callback(any(), eq(code), isNull(), isNull())))
             .thenReturn(GoogleSignSuccessDTO(accessToken, refreshToken))
 
         mockMvc.perform(
@@ -153,7 +186,7 @@ class GoogleOauth2ControllerTest(
         val accessToken = "access-jwt"
         val refreshToken = "refresh-jwt"
 
-        whenever((googleOauth2ApplicationService.processGoogleWebOauth2(any(), eq(code), isNull(), isNull())))
+        whenever((googleOauth2ApplicationService.processOauth2Callback(any(), eq(code), isNull(), isNull())))
             .thenReturn(GoogleSignSuccessDTO(accessToken, refreshToken))
 
         mockMvc.perform(get("/api/auth/google-oauth2").queryParam("code", code))
@@ -171,7 +204,7 @@ class GoogleOauth2ControllerTest(
     fun `google oauth2 callback error for mobile`() {
         val code = "google-error-code"
         val error = "error-message"
-        whenever((googleOauth2ApplicationService.processGoogleWebOauth2(any(), isNull(), eq(code), isNull())))
+        whenever((googleOauth2ApplicationService.processOauth2Callback(any(), isNull(), eq(code), isNull())))
             .thenReturn(GoogleSignErrorDTO(error))
 
         mockMvc.perform(
@@ -192,7 +225,7 @@ class GoogleOauth2ControllerTest(
     fun `google oauth2 callback error for desktop`() {
         val code = "google-error-code"
         val error = "error_message"
-        whenever((googleOauth2ApplicationService.processGoogleWebOauth2(any(), isNull(), eq(code), isNull())))
+        whenever((googleOauth2ApplicationService.processOauth2Callback(any(), isNull(), eq(code), isNull())))
             .thenReturn(GoogleSignErrorDTO(error))
 
         mockMvc.perform(get("/api/auth/google-oauth2").queryParam("error", code))

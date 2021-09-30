@@ -37,3 +37,5 @@ databaseChangeLog:
       file: classpath*:liquibase/change-sets/2021_09_24-google-calendar-list-sync.yml
   - include:
       file: classpath*:liquibase/change-sets/2021_09_29-multi-google-accounts.yml
+  - include:
+      file: classpath*:liquibase/change-sets/2021_09_30-oauth2-state.yml

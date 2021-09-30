@@ -35,11 +35,6 @@ class GoogleOauth2Controller(
     fun googleAuthorize(request: HttpServletRequest) =
         googleOauth2ApplicationService.generateAuthorizationUrl(redirectUri(request))
 
-    @Operation(summary = "Sign in using Google OAuth2 token")
-    @PostMapping("/api/auth/google-sign-in")
-    fun googleSignIn(@RequestBody command: GoogleSignInCommand) =
-        googleOauth2ApplicationService.googleSignIn(command)
-
     @Operation(
         summary = "Link an additional Google account using an OAuth2 token",
         security = [SecurityRequirement(name = "user-auth")]
@@ -47,6 +42,11 @@ class GoogleOauth2Controller(
     @PostMapping("/api/auth/link-google-account")
     fun linkGoogleAccount(@AuthUserId userId: UserId?, request: HttpServletRequest) =
         googleOauth2ApplicationService.generateAuthorizationUrl(redirectUri(request), userId)
+
+    @Operation(summary = "Sign in using Google OAuth2 token")
+    @PostMapping("/api/auth/google-sign-in")
+    fun googleSignIn(@RequestBody command: GoogleSignInCommand) =
+        googleOauth2ApplicationService.googleSignIn(command)
 
     @Operation(
         summary = "Callback for Google OAuth2 process",
@@ -59,14 +59,14 @@ class GoogleOauth2Controller(
         ],
     )
     @GetMapping("/api/auth/google-oauth2")
-    fun googleOauth2(
+    fun googleOauth2Callback(
         request: HttpServletRequest,
         @RequestParam(required = false) code: String?,
         @RequestParam(required = false) error: String?,
         @RequestParam(required = false) state: String?,
     ): RedirectView {
         val redirectUri = redirectUri(request)
-        val result = googleOauth2ApplicationService.processGoogleWebOauth2(redirectUri, code, error, state)
+        val result = googleOauth2ApplicationService.processOauth2Callback(redirectUri, code, error, state)
 
         return when (result) {
             is GoogleSignSuccessDTO -> {
@@ -76,15 +76,24 @@ class GoogleOauth2Controller(
                 redirectView.url = "meetsama://auth/success"
                 redirectView
             }
-
             is GoogleSignErrorDTO -> {
                 val redirectView = RedirectView()
                 redirectView.attributesMap["reason"] = result.error
                 redirectView.url = "meetsama://auth/error"
                 redirectView
             }
-            is LinkGoogleAccountErrorDTO -> TODO()
-            is LinkGoogleAccountSuccessDTO -> TODO()
+            is LinkGoogleAccountSuccessDTO -> {
+                val redirectView = RedirectView()
+                redirectView.url = "meetsama://link-google-account/success"
+                redirectView.attributesMap["accountId"] = result.googleAccountId.id
+                redirectView
+            }
+            is LinkGoogleAccountErrorDTO -> {
+                val redirectView = RedirectView()
+                redirectView.attributesMap["reason"] = result.error
+                redirectView.url = "meetsama://link-google-account/error"
+                redirectView
+            }
         }
     }
 
