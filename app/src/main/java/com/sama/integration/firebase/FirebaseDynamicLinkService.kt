@@ -51,9 +51,10 @@ class FirebaseDynamicLinkService(
             // querying.
             // https://firebase.google.com/docs/dynamic-links/create-links
             val request = HttpEntity(DynamicLinkShortenRequest(longDynamicLink))
-            val response = restTemplate.postForObject(dynamicLinkApiUri,
-                request, DynamicLinkShortenResponse::class.java)
-            val shortLink = response.shortLink
+            val response = restTemplate.postForObject(
+                dynamicLinkApiUri, request, DynamicLinkShortenResponse::class.java
+            )
+            val shortLink = response!!.shortLink
 
             firebaseDynamicLinkRepository.save(key, shortLink)
 

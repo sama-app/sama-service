@@ -27,9 +27,9 @@ class UserIdAttributeResolver(
 
     override fun resolveArgument(
         parameter: MethodParameter,
-        mavContainer: ModelAndViewContainer,
+        mavContainer: ModelAndViewContainer?,
         webRequest: NativeWebRequest,
-        binderFactory: WebDataBinderFactory
+        binderFactory: WebDataBinderFactory?
     ): UserId? {
         val token = webRequest.userPrincipal as UsernamePasswordAuthenticationToken?
         val userPrincipal = token?.principal as UserPrincipal?

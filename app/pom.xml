@@ -397,6 +397,13 @@
                         <plugin>jpa</plugin>
                         <plugin>spring</plugin>
                     </compilerPlugins>
+                    <!--
+                        Strict validation of null-safety
+                        https://docs.spring.io/spring-boot/docs/2.0.x/reference/html/boot-features-kotlin.html#boot-features-kotlin-null-safety
+                    -->
+                    <args>
+                        <arg>-Xjsr305=strict</arg>
+                    </args>
                     <jvmTarget>16</jvmTarget>
                 </configuration>
                 <dependencies>
