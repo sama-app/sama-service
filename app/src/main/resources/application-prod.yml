@@ -16,7 +16,7 @@ spring:
   jpa:
     show-sql: false
   task:
-    scheduling.pool.size: 2
+    scheduling.pool.size: 8
   cache:
     cache-names: blocks-by-user
     caffeine:
