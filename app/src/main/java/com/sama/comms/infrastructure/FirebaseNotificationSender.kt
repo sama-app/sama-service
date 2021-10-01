@@ -7,18 +7,18 @@ import com.google.firebase.messaging.MessagingErrorCode
 import com.sama.comms.domain.Notification
 import com.sama.comms.domain.NotificationSender
 import com.sama.users.application.UnregisterDeviceCommand
-import com.sama.users.application.UserService
+import com.sama.users.application.UserDeviceRegistrationService
 import com.sama.users.domain.UserId
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 
 @Component
-class FirebaseNotificationSender(private val userService: UserService) : NotificationSender {
+class FirebaseNotificationSender(private val deviceRegistrationService: UserDeviceRegistrationService) : NotificationSender {
     private var logger: Logger = LoggerFactory.getLogger(FirebaseNotificationSender::class.java)
 
     override fun send(userId: UserId, notification: Notification) {
-        val response = userService.findUserDeviceRegistrations(userId)
+        val response = deviceRegistrationService.findByUserId(userId)
         if (response.firebaseDeviceRegistrations.isEmpty()) {
             throw RuntimeException("No Firebase device registrations found")
         }
@@ -42,7 +42,7 @@ class FirebaseNotificationSender(private val userService: UserService) : Notific
                     // Remove unregistered devices
                     if (e.messagingErrorCode == MessagingErrorCode.UNREGISTERED) {
                         kotlin.runCatching {
-                            userService.unregisterDevice(userId, UnregisterDeviceCommand(it.deviceId))
+                            deviceRegistrationService.unregister(userId, UnregisterDeviceCommand(it.deviceId))
                         }
                     }
                 }
