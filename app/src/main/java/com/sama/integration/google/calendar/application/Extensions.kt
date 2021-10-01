@@ -1,5 +1,6 @@
 package com.sama.integration.google.calendar.application
 
+import com.google.api.client.util.DateTime
 import com.google.api.services.calendar.model.EventDateTime
 import com.sama.integration.google.calendar.domain.Calendar
 import com.sama.integration.google.calendar.domain.CalendarEvent
@@ -36,11 +37,13 @@ fun EventDateTime.toZonedDateTime(defaultZoneId: ZoneId): ZonedDateTime {
         return ZonedDateTime.of(localDateTime, defaultZoneId)
     }
     if (this.dateTime != null) {
-        return ZonedDateTime.parse(this.dateTime.toStringRfc3339())
+        return dateTime.toZonedDateTime()
 
     }
     throw IllegalArgumentException("invalid EventDateTime")
 }
+
+fun DateTime.toZonedDateTime(): ZonedDateTime = ZonedDateTime.parse(toStringRfc3339())
 
 fun Collection<GoogleCalendarEvent>.toDomain(
     userId: UserId, calendarId: GoogleCalendarId, timeZone: ZoneId,
@@ -58,7 +61,7 @@ fun GoogleCalendarEvent.toDomain(userId: UserId, calendarId: GoogleCalendarId, t
         toKey(userId, calendarId),
         start.toZonedDateTime(timeZone),
         end.toZonedDateTime(timeZone),
-        EventData(summary, isAllDay(), attendeeCount(), recurringEventId)
+        EventData(summary, isAllDay(), attendeeCount(), recurringEventId, created?.toZonedDateTime())
     )
 }
 
