@@ -26,7 +26,9 @@ import com.sama.users.application.InternalUserService
 import com.sama.users.domain.UserId
 import io.sentry.spring.tracing.SentryTransaction
 import java.time.Clock
+import java.time.Instant
 import java.time.ZonedDateTime
+import org.springframework.scheduling.TaskScheduler
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.stereotype.Service
@@ -45,6 +47,7 @@ class MeetingApplicationService(
     private val userService: InternalUserService,
     private val calendarEventConsumer: CalendarEventConsumer,
     private val commsEventConsumer: CommsEventConsumer,
+    private val taskScheduler: TaskScheduler,
     private val clock: Clock,
 ) {
 
@@ -151,7 +154,11 @@ class MeetingApplicationService(
         // "manual" event publishing
         val event = MeetingConfirmedEvent(confirmedMeeting)
         calendarEventConsumer.onMeetingConfirmed(event)
-        commsEventConsumer.onMeetingConfirmed(event)
+
+        taskScheduler.schedule(
+            { commsEventConsumer.onMeetingConfirmed(event) },
+            Instant.now()
+        )
         return true
     }
 
