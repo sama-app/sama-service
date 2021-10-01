@@ -35,6 +35,7 @@ fun UserSettingsEntity.toDomainObject(): UserSettings {
         locale!!,
         timezone!!,
         format24HourTime!!,
-        dayWorkingHours.mapValues { it.value.workingHours }
+        dayWorkingHours.mapValues { it.value.workingHours },
+        newsletterSubscriptionEnabledAt != null
     )
 }
