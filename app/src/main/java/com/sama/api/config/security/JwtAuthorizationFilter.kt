@@ -48,7 +48,7 @@ class JwtAuthorizationFilter(
     }
 
     private fun getJwtFromCookie(request: HttpServletRequest): String? {
-        return request.cookies?.first { it.name == "sama.access" }?.value
+        return request.cookies?.firstOrNull { it.name == "sama.access" }?.value
     }
 }
 
