@@ -57,14 +57,6 @@ class UserApplicationService(
         return true
     }
 
-    @Transactional(readOnly = true)
-    override fun findUserDeviceRegistrations(userId: UserId): UserDeviceRegistrationsDTO {
-        return userRepository.findDeviceRegistrationsByIdOrThrow(userId)
-            .deviceRegistrations
-            .map { FirebaseDeviceRegistrationDTO(it.deviceId, it.firebaseRegistrationToken) }
-            .let { UserDeviceRegistrationsDTO(it) }
-    }
-
     override fun translatePublicId(userPublicId: UserPublicId): UserId {
         return userRepository.findIdByPublicIdOrThrow(userPublicId)
     }
@@ -77,22 +69,6 @@ class UserApplicationService(
     override fun findInternalByPublicId(userPublicId: UserPublicId): UserInternalDTO {
         return userRepository.findByPublicIdOrThrow(userPublicId)
             .let { UserInternalDTO(it.id!!, it.publicId!!, it.fullName, it.email) }
-    }
-
-    @Transactional
-    fun registerDevice(userId: UserId, command: RegisterDeviceCommand): Boolean {
-        val changes = userRepository.findDeviceRegistrationsByIdOrThrow(userId)
-            .register(command.deviceId, command.firebaseRegistrationToken)
-        userRepository.save(changes)
-        return true
-    }
-
-    @Transactional
-    override fun unregisterDevice(userId: UserId, command: UnregisterDeviceCommand): Boolean {
-        val changes = userRepository.findDeviceRegistrationsByIdOrThrow(userId)
-            .unregister(command.deviceId)
-        userRepository.save(changes)
-        return true
     }
 
     fun issueTokens(userId: UserId): JwtPairDTO {

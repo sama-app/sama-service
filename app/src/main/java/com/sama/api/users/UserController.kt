@@ -15,7 +15,8 @@ import org.springframework.web.bind.annotation.RestController
 @Tag(name = "user")
 @RestController
 class UserController(
-    private val userApplicationService: UserApplicationService
+    private val userApplicationService: UserApplicationService,
+    private val userDeviceRegistrationService: UserDeviceRegistrationService
 ) {
 
     @Operation(
@@ -38,7 +39,7 @@ class UserController(
         consumes = [APPLICATION_JSON_VALUE]
     )
     fun registerDevice(@AuthUserId userId: UserId?, @RequestBody command: RegisterDeviceCommand) =
-        userApplicationService.registerDevice(userId!!, command)
+        userDeviceRegistrationService.register(userId!!, command)
 
 
     @Operation(
@@ -50,5 +51,5 @@ class UserController(
         consumes = [APPLICATION_JSON_VALUE]
     )
     fun unregisterDevice(@AuthUserId userId: UserId?, @RequestBody command: UnregisterDeviceCommand) =
-        userApplicationService.unregisterDevice(userId!!, command)
+        userDeviceRegistrationService.unregister(userId!!, command)
 }
