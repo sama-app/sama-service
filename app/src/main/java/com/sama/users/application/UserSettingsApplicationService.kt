@@ -59,4 +59,18 @@ class UserSettingsApplicationService(
         userSettingsRepository.save(userSettings)
         return true
     }
+
+    override fun updateMarketingPreferences(userId: UserId, command: UpdateMarketingPreferencesCommand): Boolean {
+        val userSettings = userSettingsRepository.findByIdOrThrow(userId)
+            .also {
+                if (command.newsletterSubscriptionEnabled) {
+                    it.enableNewsletterSubscription()
+                } else {
+                    it.disableNewsletterSubscription()
+                }
+            }
+
+        userSettingsRepository.save(userSettings)
+        return true
+    }
 }

@@ -1,0 +1,12 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-user-marketing-preferences
+      author: balys
+      changes:
+        - addColumn:
+            schemaName: sama
+            tableName: user_settings
+            columns:
+              - column:
+                  name: newsletter_subscription_enabled_at
+                  type: TIMESTAMP

@@ -3,6 +3,7 @@ package com.sama.api.users
 import com.sama.api.ApiTestConfiguration
 import com.sama.api.config.WebMvcConfiguration
 import com.sama.users.application.DayWorkingHoursDTO
+import com.sama.users.application.UpdateMarketingPreferencesCommand
 import com.sama.users.application.UpdateTimeZoneCommand
 import com.sama.users.application.UpdateWorkingHoursCommand
 import com.sama.users.application.UserSettingsApplicationService
@@ -151,10 +152,31 @@ class UserSettingsControllerTest(
             .andExpect(content().string("true"))
     }
 
+    @Test
+    fun `update marketing preferences`() {
+        whenever(userSettingsApplicationService.updateMarketingPreferences(userId, UpdateMarketingPreferencesCommand(true)))
+            .thenReturn(true)
+
+        val requestBody = """
+            {
+                "newsletterSubscriptionEnabled": "true"
+            }
+        """
+        mockMvc.perform(
+            post("/api/user/me/update-marketing-preferences")
+                .contentType(APPLICATION_JSON)
+                .header("Authorization", "Bearer $jwt")
+                .content(requestBody)
+        )
+            .andExpect(status().isOk)
+            .andExpect(content().string("true"))
+    }
+
     @TestFactory
     fun `endpoint authorization without jwt`() = listOf(
         post("/api/user/me/update-working-hours") to HttpStatus.UNAUTHORIZED,
         post("/api/user/me/update-time-zone") to HttpStatus.UNAUTHORIZED,
+        post("/api/user/me/update-marketing-preferences") to HttpStatus.UNAUTHORIZED,
         get("/api/user/me/settings") to HttpStatus.UNAUTHORIZED,
     )
         .mapIndexed { idx, (request, expectedStatus) ->
