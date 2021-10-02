@@ -60,9 +60,10 @@ class UserSettingsApplicationService(
         return true
     }
 
+    @Transactional
     override fun updateMarketingPreferences(userId: UserId, command: UpdateMarketingPreferencesCommand): Boolean {
         val userSettings = userSettingsRepository.findByIdOrThrow(userId)
-            .also {
+            .let {
                 if (command.newsletterSubscriptionEnabled) {
                     it.enableNewsletterSubscription()
                 } else {
