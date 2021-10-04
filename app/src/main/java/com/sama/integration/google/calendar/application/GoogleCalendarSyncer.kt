@@ -50,11 +50,11 @@ class GoogleCalendarSyncer(
             calendarListSyncRepository.findAndLock(userId)
                 ?: CalendarListSync.new(userId, clock)
         } catch (e: CannotAcquireLockException) {
-            logger.info("User#${userId.id} CalendarList sync already in progress...")
+            logger.debug("User#${userId.id} CalendarList sync already in progress...")
             return
         }
 
-        logger.info("Syncing User#${userId.id} CalendarList...")
+        logger.debug("Syncing User#${userId.id} CalendarList...")
         val calendarService = googleServiceFactory.calendarService(userId)
         try {
             val (newCalendarList, newSyncToken) =
@@ -84,11 +84,11 @@ class GoogleCalendarSyncer(
 
             val updatedSync = calendarSync.complete(newSyncToken!!, clock)
             calendarListSyncRepository.save(updatedSync)
-            logger.info("Completed sync for User#${userId.id} CalendarList...")
+            logger.debug("Completed sync for User#${userId.id} CalendarList...")
         } catch (e: Exception) {
             val ex = translatedGoogleException(e)
             if (ex is GoogleSyncTokenInvalidatedException) {
-                logger.error("CalendarList sync token expired for User#${userId.id}", e)
+                logger.debug("CalendarList sync token expired for User#${userId.id}", e)
                 val updatedSync = calendarSync.reset(clock)
                 calendarListSyncRepository.save(updatedSync)
             } else {
@@ -123,11 +123,11 @@ class GoogleCalendarSyncer(
             calendarSyncRepository.findAndLock(userId, calendarId)
                 ?: CalendarSync.new(userId, calendarId, clock)
         } catch (e: CannotAcquireLockException) {
-            logger.info("User#${userId.id} Calendar#${calendarId} sync already in progress...")
+            logger.debug("User#${userId.id} Calendar#${calendarId} sync already in progress...")
             return
         }
 
-        logger.info("Syncing User#${userId.id} Calendar#${calendarId}...")
+        logger.debug("Syncing User#${userId.id} Calendar#${calendarId}...")
         val calendarService = googleServiceFactory.calendarService(userId)
         try {
             val updatedSync = if (forceFullSync || calendarSync.needsFullSync(clock)) {
@@ -152,11 +152,11 @@ class GoogleCalendarSyncer(
             }
 
             calendarSyncRepository.save(updatedSync)
-            logger.info("Completed sync for User#${userId.id} Calendar#${calendarId}...")
+            logger.debug("Completed sync for User#${userId.id} Calendar#${calendarId}...")
         } catch (e: Exception) {
             val ex = translatedGoogleException(e)
             if (ex is GoogleSyncTokenInvalidatedException) {
-                logger.error("Calendar sync token expired for User#${userId.id}", e)
+                logger.debug("Calendar sync token expired for User#${userId.id}", e)
                 val updated = calendarSync.reset(clock)
                 calendarEventRepository.deleteBy(userId, calendarId)
                 calendarSyncRepository.save(updated)
