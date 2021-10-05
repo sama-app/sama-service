@@ -7,5 +7,6 @@ data class InsertGoogleCalendarEventCommand(
     val endDateTime: ZonedDateTime,
     val title: String,
     val description: String?,
+    val initiatorEmail: String,
     val recipientEmail: String,
 )

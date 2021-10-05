@@ -107,7 +107,12 @@ class SyncGoogleCalendarService(
                     .setTimeZone(timeZone.id)
                 attendees = listOf(
                     EventAttendee().apply {
+                        email = command.initiatorEmail
+                        responseStatus = "accepted"
+                    },
+                    EventAttendee().apply {
                         email = command.recipientEmail
+                        responseStatus = "accepted"
                     },
                 )
                 summary = command.title
@@ -118,7 +123,6 @@ class SyncGoogleCalendarService(
                         conferenceSolutionKey = ConferenceSolutionKey().apply {
                             type = "hangoutsMeet"
                         }
-
                     }
                 }
             }
