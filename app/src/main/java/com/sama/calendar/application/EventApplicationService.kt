@@ -3,6 +3,7 @@ package com.sama.calendar.application
 import com.sama.common.ApplicationService
 import com.sama.integration.google.calendar.application.InsertGoogleCalendarEventCommand
 import com.sama.integration.google.calendar.application.SyncGoogleCalendarService
+import com.sama.users.application.UserService
 import com.sama.users.domain.UserId
 import java.time.LocalDate
 import java.time.ZoneId
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service
 @Service
 class EventApplicationService(
     private val googleCalendarService: SyncGoogleCalendarService,
+    private val userService: UserService,
     @Value("\${sama.landing.url}") private val samaWebUrl: String,
 ) {
 
@@ -27,10 +29,11 @@ class EventApplicationService(
 
 
     fun createEvent(userId: UserId, command: CreateEventCommand): EventDTO {
+        val initiatorEmail = userService.find(userId).email
         val insertCommand = InsertGoogleCalendarEventCommand(
             command.startDateTime, command.endDateTime, command.title,
             "Time for this meeting was created via <a href=$samaWebUrl>Sama app</a>",
-            command.recipientEmail
+            initiatorEmail, command.recipientEmail
         )
         return googleCalendarService.insertEvent(userId = userId, command = insertCommand)
             .let { EventDTO(it.startDateTime, it.endDateTime, it.eventData.allDay, it.eventData.title) }
