@@ -79,7 +79,7 @@ fun GoogleCalendar.toDomain(): Calendar {
     val isOwner = accessRole == "owner"
     val primary = primary ?: false
     return Calendar(
-        ZoneId.of(timeZone),
+        timeZone?.let { ZoneId.of(it) },
         selected ?: primary,
         isOwner
     )
