@@ -14,8 +14,7 @@ import org.springframework.transaction.annotation.Transactional
 class UserApplicationService(
     private val userRepository: UserRepository,
     private val userSettingsRepository: UserSettingsRepository
-) :
-    InternalUserService, UserService {
+) : InternalUserService, UserService {
 
     @Transactional(readOnly = true)
     override fun find(userId: UserId): UserPublicDTO {
@@ -50,14 +49,6 @@ class UserApplicationService(
         return true
     }
 
-    override fun translatePublicId(userPublicId: UserPublicId): UserId {
-        return userRepository.findIdByPublicIdOrThrow(userPublicId)
-    }
-
-    override fun findIdsByEmail(emails: Set<String>): Set<UserId> {
-        return userRepository.findIdsByEmail(emails)
-    }
-
     override fun findInternalByEmail(email: String): UserInternalDTO {
         val user = userRepository.findByEmailOrThrow(email)
         val userSettings = userSettingsRepository.findByIdOrThrow(user.id!!).toDTO()
@@ -70,5 +61,13 @@ class UserApplicationService(
         val userSettings = userSettingsRepository.findByIdOrThrow(user.id!!).toDTO()
         return user
             .let { UserInternalDTO(it.id!!, it.publicId!!, it.fullName, it.email, userSettings) }
+    }
+
+    override fun translatePublicId(userPublicId: UserPublicId): UserId {
+        return userRepository.findIdByPublicIdOrThrow(userPublicId)
+    }
+
+    override fun findIdsByEmail(emails: Set<String>): Set<UserId> {
+        return userRepository.findIdsByEmail(emails)
     }
 }

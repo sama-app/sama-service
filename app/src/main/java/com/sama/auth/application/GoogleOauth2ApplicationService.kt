@@ -113,7 +113,7 @@ class GoogleOauth2ApplicationService(
             if (it !is UserAlreadyExistsException) {
                 throw it
             }
-            val userId = userApplicationService.findInternalByEmail(verifiedToken.email).id
+            val userId = userApplicationService.findIdsByEmail(setOf(verifiedToken.email)).first()
             persistGoogleCredentials(userId, verifiedToken)
             googleCalendarService.enableCalendarSync(userId)
             userApplicationService.updatePublicDetails(userId, UpdateUserPublicDetailsCommand(googleUser.fullName))
