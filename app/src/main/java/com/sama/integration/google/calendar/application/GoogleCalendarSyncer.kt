@@ -13,6 +13,8 @@ import com.sama.integration.google.calendar.domain.CalendarListSyncRepository
 import com.sama.integration.google.calendar.domain.CalendarSync
 import com.sama.integration.google.calendar.domain.CalendarSyncRepository
 import com.sama.integration.google.calendar.domain.GoogleCalendarId
+import com.sama.integration.google.calendar.domain.ResourceType.CALENDAR
+import com.sama.integration.google.calendar.domain.ResourceType.CALENDAR_LIST
 import com.sama.integration.google.calendar.domain.findAllCalendars
 import com.sama.integration.google.calendar.domain.findAllEvents
 import com.sama.integration.google.translatedGoogleException
@@ -30,6 +32,7 @@ class GoogleCalendarSyncer(
     private val calendarEventRepository: CalendarEventRepository,
     private val calendarListSyncRepository: CalendarListSyncRepository,
     private val calendarListRepository: CalendarListRepository,
+    private val channelManager: GoogleChannelManager,
     private val clock: Clock
 ) {
     private var logger: Logger = LoggerFactory.getLogger(GoogleCalendarSyncer::class.java)
@@ -41,10 +44,12 @@ class GoogleCalendarSyncer(
             ?: CalendarListSync.new(accountId, clock)
         calendarListSyncRepository.save(calendarSync)
         syncUserCalendarList(accountId)
+        channelManager.createChannel(accountId, CALENDAR_LIST)
     }
 
     @Transactional
     fun disableCalendarListSync(accountId: GoogleAccountId) {
+        channelManager.closeChannel(accountId, CALENDAR_LIST)
         calendarListRepository.delete(accountId)
         calendarListSyncRepository.deleteBy(accountId)
         val syncedCalendars = calendarSyncRepository.findAllCalendarIds(accountId)
@@ -100,7 +105,10 @@ class GoogleCalendarSyncer(
                 calendarListSyncRepository.save(updatedSync)
             } else {
                 val updatedSync = calendarSync.fail(clock)
-                logger.error("Failed to sync CalendarList for GoogleAccount${accountId.id} ${updatedSync.failedSyncCount} times", e)
+                logger.error(
+                    "Failed to sync CalendarList for GoogleAccount${accountId.id} ${updatedSync.failedSyncCount} times",
+                    e
+                )
                 calendarListSyncRepository.save(updatedSync)
             }
         }
@@ -113,10 +121,12 @@ class GoogleCalendarSyncer(
             ?.forceSync(clock)
             ?: CalendarSync.new(accountId, calendarId, clock)
         calendarSyncRepository.save(calendarSync)
+        channelManager.createChannel(accountId, CALENDAR, calendarId)
     }
 
     @Transactional
     fun disableCalendarSync(accountId: GoogleAccountId, calendarId: GoogleCalendarId) {
+        channelManager.closeChannel(accountId, CALENDAR, calendarId)
         val calendarSync = calendarSyncRepository.find(accountId, calendarId)
         calendarEventRepository.deleteBy(accountId, calendarId)
         if (calendarSync != null) {

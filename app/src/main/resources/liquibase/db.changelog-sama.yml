@@ -39,3 +39,5 @@ databaseChangeLog:
       file: classpath*:liquibase/change-sets/2021_09_29-multi-google-accounts.yml
   - include:
       file: classpath*:liquibase/change-sets/2021_09_30-oauth2-state.yml
+  - include:
+      file: classpath*:liquibase/change-sets/2021_10_05-gcal-channel-sync.yml

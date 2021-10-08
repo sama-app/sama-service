@@ -15,7 +15,9 @@ data class CalendarListSync(
     val lastSynced: Instant? = null,
 ) {
     companion object {
-        val syncInterval: Duration = Duration.ofMinutes(5)
+        val nextSyncInterval: Duration = Duration.ofHours(12)
+        val syncRetryInterval: Duration = Duration.ofSeconds(60)
+
 
         fun new(accountId: GoogleAccountId, clock: Clock): CalendarListSync {
             return CalendarListSync(
@@ -30,7 +32,7 @@ data class CalendarListSync(
 
     fun complete(syncToken: String, clock: Clock): CalendarListSync {
         return copy(
-            nextSyncAt = clock.instant().plus(syncInterval),
+            nextSyncAt = clock.instant().plus(nextSyncInterval),
             failedSyncCount = 0,
             syncToken = syncToken,
             lastSynced = clock.instant()
@@ -39,7 +41,7 @@ data class CalendarListSync(
 
     fun fail(clock: Clock): CalendarListSync {
         val failCount = failedSyncCount + 1
-        val nextSyncDelay = syncInterval.multipliedBy(pow(failCount, 2).toLong())
+        val nextSyncDelay = syncRetryInterval.multipliedBy(pow(failCount, 2).toLong())
         return copy(
             failedSyncCount = failCount,
             nextSyncAt = clock.instant().plus(nextSyncDelay)

@@ -6,6 +6,7 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.util.Objects
 import java.util.Optional
+import java.util.UUID
 import kotlin.streams.asSequence
 import org.springframework.data.repository.CrudRepository
 import org.threeten.extra.LocalDateRange
@@ -121,3 +122,5 @@ fun ZoneId.toGmtString(atDate: Instant): String {
     }
     return "GMT$plusSign$offsetString"
 }
+
+fun String.uuid(): UUID = UUID.fromString(this)

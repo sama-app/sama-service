@@ -27,7 +27,11 @@ fun String.toLinkAccountOauth2UserId(): UserId {
 }
 
 @Table("oauth2_state")
-data class Oauth2State(@Id var key: String? = null, val value: String = "", val createdAt: Instant = Instant.now())
+data class Oauth2State(@Id var key: String? = null, val value: String = "", val createdAt: Instant = Instant.now()) {
+    companion object {
+        private val tokenGenerator = KeyGenerators.string()
+    }
+}
 
 @Repository
 interface Oauth2StateRepository : CrudRepository<Oauth2State, String> {

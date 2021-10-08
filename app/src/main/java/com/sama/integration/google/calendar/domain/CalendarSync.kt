@@ -3,7 +3,6 @@ package com.sama.integration.google.calendar.domain
 import com.google.common.math.IntMath.pow
 import com.sama.common.to
 import com.sama.integration.google.auth.domain.GoogleAccountId
-import com.sama.users.domain.UserId
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
@@ -23,7 +22,9 @@ data class CalendarSync(
 ) {
 
     companion object {
-        val syncInterval: Duration = Duration.ofSeconds(60)
+        val nextSyncInterval: Duration = Duration.ofHours(12)
+        val syncRetryInterval: Duration = Duration.ofSeconds(60)
+        
         const val syncPastInMonths = 6L
         const val syncFutureInMonths = 3L
         const val fullSyncCutOffDays = 7L
@@ -60,7 +61,7 @@ data class CalendarSync(
             return false
         }
 
-        if (lastSynced!!.plus(syncInterval).isBefore(clock.instant())) {
+        if (lastSynced!!.plus(nextSyncInterval).isBefore(clock.instant())) {
             return false
         }
 
@@ -72,7 +73,7 @@ data class CalendarSync(
 
     fun complete(syncToken: String, syncedRange: LocalDateRange, clock: Clock): CalendarSync {
         return copy(
-            nextSyncAt = clock.instant().plus(syncInterval),
+            nextSyncAt = clock.instant().plus(nextSyncInterval),
             failedSyncCount = 0,
             syncToken = syncToken,
             syncedRange = syncedRange,
@@ -86,7 +87,7 @@ data class CalendarSync(
 
     fun fail(clock: Clock): CalendarSync {
         val failCount = failedSyncCount + 1
-        val nextSyncDelay = syncInterval.multipliedBy(pow(failCount, 2).toLong())
+        val nextSyncDelay = syncRetryInterval.multipliedBy(pow(failCount, 2).toLong())
         return copy(
             failedSyncCount = failCount,
             nextSyncAt = clock.instant().plus(nextSyncDelay)

@@ -2,14 +2,17 @@ package com.sama.integration.google.calendar.domain
 
 import com.google.api.client.util.DateTime
 import com.google.api.services.calendar.model.CalendarListEntry
+import com.google.api.services.calendar.model.Channel
 import com.google.api.services.calendar.model.Event
 import java.time.ZoneId
+import java.util.UUID
 
 typealias GoogleCalendar = CalendarListEntry
 typealias GoogleCalendarId = String
 typealias GoogleCalendarEvent = Event
 typealias GoogleCalendarEventId = String
 typealias GoogleCalendarDateTime = DateTime
+typealias GoogleChannel = Channel
 
 data class GoogleCalendarEventsResponse(
     val events: List<GoogleCalendarEvent>, val timeZone: ZoneId, val syncToken: String?,

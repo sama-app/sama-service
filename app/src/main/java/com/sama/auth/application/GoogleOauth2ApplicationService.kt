@@ -75,11 +75,11 @@ class GoogleOauth2ApplicationService(
                     } catch (e: MissingScopesException) {
                         GoogleSignErrorDTO("google_insufficient_permissions")
                     } catch (e: Exception) {
-                        logger.warn("oauth2-callback-exception: $e.message")
+                        logger.error("oauth2-callback-exception: $e.message", e)
                         GoogleSignErrorDTO("internal")
                     }
                     error != null -> {
-                        logger.warn("oauth2-callback-error: $error")
+                        logger.error("oauth2-callback-error: $error")
                         GoogleSignErrorDTO("google_insufficient_permissions")
                     }
                     else -> GoogleSignErrorDTO("sama-invalid-oauth-callback")
@@ -92,11 +92,11 @@ class GoogleOauth2ApplicationService(
                     } catch (e: MissingScopesException) {
                         LinkGoogleAccountErrorDTO("google_insufficient_permissions")
                     } catch (e: Exception) {
-                        logger.warn("oauth2-callback-exception: $e.message")
+                        logger.error("oauth2-callback-exception: $e.message", e)
                         LinkGoogleAccountErrorDTO("internal")
                     }
                     error != null -> {
-                        logger.warn("oauth2-callback-error: $error")
+                        logger.error("oauth2-callback-error: $error")
                         LinkGoogleAccountErrorDTO("google_insufficient_permissions")
                     }
                     else -> LinkGoogleAccountErrorDTO("sama-invalid-oauth-callback")

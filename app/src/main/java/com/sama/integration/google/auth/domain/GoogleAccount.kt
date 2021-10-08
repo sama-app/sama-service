@@ -4,8 +4,8 @@ import com.sama.common.DomainEntity
 import com.sama.users.domain.UserId
 import java.util.UUID
 
-@JvmInline
-value class GoogleAccountId(val id: Long)
+// @JvmInline TODO: doesn't work with spring-data-jdbc
+data class GoogleAccountId(val id: Long)
 
 fun GoogleAccountId.toStorageKey() = id.toString()
 

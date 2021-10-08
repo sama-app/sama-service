@@ -1,0 +1,70 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-gcal-channel-sync
+      author: balys
+      changes:
+        - createTable:
+            schemaName: gcal
+            tableName: channel
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: PK_channel_id
+              - column:
+                  name: google_account_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: resource_type
+                  type: VARCHAR
+                  constraints:
+                    nullable: false
+              - column:
+                  name: resource_id
+                  type: VARCHAR
+              - column:
+                  name: status
+                  type: VARCHAR
+                  constraints:
+                    nullable: false
+              - column:
+                  name: token
+                  type: VARCHAR
+              - column:
+                  name: external_resource_id
+                  type: VARCHAR
+                  constraints:
+                    nullable: false
+              - column:
+                  name: expires_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: message_number
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+        - createIndex:
+            schemaName: gcal
+            tableName: channel
+            columns:
+              - column:
+                  name: google_account_id
+            indexName: IDX_channel#google_account_id

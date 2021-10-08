@@ -2,6 +2,7 @@ package com.sama.common
 
 import com.sama.AppTestConfiguration
 import com.sama.PersistenceConfiguration
+import com.sama.PersistenceJdbcConfiguration
 import java.time.Clock
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
@@ -20,7 +21,8 @@ import org.testcontainers.junit.jupiter.Testcontainers
 @SpringBootTest(
     classes = [
         AppTestConfiguration::class,
-        PersistenceConfiguration::class
+        PersistenceConfiguration::class,
+        PersistenceJdbcConfiguration::class
     ]
 )
 @Transactional

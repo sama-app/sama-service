@@ -62,6 +62,10 @@ integration:
     tokens.encryption:
       password: # Loaded from AWS SM
       salt: # Loaded from AWS SM
+    sync:
+      channel:
+        enabled: true
+        callback-url: https://app.meetsama.com/api/integration/google/channel-notification
 
   firebase:
     credentials: "dummy-value-this-is-loaded-from-AWS-SM"

@@ -10,6 +10,8 @@ import com.google.api.client.json.gson.GsonFactory
 import com.sama.integration.google.auth.infrastructure.GoogleCredentialDataStoreFactory
 import java.io.StringReader
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.boot.context.properties.ConfigurationProperties
+import org.springframework.boot.context.properties.ConstructorBinding
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
@@ -79,3 +81,10 @@ class GoogleConfiguration() {
             .build()
     }
 }
+
+@ConstructorBinding
+@ConfigurationProperties(prefix = "integration.google.sync.channel")
+class ChannelConfiguration(
+    val enabled: Boolean,
+    val callbackUrl: String
+)

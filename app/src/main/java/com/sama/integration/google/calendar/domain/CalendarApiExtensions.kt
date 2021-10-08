@@ -7,6 +7,7 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZoneOffset.UTC
 import java.time.ZonedDateTime
+import java.util.UUID
 import org.dmfs.rfc5545.recur.RecurrenceRule
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -137,4 +138,34 @@ private fun Calendar.findCalendarsPage(nextPageToken: String?, syncToken: String
     requestBuilder.syncToken = syncToken
     nextPageToken?.run { requestBuilder.setPageToken(this) }
     return requestBuilder
+}
+
+fun Calendar.createCalendarsChannel(channelId: UUID, inputToken: String, callbackUrl: String): Calendar.CalendarList.Watch {
+    return calendarList().watch(GoogleChannel().apply {
+        id = channelId.toString()
+        type = "webhook"
+        address = callbackUrl
+        token = inputToken
+    })
+}
+
+fun Calendar.createEventsChannel(
+    calendarId: GoogleCalendarId,
+    channelId: UUID,
+    inputToken: String,
+    callbackUrl: String
+): Calendar.Events.Watch {
+    return events().watch(calendarId, GoogleChannel().apply {
+        id = channelId.toString()
+        type = "webhook"
+        address = callbackUrl
+        token = inputToken
+    })
+}
+
+fun Calendar.stopChannel(channelId: UUID, resourceId: String) {
+    channels().stop(GoogleChannel().apply {
+        this.id = channelId.toString()
+        this.resourceId = resourceId
+    })
 }

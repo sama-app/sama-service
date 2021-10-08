@@ -1,5 +1,7 @@
 package com.sama
 
+import com.sama.integration.google.calendar.infrastructure.GoogleAccountIdReader
+import com.sama.integration.google.calendar.infrastructure.GoogleAccountIdWriter
 import io.undertow.UndertowOptions.ENABLE_HTTP2
 import java.time.Clock
 import org.springframework.boot.SpringApplication
@@ -11,8 +13,11 @@ import org.springframework.boot.web.embedded.undertow.UndertowServletWebServerFa
 import org.springframework.cache.annotation.EnableCaching
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.data.jdbc.core.convert.JdbcCustomConversions
+import org.springframework.data.jdbc.repository.config.AbstractJdbcConfiguration
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories
+import org.springframework.data.relational.core.mapping.NamingStrategy
 import org.springframework.scheduling.annotation.EnableScheduling
 
 
@@ -50,6 +55,25 @@ class AppConfiguration {
 @EnableJdbcRepositories(basePackages = ["com.sama"])
 @EntityScan("com.sama")
 class PersistenceConfiguration
+
+@Configuration
+class PersistenceJdbcConfiguration : AbstractJdbcConfiguration() {
+
+    @Bean
+    override fun jdbcCustomConversions(): JdbcCustomConversions {
+        return JdbcCustomConversions(listOf(GoogleAccountIdWriter(), GoogleAccountIdReader()))
+    }
+
+    @Bean
+    fun namingStrategy(): NamingStrategy = object : NamingStrategy {
+        override fun getSchema(): String {
+            // The default schema provided by the JDBC connection is 'sama'. For tables in that schema
+            // use @Table(TABLE_NAME) on the entity.
+            // Of course, this won't work if we have three or more schemas.
+            return "gcal"
+        }
+    }
+}
 
 @Configuration
 @EnableCaching
