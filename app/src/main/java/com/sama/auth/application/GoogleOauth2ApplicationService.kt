@@ -63,7 +63,7 @@ class GoogleOauth2ApplicationService(
             } catch (e: MissingScopesException) {
                 GoogleSignFailureDTO("google_insufficient_permissions")
             } catch (e: Exception) {
-                logger.warn("oauth2-callback-exception: $e.message")
+                logger.warn("oauth2-callback-exception: $e.message", e)
                 GoogleSignFailureDTO("internal")
             }
             error != null -> {
