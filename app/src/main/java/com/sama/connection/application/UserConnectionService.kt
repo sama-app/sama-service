@@ -9,12 +9,12 @@ interface UserConnectionService {
     fun findUserConnections(userId: UserId): UserConnectionsDTO
     @InternalApi
     fun createUserConnection(userId: UserId, command: CreateUserConnectionCommand): Boolean
-    fun removeUserConnection(userId: UserId, command: RemoveUserConnectionCommand)
+    fun removeUserConnection(userId: UserId, command: RemoveUserConnectionCommand): Boolean
     @InternalApi
     fun addDiscoveredUsers(userId: UserId, command: AddDiscoveredUsersCommand): Boolean
 
     fun findConnectionRequests(userId: UserId): ConnectionRequestsDTO
     fun createConnectionRequest(userId: UserId, command: CreateConnectionRequestCommand): ConnectionRequestDTO
-    fun approveConnectionRequest(userId: UserId, connectionRequestId: ConnectionRequestId)
-    fun rejectConnectionRequest(userId: UserId, connectionRequestId: ConnectionRequestId)
+    fun approveConnectionRequest(userId: UserId, connectionRequestId: ConnectionRequestId): Boolean
+    fun rejectConnectionRequest(userId: UserId, connectionRequestId: ConnectionRequestId): Boolean
 }

@@ -58,9 +58,10 @@ class UserConnectionApplicationService(
     }
 
     @Transactional
-    override fun removeUserConnection(userId: UserId, command: RemoveUserConnectionCommand) {
+    override fun removeUserConnection(userId: UserId, command: RemoveUserConnectionCommand): Boolean {
         val recipientId = userService.translatePublicId(command.userId)
         userConnectionRepository.delete(UserConnection(userId, recipientId))
+        return true
     }
 
     @Transactional
@@ -108,7 +109,7 @@ class UserConnectionApplicationService(
     }
 
     @Transactional
-    override fun approveConnectionRequest(userId: UserId, connectionRequestId: ConnectionRequestId) {
+    override fun approveConnectionRequest(userId: UserId, connectionRequestId: ConnectionRequestId): Boolean {
         val connectionRequest = connectionRequestRepository.findByIdOrThrow(connectionRequestId)
         checkAccess(connectionRequest.recipientUserId == userId)
         { "User#${userId.id} does not have access to ConnectionRequest#$connectionRequestId" }
@@ -120,10 +121,11 @@ class UserConnectionApplicationService(
 
         val event = UserConnectedEvent(userId, userConnection)
         commsEventConsumer.onUserConnected(event)
+        return true
     }
 
     @Transactional
-    override fun rejectConnectionRequest(userId: UserId, connectionRequestId: ConnectionRequestId) {
+    override fun rejectConnectionRequest(userId: UserId, connectionRequestId: ConnectionRequestId): Boolean {
         val connectionRequest = connectionRequestRepository.findByIdOrThrow(connectionRequestId)
         checkAccess(connectionRequest.recipientUserId == userId)
         { "User#${userId.id} does not have access to ConnectionRequest#$connectionRequestId" }
@@ -133,5 +135,6 @@ class UserConnectionApplicationService(
 
         val event = UserConnectionRequestRejectedEvent(userId, rejectedRequest)
         commsEventConsumer.onConnectionRequestRejected(event)
+        return true
     }
 }
