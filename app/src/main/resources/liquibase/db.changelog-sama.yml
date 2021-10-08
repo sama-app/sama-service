@@ -32,6 +32,10 @@ databaseChangeLog:
   - include:
       file: classpath*:liquibase/change-sets/2021_09_15-firebase-dynamic-links.yml
   - include:
+      file: classpath*:liquibase/change-sets/2021_09_20-add-sama-sama-meeting-fields.yml
+  - include:
+      file: classpath*:liquibase/change-sets/2021_09_22-add-user-permissions.yml
+  - include:
       file: classpath*:liquibase/change-sets/2021_09_22-meeting-indices.yml
   - include:
       file: classpath*:liquibase/change-sets/2021_09_24-google-calendar-list-sync.yml
@@ -39,5 +43,7 @@ databaseChangeLog:
       file: classpath*:liquibase/change-sets/2021_09_29-multi-google-accounts.yml
   - include:
       file: classpath*:liquibase/change-sets/2021_09_30-oauth2-state.yml
+  - include:
+      file: classpath*:liquibase/change-sets/2021_10_01-user-marketing-preferences.yml
   - include:
       file: classpath*:liquibase/change-sets/2021_10_05-gcal-channel-sync.yml

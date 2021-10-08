@@ -16,7 +16,7 @@ spring:
   jpa:
     show-sql: false
   task:
-    scheduling.pool.size: 2
+    scheduling.pool.size: 8
   cache:
     cache-names: blocks-by-user
     caffeine:
@@ -77,9 +77,9 @@ integration:
         ifl: # Overrides `isi` if specified
         isi: 1586527998 # AppStore ID
         efr: 0 # Do not skip preview page
-        ofl: # TODO: Mac store link
+        ofl: https://apps.apple.com/lt/app/sama-scheduling-assistant/id1586527998
 
 sentry:
   environment: prod
   debug: false
-  traces-sample-rate: 0.1
+  traces-sample-rate: 0.3

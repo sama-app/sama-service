@@ -2,22 +2,13 @@ package com.sama.api.users
 
 import com.sama.api.ApiTestConfiguration
 import com.sama.api.config.WebMvcConfiguration
-import com.sama.users.application.DayWorkingHoursDTO
 import com.sama.users.application.RegisterDeviceCommand
 import com.sama.users.application.UnregisterDeviceCommand
-import com.sama.users.application.UpdateTimeZoneCommand
-import com.sama.users.application.UpdateWorkingHoursCommand
 import com.sama.users.application.UserApplicationService
+import com.sama.users.application.UserDeviceRegistrationService
 import com.sama.users.application.UserPublicDTO
-import com.sama.users.application.UserSettingsDTO
 import com.sama.users.domain.UserId
 import com.sama.users.domain.UserPublicId
-import java.time.DayOfWeek.MONDAY
-import java.time.DayOfWeek.TUESDAY
-import java.time.DayOfWeek.WEDNESDAY
-import java.time.LocalTime
-import java.time.ZoneId
-import java.util.Locale
 import java.util.UUID
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
@@ -52,6 +43,9 @@ class UserControllerTest(
 ) {
     @MockBean
     lateinit var userApplicationService: UserApplicationService
+
+    @MockBean
+    lateinit var userDeviceRegistrationService: UserDeviceRegistrationService
 
     private val userId = UserId(1)
     private val jwt = "eyJraWQiOiJrZXktaWQiLCJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9." +
@@ -90,7 +84,7 @@ class UserControllerTest(
         val deviceId = UUID.fromString("075f7e8a-e01c-4f2f-9c3b-ce5d412e618c")
         val registrationToken = "some-token"
         whenever(
-            (userApplicationService.registerDevice(
+            (userDeviceRegistrationService.register(
                 userId,
                 RegisterDeviceCommand(deviceId, registrationToken)
             ))
@@ -117,7 +111,7 @@ class UserControllerTest(
     fun `unregister device`() {
         val deviceId = UUID.fromString("075f7e8a-e01c-4f2f-9c3b-ce5d412e618c")
         whenever(
-            (userApplicationService.unregisterDevice(
+            (userDeviceRegistrationService.unregister(
                 userId,
                 UnregisterDeviceCommand(deviceId)
             ))

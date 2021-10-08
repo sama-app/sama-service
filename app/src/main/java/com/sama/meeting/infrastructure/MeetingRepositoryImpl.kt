@@ -5,27 +5,30 @@ import com.sama.common.findByIdOrThrow
 import com.sama.meeting.domain.ConfirmedMeeting
 import com.sama.meeting.domain.EmailRecipient
 import com.sama.meeting.domain.ExpiredMeeting
-import com.sama.meeting.domain.MeetingRecipient
 import com.sama.meeting.domain.Meeting
 import com.sama.meeting.domain.MeetingCode
 import com.sama.meeting.domain.MeetingId
+import com.sama.meeting.domain.MeetingRecipient
 import com.sama.meeting.domain.MeetingRepository
 import com.sama.meeting.domain.MeetingSlot
 import com.sama.meeting.domain.MeetingStatus
-import com.sama.meeting.domain.ProposedMeeting
+import com.sama.meeting.domain.SamaNonSamaProposedMeeting
 import com.sama.meeting.domain.RejectedMeeting
+import com.sama.meeting.domain.SamaSamaProposedMeeting
 import com.sama.meeting.domain.UserRecipient
 import com.sama.meeting.infrastructure.jpa.MeetingEntity
 import com.sama.meeting.infrastructure.jpa.MeetingIntentEntity
 import com.sama.meeting.infrastructure.jpa.MeetingIntentJpaRepository
 import com.sama.meeting.infrastructure.jpa.MeetingJpaRepository
 import com.sama.meeting.infrastructure.jpa.MeetingRecipientEntity
+import com.sama.meeting.infrastructure.jpa.MeetingSlotStatus
 import com.sama.meeting.infrastructure.jpa.findByCodeOrThrow
 import com.sama.meeting.infrastructure.jpa.findLockedByCodeOrThrow
 import com.sama.users.domain.UserId
 import com.sama.users.infrastructure.toUserId
 import java.time.Duration
 import java.time.ZonedDateTime
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Component
 
 @Component
@@ -58,14 +61,20 @@ class MeetingRepositoryImpl(
     }
 
     override fun save(meeting: Meeting): Meeting {
-        val meetingEntity: MeetingEntity
-        when (meeting) {
-            is ConfirmedMeeting -> {
-                meetingEntity = meetingJpaRepository.findByIdOrThrow(meeting.meetingId.id)
-                meetingEntity.applyChanges(meeting)
+        val meetingEntity = when (meeting) {
+            is SamaNonSamaProposedMeeting -> {
+                meetingJpaRepository.findByIdOrNull(meeting.meetingId.id)
+                    ?.applyChanges(meeting)
+                    ?: MeetingEntity.new(meeting)
             }
-            is ProposedMeeting -> {
-                meetingEntity = MeetingEntity.new(meeting)
+            is SamaSamaProposedMeeting -> {
+                meetingJpaRepository.findByIdOrNull(meeting.meetingId.id)
+                    ?.applyChanges(meeting)
+                    ?: MeetingEntity.new(meeting)
+            }
+            is ConfirmedMeeting -> {
+                meetingJpaRepository.findByIdOrThrow(meeting.meetingId.id)
+                    .applyChanges(meeting)
             }
             is ExpiredMeeting -> throw UnsupportedOperationException()
             is RejectedMeeting -> throw UnsupportedOperationException()
@@ -97,22 +106,37 @@ class MeetingRepositoryImpl(
     ): Meeting {
         return when (meetingEntity.status!!) {
             MeetingStatus.PROPOSED -> {
-                val proposedSlots = meetingEntity.proposedSlots
-                    .map { MeetingSlot(it.startDateTime, it.endDateTime) }
-                ProposedMeeting(
-                    meetingEntity.id!!.toMeetingId(),
-                    meetingIntentEntity.id!!.toMeetingIntentId(),
-                    meetingIntentEntity.initiatorId!!.toUserId(),
-                    Duration.ofMinutes(meetingIntentEntity.durationMinutes!!),
-                    proposedSlots,
-                    meetingEntity.code!!.toMeetingCode(),
-                    meetingEntity.title!!
-                )
+                val (proposedSlots, rejectedSlots) = meetingEntity.proposedSlots
+                    .partition { it.status == MeetingSlotStatus.PROPOSED }
+
+                if (meetingEntity.meetingRecipient?.recipientId != null) {
+                    SamaSamaProposedMeeting(
+                        meetingEntity.id!!.toMeetingId(),
+                        meetingIntentEntity.id!!.toMeetingIntentId(),
+                        Duration.ofMinutes(meetingIntentEntity.durationMinutes!!),
+                        meetingIntentEntity.initiatorId!!.toUserId(),
+                        UserId(meetingEntity.meetingRecipient?.recipientId!!),
+                        meetingEntity.currentActor!!,
+                        proposedSlots.map { MeetingSlot(it.startDateTime, it.endDateTime) },
+                        rejectedSlots.map { MeetingSlot(it.startDateTime, it.endDateTime) },
+                        meetingEntity.code!!.toMeetingCode(),
+                        meetingEntity.title!!
+                    )
+                } else {
+                    SamaNonSamaProposedMeeting(
+                        meetingEntity.id!!.toMeetingId(),
+                        meetingIntentEntity.id!!.toMeetingIntentId(),
+                        Duration.ofMinutes(meetingIntentEntity.durationMinutes!!),
+                        meetingIntentEntity.initiatorId!!.toUserId(),
+                        proposedSlots.map { MeetingSlot(it.startDateTime, it.endDateTime) },
+                        meetingEntity.code!!.toMeetingCode(),
+                        meetingEntity.title!!
+                    )
+                }
             }
             MeetingStatus.CONFIRMED -> ConfirmedMeeting(
                 meetingEntity.id!!.toMeetingId(),
                 meetingIntentEntity.initiatorId!!.toUserId(),
-                Duration.ofMinutes(meetingIntentEntity.durationMinutes!!),
                 meetingEntity.meetingRecipient!!.toDomainObject(),
                 meetingEntity.confirmedSlot!!,
                 meetingEntity.title!!
@@ -132,10 +156,10 @@ fun String.toMeetingCode(): MeetingCode {
 }
 
 fun MeetingRecipientEntity.toDomainObject(): MeetingRecipient {
-    if (recipientId != null) {
-        return UserRecipient.of(recipientId.toUserId(), email!!)
+    return if (recipientId != null) {
+        UserRecipient.of(recipientId.toUserId())
     } else {
-        return EmailRecipient.of(email!!)
+        EmailRecipient.of(email!!)
     }
 }
 

@@ -15,9 +15,10 @@ import com.sama.integration.google.auth.application.GoogleAccountService
 import com.sama.integration.google.auth.application.GoogleOauth2Credential
 import com.sama.integration.google.auth.application.LinkGoogleAccountCommand
 import com.sama.users.application.GoogleOauth2Redirect
+import com.sama.users.application.InternalUserService
 import com.sama.users.application.RegisterUserCommand
-import com.sama.users.application.UserApplicationService
 import com.sama.users.application.UserSettingsApplicationService
+import com.sama.users.application.UserTokenService
 import com.sama.users.domain.UserAlreadyExistsException
 import com.sama.users.domain.UserId
 import io.sentry.spring.tracing.SentryTransaction
@@ -30,8 +31,9 @@ import org.springframework.stereotype.Service
 @ApplicationService
 @Service
 class GoogleOauth2ApplicationService(
-    private val userApplicationService: UserApplicationService,
+    private val userApplicationService: InternalUserService,
     private val userSettingsApplicationService: UserSettingsApplicationService,
+    private val userTokenService: UserTokenService,
     private val googleAuthorizationCodeFlow: GoogleAuthorizationCodeFlow,
     private val googleIdTokenVerifier: GoogleIdTokenVerifier,
     private val googleAccountService: GoogleAccountService,
@@ -124,9 +126,9 @@ class GoogleOauth2ApplicationService(
 
         // Step #3: Register a user or refresh their credentials if already registered
         val userId = kotlin.runCatching {
-            val userId = userApplicationService.registerUser(RegisterUserCommand(verifiedToken.email, googleUser.fullName))
+            val userId = userApplicationService.register(RegisterUserCommand(verifiedToken.email, googleUser.fullName))
             googleAccountService.linkAccount(userId, LinkGoogleAccountCommand(verifiedToken.email, verifiedToken.credential))
-            userSettingsApplicationService.createUserSettings(userId)
+            userSettingsApplicationService.create(userId)
             userId
         }.recover {
             if (it !is UserAlreadyExistsException) {
@@ -138,7 +140,7 @@ class GoogleOauth2ApplicationService(
         }.getOrThrow()
 
         // Step #4: Issue SAMA authentication tokens
-        val (accessToken, refreshToken) = userApplicationService.issueTokens(userId)
+        val (accessToken, refreshToken) = userTokenService.issueTokens(userId)
         return GoogleSignSuccessDTO(accessToken, refreshToken)
     }
 

@@ -50,6 +50,10 @@ data class HeatMapWeigherBuilder(
         weighers.add(ThisOrNextWeekTemplateWeigher(suggestions))
     }
 
+    fun add(weigher: Weigher) {
+        weighers.add(weigher)
+    }
+
     fun build(): HeatMapWeigher {
         return HeatMapWeigher(weighers)
     }

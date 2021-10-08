@@ -2,6 +2,7 @@ package com.sama.meeting.infrastructure
 
 import com.sama.common.BasePersistenceIT
 import com.sama.common.NotFoundException
+import com.sama.meeting.domain.Actor
 import com.sama.meeting.domain.ConfirmedMeeting
 import com.sama.meeting.domain.ExpiredMeeting
 import com.sama.meeting.domain.MeetingCode
@@ -10,7 +11,8 @@ import com.sama.meeting.domain.MeetingIntentId
 import com.sama.meeting.domain.MeetingRepository
 import com.sama.meeting.domain.MeetingSlot
 import com.sama.meeting.domain.MeetingStatus
-import com.sama.meeting.domain.ProposedMeeting
+import com.sama.meeting.domain.SamaNonSamaProposedMeeting
+import com.sama.meeting.domain.SamaSamaProposedMeeting
 import com.sama.meeting.domain.UserRecipient
 import com.sama.meeting.infrastructure.jpa.MeetingIntentEntity
 import com.sama.meeting.infrastructure.jpa.MeetingIntentJpaRepository
@@ -18,6 +20,8 @@ import com.sama.users.domain.UserId
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
+import java.time.ZoneOffset
+import java.time.ZoneOffset.UTC
 import java.time.ZonedDateTime
 import kotlin.test.assertNotEquals
 import org.assertj.core.api.Assertions.assertThat
@@ -39,7 +43,7 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
         this.id = meetingIntentId.id
         this.initiatorId = 1L
         this.durationMinutes = 60
-        this.timezone = ZoneId.systemDefault()
+        this.timezone = UTC
         this.createdAt = Instant.now()
         this.updatedAt = Instant.now()
     }
@@ -59,17 +63,47 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
     @Test
     fun `proposed meeting persistence`() {
         val meetingId = MeetingId(21)
-        val proposedMeeting = ProposedMeeting(
+        val proposedMeeting = SamaNonSamaProposedMeeting(
             meetingId,
             meetingIntentId,
-            UserId(1),
             Duration.ofMinutes(60),
+            UserId(1),
             listOf(
                 MeetingSlot(
                     ZonedDateTime.now(clock).plusHours(3),
                     ZonedDateTime.now(clock).plusHours(4)
                 )
             ),
+            MeetingCode("VGsUTGno"),
+            "Meeting title"
+        )
+
+        // act
+        underTest.save(proposedMeeting)
+        val persisted = underTest.findByIdOrThrow(proposedMeeting.meetingId)
+
+        // verify
+        assertThat(persisted).usingRecursiveComparison()
+            .isEqualTo(proposedMeeting)
+    }
+
+    @Test
+    fun `sama-sama proposed meeting persistence`() {
+        val meetingId = MeetingId(21)
+        val proposedMeeting = SamaSamaProposedMeeting(
+            meetingId,
+            meetingIntentId,
+            Duration.ofMinutes(60),
+            UserId(1),
+            UserId(2),
+            Actor.RECIPIENT,
+            listOf(
+                MeetingSlot(
+                    ZonedDateTime.now(clock).plusHours(3),
+                    ZonedDateTime.now(clock).plusHours(4)
+                )
+            ),
+            emptyList(),
             MeetingCode("VGsUTGno"),
             "Meeting title"
         )
@@ -91,11 +125,11 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
         val initiatorId = UserId(1)
 
         // act
-        val proposedMeeting = ProposedMeeting(
+        val proposedMeeting = SamaNonSamaProposedMeeting(
             meetingId,
             meetingIntentId,
-            initiatorId,
             Duration.ofMinutes(60),
+            initiatorId,
             listOf(
                 MeetingSlot(
                     ZonedDateTime.now(clock).plusHours(3),
@@ -109,8 +143,7 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
         underTest.save(proposedMeeting)
 
         val confirmedMeeting = ConfirmedMeeting(
-            meetingId, initiatorId, Duration.ofMinutes(60),
-            UserRecipient.of(UserId(2), "test@meetsama.com"),
+            meetingId, initiatorId, UserRecipient.of(UserId(2)),
             MeetingSlot(
                 ZonedDateTime.now(clock).plusHours(3),
                 ZonedDateTime.now(clock).plusHours(4)
@@ -134,11 +167,11 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
         val initiatorId = UserId(1)
 
         // act
-        val proposedMeeting = ProposedMeeting(
+        val proposedMeeting = SamaNonSamaProposedMeeting(
             meetingId,
             meetingIntentId,
-            initiatorId,
             Duration.ofMinutes(60),
+            initiatorId,
             listOf(
                 MeetingSlot(
                     ZonedDateTime.now(clock).plusHours(3),
@@ -153,11 +186,44 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
 
         // act
         val persisted = underTest.findByCodeOrThrow(meetingCode)
-        val persistedForUpdate = underTest.findByCodeOrThrow(meetingCode, true)
 
         // verify
         assertThat(persisted).isEqualTo(proposedMeeting)
-        assertThat(persistedForUpdate).isEqualTo(proposedMeeting)
+    }
+
+    @Test
+    fun `find sama-sama by code`() {
+        val meetingId = MeetingId(21)
+        val meetingCode = MeetingCode("VGsUTGno")
+        val initiatorId = UserId(1)
+        val recipientId = UserId(2)
+
+        // act
+        val proposedMeeting = SamaSamaProposedMeeting(
+            meetingId,
+            meetingIntentId,
+            Duration.ofMinutes(60),
+            initiatorId,
+            recipientId,
+            Actor.RECIPIENT,
+            listOf(
+                MeetingSlot(
+                    ZonedDateTime.now(clock).plusHours(3),
+                    ZonedDateTime.now(clock).plusHours(4)
+                )
+            ),
+            emptyList(),
+            meetingCode,
+            "Meeting title"
+        )
+
+        underTest.save(proposedMeeting)
+
+        // act
+        val persisted = underTest.findByCodeOrThrow(meetingCode)
+
+        // verify
+        assertThat(persisted).isEqualTo(proposedMeeting)
     }
 
     @Test
@@ -181,11 +247,11 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
             ZonedDateTime.now(clock).plusDays(1).plusMinutes(61)
         )
 
-        val proposedMeeting = ProposedMeeting(
+        val proposedMeeting = SamaNonSamaProposedMeeting(
             validMeetingId,
             meetingIntentId,
-            initiatorId,
             Duration.ofMinutes(60),
+            initiatorId,
             listOf(
                 MeetingSlot(
                     ZonedDateTime.now(clock).minusMinutes(30),
@@ -211,11 +277,11 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
     @Test
     fun `find expiring`() {
         val validMeetingId = MeetingId(22)
-        val validMeeting = ProposedMeeting(
+        val validMeeting = SamaNonSamaProposedMeeting(
             validMeetingId,
             meetingIntentId,
-            UserId(1),
             Duration.ofMinutes(60),
+            UserId(1),
             listOf(
                 MeetingSlot(
                     ZonedDateTime.now(clock).minusHours(2),
@@ -231,11 +297,11 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
         )
 
         val expiringMeetingId = MeetingId(21)
-        val expiringMeeting = ProposedMeeting(
+        val expiringMeeting = SamaNonSamaProposedMeeting(
             expiringMeetingId,
             meetingIntentId,
-            UserId(1),
             Duration.ofMinutes(60),
+            UserId(1),
             listOf(
                 MeetingSlot(
                     ZonedDateTime.now(clock).minusHours(2),
@@ -262,15 +328,15 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
     @Test
     fun `save all expired`() {
         val expiringMeetingId = MeetingId(21)
-        val expiringMeeting = ProposedMeeting(
+        val expiringMeeting = SamaNonSamaProposedMeeting(
             expiringMeetingId,
             meetingIntentId,
-            UserId(1),
             Duration.ofMinutes(60),
+            UserId(1),
             listOf(
                 MeetingSlot(
-                    ZonedDateTime.now(clock).minusHours(3),
-                    ZonedDateTime.now(clock).minusHours(4)
+                    ZonedDateTime.now(clock).minusHours(4),
+                    ZonedDateTime.now(clock).minusHours(3)
                 )
             ),
             MeetingCode("VGsUTGno"),

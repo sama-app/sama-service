@@ -31,6 +31,7 @@ class MeetingIntentRepositoryIT : BasePersistenceIT<MeetingIntentRepository>() {
             meetingIntentId,
             UserId(1),
             Duration.ofMinutes(60),
+            null,
             ZoneId.of("Europe/Rome"),
             listOf(
                 MeetingSlot(
@@ -57,6 +58,7 @@ class MeetingIntentRepositoryIT : BasePersistenceIT<MeetingIntentRepository>() {
             meetingIntentId,
             UserId(1),
             Duration.ofMinutes(60),
+            null,
             ZoneId.of("Europe/Rome"),
             listOf(
                 MeetingSlot(

@@ -29,9 +29,24 @@ class JdbcUserConnectionRepository(private val namedParameterJdbcTemplate: Named
                     SELECT r_user_id AS connected_user_id  FROM sama.user_connection
                     WHERE l_user_id = :user_id
                 ) uc
-            """.trimIndent(),
+            """,
             namedParameters
         ) { rs, _ -> rs.getLong("connected_user_id").toUserId() }
+    }
+
+    override fun exists(userOneId: UserId, userTwoId: UserId): Boolean {
+        // always put the smaller id in the first column to ensure uniqueness
+        val namedParameters = MapSqlParameterSource()
+            .addValue("l_user_id", min(userOneId.id, userTwoId.id))
+            .addValue("r_user_id", max(userOneId.id, userTwoId.id))
+
+        return namedParameterJdbcTemplate.queryForObject(
+            """
+                SELECT EXISTS(SELECT 1 FROM sama.user_connection WHERE l_user_id = :l_user_id AND r_user_id = :r_user_id)
+            """,
+            namedParameters,
+            Boolean::class.java
+        )!!
     }
 
     override fun save(userConnection: UserConnection) {
@@ -39,7 +54,7 @@ class JdbcUserConnectionRepository(private val namedParameterJdbcTemplate: Named
             """
                 INSERT INTO sama.user_connection (l_user_id, r_user_id, created_at)  
                 VALUES (:l_user_id, :r_user_id, CURRENT_TIMESTAMP)
-            """.trimIndent(),
+            """,
             userConnection.toSqlParameterSource()
         )
     }
@@ -49,7 +64,7 @@ class JdbcUserConnectionRepository(private val namedParameterJdbcTemplate: Named
             """
                 DELETE FROM sama.user_connection
                 WHERE l_user_id = :l_user_id AND r_user_id = :r_user_id
-            """.trimIndent(),
+            """,
             userConnection.toSqlParameterSource()
         )
     }

@@ -32,6 +32,22 @@ class JdbcGoogleAccountRepository(private val jdbcTemplate: NamedParameterJdbcTe
         )
     }
 
+    override fun findByIdOrThrow(googleAccountId: GoogleAccountId): GoogleAccount {
+        return try {
+            jdbcTemplate.queryForObject(
+                """
+                    SELECT * FROM sama.user_google_account 
+                    WHERE id = :id
+                """,
+                MapSqlParameterSource()
+                    .addValue("id", googleAccountId.id),
+                rowMapper
+            )!!
+        } catch (e: EmptyResultDataAccessException) {
+            throw NotFoundException(GoogleAccount::class, googleAccountId.id)
+        }
+    }
+
     override fun findByPublicIdOrThrow(googleAccountId: GoogleAccountPublicId): GoogleAccount {
         return try {
             jdbcTemplate.queryForObject(
@@ -88,7 +104,7 @@ class JdbcGoogleAccountRepository(private val jdbcTemplate: NamedParameterJdbcTe
                     .addValue("linked", googleAccount.linked),
                 keyHolder
             )
-            keyHolder.keys["id"] as Long to keyHolder.keys["public_id"] as UUID
+            keyHolder.keys?.get("id") as Long to keyHolder.keys?.get("public_id") as UUID
         } else {
             jdbcTemplate.update(
                 """

@@ -1,7 +1,9 @@
 package com.sama.integration.google.calendar.application
 
+import com.google.api.client.util.DateTime
 import com.google.api.services.calendar.model.EventDateTime
 import com.sama.integration.google.auth.domain.GoogleAccountId
+import com.sama.connection.domain.CalendarContact
 import com.sama.integration.google.calendar.domain.Calendar
 import com.sama.integration.google.calendar.domain.CalendarEvent
 import com.sama.integration.google.calendar.domain.CalendarList
@@ -37,11 +39,13 @@ fun EventDateTime.toZonedDateTime(defaultZoneId: ZoneId): ZonedDateTime {
         return ZonedDateTime.of(localDateTime, defaultZoneId)
     }
     if (this.dateTime != null) {
-        return ZonedDateTime.parse(this.dateTime.toStringRfc3339())
+        return dateTime.toZonedDateTime()
 
     }
     throw IllegalArgumentException("invalid EventDateTime")
 }
+
+fun DateTime.toZonedDateTime(): ZonedDateTime = ZonedDateTime.parse(toStringRfc3339())
 
 fun Collection<GoogleCalendarEvent>.toDomain(
     accountId: GoogleAccountId, calendarId: GoogleCalendarId, timeZone: ZoneId,
@@ -54,12 +58,21 @@ fun GoogleCalendarEvent.toKey(accountId: GoogleAccountId, calendarId: GoogleCale
     return GoogleCalendarEventKey(accountId, calendarId, id)
 }
 
+fun Collection<GoogleCalendarEvent>.attendeeEmails(): Set<String> {
+    return asSequence() // more efficient
+        .mapNotNull { it.attendees }
+        .flatten()
+        .distinct()
+        .map { it.email }
+        .toSet()
+}
+
 fun GoogleCalendarEvent.toDomain(accountId: GoogleAccountId, calendarId: GoogleCalendarId, timeZone: ZoneId): CalendarEvent {
     return CalendarEvent(
         toKey(accountId, calendarId),
         start.toZonedDateTime(timeZone),
         end.toZonedDateTime(timeZone),
-        EventData(summary, isAllDay(), attendeeCount(), recurringEventId)
+        EventData(summary, isAllDay(), attendeeCount(), recurringEventId, created?.toZonedDateTime())
     )
 }
 
@@ -77,7 +90,7 @@ fun GoogleCalendar.toDomain(): Calendar {
     val isOwner = accessRole == "owner"
     val primary = primary ?: false
     return Calendar(
-        ZoneId.of(timeZone),
+        timeZone?.let { ZoneId.of(it) },
         selected ?: primary,
         isOwner
     )

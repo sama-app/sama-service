@@ -3,9 +3,12 @@ package com.sama.integration.google.calendar.application
 import com.sama.common.component1
 import com.sama.common.component2
 import com.sama.common.to
+import com.sama.connection.application.AddDiscoveredUsersCommand
+import com.sama.connection.application.UserConnectionService
 import com.sama.integration.google.GoogleServiceFactory
 import com.sama.integration.google.GoogleSyncTokenInvalidatedException
 import com.sama.integration.google.auth.domain.GoogleAccountId
+import com.sama.integration.google.auth.domain.GoogleAccountRepository
 import com.sama.integration.google.calendar.domain.CalendarEventRepository
 import com.sama.integration.google.calendar.domain.CalendarListRepository
 import com.sama.integration.google.calendar.domain.CalendarListSync
@@ -18,6 +21,9 @@ import com.sama.integration.google.calendar.domain.ResourceType.CALENDAR_LIST
 import com.sama.integration.google.calendar.domain.findAllCalendars
 import com.sama.integration.google.calendar.domain.findAllEvents
 import com.sama.integration.google.translatedGoogleException
+import com.sama.users.application.UserSettingsService
+import com.sama.users.domain.UserId
+import com.sama.users.domain.UserPermission
 import java.time.Clock
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -32,6 +38,9 @@ class GoogleCalendarSyncer(
     private val calendarEventRepository: CalendarEventRepository,
     private val calendarListSyncRepository: CalendarListSyncRepository,
     private val calendarListRepository: CalendarListRepository,
+    private val userSettingsService: UserSettingsService,
+    private val googleAccountRepository: GoogleAccountRepository,
+    private val userConnectionService: UserConnectionService,
     private val channelManager: GoogleChannelManager,
     private val clock: Clock
 ) {
@@ -145,6 +154,15 @@ class GoogleCalendarSyncer(
         }
 
         logger.info("Syncing GoogleAccount${accountId.id} Calendar#${calendarId}...")
+        val googleAccount = googleAccountRepository.findByIdOrThrow(accountId)
+        if (!googleAccount.linked) {
+            return
+        }
+        val userId = googleAccount.userId
+
+        val grantedPermissions = userSettingsService.find(userId).grantedPermissions
+        val pastEventContactScanEnabled = grantedPermissions.contains(UserPermission.PAST_EVENT_CONTACT_SCAN)
+
         val calendarService = googleServiceFactory.calendarService(accountId)
         try {
             val updatedSync = if (forceFullSync || calendarSync.needsFullSync(clock)) {
@@ -156,6 +174,11 @@ class GoogleCalendarSyncer(
                 calendarEventRepository.deleteBy(accountId, calendarId)
                 calendarEventRepository.saveAll(calendarEvents)
 
+                if (pastEventContactScanEnabled) {
+                    val attendeeEmails = events.attendeeEmails()
+                    userConnectionService.addDiscoveredUsers(userId, AddDiscoveredUsersCommand(attendeeEmails))
+                }
+
                 calendarSync.complete(syncToken!!, startDate to endDate, clock)
             } else {
                 val (events, timeZone, newSyncToken) = calendarService
@@ -164,6 +187,11 @@ class GoogleCalendarSyncer(
                 val (toAdd, toRemove) = events.partition { it.status in ACCEPTED_EVENT_STATUSES }
                 calendarEventRepository.saveAll(toAdd.toDomain(accountId, calendarId, timeZone))
                 calendarEventRepository.deleteAll(toRemove.map { it.toKey(accountId, calendarId) })
+
+                if (pastEventContactScanEnabled) {
+                    val attendeeEmails = events.attendeeEmails()
+                    userConnectionService.addDiscoveredUsers(userId, AddDiscoveredUsersCommand(attendeeEmails))
+                }
 
                 calendarSync.complete(newSyncToken!!, clock)
             }

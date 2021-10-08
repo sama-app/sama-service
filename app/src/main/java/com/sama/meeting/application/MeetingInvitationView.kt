@@ -8,7 +8,6 @@ import com.sama.meeting.configuration.toUrl
 import com.sama.meeting.domain.ProposedMeeting
 import com.sama.users.application.UserService
 import com.samskivert.mustache.Template
-import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter.ofLocalizedDateTime
 import java.time.format.DateTimeFormatter.ofLocalizedTime

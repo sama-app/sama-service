@@ -17,7 +17,7 @@ class UserSettingsApplicationService(
 ) : UserSettingsService {
 
     @Transactional
-    fun createUserSettings(userId: UserId): Boolean {
+    override fun create(userId: UserId): Boolean {
         val userSettingsDefaults = userSettingsDefaultsRepository.findById(userId)
         val userSettings = UserSettings.createWithDefaults(userId, userSettingsDefaults)
         userSettingsRepository.save(userSettings)
@@ -27,20 +27,11 @@ class UserSettingsApplicationService(
     @Transactional(readOnly = true)
     override fun find(userId: UserId): UserSettingsDTO {
         val userSettings = userSettingsRepository.findByIdOrThrow(userId)
-        return userSettings.let {
-            UserSettingsDTO(
-                it.locale,
-                it.timeZone,
-                it.format24HourTime,
-                it.dayWorkingHours
-                    .map { wh -> DayWorkingHoursDTO(wh.key, wh.value.startTime, wh.value.endTime) }
-                    .sortedBy { wh -> wh.dayOfWeek }
-            )
-        }
+        return userSettings.toDTO()
     }
 
     @Transactional
-    fun updateWorkingHours(userId: UserId, command: UpdateWorkingHoursCommand): Boolean {
+    override fun updateWorkingHours(userId: UserId, command: UpdateWorkingHoursCommand): Boolean {
         val workingHours = command.workingHours
             .associate { Pair(it.dayOfWeek, WorkingHours(it.startTime, it.endTime)) }
 
@@ -52,11 +43,56 @@ class UserSettingsApplicationService(
     }
 
     @Transactional
-    fun updateTimeZone(userId: UserId, command: UpdateTimeZoneCommand): Boolean {
+    override fun updateTimeZone(userId: UserId, command: UpdateTimeZoneCommand): Boolean {
         val userSettings = userSettingsRepository.findByIdOrThrow(userId)
             .updateTimeZone(command.timeZone)
 
         userSettingsRepository.save(userSettings)
         return true
     }
+
+    @Transactional
+    override fun updateMarketingPreferences(userId: UserId, command: UpdateMarketingPreferencesCommand): Boolean {
+        val userSettings = userSettingsRepository.findByIdOrThrow(userId)
+            .let {
+                if (command.newsletterSubscriptionEnabled) {
+                    it.enableNewsletterSubscription()
+                } else {
+                    it.disableNewsletterSubscription()
+                }
+            }
+
+        userSettingsRepository.save(userSettings)
+        return true
+    }
+
+    @Transactional
+    fun grantPermissions(userId: UserId, command: GrantUserPermissionsCommand): Boolean {
+        val userSettings = userSettingsRepository.findByIdOrThrow(userId)
+            .grantPermissions(command.permissions)
+
+        userSettingsRepository.save(userSettings)
+        return true
+    }
+
+    @Transactional
+    fun revokePermissions(userId: UserId, command: RevokeUserPermissionsCommand): Boolean {
+        val userSettings = userSettingsRepository.findByIdOrThrow(userId)
+            .revokePermissions(command.permissions)
+
+        userSettingsRepository.save(userSettings)
+        return true
+    }
+}
+
+fun UserSettings.toDTO(): UserSettingsDTO {
+    return UserSettingsDTO(
+        locale,
+        timeZone,
+        format24HourTime,
+        dayWorkingHours
+            .map { wh -> DayWorkingHoursDTO(wh.key, wh.value.startTime, wh.value.endTime) }
+            .sortedBy { wh -> wh.dayOfWeek },
+        grantedPermissions
+    )
 }

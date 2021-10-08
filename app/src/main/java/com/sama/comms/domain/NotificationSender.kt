@@ -3,5 +3,5 @@ package com.sama.comms.domain
 import com.sama.users.domain.UserId
 
 interface NotificationSender {
-    fun send(userId: UserId, notification: Notification)
+    fun send(receiverUserId: UserId, notification: Notification)
 }

@@ -6,7 +6,7 @@ import com.sama.meeting.domain.MeetingCode
 import com.sama.meeting.domain.MeetingId
 import com.sama.meeting.domain.MeetingIntentId
 import com.sama.meeting.domain.MeetingSlot
-import com.sama.meeting.domain.ProposedMeeting
+import com.sama.meeting.domain.SamaNonSamaProposedMeeting
 import com.sama.users.application.UserPublicDTO
 import com.sama.users.application.UserService
 import com.sama.users.domain.UserId
@@ -42,6 +42,13 @@ class MeetingViewTest {
 
     lateinit var underTest: MeetingView
 
+    private val _9am = ZonedDateTime.of(
+        LocalDate.of(2021, 7, 7),
+        LocalTime.of(9, 0), ZoneId.of("UTC")
+    )
+    private val _10am = _9am.plusHours(1)
+    private val _11am = _9am.plusHours(2)
+
     @BeforeEach
     fun setup() {
         underTest = MeetingView(
@@ -52,13 +59,6 @@ class MeetingViewTest {
 
     @Test
     fun render() {
-        val _9am = ZonedDateTime.of(
-            LocalDate.of(2021, 7, 7),
-            LocalTime.of(9, 0), ZoneId.of("UTC")
-        )
-        val _10am = _9am.plusHours(1)
-        val _11am = _9am.plusHours(2)
-
         val currentUserId = UserId(10)
         val initiatorId = UserId(1)
         val initiator = UserPublicDTO(UserPublicId.random(), "test", "test@meetsama.com")
@@ -71,21 +71,18 @@ class MeetingViewTest {
             .thenReturn(dynamicUrl)
 
         // act
-        val proposedSlots = listOf(
-            MeetingSlot(_9am, _9am.plusMinutes(15)),
-            MeetingSlot(_10am, _11am)
-        )
-        val slots = listOf(MeetingSlot(_10am, _11am))
+        val proposedSlots = listOf(MeetingSlot(_10am, _11am))
         val actual = underTest.render(
             currentUserId,
-            ProposedMeeting(
-                MeetingId(21), MeetingIntentId(11), initiatorId,
-                Duration.ofMinutes(15),
+            SamaNonSamaProposedMeeting(
+                MeetingId(21),
+                MeetingIntentId(11),
+                Duration.ofHours(1),
+                initiatorId,
                 proposedSlots,
                 meetingCode,
                 meetingTitle
-            ),
-            slots
+            )
         )
 
         // verify
@@ -97,6 +94,8 @@ class MeetingViewTest {
                 initiator.fullName,
                 initiator.email
             ),
+            recipient = null,
+            isReadOnly = false,
             isOwnMeeting = false,
             title = meetingTitle,
             appLinks = MeetingAppLinksDTO(dynamicUrl)
@@ -122,25 +121,28 @@ class MeetingViewTest {
         // act
         val actual = underTest.render(
             currentUserId,
-            ProposedMeeting(
-                MeetingId(21), MeetingIntentId(11), initiatorId,
-                Duration.ofMinutes(15),
-                emptyList(),
+            SamaNonSamaProposedMeeting(
+                MeetingId(21),
+                MeetingIntentId(11),
+                Duration.ofHours(1),
+                initiatorId,
+                listOf(MeetingSlot(_10am, _11am)),
                 meetingCode,
                 meetingTitle
-            ),
-            emptyList()
+            )
         )
 
         // verify
         val expectedUrl = "$scheme://$host/${meetingCode.code}"
         val expected = ProposedMeetingDTO(
-            proposedSlots = emptyList(),
+            proposedSlots = listOf(MeetingSlotDTO(_10am, _11am)),
             initiator = UserPublicDTO(
                 initiator.userId,
                 initiator.fullName,
                 initiator.email
             ),
+            recipient = null,
+            isReadOnly = false,
             isOwnMeeting = true,
             title = meetingTitle,
             appLinks = MeetingAppLinksDTO(dynamicUrl)

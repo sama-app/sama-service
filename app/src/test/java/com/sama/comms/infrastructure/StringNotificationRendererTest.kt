@@ -16,10 +16,10 @@ class StringNotificationRendererTest {
     @Test
     fun renderMeetingConfirmedSameTimeZone() {
         val timeZone = ZoneId.of("UTC")
-        val commsUser = CommsUser(UserId(1), timeZone, "test@meetsama.com")
+        val commsUser = CommsUser(UserId(1), timeZone, "test@meetsama.com", "Initiator")
         val actual = underTest.renderMeetingConfirmed(
-            commsUser,
             "attendee@meetsama.com",
+            commsUser,
             ZonedDateTime.of(
                 LocalDate.of(2021, 6, 1),
                 LocalTime.of(8, 0),
@@ -39,10 +39,10 @@ class StringNotificationRendererTest {
     @Test
     fun renderMeetingConfirmedDifferentTimeZone() {
         val timeZone = ZoneId.of("UTC+10")
-        val commsUser = CommsUser(UserId(1), timeZone, "test@meetsama.com")
+        val commsUser = CommsUser(UserId(1), timeZone, "test@meetsama.com", "Initiator")
         val actual = underTest.renderMeetingConfirmed(
-            commsUser,
             "attendee@meetsama.com",
+            commsUser,
             ZonedDateTime.of(
                 LocalDate.of(2021, 6, 1),
                 LocalTime.of(8, 0),

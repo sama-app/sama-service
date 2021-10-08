@@ -6,5 +6,8 @@ import java.time.ZoneId
 data class CommsUser(
     val userId: UserId,
     val timeZone: ZoneId,
-    val email: String
-)
+    val email: String,
+    val fullName: String?
+) {
+    val displayName = fullName ?: email
+}

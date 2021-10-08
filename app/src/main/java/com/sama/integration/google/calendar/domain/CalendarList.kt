@@ -17,7 +17,7 @@ data class CalendarList(
 }
 
 data class Calendar(
-    val timeZone: ZoneId,
+    val timeZone: ZoneId?,
     val selected: Boolean,
     val isOwner: Boolean
 ) {

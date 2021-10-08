@@ -58,7 +58,7 @@ class CalendarSyncTest {
     fun `is synced for current time`() = listOf(
         fixedClock to true,
         Clock.offset(fixedClock, Duration.ofSeconds(59)) to true,
-        Clock.offset(fixedClock, Duration.ofSeconds(61)) to false,
+        Clock.offset(fixedClock, Duration.ofHours(24)) to false,
     ).map { (clock, expected) ->
         dynamicTest("${clock.instant()} is synced: $expected") {
             assertThat(fullySynced.isSyncedFor(ZonedDateTime.now(clock), ZonedDateTime.now(clock), clock))

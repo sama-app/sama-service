@@ -19,10 +19,11 @@ data class CalendarEvent(
 )
 
 data class EventData(
-    var title: String? = null,
+    val title: String? = null,
     val allDay: Boolean,
     val attendeeCount: Int,
-    var recurringEventId: GoogleCalendarEventId? = null,
+    val recurringEventId: GoogleCalendarEventId? = null,
+    val created: ZonedDateTime? = null
 )
 
 data class AggregatedData(

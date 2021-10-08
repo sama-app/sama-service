@@ -6,6 +6,7 @@ import org.springframework.data.repository.Repository
 
 @DomainRepository
 interface GoogleAccountRepository : Repository<GoogleAccount, GoogleAccountId> {
+    fun findByIdOrThrow(googleAccountId: GoogleAccountId): GoogleAccount
     fun findByPublicIdOrThrow(googleAccountId: GoogleAccountPublicId): GoogleAccount
     fun findAllByUserId(userId: UserId): Collection<GoogleAccount>
     fun findByUserIdAndPrimary(userId: UserId): GoogleAccountId?

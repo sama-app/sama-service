@@ -10,14 +10,15 @@ data class MeetingIntent(
     val meetingIntentId: MeetingIntentId,
     val initiatorId: UserId,
     val duration: Duration,
-    val timezone: ZoneId,
+    val recipientId: UserId?,
+    val recipientTimeZone: ZoneId,
     val suggestedSlots: List<MeetingSlot>,
     val code: MeetingIntentCode? = null,
 ) {
-    private val minimumDuration: Duration = Duration.ofMinutes(15)
+    val isSamaSama = recipientId != null
 
     init {
-        if (duration < minimumDuration) {
+        if (duration < MEETING_SLOT_INTERVAL) {
             throw InvalidDurationException(duration)
         }
         suggestedSlots.validate()
@@ -28,25 +29,34 @@ data class MeetingIntent(
         meetingCode: MeetingCode,
         proposedSlots: List<MeetingSlot>,
         meetingTitle: String,
-    ): Result<ProposedMeeting> {
-        if (proposedSlots.isEmpty()) {
-            return Result.failure(InvalidMeetingProposalException("No slots proposed"))
-        }
-
-        kotlin.runCatching { proposedSlots.validate() }
-            .onFailure { return Result.failure(it) }
-
-        return Result.success(
-            ProposedMeeting(
+    ): ProposedMeeting {
+        return when (isSamaSama) {
+            true -> SamaSamaProposedMeeting(
                 meetingId,
                 meetingIntentId,
-                initiatorId,
                 duration,
+                initiatorId,
+                recipientId!!,
+                Actor.RECIPIENT,
+                proposedSlots.combineContinuous(),
+                emptyList(),
+                meetingCode,
+                meetingTitle
+            )
+            false -> SamaNonSamaProposedMeeting(
+                meetingId,
+                meetingIntentId,
+                duration,
+                initiatorId,
                 proposedSlots.combineContinuous(),
                 meetingCode,
                 meetingTitle
             )
-        )
+        }
+    }
+
+    fun isReadableBy(userId: UserId?): Boolean {
+        return initiatorId == userId
     }
 
     private fun List<MeetingSlot>.combineContinuous(): List<MeetingSlot> {

@@ -108,7 +108,7 @@ class SlotSuggestionServiceTestConfiguration {
 @ExtendWith(SpringExtension::class)
 @SpringBootTest(
     classes = [
-        SlotSuggestionServiceV2::class,
+        HeatMapSlotSuggestionService::class,
         HeatMapService::class,
         SlotSuggestionServiceTestConfiguration::class,
         SyncGoogleCalendarService::class,
@@ -132,14 +132,14 @@ class SlotSuggestionServiceTest {
     lateinit var clock: Clock
 
     @Autowired
-    lateinit var underTest: SlotSuggestionServiceV2
+    lateinit var underTest: HeatMapSlotSuggestionService
 
     @Test
     fun `non calendar user gets two suggestions today and one next week`() {
         setupPersona(nonCalendarUser)
 
         val suggestions =
-            underTest.suggestSlots(userId, SlotSuggestionRequest(Duration.ofHours(1), ZoneId.of("UTC"), 3))
+            underTest.suggestSlots(userId, SlotSuggestionRequest(Duration.ofHours(1), 3, ZoneId.of("UTC")))
 
         assertThat(suggestions.suggestions).hasSize(3)
 
@@ -155,7 +155,7 @@ class SlotSuggestionServiceTest {
         setupPersona(fullyBlockedCalendarUser)
 
         val suggestions =
-            underTest.suggestSlots(userId, SlotSuggestionRequest(Duration.ofHours(1), ZoneId.of("UTC"), 3))
+            underTest.suggestSlots(userId, SlotSuggestionRequest(Duration.ofHours(1), 3, ZoneId.of("UTC")))
 
         assertThat(suggestions.suggestions).hasSize(3)
 

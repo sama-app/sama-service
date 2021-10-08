@@ -14,6 +14,9 @@ class InvalidMeetingSlotException(slot: MeetingSlot) :
 class InvalidMeetingProposalException(message: String) :
     DomainValidationException("Meeting cannot be proposed: $message")
 
+class InvalidMeetingInitiationException(message: String) :
+    DomainValidationException("Meeting cannot be initiated: $message")
+
 class MeetingAlreadyConfirmedException(meetingCode: MeetingCode) :
     DomainEntityStatusException("already_confirmed", "Meeting#${meetingCode.code} already confirmed")
 

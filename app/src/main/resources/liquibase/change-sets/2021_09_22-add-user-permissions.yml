@@ -1,0 +1,15 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-meeting-actor
+      author: balys
+      changes:
+        - addColumn:
+            schemaName: sama
+            tableName: user_settings
+            columns:
+              - column:
+                  name: past_event_contact_scan_enabled
+                  type: BOOL
+                  defaultValue: false
+                  constraints:
+                    nullable: false

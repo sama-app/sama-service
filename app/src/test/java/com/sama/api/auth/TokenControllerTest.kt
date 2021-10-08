@@ -5,6 +5,7 @@ import com.sama.api.config.WebMvcConfiguration
 import com.sama.users.application.JwtPairDTO
 import com.sama.users.application.RefreshTokenCommand
 import com.sama.users.application.UserApplicationService
+import com.sama.users.application.UserTokenService
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.kotlin.eq
@@ -33,12 +34,12 @@ class TokenControllerTest(
     @Autowired val mockMvc: MockMvc
 ) {
     @MockBean
-    lateinit var userApplicationService: UserApplicationService
+    lateinit var userTokenService: UserTokenService
 
     @Test
     fun `refresh token`() {
         val refreshToken = "refresh-token"
-        whenever(userApplicationService.refreshToken(eq(RefreshTokenCommand(refreshToken))))
+        whenever(userTokenService.refreshToken(eq(RefreshTokenCommand(refreshToken))))
             .thenReturn(JwtPairDTO("access-token", "refresh-token"))
 
         val requestBody = """

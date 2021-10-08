@@ -6,13 +6,11 @@ import com.sama.meeting.domain.MeetingCode
 import com.sama.meeting.domain.MeetingId
 import com.sama.meeting.domain.MeetingIntentId
 import com.sama.meeting.domain.MeetingSlot
-import com.sama.meeting.domain.ProposedMeeting
+import com.sama.meeting.domain.SamaNonSamaProposedMeeting
 import com.sama.users.application.UserPublicDTO
 import com.sama.users.application.UserService
 import com.sama.users.domain.UserId
 import com.sama.users.domain.UserPublicId
-import com.sama.users.infrastructure.jpa.UserEntity
-import com.sama.users.infrastructure.jpa.UserJpaRepository
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.kotlin.whenever
@@ -23,7 +21,6 @@ import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.context.annotation.Bean
 import org.springframework.test.context.junit.jupiter.SpringExtension
 import java.time.*
-import java.util.*
 import kotlin.test.assertEquals
 
 private const val scheme = "https"
@@ -70,9 +67,9 @@ class MeetingInvitationViewTest {
             .thenReturn(initiator)
 
         val actual = underTest.render(
-            ProposedMeeting(
-                MeetingId(21), MeetingIntentId(11L), initiatorId,
-                Duration.ofMinutes(15),
+            SamaNonSamaProposedMeeting(
+                MeetingId(21), MeetingIntentId(11L), Duration.ofMinutes(15),
+                initiatorId,
                 listOf(
                     MeetingSlot(_10am, _11am),
                     MeetingSlot(_9am, _9am.plusMinutes(15))

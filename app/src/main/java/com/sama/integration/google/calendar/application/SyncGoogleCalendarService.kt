@@ -6,15 +6,22 @@ import com.google.api.services.calendar.model.CreateConferenceRequest
 import com.google.api.services.calendar.model.EventAttendee
 import com.google.api.services.calendar.model.EventDateTime
 import com.sama.common.ApplicationService
+import com.sama.common.component1
+import com.sama.common.component2
+import com.sama.common.to
+import com.sama.connection.application.AddDiscoveredUsersCommand
+import com.sama.connection.application.UserConnectionService
 import com.sama.integration.google.GoogleServiceFactory
 import com.sama.integration.google.NoPrimaryGoogleAccountException
 import com.sama.integration.google.auth.application.GoogleAccountService
 import com.sama.integration.google.auth.domain.GoogleAccountId
 import com.sama.integration.google.auth.domain.GoogleAccountRepository
+import com.sama.integration.google.GoogleSyncTokenInvalidatedException
 import com.sama.integration.google.calendar.domain.AggregatedData
 import com.sama.integration.google.calendar.domain.CalendarEvent
 import com.sama.integration.google.calendar.domain.CalendarEventRepository
 import com.sama.integration.google.calendar.domain.CalendarListSyncRepository
+import com.sama.integration.google.calendar.domain.CalendarSync
 import com.sama.integration.google.calendar.domain.CalendarSyncRepository
 import com.sama.integration.google.calendar.domain.GoogleCalendarEvent
 import com.sama.integration.google.calendar.domain.GoogleCalendarId
@@ -22,11 +29,15 @@ import com.sama.integration.google.calendar.domain.findAllEvents
 import com.sama.integration.google.calendar.domain.insert
 import com.sama.integration.google.translatedGoogleException
 import com.sama.integration.sentry.sentrySpan
+import com.sama.users.application.UserSettingsService
 import com.sama.users.domain.UserId
+import com.sama.users.domain.UserPermission
+import com.sama.users.domain.UserPermission.PAST_EVENT_CONTACT_SCAN
 import java.time.Clock
 import java.time.Instant
 import java.time.ZonedDateTime
 import java.util.UUID
+import org.springframework.dao.CannotAcquireLockException
 import liquibase.pro.packaged.it
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
@@ -115,7 +126,12 @@ class SyncGoogleCalendarService(
                     .setTimeZone(timeZone.id)
                 attendees = listOf(
                     EventAttendee().apply {
+                        email = command.initiatorEmail
+                        responseStatus = "accepted"
+                    },
+                    EventAttendee().apply {
                         email = command.recipientEmail
+                        responseStatus = "accepted"
                     },
                 )
                 summary = command.title
@@ -126,7 +142,6 @@ class SyncGoogleCalendarService(
                         conferenceSolutionKey = ConferenceSolutionKey().apply {
                             type = "hangoutsMeet"
                         }
-
                     }
                 }
             }

@@ -4,11 +4,15 @@ import com.sama.common.DomainEntity
 import com.sama.common.Factory
 import com.sama.common.ValueObject
 import java.time.DayOfWeek
-import java.time.DayOfWeek.*
+import java.time.DayOfWeek.FRIDAY
+import java.time.DayOfWeek.MONDAY
+import java.time.DayOfWeek.THURSDAY
+import java.time.DayOfWeek.TUESDAY
+import java.time.DayOfWeek.WEDNESDAY
 import java.time.LocalTime
 import java.time.ZoneId
-import java.util.*
-import javax.persistence.*
+import java.util.Locale
+import javax.persistence.Embeddable
 
 @DomainEntity
 data class UserSettings(
@@ -17,6 +21,8 @@ data class UserSettings(
     val timeZone: ZoneId,
     val format24HourTime: Boolean,
     val dayWorkingHours: Map<DayOfWeek, WorkingHours>,
+    val newsletterSubscriptionEnabled: Boolean,
+    val grantedPermissions: Set<UserPermission>,
 ) {
 
     @Factory
@@ -28,10 +34,11 @@ data class UserSettings(
                 timeZone = defaults?.timezone ?: ZoneId.of("Etc/GMT"),
                 format24HourTime = defaults?.format24HourTime ?: false,
                 dayWorkingHours = defaults?.workingHours ?: listOf(MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY)
-                    .associateWith { WorkingHours.nineToFive() }
+                    .associateWith { WorkingHours.nineToFive() },
+                newsletterSubscriptionEnabled = false,
+                grantedPermissions = emptySet()
             )
         }
-
     }
 
     fun updateWorkingHours(dayWorkingHours: Map<DayOfWeek, WorkingHours>): UserSettings {
@@ -41,13 +48,29 @@ data class UserSettings(
     fun updateTimeZone(timeZone: ZoneId): UserSettings {
         return copy(timeZone = timeZone)
     }
+
+    fun grantPermissions(permissions: Set<UserPermission>): UserSettings {
+        return copy(grantedPermissions = grantedPermissions + permissions)
+    }
+
+    fun revokePermissions(permissions: Set<UserPermission>): UserSettings {
+        return copy(grantedPermissions = grantedPermissions - permissions)
+    }
+
+    fun enableNewsletterSubscription(): UserSettings {
+        return copy(newsletterSubscriptionEnabled = true)
+    }
+
+    fun disableNewsletterSubscription(): UserSettings {
+        return copy(newsletterSubscriptionEnabled = false)
+    }
 }
 
 @ValueObject
 @Embeddable
 data class WorkingHours(
     val startTime: LocalTime,
-    val endTime: LocalTime
+    val endTime: LocalTime,
 ) {
     init {
         if (!startTime.isBefore(endTime)) {
@@ -63,4 +86,8 @@ data class WorkingHours(
             )
         }
     }
+}
+
+enum class UserPermission {
+    PAST_EVENT_CONTACT_SCAN
 }

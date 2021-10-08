@@ -43,7 +43,7 @@ class UserSettingsApplicationServiceIT : BaseApplicationIntegrationTest() {
     @Test
     fun `create user settings from defaults`() {
         val userId = initiator().id!!
-        underTest.createUserSettings(userId)
+        underTest.create(userId)
 
         val actual = underTest.find(userId)
 
@@ -52,7 +52,8 @@ class UserSettingsApplicationServiceIT : BaseApplicationIntegrationTest() {
             ZoneId.of("Europe/Rome"),
             true,
             listOf(MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY)
-                .map { DayWorkingHoursDTO(it, LocalTime.of(9, 0), LocalTime.of(17, 0)) }
+                .map { DayWorkingHoursDTO(it, LocalTime.of(9, 0), LocalTime.of(17, 0)) },
+ emptySet()
         )
 
 
@@ -62,7 +63,7 @@ class UserSettingsApplicationServiceIT : BaseApplicationIntegrationTest() {
     @Test
     fun `update user settings`() {
         val userId = initiator().id!!
-        underTest.createUserSettings(userId)
+        underTest.create(userId)
 
         val newTimeZone = ZoneId.of("Europe/Vilnius")
         underTest.updateTimeZone(userId, UpdateTimeZoneCommand(newTimeZone))

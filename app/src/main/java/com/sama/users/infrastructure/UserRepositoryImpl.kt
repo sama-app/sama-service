@@ -48,6 +48,13 @@ class UserRepositoryImpl(private val userJpaRepository: UserJpaRepository) : Use
         return userJpaRepository.findIdByEmailOrThrow(email).toUserId()
     }
 
+    override fun findIdsByEmail(emails: Set<String>): Set<UserId> {
+        if (emails.isEmpty()) {
+            return emptySet()
+        }
+        return userJpaRepository.findIdsByEmail(emails).mapTo(mutableSetOf()) { it.toUserId() }
+    }
+
     override fun findIdByPublicIdOrThrow(userPublicId: UserPublicId): UserId {
         return userJpaRepository.findIdByPublicIdOrThrow(userPublicId.id).toUserId()
     }

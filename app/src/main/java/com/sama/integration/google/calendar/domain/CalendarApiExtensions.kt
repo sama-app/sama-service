@@ -19,6 +19,7 @@ fun Calendar.insert(calendarId: String, googleCalendarEvent: GoogleCalendarEvent
         return events()
             .insert(calendarId, googleCalendarEvent)
             .setSendNotifications(true)
+            .setSendUpdates("all")
             .setConferenceDataVersion(1)
             .execute()
     }

@@ -10,11 +10,14 @@ import java.time.ZonedDateTime
 
 fun MeetingIntent.toDTO(): MeetingIntentDTO {
     return MeetingIntentDTO(
-        this.code!!,
-        this.duration.toMinutes(),
-        this.suggestedSlots.map { it.toDTO() }
+        code!!,
+        duration.toMinutes(),
+        suggestedSlots.toDTO()
     )
 }
+
+fun MeetingSlot.toDTO() = MeetingSlotDTO(this.startDateTime, this.endDateTime)
+fun Iterable<MeetingSlot>.toDTO()= map { it.toDTO() }
 
 data class MeetingIntentDTO(
     val meetingIntentCode: MeetingIntentCode,
@@ -22,25 +25,24 @@ data class MeetingIntentDTO(
     val suggestedSlots: List<MeetingSlotDTO>,
 )
 
-fun MeetingSlot.toDTO(): MeetingSlotDTO {
-    return MeetingSlotDTO(this.startDateTime, this.endDateTime)
-}
-
 data class MeetingSlotDTO(
     val startDateTime: ZonedDateTime,
     val endDateTime: ZonedDateTime
 )
 
-fun MeetingSlotDTO.toValueObject(): MeetingSlot {
-    return MeetingSlot(this.startDateTime, this.endDateTime)
-}
-
 data class ProposedMeetingDTO(
     val proposedSlots: List<MeetingSlotDTO>,
     val initiator: UserPublicDTO,
+    val recipient: UserPublicDTO?,
     val isOwnMeeting: Boolean?,
+    val isReadOnly: Boolean,
     val title: String,
     val appLinks: MeetingAppLinksDTO?
+)
+
+data class MeetingSlotSuggestionDTO(
+    val suggestedSlots: List<MeetingSlotDTO>,
+    val rejectedSlots: List<MeetingSlotDTO>
 )
 
 data class MeetingAppLinksDTO(val iosAppDownloadLink: String)
