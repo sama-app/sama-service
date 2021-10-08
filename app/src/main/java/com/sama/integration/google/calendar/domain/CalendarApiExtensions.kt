@@ -18,6 +18,7 @@ fun Calendar.insert(calendarId: String, googleCalendarEvent: GoogleCalendarEvent
         return events()
             .insert(calendarId, googleCalendarEvent)
             .setSendNotifications(true)
+            .setSendUpdates("all")
             .setConferenceDataVersion(1)
             .execute()
     }
@@ -30,7 +31,6 @@ fun Calendar.findAllEvents(
     singleEvents: Boolean = true,
 ) = findAllEvents(calendarId, startDate.atStartOfDay(UTC), endDate.atStartOfDay(UTC), null, singleEvents)
 
-
 fun Calendar.findAllEvents(
     calendarId: GoogleCalendarId,
     startDateTime: ZonedDateTime,
@@ -38,10 +38,8 @@ fun Calendar.findAllEvents(
     singleEvents: Boolean = true,
 ) = findAllEvents(calendarId, startDateTime, endDateTime, null, singleEvents)
 
-
 fun Calendar.findAllEvents(calendarId: GoogleCalendarId, syncToken: String, singleEvents: Boolean = true) =
     findAllEvents(calendarId, null, null, syncToken, singleEvents)
-
 
 private fun Calendar.findAllEvents(
     calendarId: GoogleCalendarId,
@@ -115,4 +113,29 @@ fun Calendar.findRecurrenceRules(
                 }
             }
     }
+}
+
+fun Calendar.findAllCalendars(syncToken: String?): GoogleCalendarListResponse {
+    sentrySpan(method = "Calendar.findAllCalendars") {
+        val calendars = mutableListOf<GoogleCalendar>()
+        var nextPageToken: String? = null
+        var nextSyncToken: String?
+        do {
+            val result = findCalendarsPage(nextPageToken, syncToken).execute()
+            nextPageToken = result.nextPageToken
+            nextSyncToken = result.nextSyncToken
+
+            calendars.addAll(result.items)
+        } while (nextPageToken != null)
+
+        return GoogleCalendarListResponse(calendars, nextSyncToken)
+    }
+}
+
+private fun Calendar.findCalendarsPage(nextPageToken: String?, syncToken: String? = null): Calendar.CalendarList.List {
+    val requestBuilder = this.calendarList().list()
+    requestBuilder.maxResults = 250
+    requestBuilder.syncToken = syncToken
+    nextPageToken?.run { requestBuilder.setPageToken(this) }
+    return requestBuilder
 }

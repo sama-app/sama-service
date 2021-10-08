@@ -68,7 +68,7 @@ class BaseApplicationIntegrationTest {
             )
         )
         userSettingsRepository.save(UserSettings(initiatorUser.id!!,
-            ENGLISH, UTC, true, emptyMap(), emptySet()))
+            ENGLISH, UTC, true, emptyMap(), false, emptySet()))
 
         recipientUser = userRepository.save(
             UserDetails(
@@ -78,7 +78,7 @@ class BaseApplicationIntegrationTest {
             )
         )
         userSettingsRepository.save(UserSettings(recipientUser.id!!,
-            ENGLISH, UTC, true, emptyMap(), emptySet()))
+            ENGLISH, UTC, true, emptyMap(), false, emptySet()))
     }
 
     @AfterEach

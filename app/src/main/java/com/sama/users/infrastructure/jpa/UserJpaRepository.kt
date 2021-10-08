@@ -3,6 +3,7 @@ package com.sama.users.infrastructure.jpa
 import com.sama.common.NotFoundException
 import java.util.UUID
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
 
@@ -25,6 +26,13 @@ interface UserJpaRepository : JpaRepository<UserEntity, Long> {
 
     @Query("select u.id from UserEntity u where publicId = ?1")
     fun findIdByPublicId(userPublicId: UUID): Long?
+
+    @Modifying(clearAutomatically = true)
+    @Query(
+        "DELETE FROM sama.user_firebase_credential WHERE user_id != :ownerUserId AND device_id IN :deviceIds",
+        nativeQuery = true
+    )
+    fun deleteFirebaseCredentials(ownerUserId: Long, deviceIds: Collection<UUID>)
 }
 
 fun UserJpaRepository.findByEmailOrThrow(email: String) = findByEmail(email)

@@ -3,13 +3,11 @@ package com.sama.integration.google.calendar.domain
 import com.sama.users.domain.UserId
 import java.time.ZonedDateTime
 
-
 data class GoogleCalendarEventKey(
     val userId: UserId,
     val calendarId: GoogleCalendarId,
     val eventId: GoogleCalendarEventId,
 )
-
 
 data class CalendarEvent(
     val key: GoogleCalendarEventKey,
@@ -20,10 +18,11 @@ data class CalendarEvent(
 )
 
 data class EventData(
-    var title: String? = null,
+    val title: String? = null,
     val allDay: Boolean,
     val attendeeCount: Int,
-    var recurringEventId: GoogleCalendarEventId? = null,
+    val recurringEventId: GoogleCalendarEventId? = null,
+    val created: ZonedDateTime? = null
 )
 
 data class AggregatedData(

@@ -6,13 +6,27 @@ import com.sama.users.domain.UserPermission
 import com.sama.users.domain.UserSettings
 import com.sama.users.domain.WorkingHours
 import com.sama.users.infrastructure.toUserId
-import org.springframework.data.annotation.LastModifiedDate
-import org.springframework.data.jpa.convert.threeten.Jsr310JpaConverters
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.ZoneId
-import java.util.*
-import javax.persistence.*
+import java.util.Locale
+import javax.persistence.CascadeType
+import javax.persistence.Column
+import javax.persistence.Convert
+import javax.persistence.Embedded
+import javax.persistence.Entity
+import javax.persistence.EnumType
+import javax.persistence.Enumerated
+import javax.persistence.FetchType
+import javax.persistence.GeneratedValue
+import javax.persistence.GenerationType
+import javax.persistence.Id
+import javax.persistence.JoinColumn
+import javax.persistence.MapKey
+import javax.persistence.OneToMany
+import javax.persistence.Table
+import org.springframework.data.annotation.LastModifiedDate
+import org.springframework.data.jpa.convert.threeten.Jsr310JpaConverters
 
 @Entity
 @Table(schema = "sama", name = "user_settings")
@@ -45,6 +59,8 @@ class UserSettingsEntity(
     @JoinColumn(name = "userId", nullable = false, updatable = false, insertable = false)
     @MapKey(name = "dayOfWeek")
     var dayWorkingHours: MutableMap<DayOfWeek, DayWorkingHoursEntity> = mutableMapOf()
+
+    var newsletterSubscriptionEnabledAt: Instant? = null
 
     @LastModifiedDate
     var updatedAt: Instant? = null
@@ -88,6 +104,12 @@ fun UserSettingsEntity.applyChanges(userSettings: UserSettings): UserSettingsEnt
     this.dayWorkingHours.entries
         .removeIf { it.key !in userSettings.dayWorkingHours.keys }
     this.pastEventContactScanEnabled = userSettings.grantedPermissions.contains(UserPermission.PAST_EVENT_CONTACT_SCAN)
+
+    if (newsletterSubscriptionEnabledAt != null && !userSettings.newsletterSubscriptionEnabled) {
+        this.newsletterSubscriptionEnabledAt = null
+    } else if (newsletterSubscriptionEnabledAt == null && userSettings.newsletterSubscriptionEnabled) {
+        this.newsletterSubscriptionEnabledAt = Instant.now()
+    }
     this.updatedAt = Instant.now()
     return this
 }

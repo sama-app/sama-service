@@ -63,6 +63,7 @@ class UserConnectionApplicationService(
         userConnectionRepository.delete(UserConnection(userId, recipientId))
     }
 
+    @Transactional
     override fun addDiscoveredUsers(userId: UserId, command: AddDiscoveredUsersCommand): Boolean {
         val discoveredUsers = discoveredUserListRepository.findById(userId)
         val discoveredUserIds = userService.findIdsByEmail(command.userEmails)

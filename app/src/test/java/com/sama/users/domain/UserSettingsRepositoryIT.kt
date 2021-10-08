@@ -16,9 +16,6 @@ import org.springframework.test.context.ContextConfiguration
 @ContextConfiguration(classes = [UserRepositoryImpl::class, UserSettingsRepositoryImpl::class])
 class UserSettingsRepositoryIT : BasePersistenceIT<UserSettingsRepository>() {
 
-    @MockBean
-    private lateinit var textEncryptor: TextEncryptor
-
     @Autowired
     private lateinit var userRepository: UserRepository
 
@@ -32,12 +29,26 @@ class UserSettingsRepositoryIT : BasePersistenceIT<UserSettingsRepository>() {
                 DayOfWeek.TUESDAY to WorkingHours.nineToFive(),
                 DayOfWeek.FRIDAY to WorkingHours.nineToFive()
             ),
- emptySet()
+            true,
+            emptySet()
         )
         underTest.save(toPersist)
 
-        val actual = underTest.findByIdOrThrow(user.id!!)
+        var actual = underTest.findByIdOrThrow(user.id!!)
         assertThat(actual).isEqualTo(toPersist)
+
+        val toUpdate = UserSettings(
+            user.id!!, Locale.ITALIAN, ZoneId.of("Europe/Rome"), false,
+            mapOf(
+                DayOfWeek.WEDNESDAY to WorkingHours.nineToFive(),
+            ),
+            false,
+            setOf(UserPermission.PAST_EVENT_CONTACT_SCAN)
+        )
+        underTest.save(toUpdate)
+
+        actual = underTest.findByIdOrThrow(user.id!!)
+        assertThat(actual).isEqualTo(toUpdate)
     }
 
 }

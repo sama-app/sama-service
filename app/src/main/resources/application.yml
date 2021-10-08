@@ -1,11 +1,15 @@
 server:
-  port: 3000
-  shutdown: graceful
   servlet:
     context-path: /
+  port: 3000
+  http2.enabled: true
+  ssl.enabled: false
+  shutdown: graceful
   error:
     include-message: always
     include-stacktrace: always
+
+
 
 spring:
   application:
@@ -53,6 +57,10 @@ spring:
     cache-names: blocks-by-user
     caffeine:
       spec: maximumSize=0
+  cloud:
+    discovery.client:
+        composite-indicator:
+          enabled: false
 
 management:
   endpoints:
@@ -65,9 +73,10 @@ management:
             enabled: true
       exposure:
         include:
-          ['configprops', 'env', 'health', 'info', 'logfile', 'loggers', 'prometheus', 'threaddump', 'caches']
+          ['health', 'info', 'prometheus', 'threaddump', 'caches']
   endpoint:
     health:
+      show-details: always
       probes:
         enabled: true
   info:
@@ -90,11 +99,6 @@ management:
       logback: true
       process: true
       system: true
-    distribution:
-      percentiles-histogram:
-        all: true
-      percentiles:
-        all: 0, 0.5, 0.75, 0.95, 0.99, 1.0
     tags:
       application: ${spring.application.name}
 
@@ -159,11 +163,11 @@ integration:
       api-url: "https://firebasedynamiclinks.googleapis.com/v1/shortLinks"
       fqdn: meetsamatest.page.link
       parameters:
-        ibi: com.meetsama.app.dev # BundleID
-        ifl: https://testflight.apple.com/join/F4cncGnA # TestFlight link (TODO: this is prod)
-        isi: # AppStoreID empty for local / dev
+        ibi: com.meetsama.sama.dev # BundleID
+        ifl: # Overrides `isi` if specified
+        isi: 1586527998 # AppStore ID
         efr: 0 # Do not skip preview page
-        ofl: https://testflight.apple.com/join/F4cncGnA # TestFlight link (TODO: this is prod)
+        ofl: https://apps.apple.com/lt/app/sama-scheduling-assistant/id1586527998
 
 sentry:
   dsn: https://b8c06b0aa478447bbdc330ad9fef42f1@o877832.ingest.sentry.io/5828928

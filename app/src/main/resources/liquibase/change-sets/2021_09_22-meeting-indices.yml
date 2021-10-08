@@ -1,0 +1,20 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-meeting-indices
+      author: balys
+      changes:
+        - createIndex:
+            schemaName: sama
+            tableName: meeting_proposed_slot
+            columns:
+              - column:
+                  name: meeting_id
+            indexName: IDX_meeting_id
+
+        - createIndex:
+            schemaName: sama
+            tableName: meeting
+            columns:
+              - column:
+                  name: meeting_intent_id
+            indexName: IDX_meeting_intent_id

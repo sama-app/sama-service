@@ -170,10 +170,12 @@ class SlotSuggestionServiceTest {
 
         val now = ZonedDateTime.now(clock)
 
-        given(googleCalendarService.findEvents(userId,
-            "primary",
-            now.minusDays(config.historicalDays),
-            now.plusDays(config.futureDays)))
-            .willReturn(persona.pastBlocks().plus(persona.futureBlocks()))
+        given(
+            googleCalendarService.findEvents(
+                userId,
+                now.minusDays(config.historicalDays),
+                now.plusDays(config.futureDays)
+            )
+        ).willReturn(persona.pastBlocks().plus(persona.futureBlocks()))
     }
 }

@@ -38,6 +38,7 @@ fun UserSettingsEntity.toDomainObject(): UserSettings {
         timezone!!,
         format24HourTime!!,
         dayWorkingHours.mapValues { it.value.workingHours },
+        newsletterSubscriptionEnabledAt != null,
         setOfNotNull(
             if (pastEventContactScanEnabled!!) {
                 PAST_EVENT_CONTACT_SCAN

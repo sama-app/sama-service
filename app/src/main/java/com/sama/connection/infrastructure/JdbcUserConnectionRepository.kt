@@ -46,7 +46,7 @@ class JdbcUserConnectionRepository(private val namedParameterJdbcTemplate: Named
             """,
             namedParameters,
             Boolean::class.java
-        )
+        )!!
     }
 
     override fun save(userConnection: UserConnection) {

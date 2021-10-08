@@ -1,7 +1,7 @@
 package com.sama.api.auth
 
 import com.sama.users.application.RefreshTokenCommand
-import com.sama.users.application.UserApplicationService
+import com.sama.users.application.UserTokenService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.MediaType.APPLICATION_JSON_VALUE
@@ -11,9 +11,7 @@ import org.springframework.web.bind.annotation.RestController
 
 @Tag(name = "auth")
 @RestController
-class TokenController(
-    private val userApplicationService: UserApplicationService
-) {
+class TokenController(private val userTokenService: UserTokenService) {
 
     @Operation(summary = "Acquire a new authentication JWT pair using a refresh token")
     @PostMapping(
@@ -22,6 +20,5 @@ class TokenController(
         consumes = [APPLICATION_JSON_VALUE]
     )
     fun refreshToken(@RequestBody command: RefreshTokenCommand) =
-        userApplicationService.refreshToken(command)
-
+        userTokenService.refreshToken(command)
 }

@@ -17,7 +17,7 @@ class UserSettingsApplicationService(
 ) : UserSettingsService {
 
     @Transactional
-    fun createUserSettings(userId: UserId): Boolean {
+    override fun create(userId: UserId): Boolean {
         val userSettingsDefaults = userSettingsDefaultsRepository.findByIdOrNull(userId)
         val userSettings = UserSettings.createWithDefaults(userId, userSettingsDefaults)
         userSettingsRepository.save(userSettings)
@@ -31,7 +31,7 @@ class UserSettingsApplicationService(
     }
 
     @Transactional
-    fun updateWorkingHours(userId: UserId, command: UpdateWorkingHoursCommand): Boolean {
+    override fun updateWorkingHours(userId: UserId, command: UpdateWorkingHoursCommand): Boolean {
         val workingHours = command.workingHours
             .associate { Pair(it.dayOfWeek, WorkingHours(it.startTime, it.endTime)) }
 
@@ -43,9 +43,24 @@ class UserSettingsApplicationService(
     }
 
     @Transactional
-    fun updateTimeZone(userId: UserId, command: UpdateTimeZoneCommand): Boolean {
+    override fun updateTimeZone(userId: UserId, command: UpdateTimeZoneCommand): Boolean {
         val userSettings = userSettingsRepository.findByIdOrThrow(userId)
             .updateTimeZone(command.timeZone)
+
+        userSettingsRepository.save(userSettings)
+        return true
+    }
+
+    @Transactional
+    override fun updateMarketingPreferences(userId: UserId, command: UpdateMarketingPreferencesCommand): Boolean {
+        val userSettings = userSettingsRepository.findByIdOrThrow(userId)
+            .let {
+                if (command.newsletterSubscriptionEnabled) {
+                    it.enableNewsletterSubscription()
+                } else {
+                    it.disableNewsletterSubscription()
+                }
+            }
 
         userSettingsRepository.save(userSettings)
         return true

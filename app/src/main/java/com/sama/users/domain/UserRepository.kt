@@ -20,7 +20,7 @@ interface UserRepository : Repository<UserDetails, UserId> {
     fun findDeviceRegistrationsByIdOrThrow(userId: UserId): UserDeviceRegistrations
 
     fun save(userDetails: UserDetails): UserDetails
-    fun save(userDeviceRegistrations: UserDeviceRegistrations): UserDeviceRegistrations
+    fun save(user: UserDeviceRegistrations): UserDeviceRegistrations
 
     fun deleteAll()
 }

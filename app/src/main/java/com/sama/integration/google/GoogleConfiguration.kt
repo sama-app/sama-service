@@ -69,7 +69,6 @@ class GoogleConfiguration() {
         )
             .setDataStoreFactory(googleCredentialDataStoreFactory)
             .setAccessType("offline")
-            .setApprovalPrompt("auto")
             .build()
     }
 

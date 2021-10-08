@@ -40,7 +40,7 @@ class JdbcConnectionRequestRepository(private val namedParameterJdbcTemplate: Na
                 """.trimIndent(),
                 namedParameters,
                 rowMapper
-            )
+            )!!
         } catch (e: EmptyResultDataAccessException) {
             throw NotFoundException(ConnectionRequest::class, connectionRequestId)
         }

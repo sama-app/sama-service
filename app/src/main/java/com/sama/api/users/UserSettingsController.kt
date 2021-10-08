@@ -3,6 +3,7 @@ package com.sama.api.users
 import com.sama.api.config.AuthUserId
 import com.sama.users.application.GrantUserPermissionsCommand
 import com.sama.users.application.RevokeUserPermissionsCommand
+import com.sama.users.application.UpdateMarketingPreferencesCommand
 import com.sama.users.application.UpdateTimeZoneCommand
 import com.sama.users.application.UpdateWorkingHoursCommand
 import com.sama.users.application.UserSettingsApplicationService
@@ -77,4 +78,15 @@ class UserSettingsController(
     )
     fun revokePermissions(@AuthUserId userId: UserId?, @RequestBody command: RevokeUserPermissionsCommand) =
         userSettingsApplicationService.revokePermissions(userId!!, command)
+
+    @Operation(
+        summary = "Update user marketing preferences",
+        security = [SecurityRequirement(name = "user-auth")]
+    )
+    @PostMapping(
+        "/api/user/me/update-marketing-preferences",
+        consumes = [APPLICATION_JSON_VALUE]
+    )
+    fun updateMarketingPreferences(@AuthUserId userId: UserId?, @RequestBody command: UpdateMarketingPreferencesCommand) =
+        userSettingsApplicationService.updateMarketingPreferences(userId!!, command)
 }

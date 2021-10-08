@@ -16,14 +16,14 @@ spring:
   jpa:
     show-sql: false
   task:
-    scheduling.pool.size: 2
+    scheduling.pool.size: 8
   cache:
     cache-names: blocks-by-user
     caffeine:
       spec: maximumSize=1000,expireAfterAccess=12h
 
 logging.level:
-  org.springframework.jdbc.core: DEBUG
+  org.springframework.jdbc.core: WARN
 
 springdoc:
   api-docs:
@@ -69,12 +69,13 @@ integration:
     app-link:
       fqdn: meetsama.page.link
       parameters:
-        ibi: com.meetsama.app # BundleID
-        ifl: https://testflight.apple.com/join/F4cncGnA # TODO: removed when released
-        isi: # TODO: AppStoreID when released
+        ibi: com.meetsama.sama # BundleID
+        ifl: # Overrides `isi` if specified
+        isi: 1586527998 # AppStore ID
         efr: 0 # Do not skip preview page
+        ofl: https://apps.apple.com/lt/app/sama-scheduling-assistant/id1586527998
 
 sentry:
   environment: prod
   debug: false
-  traces-sample-rate: 0.1
+  traces-sample-rate: 0.3
