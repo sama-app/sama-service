@@ -2,13 +2,14 @@ package com.sama.api.integration.google
 
 import com.sama.integration.google.calendar.application.GoogleChannelNotification
 import com.sama.integration.google.calendar.application.GoogleChannelNotificationReceiver
+import io.swagger.v3.oas.annotations.Hidden
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RestController
 
-
+@Hidden
 @Tag(name = "integration.google")
 @RestController
 class GoogleChannelNotificationController(

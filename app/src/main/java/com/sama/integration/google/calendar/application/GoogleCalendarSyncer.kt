@@ -22,7 +22,6 @@ import com.sama.integration.google.calendar.domain.findAllCalendars
 import com.sama.integration.google.calendar.domain.findAllEvents
 import com.sama.integration.google.translatedGoogleException
 import com.sama.users.application.UserSettingsService
-import com.sama.users.domain.UserId
 import com.sama.users.domain.UserPermission
 import java.time.Clock
 import org.slf4j.Logger
@@ -63,6 +62,13 @@ class GoogleCalendarSyncer(
         calendarListSyncRepository.deleteBy(accountId)
         val syncedCalendars = calendarSyncRepository.findAllCalendarIds(accountId)
         syncedCalendars.forEach { disableCalendarSync(accountId, it) }
+    }
+
+    @Transactional
+    fun markCalendarListNeedsSync(accountId: GoogleAccountId) {
+        val calendarSync = calendarListSyncRepository.find(accountId)?.forceSync(clock)
+        requireNotNull(calendarSync)
+        calendarListSyncRepository.save(calendarSync)
     }
 
     @Transactional
@@ -121,7 +127,6 @@ class GoogleCalendarSyncer(
                 calendarListSyncRepository.save(updatedSync)
             }
         }
-
     }
 
     @Transactional
@@ -141,6 +146,13 @@ class GoogleCalendarSyncer(
         if (calendarSync != null) {
             calendarSyncRepository.delete(accountId, calendarId)
         }
+    }
+
+    @Transactional
+    fun markCalendarNeedsSync(accountId: GoogleAccountId, calendarId: GoogleCalendarId) {
+        val calendarSync = calendarSyncRepository.find(accountId, calendarId)?.forceSync(clock)
+        requireNotNull(calendarSync)
+        calendarSyncRepository.save(calendarSync)
     }
 
     @Transactional

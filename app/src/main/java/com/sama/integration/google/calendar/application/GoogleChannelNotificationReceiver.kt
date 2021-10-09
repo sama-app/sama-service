@@ -1,11 +1,14 @@
 package com.sama.integration.google.calendar.application
 
+import com.sama.common.afterCommit
 import com.sama.common.findByIdOrThrow
 import com.sama.integration.google.calendar.domain.ChannelRepository
 import com.sama.integration.google.calendar.domain.ResourceType
+import java.time.Instant
 import java.util.UUID
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.scheduling.TaskScheduler
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 
@@ -21,7 +24,8 @@ data class GoogleChannelNotification(
 @Component
 class GoogleChannelNotificationReceiver(
     private val channelRepository: ChannelRepository,
-    private val calendarSyncer: GoogleCalendarSyncer
+    private val calendarSyncer: GoogleCalendarSyncer,
+    private val taskScheduler: TaskScheduler,
 ) {
     private var logger: Logger = LoggerFactory.getLogger(GoogleChannelNotificationReceiver::class.java)
 
@@ -31,18 +35,30 @@ class GoogleChannelNotificationReceiver(
     @Transactional
     fun receive(notification: GoogleChannelNotification) {
         try {
-            logger.debug("Received notification for Channel#${notification.channelId}")
+            logger.info("Received notification for Channel#${notification.channelId}")
             val channelId = UUID.fromString(notification.channelId)
             val channel = channelRepository.findByIdOrThrow(channelId)
                 .receiveMessage(notification)
 
             when (channel.resourceType) {
                 ResourceType.CALENDAR_LIST -> {
-                    calendarSyncer.syncUserCalendarList(channel.googleAccountId)
+                    calendarSyncer.markCalendarListNeedsSync(channel.googleAccountId)
+                    afterCommit {
+                        taskScheduler.schedule(
+                            { calendarSyncer.syncUserCalendarList(channel.googleAccountId) },
+                            Instant.now()
+                        )
+                    }
                 }
                 ResourceType.CALENDAR -> {
                     check(channel.resourceId != null) { "Received notification for invalid channel: ${channel.debugString()}" }
-                    calendarSyncer.syncUserCalendar(channel.googleAccountId, channel.resourceId)
+                    calendarSyncer.markCalendarNeedsSync(channel.googleAccountId, channel.resourceId)
+                    afterCommit {
+                        taskScheduler.schedule(
+                            { calendarSyncer.syncUserCalendar(channel.googleAccountId, channel.resourceId) },
+                            Instant.now()
+                        )
+                    }
                 }
             }
 
