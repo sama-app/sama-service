@@ -76,6 +76,16 @@ class JdbcGoogleAccountRepository(private val jdbcTemplate: NamedParameterJdbcTe
         )
     }
 
+    override fun findAllIds(): Collection<GoogleAccountId> {
+        return jdbcTemplate.queryForList(
+            """
+                    SELECT id FROM sama.user_google_account 
+            """,
+            MapSqlParameterSource(),
+            Long::class.java
+        ).map { GoogleAccountId(it) }
+    }
+
     override fun findByUserIdAndPrimary(userId: UserId): GoogleAccountId? {
         return jdbcTemplate.queryForObject(
             """

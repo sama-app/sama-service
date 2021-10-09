@@ -51,6 +51,7 @@ class WebSecurityConfiguration(
             .antMatchers(HttpMethod.POST, "/api/integration/google/channel-notification").permitAll()
             .antMatchers(HttpMethod.GET, "/api/__debug/auth/**").permitAll()
             .antMatchers(HttpMethod.GET, "/api/__debug/auth/link-google-account").authenticated()
+            .antMatchers(HttpMethod.POST, "/api/__migration/**").permitAll()
             // Actuator
             .antMatchers(HttpMethod.GET, "/__mon/**").permitAll()
             // All other requests require authentication
