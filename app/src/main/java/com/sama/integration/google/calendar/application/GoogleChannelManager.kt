@@ -28,6 +28,12 @@ class GoogleChannelManager(
             return
         }
 
+        try {
+            closeChannel(accountId, resourceType, resourceId)
+        } catch (e: Exception) {
+            logger.debug("Could not close channel for GoogleAccount${accountId.id} $resourceType: $resourceId: ${e.message}", e)
+        }
+
         val channelId = Channel.newId()
         val token = Channel.newToken()
 
