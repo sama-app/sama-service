@@ -7,6 +7,7 @@ import com.sama.connection.application.AddDiscoveredUsersCommand
 import com.sama.connection.application.UserConnectionService
 import com.sama.integration.google.GoogleServiceFactory
 import com.sama.integration.google.GoogleSyncTokenInvalidatedException
+import com.sama.integration.google.SyncConfiguration
 import com.sama.integration.google.auth.domain.GoogleAccountId
 import com.sama.integration.google.auth.domain.GoogleAccountRepository
 import com.sama.integration.google.calendar.domain.ACCEPTED_EVENT_STATUSES
@@ -45,6 +46,7 @@ class GoogleCalendarSyncer(
     private val googleAccountRepository: GoogleAccountRepository,
     private val userConnectionService: UserConnectionService,
     private val channelManager: GoogleChannelManager,
+    private val syncConfiguration: SyncConfiguration,
     private val clock: Clock
 ) {
     private var logger: Logger = LoggerFactory.getLogger(GoogleCalendarSyncer::class.java)
@@ -117,7 +119,7 @@ class GoogleCalendarSyncer(
 
             calendarListRepository.save(newCalendarList)
 
-            val updatedSync = calendarListSync.complete(newSyncToken!!, clock)
+            val updatedSync = calendarListSync.complete(newSyncToken!!, syncConfiguration, clock)
             calendarListSyncRepository.save(updatedSync)
             logger.info("Completed sync for GoogleAccount${accountId.id} CalendarList...")
         } catch (e: Exception) {
@@ -127,7 +129,7 @@ class GoogleCalendarSyncer(
                 val updatedSync = calendarListSync.reset(clock)
                 calendarListSyncRepository.save(updatedSync)
             } else {
-                val updatedSync = calendarListSync.fail(clock)
+                val updatedSync = calendarListSync.fail(syncConfiguration, clock)
                 logger.error(
                     "Failed to sync CalendarList for GoogleAccount#${accountId.id} ${updatedSync.failedSyncCount} times",
                     e
@@ -203,7 +205,7 @@ class GoogleCalendarSyncer(
                     userConnectionService.addDiscoveredUsers(userId, AddDiscoveredUsersCommand(attendeeEmails))
                 }
 
-                calendarSync.complete(syncToken!!, startDate to endDate, clock)
+                calendarSync.complete(syncToken!!, startDate to endDate, syncConfiguration, clock)
             } else {
                 val (events, timeZone, newSyncToken) = calendarService
                     .findAllEvents(calendarId, calendarSync.syncToken!!)
@@ -217,7 +219,7 @@ class GoogleCalendarSyncer(
                     userConnectionService.addDiscoveredUsers(userId, AddDiscoveredUsersCommand(attendeeEmails))
                 }
 
-                calendarSync.complete(newSyncToken!!, clock)
+                calendarSync.complete(newSyncToken!!, syncConfiguration, clock)
             }
 
             calendarSyncRepository.save(updatedSync)
@@ -230,7 +232,7 @@ class GoogleCalendarSyncer(
                 calendarEventRepository.deleteBy(accountId, calendarId)
                 calendarSyncRepository.save(updated)
             } else {
-                val updated = calendarSync.fail(clock)
+                val updated = calendarSync.fail(syncConfiguration, clock)
                 logger.error("Failed to sync Calendar for GoogleAccount${accountId.id} ${updated.failedSyncCount} times", e)
                 calendarSyncRepository.save(updated)
             }

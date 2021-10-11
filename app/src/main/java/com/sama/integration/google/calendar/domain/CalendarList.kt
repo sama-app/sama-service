@@ -29,7 +29,7 @@ typealias GoogleCalendar = CalendarListEntry
 typealias GoogleCalendarId = String
 
 data class GoogleCalendarListResponse(
-    val calendar: List<GoogleCalendar>, val syncToken: String?
+    val calendars: List<GoogleCalendar>, val syncToken: String?
 )
 
 fun Collection<GoogleCalendar>.toDomain(accountId: GoogleAccountId): CalendarList {

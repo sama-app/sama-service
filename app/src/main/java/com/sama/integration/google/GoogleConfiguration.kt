@@ -90,3 +90,10 @@ class ChannelConfiguration(
     val expiresInHours: Long,
     val cleanupLeadTimeHours: Long
 )
+
+@ConstructorBinding
+@ConfigurationProperties(prefix = "integration.google.sync")
+class SyncConfiguration(
+    val pollingIntervalSeconds: Long,
+    val retryIntervalSeconds: Long
+)

@@ -2,6 +2,7 @@ package com.sama.integration.google.calendar.domain
 
 import com.google.common.math.IntMath.pow
 import com.sama.common.to
+import com.sama.integration.google.SyncConfiguration
 import com.sama.integration.google.auth.domain.GoogleAccountId
 import java.time.Clock
 import java.time.Duration
@@ -20,11 +21,7 @@ data class CalendarSync(
     val syncedRange: LocalDateRange? = null,
     val lastSynced: Instant? = null,
 ) {
-
     companion object {
-        val nextSyncInterval: Duration = Duration.ofHours(12)
-        val syncRetryInterval: Duration = Duration.ofSeconds(60)
-        
         const val syncPastInMonths = 6L
         const val syncFutureInMonths = 3L
         const val fullSyncCutOffDays = 7L
@@ -63,19 +60,15 @@ data class CalendarSync(
             return false
         }
 
-        if (lastSynced!!.plus(nextSyncInterval).isBefore(clock.instant())) {
-            return false
-        }
-
         val requiredRange = startDateTime.withZoneSameInstant(UTC).toLocalDate() to
                 endDateTime.withZoneSameInstant(UTC).toLocalDate()
 
         return syncedRange!!.encloses(requiredRange)
     }
 
-    fun complete(syncToken: String, syncedRange: LocalDateRange, clock: Clock): CalendarSync {
+    fun complete(syncToken: String, syncedRange: LocalDateRange, config: SyncConfiguration, clock: Clock): CalendarSync {
         return copy(
-            nextSyncAt = clock.instant().plus(nextSyncInterval),
+            nextSyncAt = clock.instant().plusSeconds(config.pollingIntervalSeconds),
             failedSyncCount = 0,
             syncToken = syncToken,
             syncedRange = syncedRange,
@@ -83,13 +76,14 @@ data class CalendarSync(
         )
     }
 
-    fun complete(syncToken: String, clock: Clock): CalendarSync {
-        return complete(syncToken, syncedRange!!, clock)
+    fun complete(syncToken: String, config: SyncConfiguration, clock: Clock): CalendarSync {
+        return complete(syncToken, syncedRange!!, config, clock)
     }
 
-    fun fail(clock: Clock): CalendarSync {
+    fun fail(config: SyncConfiguration, clock: Clock): CalendarSync {
         val failCount = failedSyncCount + 1
-        val nextSyncDelay = syncRetryInterval.multipliedBy(pow(failCount, 2).toLong())
+        val nextSyncDelay = Duration.ofSeconds(config.retryIntervalSeconds)
+            .multipliedBy(pow(failCount, 2).toLong())
         return copy(
             failedSyncCount = failCount,
             nextSyncAt = clock.instant().plus(nextSyncDelay)
