@@ -92,6 +92,8 @@ private fun Calendar.findEventsPage(
         requestBuilder.timeMin = startDateTime?.toGoogleCalendarDateTime()
         requestBuilder.timeMax = endDateTime?.toGoogleCalendarDateTime()
     }
+    requestBuilder.fields =
+        "nextPageToken,nextSyncToken,timeZone,items(id,status,start,end,summary,attendees,recurringEventId,created)"
 
     nextPageToken?.run { requestBuilder.setPageToken(this) }
     return requestBuilder
@@ -143,6 +145,7 @@ private fun Calendar.findCalendarsPage(nextPageToken: String?, syncToken: String
     val requestBuilder = this.calendarList().list()
     requestBuilder.maxResults = 250
     requestBuilder.syncToken = syncToken
+    requestBuilder.fields = "nextPageToken,nextSyncToken,items(id,timeZone,accessRole,primary,selected)"
     nextPageToken?.run { requestBuilder.setPageToken(this) }
     return requestBuilder
 }
