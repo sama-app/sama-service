@@ -1,6 +1,7 @@
 package com.sama.integration.google.calendar.application
 
 import com.sama.integration.google.ChannelConfiguration
+import com.sama.integration.google.GoogleNotFoundException
 import com.sama.integration.google.GoogleServiceFactory
 import com.sama.integration.google.auth.domain.GoogleAccountId
 import com.sama.integration.google.auth.domain.GoogleAccountRepository
@@ -103,7 +104,10 @@ class GoogleChannelManager(
                 channelRepository.save(channel.close())
             } catch (e: Exception) {
                 logger.error("Error closing channel for ${channel.debugString()}...", e)
-                throw translatedGoogleException(e)
+                when (val googleException = translatedGoogleException(e)) {
+                    is GoogleNotFoundException -> channelRepository.delete(channel)
+                    else -> throw googleException
+                }
             }
 
             logger.info("Channel closed for ${channel.debugString()}...")

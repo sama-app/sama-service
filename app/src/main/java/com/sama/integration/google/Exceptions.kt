@@ -17,6 +17,7 @@ fun translatedGoogleException(ex: Throwable): Throwable {
                     GoogleInsufficientPermissionsException(ex)
                 }
             }
+            404 -> GoogleNotFoundException(ex)
             429 -> GoogleApiRateLimitException(ex)
             410 -> GoogleSyncTokenInvalidatedException(ex)
             else -> GoogleUnhandledException(ex)
@@ -38,6 +39,8 @@ class GoogleInsufficientPermissionsException(originalEx: Exception) :
     HasReason {
     override val reason: String = "google_insufficient_permissions"
 }
+
+class GoogleNotFoundException(originalEx: GoogleJsonResponseException) : GoogleException("Not Found", originalEx)
 
 class GoogleSyncTokenInvalidatedException(originalEx: GoogleJsonResponseException) :
     GoogleException("Sync token invalidated", originalEx)
