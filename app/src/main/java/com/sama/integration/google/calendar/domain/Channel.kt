@@ -102,9 +102,6 @@ data class Channel(
     }
 
     fun close(): Channel {
-        if (status == CLOSED) {
-            throw ChannelClosedException(id)
-        }
         return copy(status = CLOSED)
     }
 

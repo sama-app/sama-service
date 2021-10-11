@@ -107,14 +107,16 @@ class GoogleChannelManager(
             .filter { it.channelId != excludeChannelId && it.resourceId == resourceId }
             .forEach { channel ->
                 try {
+                    channelRepository.save(channel.close())
                     val calendarService = googleServiceFactory.calendarService(accountId)
                     calendarService.stopChannel(channel.id, channel.externalResourceId).execute()
-                    channelRepository.save(channel.close())
                 } catch (e: Exception) {
-                    logger.error("Error closing channel for ${channel.debugString()}...", e)
                     when (val googleException = translatedGoogleException(e)) {
-                        is GoogleNotFoundException -> channelRepository.delete(channel)
-                        else -> throw googleException
+                        is GoogleNotFoundException -> return
+                        else -> {
+                            logger.error("Error closing channel for ${channel.debugString()}...", e)
+                            throw googleException
+                        }
                     }
                 }
 
