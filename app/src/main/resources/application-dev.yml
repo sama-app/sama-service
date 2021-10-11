@@ -41,6 +41,8 @@ integration:
       password: # Loaded from AWS SM
       salt: # Loaded from AWS SM
     sync:
+      polling-interval-seconds: 3600
+      retry-interval-seconds: 30
       channel:
         enabled: true
         callback-url: https://app.meetsama.com.smtest.it/api/integration/google/channel-notification

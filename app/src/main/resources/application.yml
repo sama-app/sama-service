@@ -156,6 +156,8 @@ integration:
       password: 632c851465175f96507475446996dd9b79a44a66f6205bee473f8647ab696a5b43f671da75f47f9356e945dd815e5d3cca222ff3260c9f727ae55da78614e24f
       salt: 16dc92db6028e4ec
     sync:
+      polling-interval-seconds: 60
+      retry-interval-seconds: 30
       channel:
         enabled: false
         callback-url: http://localhost:3000/api/integration/google/channel-notification
