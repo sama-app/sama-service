@@ -16,6 +16,7 @@ import com.sama.integration.sentry.sentrySpan
 import java.time.Instant
 import java.time.temporal.ChronoUnit.DAYS
 import java.time.temporal.ChronoUnit.HOURS
+import java.util.UUID
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
@@ -37,12 +38,6 @@ class GoogleChannelManager(
     fun createChannel(accountId: GoogleAccountId, resourceType: ResourceType, resourceId: String? = null) {
         if (!channelConfiguration.enabled) {
             return
-        }
-
-        try {
-            closeChannel(accountId, resourceType, resourceId)
-        } catch (e: Exception) {
-            logger.warn("Could not close channel for GoogleAccount${accountId.id} $resourceType: $resourceId: ${e.message}", e)
         }
 
         val channelId = Channel.newId()
@@ -88,17 +83,28 @@ class GoogleChannelManager(
             logger.error("Reverted channel creation for GoogleAccount${accountId.id} $resourceType: $resourceId...", e)
             throw e
         }
+
+        try {
+            // close and stop all channels of the same type, except the newly created one
+            closeChannels(accountId, resourceType, resourceId, excludeChannelId = channelId)
+        } catch (e: Exception) {
+            logger.warn("Could not close channels for GoogleAccount${accountId.id} $resourceType: $resourceId: ${e.message}", e)
+        }
     }
 
-    fun closeChannel(accountId: GoogleAccountId, resourceType: ResourceType, resourceId: String? = null) {
+    fun closeChannels(
+        accountId: GoogleAccountId,
+        resourceType: ResourceType,
+        resourceId: String? = null,
+        excludeChannelId: UUID? = null
+    ) {
         if (!channelConfiguration.enabled) {
             return
         }
 
         val channels = channelRepository.findByGoogleAccountIdAndResourceType(accountId, resourceType)
-
-        channels
-            .filter { it.resourceId == resourceId }
+        channels.asSequence()
+            .filter { it.channelId != excludeChannelId && it.resourceId == resourceId }
             .forEach { channel ->
                 try {
                     val calendarService = googleServiceFactory.calendarService(accountId)
@@ -116,21 +122,12 @@ class GoogleChannelManager(
             }
     }
 
-    private fun recreateChannel(channel: Channel) {
-        val googleAccount = googleAccountRepository.findByIdOrThrow(channel.googleAccountId)
-        if (!googleAccount.linked) {
-            closeChannel(channel.googleAccountId, channel.resourceType, channel.resourceId)
-            return
-        }
-        createChannel(channel.googleAccountId, channel.resourceType, channel.resourceId)
-    }
-
     @Scheduled(cron = "0 0 */1 * * *")
     fun runChannelMaintenance() {
         sentrySpan(method = "runChannelMaintenance") {
             val channelToRecreate = channelRepository.findByExpiresAtLessThan(Instant.now().plus(3, DAYS))
             channelToRecreate.forEach { channel ->
-                transactionTemplate.execute { recreateChannel(channel) }
+                transactionTemplate.execute { createChannel(channel.googleAccountId, channel.resourceType, channel.resourceId) }
             }
 
             val affectedCount = channelRepository.deleteAllClosed()

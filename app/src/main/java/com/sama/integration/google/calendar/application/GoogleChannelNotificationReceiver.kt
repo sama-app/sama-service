@@ -51,7 +51,7 @@ class GoogleChannelNotificationReceiver(
                 channel.receiveMessage(notification)
             } catch (e: ChannelClosedException) {
                 logger.warn("Channel#${notification.channelId} received a message when mark as closed. Cleaning up...")
-                channelManager.closeChannel(channel.googleAccountId, channel.resourceType, channel.resourceId)
+                channelManager.closeChannels(channel.googleAccountId, channel.resourceType, channel.resourceId)
                 return
             }
 

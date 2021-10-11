@@ -61,7 +61,7 @@ class GoogleCalendarSyncer(
 
     @Transactional
     fun disableCalendarListSync(accountId: GoogleAccountId) {
-        channelManager.closeChannel(accountId, CALENDAR_LIST)
+        channelManager.closeChannels(accountId, CALENDAR_LIST)
         calendarListRepository.delete(accountId)
         calendarListSyncRepository.deleteBy(accountId)
         val syncedCalendars = calendarSyncRepository.findAllCalendarIds(accountId)
@@ -148,7 +148,7 @@ class GoogleCalendarSyncer(
 
     @Transactional
     fun disableCalendarSync(accountId: GoogleAccountId, calendarId: GoogleCalendarId) {
-        channelManager.closeChannel(accountId, CALENDAR, calendarId)
+        channelManager.closeChannels(accountId, CALENDAR, calendarId)
         val calendarSync = calendarSyncRepository.find(accountId, calendarId)
         calendarEventRepository.deleteBy(accountId, calendarId)
         if (calendarSync != null) {
