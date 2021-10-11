@@ -127,7 +127,8 @@ class GoogleChannelManager(
     @Scheduled(cron = "0 0 */1 * * *")
     fun runChannelMaintenance() {
         sentrySpan(method = "runChannelMaintenance") {
-            val channelToRecreate = channelRepository.findByExpiresAtLessThan(Instant.now().plus(3, DAYS))
+            val cleanupLeadTime = Instant.now().plus(channelConfiguration.cleanupLeadTimeHours, HOURS)
+            val channelToRecreate = channelRepository.findByExpiresAtLessThan(cleanupLeadTime)
             channelToRecreate.forEach { channel ->
                 transactionTemplate.execute { createChannel(channel.googleAccountId, channel.resourceType, channel.resourceId) }
             }

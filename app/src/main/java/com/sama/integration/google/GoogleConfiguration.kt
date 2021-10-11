@@ -87,5 +87,6 @@ class GoogleConfiguration() {
 class ChannelConfiguration(
     val enabled: Boolean,
     val callbackUrl: String,
-    val expiresInHours: Long
+    val expiresInHours: Long,
+    val cleanupLeadTimeHours: Long
 )
