@@ -104,4 +104,35 @@ class ChannelRepositoryIT : BasePersistenceIT<ChannelRepository>() {
 
         underTest.delete(channel)
     }
+
+    @Test
+    fun deleteClosed() {
+        val channel = Channel.new(
+            UUID.randomUUID(),
+            GoogleAccountId(1L),
+            "token",
+            ResourceType.CALENDAR,
+            "primary",
+            "some resource",
+            Instant.now()
+        )
+        val closedChannel = Channel.new(
+            UUID.randomUUID(),
+            GoogleAccountId(1L),
+            "token",
+            ResourceType.CALENDAR,
+            "primary",
+            "some resource",
+            Instant.now()
+        )
+
+        // insert
+        underTest.save(channel)
+        underTest.save(closedChannel)
+        // update
+        underTest.save(closedChannel.close())
+        val actual = underTest.deleteAllClosed()
+        assertThat(actual).isEqualTo(1)
+        assertThat(underTest.findAll()).hasSize(1)
+    }
 }

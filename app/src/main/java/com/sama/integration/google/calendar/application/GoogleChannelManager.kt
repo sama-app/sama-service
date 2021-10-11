@@ -122,10 +122,13 @@ class GoogleChannelManager(
     @Scheduled(cron = "0 0 */3 * * *")
     fun runChannelMaintenance() {
         sentrySpan(method = "runChannelMaintenance") {
-            val channels = channelRepository.findByExpiresAtLessThan(Instant.now().plus(3, DAYS))
-            channels.forEach { channel ->
+            val channelToRecreate = channelRepository.findByExpiresAtLessThan(Instant.now().plus(3, DAYS))
+            channelToRecreate.forEach { channel ->
                 transactionTemplate.execute { recreateChannel(channel) }
             }
+
+            val affectedCount = channelRepository.deleteAllClosed()
+            logger.info("Delete $affectedCount closed channels")
         }
     }
 }
