@@ -85,7 +85,7 @@ class GoogleChannelManager(
             logger.info("Channel created for ${channel.debugString()}...")
         } catch (e: Exception) {
             calendarService.stopChannel(channelId, googleChannel.resourceId).execute()
-            logger.warn("Reverted channel creation for GoogleAccount${accountId.id} $resourceType: $resourceId...", e)
+            logger.error("Reverted channel creation for GoogleAccount${accountId.id} $resourceType: $resourceId...", e)
             throw e
         }
     }
@@ -123,7 +123,7 @@ class GoogleChannelManager(
         createChannel(channel.googleAccountId, channel.resourceType, channel.resourceId)
     }
 
-    @Scheduled(cron = "0 0 */3 * * *")
+    @Scheduled(cron = "0 0 */1 * * *")
     fun runChannelMaintenance() {
         sentrySpan(method = "runChannelMaintenance") {
             val channelToRecreate = channelRepository.findByExpiresAtLessThan(Instant.now().plus(3, DAYS))
@@ -132,7 +132,7 @@ class GoogleChannelManager(
             }
 
             val affectedCount = channelRepository.deleteAllClosed()
-            logger.info("Delete $affectedCount closed channels")
+            logger.info("Deleted $affectedCount closed channels")
         }
     }
 }
