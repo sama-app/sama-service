@@ -3,11 +3,15 @@ package com.sama.integration.google.calendar.domain
 import com.google.api.services.calendar.Calendar
 import com.sama.integration.google.calendar.application.toGoogleCalendarDateTime
 import com.sama.integration.sentry.sentrySpan
+import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZoneOffset.UTC
 import java.time.ZonedDateTime
+import java.time.temporal.ChronoUnit
+import java.time.temporal.ChronoUnit.MONTHS
 import java.util.UUID
+import java.util.concurrent.TimeUnit
 import org.dmfs.rfc5545.recur.RecurrenceRule
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -147,6 +151,7 @@ fun Calendar.createCalendarsChannel(channelId: UUID, inputToken: String, callbac
         type = "webhook"
         address = callbackUrl
         token = inputToken
+        expiration = Instant.now().plus(1, MONTHS).toEpochMilli()
     })
 }
 
@@ -161,6 +166,7 @@ fun Calendar.createEventsChannel(
         type = "webhook"
         address = callbackUrl
         token = inputToken
+        expiration = Instant.now().plus(1, MONTHS).toEpochMilli()
     })
 }
 

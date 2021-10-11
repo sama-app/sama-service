@@ -3,6 +3,7 @@ package com.sama.integration.google.calendar.application
 import com.sama.integration.google.ChannelConfiguration
 import com.sama.integration.google.GoogleServiceFactory
 import com.sama.integration.google.auth.domain.GoogleAccountId
+import com.sama.integration.google.auth.domain.GoogleAccountRepository
 import com.sama.integration.google.calendar.domain.Channel
 import com.sama.integration.google.calendar.domain.ChannelRepository
 import com.sama.integration.google.calendar.domain.ResourceType
@@ -10,18 +11,26 @@ import com.sama.integration.google.calendar.domain.createCalendarsChannel
 import com.sama.integration.google.calendar.domain.createEventsChannel
 import com.sama.integration.google.calendar.domain.stopChannel
 import com.sama.integration.google.translatedGoogleException
+import com.sama.integration.sentry.sentrySpan
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
+import org.springframework.transaction.PlatformTransactionManager
+import org.springframework.transaction.support.TransactionTemplate
 
 @Component
 class GoogleChannelManager(
     private val googleServiceFactory: GoogleServiceFactory,
     private val channelRepository: ChannelRepository,
-    private val channelConfiguration: ChannelConfiguration
+    private val channelConfiguration: ChannelConfiguration,
+    private val googleAccountRepository: GoogleAccountRepository,
+    transactionManager: PlatformTransactionManager,
 ) {
-    private var logger: Logger = LoggerFactory.getLogger(GoogleChannelManager::class.java)
+    private val transactionTemplate = TransactionTemplate(transactionManager)
+    private val logger: Logger = LoggerFactory.getLogger(GoogleChannelManager::class.java)
 
     fun createChannel(accountId: GoogleAccountId, resourceType: ResourceType, resourceId: String? = null) {
         if (!channelConfiguration.enabled) {
@@ -96,6 +105,25 @@ class GoogleChannelManager(
             }
 
             logger.info("Channel closed for ${channel.debugString()}...")
+        }
+    }
+
+    private fun recreateChannel(channel: Channel) {
+        val googleAccount = googleAccountRepository.findByIdOrThrow(channel.googleAccountId)
+        if (!googleAccount.linked) {
+            closeChannel(channel.googleAccountId, channel.resourceType, channel.resourceId)
+            return
+        }
+        createChannel(channel.googleAccountId, channel.resourceType, channel.resourceId)
+    }
+
+    @Scheduled(cron = "0 0 */3 * * *")
+    fun runChannelMaintenance() {
+        sentrySpan(method = "runChannelMaintenance") {
+            val channels = channelRepository.findByExpiresAtLessThan(Instant.now().plus(3, ChronoUnit.DAYS))
+            channels.forEach { channel ->
+                transactionTemplate.execute { recreateChannel(channel) }
+            }
         }
     }
 }
