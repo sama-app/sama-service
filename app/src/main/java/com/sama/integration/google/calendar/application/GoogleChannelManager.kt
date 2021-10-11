@@ -5,6 +5,7 @@ import com.sama.integration.google.GoogleServiceFactory
 import com.sama.integration.google.auth.domain.GoogleAccountId
 import com.sama.integration.google.calendar.domain.Channel
 import com.sama.integration.google.calendar.domain.ChannelRepository
+import com.sama.integration.google.calendar.domain.ChannelStatus
 import com.sama.integration.google.calendar.domain.ResourceType
 import com.sama.integration.google.calendar.domain.createCalendarsChannel
 import com.sama.integration.google.calendar.domain.createEventsChannel
@@ -100,7 +101,8 @@ class GoogleChannelManager(
 
         val channels = channelRepository.findByGoogleAccountIdAndResourceType(accountId, resourceType)
         channels.asSequence()
-            .filter { it.channelId != excludeChannelId && it.resourceId == resourceId }
+            .filter { it.resourceId == resourceId }
+            .filter { it.channelId != excludeChannelId && it.status != ChannelStatus.CLOSED }
             .forEach { channel ->
                 channelRepository.save(channel.close())
 
