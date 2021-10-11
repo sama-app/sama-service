@@ -21,7 +21,7 @@ class MigrationController(
         val accountIds = googleAccountRepository.findAllIds()
         accountIds.forEach { accountId ->
             kotlin.runCatching { googleCalendarSyncer.enableCalendarListSync(accountId) }
-                .onSuccess { logger.info("Migrated GoogleAccount#$accountId") }
+                .onSuccess { logger.info("Migrated GoogleAccount#${accountId.id}") }
                 .onFailure { logger.warn("Failed to migrate GoogleAccount$accountId: ${it.message}", it) }
         }
     }

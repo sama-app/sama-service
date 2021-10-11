@@ -129,7 +129,7 @@ class GoogleCalendarSyncer(
             } else {
                 val updatedSync = calendarListSync.fail(clock)
                 logger.error(
-                    "Failed to sync CalendarList for GoogleAccount${accountId.id} ${updatedSync.failedSyncCount} times",
+                    "Failed to sync CalendarList for GoogleAccount#${accountId.id} ${updatedSync.failedSyncCount} times",
                     e
                 )
                 calendarListSyncRepository.save(updatedSync)
