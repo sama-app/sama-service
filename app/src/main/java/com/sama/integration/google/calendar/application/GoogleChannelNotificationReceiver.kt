@@ -1,5 +1,6 @@
 package com.sama.integration.google.calendar.application
 
+import com.sama.common.NotFoundException
 import com.sama.common.afterCommit
 import com.sama.common.findByIdOrThrow
 import com.sama.integration.google.calendar.domain.ChannelClosedException
@@ -39,7 +40,12 @@ class GoogleChannelNotificationReceiver(
         try {
             logger.info("Received notification for Channel#${notification.channelId}")
             val channelId = UUID.fromString(notification.channelId)
-            val channel = channelRepository.findByIdOrThrow(channelId)
+            val channel = try {
+                channelRepository.findByIdOrThrow(channelId)
+            } catch (e: NotFoundException) {
+                logger.warn("Channel#${notification.channelId} received a message but it doesn't exist anymore")
+                return
+            }
 
             val updated = try {
                 channel.receiveMessage(notification)
