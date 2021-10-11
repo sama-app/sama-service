@@ -53,15 +53,15 @@ class GoogleChannelManager(
         val googleChannel = try {
             when (resourceType) {
                 ResourceType.CALENDAR_LIST -> {
-                    calendarService.createCalendarsChannel(channelId, channelConfiguration.callbackUrl, token, expiredAt)
+                    calendarService.createCalendarsChannel(channelId, token, channelConfiguration.callbackUrl, expiredAt)
                 }
                 ResourceType.CALENDAR -> {
                     require(resourceId != null) { "Must provide a calendarId to open a Channel" }
-                    calendarService.createEventsChannel(resourceId, channelId, channelConfiguration.callbackUrl, token, expiredAt)
+                    calendarService.createEventsChannel(resourceId, channelId, token, channelConfiguration.callbackUrl, expiredAt)
                 }
             }.execute()
         } catch (e: Exception) {
-            logger.error("Error creating channel for GoogleAccount${accountId.id} $resourceType: $resourceId...", e)
+            logger.error("Error creating channel for GoogleAccount#${accountId.id} $resourceType: $resourceId...", e)
             throw translatedGoogleException(e)
         }
 
