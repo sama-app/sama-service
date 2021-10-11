@@ -97,21 +97,23 @@ class GoogleChannelManager(
 
         val channels = channelRepository.findByGoogleAccountIdAndResourceType(accountId, resourceType)
 
-        channels.forEach { channel ->
-            try {
-                val calendarService = googleServiceFactory.calendarService(accountId)
-                calendarService.stopChannel(channel.id, channel.externalResourceId).execute()
-                channelRepository.save(channel.close())
-            } catch (e: Exception) {
-                logger.error("Error closing channel for ${channel.debugString()}...", e)
-                when (val googleException = translatedGoogleException(e)) {
-                    is GoogleNotFoundException -> channelRepository.delete(channel)
-                    else -> throw googleException
+        channels
+            .filter { it.resourceId == resourceId }
+            .forEach { channel ->
+                try {
+                    val calendarService = googleServiceFactory.calendarService(accountId)
+                    calendarService.stopChannel(channel.id, channel.externalResourceId).execute()
+                    channelRepository.save(channel.close())
+                } catch (e: Exception) {
+                    logger.error("Error closing channel for ${channel.debugString()}...", e)
+                    when (val googleException = translatedGoogleException(e)) {
+                        is GoogleNotFoundException -> channelRepository.delete(channel)
+                        else -> throw googleException
+                    }
                 }
-            }
 
-            logger.info("Channel closed for ${channel.debugString()}...")
-        }
+                logger.info("Channel closed for ${channel.debugString()}...")
+            }
     }
 
     private fun recreateChannel(channel: Channel) {
