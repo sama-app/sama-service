@@ -1,5 +1,6 @@
 package com.sama.users.application
 
+import com.sama.users.domain.UserDetails
 import com.sama.users.domain.UserId
 import com.sama.users.domain.UserPermission
 import com.sama.users.domain.UserPublicId
@@ -24,6 +25,9 @@ data class UserInternalDTO(
     val email: String,
     val settings: UserSettingsDTO
 )
+
+fun UserDetails.toInternalDTO(userSettings: UserSettingsDTO) =
+    UserInternalDTO(id!!, publicId!!, fullName, email, userSettings)
 
 data class UserDeviceRegistrationsDTO(
     val firebaseDeviceRegistrations: List<FirebaseDeviceRegistrationDTO>

@@ -1,7 +1,11 @@
-package com.sama.users.domain
+package com.sama.users.infrastructure
 
 import com.sama.common.BasePersistenceIT
-import com.sama.users.infrastructure.UserRepositoryImpl
+import com.sama.users.domain.DeviceRegistration
+import com.sama.users.domain.UserDetails
+import com.sama.users.domain.UserDeviceRegistrations
+import com.sama.users.domain.UserId
+import com.sama.users.domain.UserRepository
 import java.util.UUID
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test

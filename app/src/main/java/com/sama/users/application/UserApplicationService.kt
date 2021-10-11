@@ -49,18 +49,22 @@ class UserApplicationService(
         return true
     }
 
+    override fun findInternal(userId: UserId): UserInternalDTO {
+        val user = userRepository.findByIdOrThrow(userId)
+        val userSettings = userSettingsRepository.findByIdOrThrow(user.id!!)
+        return user.let { user.toInternalDTO(userSettings.toDTO()) }
+    }
+
     override fun findInternalByEmail(email: String): UserInternalDTO {
         val user = userRepository.findByEmailOrThrow(email)
-        val userSettings = userSettingsRepository.findByIdOrThrow(user.id!!).toDTO()
-        return user
-            .let { UserInternalDTO(it.id!!, it.publicId!!, it.fullName, it.email, userSettings) }
+        val userSettings = userSettingsRepository.findByIdOrThrow(user.id!!)
+        return user.let { user.toInternalDTO(userSettings.toDTO()) }
     }
 
     override fun findInternalByPublicId(userPublicId: UserPublicId): UserInternalDTO {
         val user = userRepository.findByPublicIdOrThrow(userPublicId)
-        val userSettings = userSettingsRepository.findByIdOrThrow(user.id!!).toDTO()
-        return user
-            .let { UserInternalDTO(it.id!!, it.publicId!!, it.fullName, it.email, userSettings) }
+        val userSettings = userSettingsRepository.findByIdOrThrow(user.id!!)
+        return user.let { user.toInternalDTO(userSettings.toDTO()) }
     }
 
     override fun translatePublicId(userPublicId: UserPublicId): UserId {

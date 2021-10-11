@@ -12,11 +12,8 @@ import org.springframework.transaction.annotation.Transactional
 class MeetingDataService(private val meetingRepository: MeetingRepository) {
 
     @Transactional(readOnly = true)
-    fun findProposedSlots(
-        userId: UserId, startDateTime: ZonedDateTime, endDateTime: ZonedDateTime,
-    ): List<MeetingSlotDTO> {
-         return meetingRepository.findAllProposedSlots(userId, startDateTime, endDateTime)
+    fun findProposedSlots(userId: UserId, startDateTime: ZonedDateTime, endDateTime: ZonedDateTime) =
+        meetingRepository.findAllProposedSlots(userId, startDateTime, endDateTime)
             .map { it.toDTO() }
-    }
 }
 

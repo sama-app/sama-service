@@ -27,6 +27,7 @@ class GoogleAccountService(
         return result.let { GoogleUserInfo(it.email, it.name) }
     }
 
+    @Transactional(readOnly = true)
     fun findAll(userId: UserId): Collection<GoogleAccountDTO> {
         return googleAccountRepository.findAllByUserId(userId)
             .filter { it.linked }

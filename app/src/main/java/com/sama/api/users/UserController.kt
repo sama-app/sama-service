@@ -1,7 +1,11 @@
 package com.sama.api.users
 
 import com.sama.api.config.AuthUserId
-import com.sama.users.application.*
+import com.sama.users.application.RegisterDeviceCommand
+import com.sama.users.application.UnregisterDeviceCommand
+import com.sama.users.application.UserDeviceRegistrationService
+import com.sama.users.application.UserPublicDTO
+import com.sama.users.application.UserService
 import com.sama.users.domain.UserId
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
@@ -15,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController
 @Tag(name = "user")
 @RestController
 class UserController(
-    private val userApplicationService: UserApplicationService,
+    private val userApplicationService: UserService,
     private val userDeviceRegistrationService: UserDeviceRegistrationService
 ) {
 

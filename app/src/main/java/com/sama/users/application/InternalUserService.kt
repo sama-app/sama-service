@@ -12,6 +12,9 @@ interface InternalUserService: UserService {
     fun findIdsByEmail(emails: Set<String>): Set<UserId>
 
     @InternalApi
+    fun findInternal(userId: UserId): UserInternalDTO
+
+    @InternalApi
     fun findInternalByEmail(email: String): UserInternalDTO
 
     @InternalApi

@@ -67,7 +67,7 @@ class UserSettingsApplicationService(
     }
 
     @Transactional
-    fun grantPermissions(userId: UserId, command: GrantUserPermissionsCommand): Boolean {
+    override fun grantPermissions(userId: UserId, command: GrantUserPermissionsCommand): Boolean {
         val userSettings = userSettingsRepository.findByIdOrThrow(userId)
             .grantPermissions(command.permissions)
 
@@ -76,7 +76,7 @@ class UserSettingsApplicationService(
     }
 
     @Transactional
-    fun revokePermissions(userId: UserId, command: RevokeUserPermissionsCommand): Boolean {
+    override fun revokePermissions(userId: UserId, command: RevokeUserPermissionsCommand): Boolean {
         val userSettings = userSettingsRepository.findByIdOrThrow(userId)
             .revokePermissions(command.permissions)
 

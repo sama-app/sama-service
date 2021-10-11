@@ -1,16 +1,18 @@
-package com.sama.users.domain
+package com.sama.users.infrastructure
 
 import com.sama.common.BasePersistenceIT
-import com.sama.users.infrastructure.UserRepositoryImpl
-import com.sama.users.infrastructure.UserSettingsRepositoryImpl
+import com.sama.users.domain.UserDetails
+import com.sama.users.domain.UserPermission
+import com.sama.users.domain.UserRepository
+import com.sama.users.domain.UserSettings
+import com.sama.users.domain.UserSettingsRepository
+import com.sama.users.domain.WorkingHours
 import java.time.DayOfWeek
 import java.time.ZoneId
 import java.util.Locale
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.mock.mockito.MockBean
-import org.springframework.security.crypto.encrypt.TextEncryptor
 import org.springframework.test.context.ContextConfiguration
 
 @ContextConfiguration(classes = [UserRepositoryImpl::class, UserSettingsRepositoryImpl::class])

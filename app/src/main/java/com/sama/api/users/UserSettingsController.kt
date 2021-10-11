@@ -6,8 +6,8 @@ import com.sama.users.application.RevokeUserPermissionsCommand
 import com.sama.users.application.UpdateMarketingPreferencesCommand
 import com.sama.users.application.UpdateTimeZoneCommand
 import com.sama.users.application.UpdateWorkingHoursCommand
-import com.sama.users.application.UserSettingsApplicationService
 import com.sama.users.application.UserSettingsDTO
+import com.sama.users.application.UserSettingsService
 import com.sama.users.domain.UserId
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
@@ -20,9 +20,7 @@ import org.springframework.web.bind.annotation.RestController
 
 @Tag(name = "user")
 @RestController
-class UserSettingsController(
-    private val userSettingsApplicationService: UserSettingsApplicationService,
-) {
+class UserSettingsController(private val userSettingsService: UserSettingsService) {
 
     @Operation(
         summary = "Retrieve user settings",
@@ -33,7 +31,7 @@ class UserSettingsController(
         produces = [APPLICATION_JSON_VALUE]
     )
     fun getSettings(@AuthUserId userId: UserId?): UserSettingsDTO =
-        userSettingsApplicationService.find(userId!!)
+        userSettingsService.find(userId!!)
 
     @Operation(
         summary = "Update user working hours",
@@ -44,7 +42,7 @@ class UserSettingsController(
         consumes = [APPLICATION_JSON_VALUE]
     )
     fun updateWorkingHours(@AuthUserId userId: UserId?, @RequestBody command: UpdateWorkingHoursCommand) =
-        userSettingsApplicationService.updateWorkingHours(userId!!, command)
+        userSettingsService.updateWorkingHours(userId!!, command)
 
     @Operation(
         summary = "Update user time zone",
@@ -55,7 +53,7 @@ class UserSettingsController(
         consumes = [APPLICATION_JSON_VALUE]
     )
     fun updateTimeZone(@AuthUserId userId: UserId?, @RequestBody command: UpdateTimeZoneCommand) =
-        userSettingsApplicationService.updateTimeZone(userId!!, command)
+        userSettingsService.updateTimeZone(userId!!, command)
 
     @Operation(
         summary = "Grant Sama permissions to enable features",
@@ -66,7 +64,7 @@ class UserSettingsController(
         consumes = [APPLICATION_JSON_VALUE]
     )
     fun grantPermissions(@AuthUserId userId: UserId?, @RequestBody command: GrantUserPermissionsCommand) =
-        userSettingsApplicationService.grantPermissions(userId!!, command)
+        userSettingsService.grantPermissions(userId!!, command)
 
     @Operation(
         summary = "Revoke Sama permissions disabling some features",
@@ -77,7 +75,7 @@ class UserSettingsController(
         consumes = [APPLICATION_JSON_VALUE]
     )
     fun revokePermissions(@AuthUserId userId: UserId?, @RequestBody command: RevokeUserPermissionsCommand) =
-        userSettingsApplicationService.revokePermissions(userId!!, command)
+        userSettingsService.revokePermissions(userId!!, command)
 
     @Operation(
         summary = "Update user marketing preferences",
@@ -88,5 +86,5 @@ class UserSettingsController(
         consumes = [APPLICATION_JSON_VALUE]
     )
     fun updateMarketingPreferences(@AuthUserId userId: UserId?, @RequestBody command: UpdateMarketingPreferencesCommand) =
-        userSettingsApplicationService.updateMarketingPreferences(userId!!, command)
+        userSettingsService.updateMarketingPreferences(userId!!, command)
 }

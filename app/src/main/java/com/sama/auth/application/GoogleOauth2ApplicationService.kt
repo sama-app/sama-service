@@ -17,7 +17,7 @@ import com.sama.integration.google.auth.application.LinkGoogleAccountCommand
 import com.sama.users.application.GoogleOauth2Redirect
 import com.sama.users.application.InternalUserService
 import com.sama.users.application.RegisterUserCommand
-import com.sama.users.application.UserSettingsApplicationService
+import com.sama.users.application.UserSettingsService
 import com.sama.users.application.UserTokenService
 import com.sama.users.domain.UserAlreadyExistsException
 import com.sama.users.domain.UserId
@@ -32,7 +32,7 @@ import org.springframework.stereotype.Service
 @Service
 class GoogleOauth2ApplicationService(
     private val userApplicationService: InternalUserService,
-    private val userSettingsApplicationService: UserSettingsApplicationService,
+    private val userSettingsApplicationService: UserSettingsService,
     private val userTokenService: UserTokenService,
     private val googleAuthorizationCodeFlow: GoogleAuthorizationCodeFlow,
     private val googleIdTokenVerifier: GoogleIdTokenVerifier,
