@@ -3,9 +3,11 @@ package com.sama.integration.google.calendar.application
 import com.sama.common.NotFoundException
 import com.sama.common.afterCommit
 import com.sama.common.findByIdOrThrow
+import com.sama.integration.google.GoogleServiceFactory
 import com.sama.integration.google.calendar.domain.ChannelClosedException
 import com.sama.integration.google.calendar.domain.ChannelRepository
 import com.sama.integration.google.calendar.domain.ResourceType
+import com.sama.integration.google.calendar.domain.stopChannel
 import java.time.Instant
 import java.util.UUID
 import org.slf4j.Logger
@@ -27,7 +29,7 @@ data class GoogleChannelNotification(
 class GoogleChannelNotificationReceiver(
     private val channelRepository: ChannelRepository,
     private val calendarSyncer: GoogleCalendarSyncer,
-    private val channelManager: GoogleChannelManager,
+    private val googleServiceFactory: GoogleServiceFactory,
     private val taskScheduler: TaskScheduler,
 ) {
     private var logger: Logger = LoggerFactory.getLogger(GoogleChannelNotificationReceiver::class.java)
@@ -43,7 +45,7 @@ class GoogleChannelNotificationReceiver(
             val channel = try {
                 channelRepository.findByIdOrThrow(channelId)
             } catch (e: NotFoundException) {
-                logger.warn("Channel#${notification.channelId} received a message but it doesn't exist anymore")
+                logger.warn("Channel#${notification.channelId} received a message but it doesn't exist anymore.")
                 return
             }
 
@@ -51,7 +53,8 @@ class GoogleChannelNotificationReceiver(
                 channel.receiveMessage(notification)
             } catch (e: ChannelClosedException) {
                 logger.warn("Channel#${notification.channelId} received a message when mark as closed. Cleaning up...")
-                channelManager.closeChannels(channel.googleAccountId, channel.resourceType, channel.resourceId)
+                val calendarService = googleServiceFactory.calendarService(channel.googleAccountId)
+                calendarService.stopChannel(channel.id, channel.externalResourceId).execute()
                 return
             }
 

@@ -1,10 +1,8 @@
 package com.sama.integration.google.calendar.application
 
 import com.sama.integration.google.ChannelConfiguration
-import com.sama.integration.google.GoogleNotFoundException
 import com.sama.integration.google.GoogleServiceFactory
 import com.sama.integration.google.auth.domain.GoogleAccountId
-import com.sama.integration.google.auth.domain.GoogleAccountRepository
 import com.sama.integration.google.calendar.domain.Channel
 import com.sama.integration.google.calendar.domain.ChannelRepository
 import com.sama.integration.google.calendar.domain.ResourceType
@@ -14,7 +12,6 @@ import com.sama.integration.google.calendar.domain.stopChannel
 import com.sama.integration.google.translatedGoogleException
 import com.sama.integration.sentry.sentrySpan
 import java.time.Instant
-import java.time.temporal.ChronoUnit.DAYS
 import java.time.temporal.ChronoUnit.HOURS
 import java.util.UUID
 import org.slf4j.Logger
@@ -29,7 +26,6 @@ class GoogleChannelManager(
     private val googleServiceFactory: GoogleServiceFactory,
     private val channelRepository: ChannelRepository,
     private val channelConfiguration: ChannelConfiguration,
-    private val googleAccountRepository: GoogleAccountRepository,
     transactionManager: PlatformTransactionManager,
 ) {
     private val transactionTemplate = TransactionTemplate(transactionManager)
@@ -106,21 +102,16 @@ class GoogleChannelManager(
         channels.asSequence()
             .filter { it.channelId != excludeChannelId && it.resourceId == resourceId }
             .forEach { channel ->
+                channelRepository.save(channel.close())
+
                 try {
-                    channelRepository.save(channel.close())
                     val calendarService = googleServiceFactory.calendarService(accountId)
                     calendarService.stopChannel(channel.id, channel.externalResourceId).execute()
+                    logger.info("Channel closed for ${channel.debugString()}...")
                 } catch (e: Exception) {
-                    when (val googleException = translatedGoogleException(e)) {
-                        is GoogleNotFoundException -> return
-                        else -> {
-                            logger.error("Error closing channel for ${channel.debugString()}...", e)
-                            throw googleException
-                        }
-                    }
+                    val googleException = translatedGoogleException(e)
+                    logger.error("Error closing channel for ${channel.debugString()}...", googleException)
                 }
-
-                logger.info("Channel closed for ${channel.debugString()}...")
             }
     }
 
