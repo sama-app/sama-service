@@ -28,6 +28,8 @@ data class CalendarListSync(
         }
     }
 
+    fun needsSync(clock: Clock) = nextSyncAt.isBefore(clock.instant())
+
     fun needsFullSync() = syncToken == null
 
     fun complete(syncToken: String, clock: Clock): CalendarListSync {

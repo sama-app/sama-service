@@ -44,6 +44,8 @@ data class CalendarSync(
         }
     }
 
+    fun needsSync(clock: Clock) = nextSyncAt.isBefore(clock.instant())
+
     fun needsFullSync(clock: Clock): Boolean {
         if (syncToken == null || syncedRange == null) {
             return true
@@ -106,4 +108,5 @@ data class CalendarSync(
             nextSyncAt = clock.instant()
         )
     }
+
 }

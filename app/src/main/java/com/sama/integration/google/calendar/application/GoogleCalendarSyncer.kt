@@ -73,7 +73,7 @@ class GoogleCalendarSyncer(
 
     @Transactional
     fun syncUserCalendarList(accountId: GoogleAccountId, forceFullSync: Boolean = false) {
-        val calendarSync = try {
+        val calendarListSync = try {
             calendarListSyncRepository.findAndLock(accountId)
                 ?: CalendarListSync.new(accountId, clock)
         } catch (e: CannotAcquireLockException) {
@@ -81,16 +81,20 @@ class GoogleCalendarSyncer(
             return
         }
 
+        if (!calendarListSync.needsSync(clock)) {
+            return
+        }
+
         logger.info("Syncing GoogleAccount${accountId.id} CalendarList...")
         val calendarService = googleServiceFactory.calendarService(accountId)
         try {
             val (newCalendarList, newSyncToken) =
-                if (forceFullSync || calendarSync.needsFullSync()) {
+                if (forceFullSync || calendarListSync.needsFullSync()) {
                     val (calendars, syncToken) = calendarService.findAllCalendars(null)
                     val newCalendarList = calendars.toDomain(accountId)
                     newCalendarList to syncToken
                 } else {
-                    val (calendars, syncToken) = calendarService.findAllCalendars(calendarSync.syncToken)
+                    val (calendars, syncToken) = calendarService.findAllCalendars(calendarListSync.syncToken)
                     val calendarListDiff = calendars.toDomain(accountId)
                     val existingCalendarList = calendarListRepository.find(accountId)!!
                     val newCalendarList = existingCalendarList.merge(calendarListDiff)
@@ -109,17 +113,17 @@ class GoogleCalendarSyncer(
 
             calendarListRepository.save(newCalendarList)
 
-            val updatedSync = calendarSync.complete(newSyncToken!!, clock)
+            val updatedSync = calendarListSync.complete(newSyncToken!!, clock)
             calendarListSyncRepository.save(updatedSync)
             logger.info("Completed sync for GoogleAccount${accountId.id} CalendarList...")
         } catch (e: Exception) {
             val ex = translatedGoogleException(e)
             if (ex is GoogleSyncTokenInvalidatedException) {
                 logger.error("CalendarList sync token expired for GoogleAccount${accountId.id}", e)
-                val updatedSync = calendarSync.reset(clock)
+                val updatedSync = calendarListSync.reset(clock)
                 calendarListSyncRepository.save(updatedSync)
             } else {
-                val updatedSync = calendarSync.fail(clock)
+                val updatedSync = calendarListSync.fail(clock)
                 logger.error(
                     "Failed to sync CalendarList for GoogleAccount${accountId.id} ${updatedSync.failedSyncCount} times",
                     e
@@ -162,6 +166,10 @@ class GoogleCalendarSyncer(
                 ?: CalendarSync.new(accountId, calendarId, clock)
         } catch (e: CannotAcquireLockException) {
             logger.info("GoogleAccount${accountId.id} Calendar#${calendarId} sync already in progress...")
+            return
+        }
+
+        if (!calendarSync.needsSync(clock)) {
             return
         }
 
