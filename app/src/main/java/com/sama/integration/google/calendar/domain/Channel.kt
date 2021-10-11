@@ -2,6 +2,7 @@ package com.sama.integration.google.calendar.domain
 
 import com.sama.integration.google.auth.domain.GoogleAccountId
 import com.sama.integration.google.calendar.application.GoogleChannelNotification
+import com.sama.integration.google.calendar.domain.ChannelStatus.CLOSED
 import com.sama.integration.google.calendar.domain.ChannelStatus.CREATED
 import com.sama.integration.google.calendar.domain.ChannelStatus.SYNCING
 import java.time.Instant
@@ -94,6 +95,9 @@ data class Channel(
 
     fun receiveMessage(notification: GoogleChannelNotification): Channel {
         check(notification.token == token)
+        if (status == CLOSED) {
+            throw ChannelClosedException(id)
+        }
         return copy(status = SYNCING, messageNumber = notification.messageNumber, updatedAt = Instant.now())
     }
 

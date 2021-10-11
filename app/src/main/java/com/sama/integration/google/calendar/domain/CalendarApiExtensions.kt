@@ -149,34 +149,32 @@ private fun Calendar.findCalendarsPage(nextPageToken: String?, syncToken: String
 
 fun Calendar.createCalendarsChannel(
     channelId: UUID, inputToken: String, callbackUrl: String, expiresAt: Instant
-): Calendar.CalendarList.Watch {
-    return calendarList().watch(GoogleChannel().apply {
+): Calendar.CalendarList.Watch =
+    calendarList().watch(GoogleChannel().apply {
         id = channelId.toString()
         type = "webhook"
         address = callbackUrl
         token = inputToken
         expiration = expiresAt.toEpochMilli()
     })
-}
+
 
 fun Calendar.createEventsChannel(
     calendarId: GoogleCalendarId, channelId: UUID, inputToken: String, callbackUrl: String, expiresAt: Instant
-): Calendar.Events.Watch {
-    return events().watch(calendarId, GoogleChannel().apply {
+): Calendar.Events.Watch =
+    events().watch(calendarId, GoogleChannel().apply {
         id = channelId.toString()
         type = "webhook"
         address = callbackUrl
         token = inputToken
         expiration = expiresAt.toEpochMilli()
     })
-}
 
-fun Calendar.stopChannel(channelId: UUID, resourceId: String) {
+fun Calendar.stopChannel(channelId: UUID, resourceId: String): Calendar.Channels.Stop =
     channels().stop(GoogleChannel().apply {
         this.id = channelId.toString()
         this.resourceId = resourceId
     })
-}
 
 
 fun ZonedDateTime.toGoogleCalendarDateTime() =

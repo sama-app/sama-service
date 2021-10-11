@@ -2,6 +2,7 @@ package com.sama.integration.google.calendar.application
 
 import com.sama.common.afterCommit
 import com.sama.common.findByIdOrThrow
+import com.sama.integration.google.calendar.domain.ChannelClosedException
 import com.sama.integration.google.calendar.domain.ChannelRepository
 import com.sama.integration.google.calendar.domain.ResourceType
 import java.time.Instant
@@ -25,6 +26,7 @@ data class GoogleChannelNotification(
 class GoogleChannelNotificationReceiver(
     private val channelRepository: ChannelRepository,
     private val calendarSyncer: GoogleCalendarSyncer,
+    private val channelManager: GoogleChannelManager,
     private val taskScheduler: TaskScheduler,
 ) {
     private var logger: Logger = LoggerFactory.getLogger(GoogleChannelNotificationReceiver::class.java)
@@ -38,7 +40,14 @@ class GoogleChannelNotificationReceiver(
             logger.info("Received notification for Channel#${notification.channelId}")
             val channelId = UUID.fromString(notification.channelId)
             val channel = channelRepository.findByIdOrThrow(channelId)
-                .receiveMessage(notification)
+
+            val updated = try {
+                channel.receiveMessage(notification)
+            } catch (e: ChannelClosedException) {
+                logger.warn("Channel#${notification.channelId} received a message when mark as closed. Cleaning up...")
+                channelManager.closeChannel(channel.googleAccountId, channel.resourceType, channel.resourceId)
+                return
+            }
 
             when (channel.resourceType) {
                 ResourceType.CALENDAR_LIST -> {
@@ -62,7 +71,7 @@ class GoogleChannelNotificationReceiver(
                 }
             }
 
-            channelRepository.save(channel)
+            channelRepository.save(updated)
             logger.info("Finished processing notification for Channel#${notification.channelId}")
         } catch (e: Exception) {
             logger.error("Failed to process notification for Channel#${notification.channelId}", e)

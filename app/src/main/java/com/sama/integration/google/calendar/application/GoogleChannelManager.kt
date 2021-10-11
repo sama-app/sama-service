@@ -41,7 +41,7 @@ class GoogleChannelManager(
         try {
             closeChannel(accountId, resourceType, resourceId)
         } catch (e: Exception) {
-            logger.debug("Could not close channel for GoogleAccount${accountId.id} $resourceType: $resourceId: ${e.message}", e)
+            logger.warn("Could not close channel for GoogleAccount${accountId.id} $resourceType: $resourceId: ${e.message}", e)
         }
 
         val channelId = Channel.newId()
@@ -83,7 +83,7 @@ class GoogleChannelManager(
             channelRepository.save(channel)
             logger.info("Channel created for ${channel.debugString()}...")
         } catch (e: Exception) {
-            calendarService.stopChannel(channelId, googleChannel.resourceId)
+            calendarService.stopChannel(channelId, googleChannel.resourceId).execute()
             logger.warn("Reverted channel creation for GoogleAccount${accountId.id} $resourceType: $resourceId...", e)
             throw e
         }
@@ -99,7 +99,7 @@ class GoogleChannelManager(
         channels.forEach { channel ->
             try {
                 val calendarService = googleServiceFactory.calendarService(accountId)
-                calendarService.stopChannel(channel.id, channel.externalResourceId)
+                calendarService.stopChannel(channel.id, channel.externalResourceId).execute()
                 channelRepository.save(channel.close())
             } catch (e: Exception) {
                 logger.error("Error closing channel for ${channel.debugString()}...", e)
