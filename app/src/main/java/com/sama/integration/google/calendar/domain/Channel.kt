@@ -12,6 +12,9 @@ import org.springframework.data.relational.core.mapping.Column
 import org.springframework.data.relational.core.mapping.Table
 import org.springframework.security.crypto.keygen.KeyGenerators
 
+
+typealias GoogleChannel = com.google.api.services.calendar.model.Channel
+
 enum class ChannelStatus {
     CREATED,
     SYNCING,
@@ -22,7 +25,6 @@ enum class ResourceType {
     CALENDAR_LIST,
     CALENDAR
 }
-
 
 /**
  * A channel that receives push notification from Google Calendar API when the specified

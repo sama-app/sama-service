@@ -1,17 +1,19 @@
 package com.sama.integration.google.calendar.domain
 
+import com.google.api.client.util.DateTime
 import com.google.api.services.calendar.Calendar
-import com.sama.integration.google.calendar.application.toGoogleCalendarDateTime
+import com.google.api.services.calendar.model.EventDateTime
 import com.sama.integration.sentry.sentrySpan
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.ZoneId
+import java.time.ZoneOffset
 import java.time.ZoneOffset.UTC
 import java.time.ZonedDateTime
-import java.time.temporal.ChronoUnit
-import java.time.temporal.ChronoUnit.MONTHS
+import java.util.Date
+import java.util.TimeZone
 import java.util.UUID
-import java.util.concurrent.TimeUnit
 import org.dmfs.rfc5545.recur.RecurrenceRule
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -145,28 +147,27 @@ private fun Calendar.findCalendarsPage(nextPageToken: String?, syncToken: String
     return requestBuilder
 }
 
-fun Calendar.createCalendarsChannel(channelId: UUID, inputToken: String, callbackUrl: String): Calendar.CalendarList.Watch {
+fun Calendar.createCalendarsChannel(
+    channelId: UUID, inputToken: String, callbackUrl: String, expiresAt: Instant
+): Calendar.CalendarList.Watch {
     return calendarList().watch(GoogleChannel().apply {
         id = channelId.toString()
         type = "webhook"
         address = callbackUrl
         token = inputToken
-        expiration = Instant.now().plus(1, MONTHS).toEpochMilli()
+        expiration = expiresAt.toEpochMilli()
     })
 }
 
 fun Calendar.createEventsChannel(
-    calendarId: GoogleCalendarId,
-    channelId: UUID,
-    inputToken: String,
-    callbackUrl: String
+    calendarId: GoogleCalendarId, channelId: UUID, inputToken: String, callbackUrl: String, expiresAt: Instant
 ): Calendar.Events.Watch {
     return events().watch(calendarId, GoogleChannel().apply {
         id = channelId.toString()
         type = "webhook"
         address = callbackUrl
         token = inputToken
-        expiration = Instant.now().plus(1, MONTHS).toEpochMilli()
+        expiration = expiresAt.toEpochMilli()
     })
 }
 
@@ -176,3 +177,21 @@ fun Calendar.stopChannel(channelId: UUID, resourceId: String) {
         this.resourceId = resourceId
     })
 }
+
+
+fun ZonedDateTime.toGoogleCalendarDateTime() =
+    GoogleCalendarDateTime(Date.from(this.toInstant()), TimeZone.getTimeZone(this.zone))
+
+fun EventDateTime.toZonedDateTime(defaultZoneId: ZoneId): ZonedDateTime {
+    if (this.date != null) {
+        val localDateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(this.date.value), ZoneOffset.UTC)
+        return ZonedDateTime.of(localDateTime, defaultZoneId)
+    }
+    if (this.dateTime != null) {
+        return dateTime.toZonedDateTime()
+
+    }
+    throw IllegalArgumentException("invalid EventDateTime")
+}
+
+fun DateTime.toZonedDateTime(): ZonedDateTime = ZonedDateTime.parse(toStringRfc3339())

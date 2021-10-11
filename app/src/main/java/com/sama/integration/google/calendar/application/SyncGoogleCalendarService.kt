@@ -25,8 +25,11 @@ import com.sama.integration.google.calendar.domain.CalendarSync
 import com.sama.integration.google.calendar.domain.CalendarSyncRepository
 import com.sama.integration.google.calendar.domain.GoogleCalendarEvent
 import com.sama.integration.google.calendar.domain.GoogleCalendarId
+import com.sama.integration.google.calendar.domain.PRIMARY_CALENDAR_ID
 import com.sama.integration.google.calendar.domain.findAllEvents
 import com.sama.integration.google.calendar.domain.insert
+import com.sama.integration.google.calendar.domain.toDomain
+import com.sama.integration.google.calendar.domain.toGoogleCalendarDateTime
 import com.sama.integration.google.translatedGoogleException
 import com.sama.integration.sentry.sentrySpan
 import com.sama.users.application.UserSettingsService
