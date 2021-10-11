@@ -68,3 +68,10 @@ databaseChangeLog:
               - column:
                   name: google_account_id
             indexName: IDX_channel#google_account_id
+        - createIndex:
+            schemaName: gcal
+            tableName: channel
+            columns:
+              - column:
+                  name: expires_at
+            indexName: IDX_channel#expires_at
