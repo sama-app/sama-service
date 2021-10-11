@@ -14,6 +14,7 @@ import com.sama.integration.google.translatedGoogleException
 import com.sama.integration.sentry.sentrySpan
 import java.time.Instant
 import java.time.temporal.ChronoUnit.DAYS
+import java.time.temporal.ChronoUnit.HOURS
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
@@ -45,7 +46,7 @@ class GoogleChannelManager(
 
         val channelId = Channel.newId()
         val token = Channel.newToken()
-        val expiredAt = Instant.now().plus(30, DAYS)
+        val expiredAt = Instant.now().plus(channelConfiguration.expiresInHours, HOURS)
 
         logger.info("Creating a Channel for GoogleAccount${accountId.id} $resourceType: $resourceId...")
         val calendarService = googleServiceFactory.calendarService(accountId)

@@ -44,6 +44,7 @@ integration:
       channel:
         enabled: true
         callback-url: https://app.meetsama.com.smtest.it/api/integration/google/channel-notification
+        expires-in-hours: 1
 
   firebase:
     credentials: "dummy-value-this-is-loaded-from-AWS-SM"

@@ -86,5 +86,6 @@ class GoogleConfiguration() {
 @ConfigurationProperties(prefix = "integration.google.sync.channel")
 class ChannelConfiguration(
     val enabled: Boolean,
-    val callbackUrl: String
+    val callbackUrl: String,
+    val expiresInHours: Long
 )
