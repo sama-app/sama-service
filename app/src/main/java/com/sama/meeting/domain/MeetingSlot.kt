@@ -3,6 +3,7 @@ package com.sama.meeting.domain
 import com.sama.calendar.application.EventDTO
 import com.sama.common.ValueObject
 import java.time.Duration
+import java.time.ZoneId
 import java.time.ZonedDateTime
 import javax.persistence.Embeddable
 
@@ -37,6 +38,10 @@ data class MeetingSlot(
         val intervalMinutes = interval.toMinutes()
         return 0L.until(slotCount)
             .map { startDateTime.plusMinutes(intervalMinutes * it) }
+    }
+
+    fun atTimeZone(zoneId: ZoneId): MeetingSlot {
+        return MeetingSlot(startDateTime.withZoneSameInstant(zoneId), endDateTime.withZoneSameInstant(zoneId))
     }
 
     fun overlaps(event: EventDTO): Boolean {
