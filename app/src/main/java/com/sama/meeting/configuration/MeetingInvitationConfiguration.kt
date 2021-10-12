@@ -2,9 +2,9 @@ package com.sama.meeting.configuration
 
 import com.google.common.io.CharStreams
 import com.sama.meeting.domain.MeetingCode
-import com.sama.meeting.domain.MeetingSlot
 import com.samskivert.mustache.Mustache
 import com.samskivert.mustache.Template
+import java.io.InputStreamReader
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.context.properties.ConstructorBinding
@@ -12,7 +12,6 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.io.Resource
 import org.springframework.web.util.UriComponentsBuilder
-import java.io.InputStreamReader
 
 @ConstructorBinding
 @ConfigurationProperties(prefix = "sama.meeting.url")
@@ -40,4 +39,9 @@ class MeetingProposalMessageConfiguration {
     }
 }
 
-data class MeetingProposalMessageModel(val proposedSlots: List<String>, val meetingUrl: String)
+data class MeetingProposalMessageModel(
+    val showTimeZone: Boolean,
+    val timeZone: String,
+    val proposedSlots: Set<Map.Entry<String, List<String>>>,
+    val meetingUrl: String
+)

@@ -4,6 +4,7 @@ import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import java.time.ZonedDateTime
 import kotlin.streams.asSequence
 import org.threeten.extra.LocalDateRange
 
@@ -36,3 +37,6 @@ fun ZoneId.toGmtString(atDate: Instant): String {
     }
     return "GMT$plusSign$offsetString"
 }
+
+fun ZonedDateTime.isToday(zoneId: ZoneId) = toLocalDate().isEqual(LocalDate.now(zoneId))
+fun ZonedDateTime.isTomorrow(zoneId: ZoneId) = toLocalDate().isEqual(LocalDate.now(zoneId).plusDays(1))
