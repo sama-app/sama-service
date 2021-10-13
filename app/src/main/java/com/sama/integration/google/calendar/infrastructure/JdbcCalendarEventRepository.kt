@@ -72,6 +72,40 @@ class JdbcCalendarEventRepository(
         )
     }
 
+    override fun findAll(
+        accountId: GoogleAccountId,
+        calendarId: GoogleCalendarId,
+        from: ZonedDateTime,
+        to: ZonedDateTime,
+        createdFrom: ZonedDateTime?
+    ): List<CalendarEvent> {
+        val namedParameters = MapSqlParameterSource()
+            .addValue("google_account_id", accountId.id)
+            .addValue("calendar_id", calendarId)
+            .addValue("from", from.withZoneSameInstant(UTC).toLocalDateTime())
+            .addValue("to", to.withZoneSameInstant(UTC).toLocalDateTime())
+
+        var query = """
+                SELECT * FROM gcal.event e 
+                WHERE e.google_account_id = :google_account_id 
+                    AND e.calendar_id = :calendar_id 
+                    AND e.start_date_time < :to 
+                    AND e.end_date_time >= :from
+                    AND ((e.event_data ->> 'created')::timestamp without time zone >= :created_from OR 
+                         (e.event_data ->> 'created') IS NULL)
+            """
+
+        createdFrom?.let {
+            namedParameters.addValue("created_from", it.withZoneSameInstant(UTC).toLocalDateTime())
+            query += """
+                AND ((e.event_data ->> 'created')::timestamp without time zone >= :created_from OR 
+                    (e.event_data ->> 'created') IS NULL)
+            """
+        }
+
+        return jdbcTemplate.query(query, namedParameters, rowMapper)
+    }
+
     override fun save(event: CalendarEvent) {
         saveAll(listOf(event))
     }

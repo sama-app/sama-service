@@ -2,6 +2,7 @@ package com.sama.meeting.application
 
 import com.sama.integration.firebase.DynamicLinkService
 import com.sama.meeting.configuration.MeetingUrlConfiguration
+import com.sama.meeting.domain.AvailableSlots
 import com.sama.meeting.domain.MeetingCode
 import com.sama.meeting.domain.MeetingId
 import com.sama.meeting.domain.MeetingIntentId
@@ -81,8 +82,10 @@ class MeetingViewTest {
                 initiatorId,
                 proposedSlots,
                 meetingCode,
-                meetingTitle
-            )
+                meetingTitle,
+                ZonedDateTime.now()
+            ),
+            AvailableSlots(MeetingId(21), proposedSlots)
         )
 
         // verify
@@ -119,6 +122,7 @@ class MeetingViewTest {
             .thenReturn(dynamicUrl)
 
         // act
+        val proposedSlots = listOf(MeetingSlot(_10am, _11am))
         val actual = underTest.render(
             currentUserId,
             SamaNonSamaProposedMeeting(
@@ -126,10 +130,12 @@ class MeetingViewTest {
                 MeetingIntentId(11),
                 Duration.ofHours(1),
                 initiatorId,
-                listOf(MeetingSlot(_10am, _11am)),
+                proposedSlots,
                 meetingCode,
-                meetingTitle
-            )
+                meetingTitle,
+                ZonedDateTime.now()
+            ),
+            AvailableSlots(MeetingId(21), proposedSlots)
         )
 
         // verify

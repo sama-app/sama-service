@@ -9,6 +9,7 @@ import com.sama.users.application.InternalUserService
 import com.sama.users.domain.UserId
 import java.time.LocalDate
 import java.time.ZoneId
+import java.time.ZonedDateTime
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 
@@ -18,19 +19,25 @@ class EventApplicationService(
     private val googleCalendarService: GoogleCalendarService,
     private val internalUserService: InternalUserService,
     @Value("\${sama.landing.url}") private val samaWebUrl: String,
-) {
+) : EventService {
 
-    fun fetchEvents(userId: UserId, startDate: LocalDate, endDate: LocalDate, timezone: ZoneId) =
-        googleCalendarService.findEvents(
-            userId = userId,
-            startDateTime = startDate.atStartOfDay(timezone),
-            endDateTime = endDate.plusDays(1).atStartOfDay(timezone),
-        )
-            .map { EventDTO(it.startDateTime, it.endDateTime, it.eventData.allDay, it.eventData.title) }
-            .let { FetchEventsDTO(it) }
+    override fun fetchEvents(
+        userId: UserId,
+        startDate: LocalDate,
+        endDate: LocalDate,
+        timezone: ZoneId,
+        createdFrom: ZonedDateTime?
+    ) = googleCalendarService.findEvents(
+        userId = userId,
+        startDateTime = startDate.atStartOfDay(timezone),
+        endDateTime = endDate.plusDays(1).atStartOfDay(timezone),
+        createdFrom = createdFrom
+    )
+        .map { EventDTO(it.startDateTime, it.endDateTime, it.eventData.allDay, it.eventData.title) }
+        .let { FetchEventsDTO(it) }
 
 
-    fun createEvent(userId: UserId, command: CreateEventCommand): EventDTO {
+    override fun createEvent(userId: UserId, command: CreateEventCommand): EventDTO {
         val initiator = internalUserService.findInternal(userId)
         val initiatorEmail = initiator.email
         val timeZone = initiator.settings.timeZone

@@ -55,7 +55,7 @@ class EventApplicationServiceIT : BaseApplicationIntegrationTest() {
             )
 
         val result = asInitiator {
-            underTest.fetchEvents(userId, startDate, endDate, clock.zone)
+            underTest.fetchEvents(userId, startDate, endDate, clock.zone, null)
         }
 
         val expected = EventDTO(startDateTime, startDateTime.plusHours(1), false, "title")

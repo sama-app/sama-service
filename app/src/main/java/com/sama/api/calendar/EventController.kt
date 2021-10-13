@@ -1,7 +1,7 @@
 package com.sama.api.calendar
 
 import com.sama.api.config.AuthUserId
-import com.sama.calendar.application.EventApplicationService
+import com.sama.calendar.application.EventService
 import com.sama.calendar.application.FetchEventsDTO
 import com.sama.users.domain.UserId
 import io.swagger.v3.oas.annotations.Operation
@@ -20,7 +20,7 @@ import org.springframework.web.server.ResponseStatusException
 
 @Tag(name = "calendar")
 @RestController
-class EventController(private val eventApplicationService: EventApplicationService) {
+class EventController(private val eventService: EventService) {
 
     @Operation(
         summary = "Retrieve user calendar blocks",
@@ -40,6 +40,6 @@ class EventController(private val eventApplicationService: EventApplicationServi
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "'endDate' must be after 'startDate'")
         }
 
-        return eventApplicationService.fetchEvents(userId!!, startDate, endDate, timezone)
+        return eventService.fetchEvents(userId!!, startDate, endDate, timezone, null)
     }
 }

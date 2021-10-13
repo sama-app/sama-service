@@ -96,7 +96,8 @@ class MeetingInvitationViewTest {
                 userId,
                 slots,
                 meetingCode,
-                meetingTitle
+                meetingTitle,
+                ZonedDateTime.now()
             ),
             recipientZoneId
         )

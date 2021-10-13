@@ -50,6 +50,7 @@ class SyncGoogleCalendarService(
         userId: UserId,
         startDateTime: ZonedDateTime,
         endDateTime: ZonedDateTime,
+        createdFrom: ZonedDateTime?
     ): List<CalendarEvent> {
         val accountIds = googleAccountRepository.findAllByUserId(userId)
             .filter { it.linked }
@@ -62,16 +63,16 @@ class SyncGoogleCalendarService(
                 .map { sync ->
                     val isSynced = sync.isSyncedFor(startDateTime, endDateTime, clock)
                     if (isSynced) {
-                        calendarEventRepository.findAll(sync.accountId, sync.calendarId, startDateTime, endDateTime)
+                        calendarEventRepository.findAll(sync.accountId, sync.calendarId, startDateTime, endDateTime, createdFrom)
                     } else {
-                        forceLoadCalendarEvents(sync.accountId, sync.calendarId, startDateTime, endDateTime)
+                        forceLoadCalendarEvents(sync.accountId, sync.calendarId, startDateTime, endDateTime, createdFrom)
                     }
                 }
                 .flatten()
         } else {
             // If there aren't any synced calendars, load the primary calendar for all accounts
             accountIds
-                .map { forceLoadCalendarEvents(it, PRIMARY_CALENDAR_ID, startDateTime, endDateTime) }
+                .map { forceLoadCalendarEvents(it, PRIMARY_CALENDAR_ID, startDateTime, endDateTime, createdFrom) }
                 .flatten()
         }
 
@@ -93,10 +94,11 @@ class SyncGoogleCalendarService(
         accountId: GoogleAccountId,
         calendarId: GoogleCalendarId,
         startDateTime: ZonedDateTime,
-        endDateTime: ZonedDateTime
+        endDateTime: ZonedDateTime,
+        createdFrom: ZonedDateTime?
     ) = try {
         val calendarService = googleServiceFactory.calendarService(accountId)
-        val (events, timeZone) = calendarService.findAllEvents(calendarId, startDateTime, endDateTime)
+        val (events, timeZone) = calendarService.findAllEvents(calendarId, startDateTime, endDateTime, createdFrom = createdFrom)
         events.toDomain(accountId, PRIMARY_CALENDAR_ID, timeZone)
     } catch (e: Exception) {
         throw translatedGoogleException(e)

@@ -4,6 +4,7 @@ import com.sama.common.DomainEntity
 import com.sama.users.domain.UserId
 import java.time.Duration
 import java.time.ZoneId
+import java.time.ZonedDateTime
 
 @DomainEntity
 data class MeetingIntent(
@@ -50,7 +51,8 @@ data class MeetingIntent(
                 initiatorId,
                 proposedSlots.combineContinuous(),
                 meetingCode,
-                meetingTitle
+                meetingTitle,
+                ZonedDateTime.now()
             )
         }
     }

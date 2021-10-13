@@ -2,6 +2,7 @@ package com.sama.meeting.infrastructure
 
 import com.sama.common.BasePersistenceIT
 import com.sama.common.NotFoundException
+import com.sama.common.usingLaxDateTimePrecision
 import com.sama.meeting.domain.Actor
 import com.sama.meeting.domain.ConfirmedMeeting
 import com.sama.meeting.domain.ExpiredMeeting
@@ -11,6 +12,7 @@ import com.sama.meeting.domain.MeetingIntentId
 import com.sama.meeting.domain.MeetingRepository
 import com.sama.meeting.domain.MeetingSlot
 import com.sama.meeting.domain.MeetingStatus
+import com.sama.meeting.domain.ProposedMeeting
 import com.sama.meeting.domain.SamaNonSamaProposedMeeting
 import com.sama.meeting.domain.SamaSamaProposedMeeting
 import com.sama.meeting.domain.UserRecipient
@@ -19,8 +21,6 @@ import com.sama.meeting.infrastructure.jpa.MeetingIntentJpaRepository
 import com.sama.users.domain.UserId
 import java.time.Duration
 import java.time.Instant
-import java.time.ZoneId
-import java.time.ZoneOffset
 import java.time.ZoneOffset.UTC
 import java.time.ZonedDateTime
 import kotlin.test.assertNotEquals
@@ -75,16 +75,20 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
                 )
             ),
             MeetingCode("VGsUTGno"),
-            "Meeting title"
+            "Meeting title",
+            null
         )
 
         // act
         underTest.save(proposedMeeting)
-        val persisted = underTest.findByIdOrThrow(proposedMeeting.meetingId)
+        val persisted = underTest.findByIdOrThrow(proposedMeeting.meetingId) as SamaNonSamaProposedMeeting
 
         // verify
-        assertThat(persisted).usingRecursiveComparison()
+        assertThat(persisted)
+            .usingRecursiveComparison()
+            .ignoringFields("createdAt")
             .isEqualTo(proposedMeeting)
+        assertThat(persisted.createdAt).isNotNull()
     }
 
     @Test
@@ -137,7 +141,8 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
                 )
             ),
             meetingCode,
-            meetingTitle
+            meetingTitle,
+            null
         )
 
         underTest.save(proposedMeeting)
@@ -179,16 +184,21 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
                 )
             ),
             meetingCode,
-            "Meeting title"
+            "Meeting title",
+            null
         )
 
         underTest.save(proposedMeeting)
 
         // act
-        val persisted = underTest.findByCodeOrThrow(meetingCode)
+        val persisted = underTest.findByCodeOrThrow(meetingCode) as SamaNonSamaProposedMeeting
 
         // verify
-        assertThat(persisted).isEqualTo(proposedMeeting)
+        assertThat(persisted)
+            .usingRecursiveComparison()
+            .ignoringFields("createdAt")
+            .isEqualTo(proposedMeeting)
+        assertThat(persisted.createdAt).isNotNull()
     }
 
     @Test
@@ -260,7 +270,8 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
                 expected
             ),
             MeetingCode("VGsUTGno"),
-            "Meeting title"
+            "Meeting title",
+            null
         )
         underTest.save(proposedMeeting)
 
@@ -293,7 +304,8 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
                 )
             ),
             MeetingCode("one"),
-            "Meeting title"
+            "Meeting title",
+            null
         )
 
         val expiringMeetingId = MeetingId(21)
@@ -313,7 +325,8 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
                 )
             ),
             MeetingCode("two"),
-            "Meeting title"
+            "Meeting title",
+            null
         )
         underTest.save(validMeeting)
         underTest.save(expiringMeeting)
@@ -340,7 +353,8 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
                 )
             ),
             MeetingCode("VGsUTGno"),
-            "Meeting title"
+            "Meeting title",
+            null
         )
         underTest.save(expiringMeeting)
 

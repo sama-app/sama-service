@@ -27,6 +27,8 @@ import com.sama.meeting.infrastructure.jpa.findLockedByCodeOrThrow
 import com.sama.users.domain.UserId
 import com.sama.users.infrastructure.toUserId
 import java.time.Duration
+import java.time.ZoneOffset
+import java.time.ZoneOffset.UTC
 import java.time.ZonedDateTime
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Component
@@ -130,7 +132,8 @@ class MeetingRepositoryImpl(
                         meetingIntentEntity.initiatorId!!.toUserId(),
                         proposedSlots.map { MeetingSlot(it.startDateTime, it.endDateTime) },
                         meetingEntity.code!!.toMeetingCode(),
-                        meetingEntity.title!!
+                        meetingEntity.title!!,
+                        ZonedDateTime.ofInstant(meetingEntity.createdAt!!, UTC)
                     )
                 }
             }
