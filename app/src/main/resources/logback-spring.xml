@@ -47,8 +47,8 @@
         <root level="info">
             <appender-ref ref="ConsoleJson"/>
         </root>
-        <logger name="com.sama" level="info"/>
-        <logger level="info" name="org.hibernate.SQL"/>
+        <logger name="com.sama" level="debug"/>
+        <logger level="debug" name="org.hibernate.SQL"/>
         <logger level="info" name="com.google.api.client.http.HttpTransport"/>
     </springProfile>
 </configuration>

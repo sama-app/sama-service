@@ -91,7 +91,7 @@ class GoogleCalendarSyncer(
             return
         }
 
-        logger.info("Syncing GoogleAccount${accountId.id} CalendarList...")
+        logger.debug("Syncing GoogleAccount${accountId.id} CalendarList...")
         val calendarService = googleServiceFactory.calendarService(accountId)
         try {
             val (newCalendarList, newSyncToken) =
@@ -179,7 +179,7 @@ class GoogleCalendarSyncer(
             return
         }
 
-        logger.info("Syncing GoogleAccount${accountId.id} Calendar#${calendarId}...")
+        logger.debug("Syncing GoogleAccount${accountId.id} Calendar#${calendarId}...")
         val googleAccount = googleAccountRepository.findByIdOrThrow(accountId)
         if (!googleAccount.linked) {
             return

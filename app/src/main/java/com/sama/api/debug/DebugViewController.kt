@@ -180,12 +180,4 @@ class DebugViewController(
         genericUrl.scheme = if (genericUrl.host != "localhost") "https" else "http"
         return genericUrl.build()
     }
-
-    @PostMapping("/api/__debug/migrate-calendar-sync")
-    fun migrateCalendarSync() {
-        val accountIds = googleAccountRepository.findAllIds()
-        accountIds.forEach {
-            googleCalendarSyncer.enableCalendarListSync(it)
-        }
-    }
 }
