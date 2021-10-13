@@ -96,7 +96,7 @@ class MeetingApplicationServiceIT : BaseApplicationIntegrationTest() {
                 proposedSlotEnd.toLocalDate(),
                 proposedSlotStart.zone
             )
-        ).thenReturn(FetchEventsDTO(emptyList(), emptyList()))
+        ).thenReturn(FetchEventsDTO(emptyList()))
 
         val meetingProposal = underTest.loadMeetingProposal(null, meetingInvitationDTO.meetingCode)
         assertThat(meetingProposal.title).isEqualTo("Meeting with ${initiator().fullName}") // Verify default title created
@@ -592,7 +592,7 @@ class MeetingApplicationServiceIT : BaseApplicationIntegrationTest() {
                 proposedSlotEnd.toLocalDate(),
                 proposedSlotStart.zone
             )
-        ).thenReturn(FetchEventsDTO(emptyList(), emptyList()))
+        ).thenReturn(FetchEventsDTO(emptyList()))
 
         val meetingProposal = underTest.loadMeetingProposal(null, meetingInvitationDTO.meetingCode)
         assertThat(meetingProposal.title).isEqualTo(meetingTitle) // verify new title is here
@@ -734,7 +734,7 @@ class MeetingApplicationServiceIT : BaseApplicationIntegrationTest() {
                 proposedSlotStart.zone
             )
         )
-            .thenReturn(FetchEventsDTO(emptyList(), emptyList()))
+            .thenReturn(FetchEventsDTO(emptyList()))
 
         // confirm meeting
         asRecipient {
@@ -801,7 +801,7 @@ class MeetingApplicationServiceIT : BaseApplicationIntegrationTest() {
                 proposedSlotStart.zone
             )
         )
-            .thenReturn(FetchEventsDTO(emptyList(), emptyList()))
+            .thenReturn(FetchEventsDTO(emptyList()))
 
         // confirm meeting
         asInitiator {

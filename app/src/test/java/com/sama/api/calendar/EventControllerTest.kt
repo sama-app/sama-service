@@ -6,9 +6,12 @@ import com.sama.calendar.application.EventApplicationService
 import com.sama.calendar.application.EventDTO
 import com.sama.calendar.application.FetchEventsDTO
 import com.sama.users.domain.UserId
+import java.time.LocalDate
+import java.time.LocalTime
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import org.mockito.kotlin.eq
 import org.mockito.kotlin.whenever
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -19,7 +22,6 @@ import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
-import java.time.*
 
 @ExtendWith(SpringExtension::class)
 @SpringBootTest(
@@ -43,7 +45,7 @@ class EventControllerTest(
             "hcAQ6f8kaeB43nzFibGYZE8QWHyz9OIdFg9zHSbe9Vk"
 
     @Test
-    fun `fetch blocks with valid dates`() {
+    fun `fetch events with valid dates`() {
         val startDate = LocalDate.of(2021, 1, 1)
         val endDate = LocalDate.of(2021, 1, 2)
         val zoneId = ZoneId.of("Europe/Rome")
@@ -52,18 +54,10 @@ class EventControllerTest(
         val endDateTime = ZonedDateTime.of(startDate, LocalTime.of(12, 30), zoneId)
         val eventDTO = EventDTO(startDateTime, endDateTime, false, "test")
         whenever(eventApplicationService.fetchEvents(userId, startDate, endDate, zoneId))
-            .thenReturn(FetchEventsDTO(listOf(eventDTO), listOf(eventDTO)))
+            .thenReturn(FetchEventsDTO(listOf(eventDTO)))
 
         val expectedJson = """
         {
-            "blocks": [
-                {
-                    "startDateTime": "2021-01-01T11:15:00Z",
-                    "endDateTime": "2021-01-01T11:30:00Z",
-                    "allDay": false,
-                    "title": "test"
-                }
-            ],
             "events": [
                 {
                     "startDateTime": "2021-01-01T11:15:00Z",
@@ -76,7 +70,7 @@ class EventControllerTest(
         """
 
         mockMvc.perform(
-            get("/api/calendar/blocks")
+            get("/api/calendar/events")
                 .header("Authorization", "Bearer $jwt")
                 .queryParam("startDate", "2021-01-01")
                 .queryParam("endDate", "2021-01-02")
@@ -87,25 +81,23 @@ class EventControllerTest(
     }
 
     @Test
-    fun `fetch blocks empty`() {
+    fun `fetch events empty`() {
         val startDate = LocalDate.of(2021, 1, 1)
         val endDate = LocalDate.of(2021, 1, 2)
         val zoneId = ZoneId.of("Europe/Rome")
 
         whenever(eventApplicationService.fetchEvents(userId, startDate, endDate, zoneId))
-            .thenReturn(FetchEventsDTO(emptyList(), emptyList()))
+            .thenReturn(FetchEventsDTO(emptyList()))
 
         val expectedJson = """
         {
-            "blocks": [
-            ],
             "events": [
             ]
         }
         """
 
         mockMvc.perform(
-            get("/api/calendar/blocks")
+            get("/api/calendar/events")
                 .header("Authorization", "Bearer $jwt")
                 .queryParam("startDate", "2021-01-01")
                 .queryParam("endDate", "2021-01-02")
@@ -116,9 +108,9 @@ class EventControllerTest(
     }
 
     @Test
-    fun `fetch blocks with non-iso dates fails`() {
+    fun `fetch events with non-iso dates fails`() {
         mockMvc.perform(
-            get("/api/calendar/blocks")
+            get("/api/calendar/events")
                 .header("Authorization", "Bearer $jwt")
                 .queryParam("startDate", "01/01/2021")
                 .queryParam("endDate", "2021-01-02")
@@ -128,9 +120,9 @@ class EventControllerTest(
     }
 
     @Test
-    fun `fetch blocks with endDate before startDate fails`() {
+    fun `fetch events with endDate before startDate fails`() {
         mockMvc.perform(
-            get("/api/calendar/blocks")
+            get("/api/calendar/events")
                 .header("Authorization", "Bearer $jwt")
                 .queryParam("startDate", "2021-01-03")
                 .queryParam("endDate", "2021-01-02")
@@ -140,9 +132,9 @@ class EventControllerTest(
     }
 
     @Test
-    fun `fetch blocks with invalid timezone fails`() {
+    fun `fetch events with invalid timezone fails`() {
         mockMvc.perform(
-            get("/api/calendar/blocks")
+            get("/api/calendar/events")
                 .header("Authorization", "Bearer $jwt")
                 .queryParam("startDate", "2021-01-03")
                 .queryParam("endDate", "2021-01-02")
@@ -152,9 +144,9 @@ class EventControllerTest(
     }
 
     @Test
-    fun `fetch blocks without authorization fails`() {
+    fun `fetch events without authorization fails`() {
         mockMvc.perform(
-            get("/api/calendar/blocks")
+            get("/api/calendar/events")
                 .queryParam("startDate", "2021-01-01")
                 .queryParam("endDate", "2021-01-02")
                 .queryParam("timezone", "Europe/Rome")

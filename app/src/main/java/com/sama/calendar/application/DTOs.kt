@@ -10,6 +10,5 @@ data class EventDTO(
 )
 
 data class FetchEventsDTO(
-    @Deprecated("use events instead") val blocks: List<EventDTO>,
     val events: List<EventDTO>
 )

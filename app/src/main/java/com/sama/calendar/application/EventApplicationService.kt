@@ -27,7 +27,7 @@ class EventApplicationService(
             endDateTime = endDate.plusDays(1).atStartOfDay(timezone),
         )
             .map { EventDTO(it.startDateTime, it.endDateTime, it.eventData.allDay, it.eventData.title) }
-            .let { FetchEventsDTO(it, it) }
+            .let { FetchEventsDTO(it) }
 
 
     fun createEvent(userId: UserId, command: CreateEventCommand): EventDTO {
