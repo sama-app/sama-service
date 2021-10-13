@@ -1,14 +1,15 @@
 package com.sama.meeting.domain
 
+import com.sama.common.usingLaxDateTimePrecision
 import com.sama.users.domain.UserId
 import java.time.Duration.ofHours
 import java.time.Duration.ofMinutes
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId.systemDefault
-import java.time.ZoneOffset
 import java.time.ZoneOffset.UTC
 import java.time.ZonedDateTime
+import java.time.temporal.ChronoUnit
 import kotlin.test.assertEquals
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -43,7 +44,7 @@ class MeetingTest {
 
     private val proposedMeetingID1 = SamaNonSamaProposedMeeting(
         meetingId, meetingIntentId, ofMinutes(30), initiatorId,
-        listOf(proposedSlotID1), validMeetingCode, meetingTitle
+        listOf(proposedSlotID1), validMeetingCode, meetingTitle, ZonedDateTime.now()
     )
 
     @TestFactory
@@ -91,10 +92,12 @@ class MeetingTest {
         val initiatorId = initiatorId
         val meetingIntentId = MeetingIntentId(2)
         val meetingTitle = meetingTitle
+        val createdAt = ZonedDateTime.now()
         return listOf(
             listOf(proposedSlotID1.copy()) to SamaNonSamaProposedMeeting(
                 meetingId, meetingIntentId, ofHours(1), initiatorId,
-                listOf(proposedSlotID1),  validMeetingCode, meetingTitle
+                listOf(proposedSlotID1), validMeetingCode, meetingTitle,
+                createdAt
             ),
 
             listOf(proposedSlotID1.copy(), proposedSlotID3.copy()) to SamaNonSamaProposedMeeting(
@@ -104,7 +107,8 @@ class MeetingTest {
                 initiatorId,
                 listOf(proposedSlotID1, proposedSlotID3),
                 validMeetingCode,
-                meetingTitle
+                meetingTitle,
+                createdAt
             ),
 
             listOf(proposedSlotID1.copy(), proposedSlotID2.copy(), proposedSlotID3.copy()) to SamaNonSamaProposedMeeting(
@@ -114,10 +118,12 @@ class MeetingTest {
                 initiatorId,
                 listOf(MeetingSlot(proposedSlotID1.startDateTime, proposedSlotID3.endDateTime)),
                 validMeetingCode,
-                meetingTitle
+                meetingTitle,
+                createdAt
             ),
 
             ).map { (proposedSlots, expected) ->
+
             val initiatedMeeting = MeetingIntent(
                 meetingIntentId,
                 initiatorId,
@@ -130,7 +136,10 @@ class MeetingTest {
             dynamicTest("proposing slots $proposedSlots throws $expected") {
                 val proposedMeeting = initiatedMeeting.propose(meetingId, validMeetingCode, proposedSlots, meetingTitle)
 
-                assertEquals(expected, proposedMeeting)
+                assertThat(expected)
+                    .usingLaxDateTimePrecision()
+                    .usingRecursiveComparison()
+                    .isEqualTo(proposedMeeting)
             }
         }
     }
@@ -209,7 +218,7 @@ class MeetingTest {
         val meetingTitle = meetingTitle
         val proposedMeeting = SamaNonSamaProposedMeeting(
             meetingId, meetingIntentId, ofHours(1), initiatorId,
-            listOf(slot), validMeetingCode, meetingTitle
+            listOf(slot), validMeetingCode, meetingTitle, ZonedDateTime.now()
         )
         val recipient = UserRecipient.of(UserId(11L))
         val slotToConfirm = proposedSlotID1.copy()
@@ -229,7 +238,7 @@ class MeetingTest {
         val slot = proposedSlotID1
         val proposedMeeting = SamaNonSamaProposedMeeting(
             meetingId, meetingIntentId, ofHours(1), initiatorId,
-            listOf(slot), validMeetingCode, meetingTitle
+            listOf(slot), validMeetingCode, meetingTitle, ZonedDateTime.now()
         )
         val recipient = EmailRecipient.of("test@meetsama.com")
 

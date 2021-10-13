@@ -1,6 +1,7 @@
 package com.sama.meeting.application
 
 import com.sama.calendar.application.CalendarEventConsumer
+import com.sama.calendar.application.EventService
 import com.sama.common.ApplicationService
 import com.sama.common.DomainValidationException
 import com.sama.common.NotFoundException
@@ -10,6 +11,7 @@ import com.sama.comms.application.CommsEventConsumer
 import com.sama.connection.application.CreateUserConnectionCommand
 import com.sama.connection.application.UserConnectionService
 import com.sama.connection.domain.UserAlreadyConnectedException
+import com.sama.meeting.domain.AvailableSlots
 import com.sama.meeting.domain.ConfirmedMeeting
 import com.sama.meeting.domain.EmailRecipient
 import com.sama.meeting.domain.ExpiredMeeting
@@ -25,6 +27,7 @@ import com.sama.meeting.domain.MeetingIntentRepository
 import com.sama.meeting.domain.MeetingProposedEvent
 import com.sama.meeting.domain.MeetingRepository
 import com.sama.meeting.domain.MeetingSlot
+import com.sama.meeting.domain.MeetingSlotUnavailableException
 import com.sama.meeting.domain.NewMeetingSlotsProposedEvent
 import com.sama.meeting.domain.ProposedMeeting
 import com.sama.meeting.domain.SamaNonSamaProposedMeeting
@@ -38,6 +41,7 @@ import com.sama.users.domain.UserId
 import io.sentry.spring.tracing.SentryTransaction
 import java.time.Clock
 import java.time.Instant
+import java.time.ZoneOffset.UTC
 import java.time.ZonedDateTime
 import org.springframework.scheduling.TaskScheduler
 import org.springframework.scheduling.annotation.Scheduled
@@ -55,6 +59,7 @@ class MeetingApplicationService(
     private val meetingCodeGenerator: MeetingCodeGenerator,
     private val userService: InternalUserService,
     private val userConnectionService: UserConnectionService,
+    private val eventService: EventService,
     private val calendarEventConsumer: CalendarEventConsumer,
     private val commsEventConsumer: CommsEventConsumer,
     private val taskScheduler: TaskScheduler,
@@ -162,7 +167,11 @@ class MeetingApplicationService(
         checkAccess(proposedMeeting.isReadableBy(userId)) { "User does not have access to read Meeting#${meetingCode}" }
 
         return when (proposedMeeting) {
-            is SamaNonSamaProposedMeeting -> meetingView.render(userId, proposedMeeting)
+            is SamaNonSamaProposedMeeting -> {
+                val availableSlots = availableSlots(proposedMeeting)
+                meetingView.render(userId, proposedMeeting, availableSlots)
+            }
+
             is SamaSamaProposedMeeting -> meetingView.render(userId, proposedMeeting)
         }
     }
@@ -252,6 +261,10 @@ class MeetingApplicationService(
             is SamaNonSamaProposedMeeting -> {
                 val recipient = meetingRecipient(command.recipientEmail, userId)
                     ?: throw DomainValidationException("Missing recipient details")
+                val availableSlots = availableSlots(proposedMeeting)
+                if (!availableSlots.isSlotAvailable(confirmedSlot)) {
+                    throw MeetingSlotUnavailableException(meetingCode, confirmedSlot)
+                }
                 proposedMeeting.confirm(confirmedSlot, recipient)
             }
         }
@@ -267,6 +280,15 @@ class MeetingApplicationService(
             Instant.now()
         )
         return true
+    }
+
+    private fun availableSlots(proposedMeeting: SamaNonSamaProposedMeeting): AvailableSlots {
+        val (start, end) = proposedMeeting.proposedSlotsRange()
+        val meetingProposedAt = proposedMeeting.createdAt!!
+        val blockingCalendarEvents = eventService.fetchEvents(
+            proposedMeeting.initiatorId, start.toLocalDate(), end.toLocalDate(), UTC, meetingProposedAt
+        ).events
+        return AvailableSlots.of(proposedMeeting, blockingCalendarEvents, clock)
     }
 
     private fun meetingRecipient(recipientEmail: String?, userId: UserId?) = when {

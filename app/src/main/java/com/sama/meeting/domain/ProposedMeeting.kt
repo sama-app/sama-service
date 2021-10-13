@@ -1,8 +1,11 @@
 package com.sama.meeting.domain
 
+import com.sama.calendar.application.EventDTO
 import com.sama.common.DomainEntity
 import com.sama.users.domain.UserId
+import java.time.Clock
 import java.time.Duration
+import java.time.ZonedDateTime
 
 sealed interface ProposedMeeting : Meeting {
     override val status: MeetingStatus
@@ -29,6 +32,12 @@ sealed interface ProposedMeeting : Meeting {
 
     fun updateTitle(title: String): ProposedMeeting
 
+    fun proposedSlotsRange(): Pair<ZonedDateTime, ZonedDateTime> {
+        val start = proposedSlots.minOf { it.startDateTime }
+        val end = proposedSlots.maxOf { it.endDateTime }
+        return start to end
+    }
+
     fun List<MeetingSlot>.validate() {
         firstOrNull { it.duration() < duration }
             ?.run { throw InvalidMeetingSlotException(this) }
@@ -44,6 +53,7 @@ data class SamaNonSamaProposedMeeting(
     override val proposedSlots: List<MeetingSlot>,
     override val meetingCode: MeetingCode,
     override val meetingTitle: String,
+    val createdAt: ZonedDateTime?
 ) : ProposedMeeting {
 
     init {
@@ -70,7 +80,19 @@ data class SamaNonSamaProposedMeeting(
             ?: throw MeetingSlotUnavailableException(meetingCode, slot)
         return ConfirmedMeeting(meetingId, initiatorId, recipient, confirmedSlot, meetingTitle)
     }
+}
 
+data class AvailableSlots(val meetingId: MeetingId, val slots: List<MeetingSlot>) {
+    companion object {
+        fun of(meeting: ProposedMeeting, exclusions: Collection<EventDTO>, clock: Clock): AvailableSlots {
+            val now = ZonedDateTime.now(clock)
+            return meeting.expandedSlots
+                .filter { slot -> slot.endDateTime.isAfter(now) && !exclusions.any { slot.overlaps(it) } }
+                .let { AvailableSlots(meeting.meetingId, it) }
+        }
+    }
+
+    fun isSlotAvailable(slot: MeetingSlot) = slots.any { it == slot }
 }
 
 enum class Actor {

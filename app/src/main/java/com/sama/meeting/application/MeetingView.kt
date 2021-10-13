@@ -4,10 +4,12 @@ import com.sama.common.View
 import com.sama.integration.firebase.DynamicLinkService
 import com.sama.meeting.configuration.MeetingUrlConfiguration
 import com.sama.meeting.configuration.toUrl
+import com.sama.meeting.domain.AvailableSlots
 import com.sama.meeting.domain.SamaNonSamaProposedMeeting
 import com.sama.meeting.domain.SamaSamaProposedMeeting
 import com.sama.users.application.UserService
 import com.sama.users.domain.UserId
+import liquibase.pro.packaged.it
 import org.springframework.stereotype.Component
 
 @View
@@ -17,7 +19,7 @@ class MeetingView(
     private val dynamicLinkService: DynamicLinkService,
     private val urlConfiguration: MeetingUrlConfiguration,
 ) {
-    fun render(currentUserId: UserId?, meeting: SamaNonSamaProposedMeeting): ProposedMeetingDTO {
+    fun render(currentUserId: UserId?, meeting: SamaNonSamaProposedMeeting, availableSlots: AvailableSlots): ProposedMeetingDTO {
         val initiator = userService.find(meeting.initiatorId)
 
         val meetingUrl = meeting.meetingCode.toUrl(urlConfiguration)
@@ -25,7 +27,7 @@ class MeetingView(
         val dynamicAppLink = dynamicLinkService.generate(meeting.meetingCode.code, meetingUrl)
 
         return ProposedMeetingDTO(
-            meeting.expandedSlots.map { it.toDTO() },
+            availableSlots.slots.map { it.toDTO() },
             initiator,
             null,
             isOwnMeeting,

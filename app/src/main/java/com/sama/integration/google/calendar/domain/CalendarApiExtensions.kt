@@ -8,7 +8,6 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
-import java.time.ZoneOffset
 import java.time.ZoneOffset.UTC
 import java.time.ZonedDateTime
 import java.util.Date
@@ -43,7 +42,8 @@ fun Calendar.findAllEvents(
     startDateTime: ZonedDateTime,
     endDateTime: ZonedDateTime,
     singleEvents: Boolean = true,
-) = findAllEvents(calendarId, startDateTime, endDateTime, null, singleEvents)
+    createdFrom: ZonedDateTime? = null,
+) = findAllEvents(calendarId, startDateTime, endDateTime, null, singleEvents, createdFrom)
 
 fun Calendar.findAllEvents(calendarId: GoogleCalendarId, syncToken: String, singleEvents: Boolean = true) =
     findAllEvents(calendarId, null, null, syncToken, singleEvents)
@@ -54,6 +54,7 @@ private fun Calendar.findAllEvents(
     endDateTime: ZonedDateTime?,
     syncToken: String? = null,
     singleEvents: Boolean = true,
+    createdFrom: ZonedDateTime? = null,
 ): GoogleCalendarEventsResponse {
     sentrySpan(method = "Calendar.findAllEvents") {
         val calendarEvents = mutableListOf<GoogleCalendarEvent>()
@@ -61,13 +62,21 @@ private fun Calendar.findAllEvents(
         var nextPageToken: String? = null
         var nextSyncToken: String?
         do {
-            val result =
-                findEventsPage(startDateTime, endDateTime, calendarId, nextPageToken, syncToken, singleEvents).execute()
+            val result = findEventsPage(
+                startDateTime, endDateTime, calendarId, nextPageToken, syncToken, singleEvents
+            ).execute()
             calendarTimeZone = result.timeZone?.let { ZoneId.of(it) } ?: UTC
             nextPageToken = result.nextPageToken
             nextSyncToken = result.nextSyncToken
 
-            calendarEvents.addAll(result.items)
+            var items = result.items
+            if (createdFrom != null) {
+                items = items.filter {
+                    it.created == null || !it.created.toZonedDateTime().isBefore(createdFrom)
+                }
+            }
+
+            calendarEvents.addAll(items)
         } while (nextPageToken != null)
 
         return GoogleCalendarEventsResponse(calendarEvents, calendarTimeZone, nextSyncToken)
@@ -185,7 +194,7 @@ fun ZonedDateTime.toGoogleCalendarDateTime() =
 
 fun EventDateTime.toZonedDateTime(defaultZoneId: ZoneId): ZonedDateTime {
     if (this.date != null) {
-        val localDateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(this.date.value), ZoneOffset.UTC)
+        val localDateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(this.date.value), UTC)
         return ZonedDateTime.of(localDateTime, defaultZoneId)
     }
     if (this.dateTime != null) {
