@@ -90,9 +90,7 @@ class JdbcCalendarEventRepository(
                 WHERE e.google_account_id = :google_account_id 
                     AND e.calendar_id = :calendar_id 
                     AND e.start_date_time < :to 
-                    AND e.end_date_time >= :from
-                    AND ((e.event_data ->> 'created')::timestamp without time zone >= :created_from OR 
-                         (e.event_data ->> 'created') IS NULL)
+                    AND e.end_date_time >= :from 
             """
 
         createdFrom?.let {
