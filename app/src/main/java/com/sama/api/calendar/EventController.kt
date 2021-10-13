@@ -27,7 +27,7 @@ class EventController(private val eventApplicationService: EventApplicationServi
         security = [SecurityRequirement(name = "user-auth")]
     )
     @GetMapping(
-        value = ["/api/calendar/blocks", "/api/calendar/events"],
+        value = ["/api/calendar/events"],
         produces = [MediaType.APPLICATION_JSON_VALUE]
     )
     fun fetchEvents(

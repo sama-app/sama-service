@@ -59,7 +59,7 @@ class EventApplicationServiceIT : BaseApplicationIntegrationTest() {
         }
 
         val expected = EventDTO(startDateTime, startDateTime.plusHours(1), false, "title")
-        assertThat(result).isEqualTo(FetchEventsDTO(blocks = listOf(expected), events = listOf(expected)))
+        assertThat(result).isEqualTo(FetchEventsDTO(listOf(expected)))
     }
 
     @Test
