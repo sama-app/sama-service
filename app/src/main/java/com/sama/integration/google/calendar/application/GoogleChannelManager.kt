@@ -41,7 +41,7 @@ class GoogleChannelManager(
         val token = Channel.newToken()
         val expiredAt = Instant.now().plus(channelConfiguration.expiresInHours, HOURS)
 
-        logger.info("Creating a Channel for GoogleAccount${accountId.id} $resourceType: $resourceId...")
+        logger.debug("Creating a Channel for GoogleAccount${accountId.id} $resourceType: $resourceId...")
         val calendarService = googleServiceFactory.calendarService(accountId)
 
         val googleChannel = try {
@@ -123,6 +123,7 @@ class GoogleChannelManager(
             val cleanupLeadTime = Instant.now().plus(channelConfiguration.cleanupLeadTimeHours, HOURS)
             val channelToRecreate = channelRepository.findByExpiresAtLessThan(cleanupLeadTime)
             channelToRecreate.forEach { channel ->
+                logger.debug("Recreating channel ${channel.debugString()} due to expiry...")
                 transactionTemplate.execute { createChannel(channel.googleAccountId, channel.resourceType, channel.resourceId) }
             }
 

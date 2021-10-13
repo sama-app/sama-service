@@ -40,7 +40,7 @@ class GoogleChannelNotificationReceiver(
     @Transactional
     fun receive(notification: GoogleChannelNotification) {
         try {
-            logger.info("Received notification for Channel#${notification.channelId}")
+            logger.debug("Received notification for Channel#${notification.channelId}")
             val channelId = UUID.fromString(notification.channelId)
             val channel = try {
                 channelRepository.findByIdOrThrow(channelId)
@@ -52,7 +52,7 @@ class GoogleChannelNotificationReceiver(
             val updated = try {
                 channel.receiveMessage(notification)
             } catch (e: ChannelClosedException) {
-                logger.warn("Channel#${notification.channelId} received a message when mark as closed. Cleaning up...")
+                logger.info("Channel#${notification.channelId} received a message when mark as closed. Cleaning up...")
                 val calendarService = googleServiceFactory.calendarService(channel.googleAccountId)
                 calendarService.stopChannel(channel.id, channel.externalResourceId).execute()
                 return
