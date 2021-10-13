@@ -1,5 +1,6 @@
 package com.sama.meeting.application
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.sama.meeting.configuration.MeetingProposalMessageConfiguration
 import com.sama.meeting.configuration.MeetingUrlConfiguration
 import com.sama.meeting.domain.MeetingCode
@@ -41,9 +42,10 @@ private val meetingCode = MeetingCode("VGsUTGno")
 @TestConfiguration
 class MeetingInvitationServiceTestConfiguration {
     @Bean
-    fun meetingUrlConfiguration(): MeetingUrlConfiguration {
-        return MeetingUrlConfiguration(10, scheme, host)
-    }
+    fun meetingUrlConfiguration() = MeetingUrlConfiguration(10, scheme, host)
+
+    @Bean
+    fun objectMapper() = ObjectMapper().findAndRegisterModules()
 }
 
 @ExtendWith(SpringExtension::class)
@@ -51,7 +53,7 @@ class MeetingInvitationServiceTestConfiguration {
     classes = [
         MeetingInvitationView::class,
         MeetingProposalMessageConfiguration::class,
-        MeetingInvitationServiceTestConfiguration::class
+        MeetingInvitationServiceTestConfiguration::class,
     ]
 )
 class MeetingInvitationViewTest {
@@ -138,14 +140,14 @@ class MeetingInvitationViewTest {
 
     @TestFactory
     fun renderShareableMessage() = listOf(
-        TestInput(ZoneId.of("Europe/London"), Locale.ENGLISH, ZoneId.of("Europe/London")) to """
+        TestInput(ZoneId.of("Europe/London"), Locale.UK, ZoneId.of("Europe/London")) to """
             Would any of these work for you?
             
             Wed, July 7:
-            * 10:00 AM - 10:15 AM
-            * 11:00 AM - 12:00 PM
+            * 10:00 - 10:15
+            * 11:00 - 12:00
             Thu, July 8:
-            * 11:00 AM - 12:00 PM
+            * 11:00 - 12:00
 
             You can pick a suitable time here: https://app.meetsama.com/VGsUTGno
         """.trimIndent(),
@@ -154,15 +156,15 @@ class MeetingInvitationViewTest {
             Would any of these work for you? Times are in GMT.
             
             Wed, July 7:
-            * 10:00 AM - 10:15 AM
-            * 11:00 AM - 12:00 PM
+            * 10:00 - 10:15
+            * 11:00 - 12:00
             Thu, July 8:
-            * 11:00 AM - 12:00 PM
-
+            * 11:00 - 12:00
+            
             You can pick a suitable time here: https://app.meetsama.com/VGsUTGno
         """.trimIndent(),
 
-        TestInput(ZoneId.of("Europe/London"), Locale.forLanguageTag("LT"), ZoneId.of("Europe/Vilnius")) to """
+        TestInput(ZoneId.of("Europe/London"), Locale.UK, ZoneId.of("Europe/Vilnius")) to """
             Would any of these work for you? Times are in EET.
             
             Wed, July 7:
@@ -186,8 +188,32 @@ class MeetingInvitationViewTest {
             You can pick a suitable time here: https://app.meetsama.com/VGsUTGno
         """.trimIndent(),
 
-        TestInput(ZoneId.of("Europe/London"), Locale.US, ZoneId.of("America/New_York")) to """
+        TestInput(ZoneId.of("Europe/London"), Locale.UK, ZoneId.of("America/New_York")) to """
             Would any of these work for you? Times are in EST.
+            
+            Wed, July 7:
+            * 5:00 AM - 5:15 AM
+            * 6:00 AM - 7:00 AM
+            Thu, July 8:
+            * 6:00 AM - 7:00 AM
+
+            You can pick a suitable time here: https://app.meetsama.com/VGsUTGno
+        """.trimIndent(),
+
+        TestInput(ZoneId.of("America/New_York"), Locale.US, ZoneId.of("America/New_York")) to """
+            Would any of these work for you?
+            
+            Wed, July 7:
+            * 5:00 AM - 5:15 AM
+            * 6:00 AM - 7:00 AM
+            Thu, July 8:
+            * 6:00 AM - 7:00 AM
+
+            You can pick a suitable time here: https://app.meetsama.com/VGsUTGno
+        """.trimIndent(),
+
+        TestInput(ZoneId.of("America/New_York"), Locale.US, ZoneId.of("America/New_York")) to """
+            Would any of these work for you?
             
             Wed, July 7:
             * 5:00 AM - 5:15 AM
