@@ -5,24 +5,25 @@ import com.sama.meeting.domain.MeetingIntent
 import com.sama.meeting.domain.MeetingIntentCode
 import com.sama.meeting.domain.MeetingSlot
 import com.sama.users.application.UserPublicDTO
-import com.sama.users.infrastructure.jpa.UserEntity
 import java.time.ZonedDateTime
 
-fun MeetingIntent.toDTO(): MeetingIntentDTO {
+fun MeetingIntent.toDTO(meetingTitle: String): MeetingIntentDTO {
     return MeetingIntentDTO(
         code!!,
         duration.toMinutes(),
-        suggestedSlots.toDTO()
+        suggestedSlots.toDTO(),
+        meetingTitle
     )
 }
 
 fun MeetingSlot.toDTO() = MeetingSlotDTO(this.startDateTime, this.endDateTime)
-fun Iterable<MeetingSlot>.toDTO()= map { it.toDTO() }
+fun Iterable<MeetingSlot>.toDTO() = map { it.toDTO() }
 
 data class MeetingIntentDTO(
     val meetingIntentCode: MeetingIntentCode,
     val durationMinutes: Long,
     val suggestedSlots: List<MeetingSlotDTO>,
+    val defaultMeetingTitle: String
 )
 
 data class MeetingSlotDTO(

@@ -73,6 +73,7 @@ class MeetingControllerTest(@Autowired val mockMvc: MockMvc) {
         val timeZone = ZoneId.of("Europe/Rome")
         val slotSuggestionCount = 3
         val code = MeetingIntentCode.random()
+        val meetingTitle = "Meeting title"
 
         whenever(
             meetingApplicationService.dispatchInitiateMeetingCommand(
@@ -87,7 +88,8 @@ class MeetingControllerTest(@Autowired val mockMvc: MockMvc) {
                         ZonedDateTime.parse("2021-01-01T12:00:00Z"),
                         ZonedDateTime.parse("2021-01-01T13:00:00Z"),
                     )
-                )
+                ),
+                meetingTitle
             )
         )
 
@@ -108,7 +110,8 @@ class MeetingControllerTest(@Autowired val mockMvc: MockMvc) {
                         "startDateTime": "2021-01-01T12:00:00Z",
                         "endDateTime": "2021-01-01T13:00:00Z"
                     }
-                ]
+                ],
+                "defaultMeetingTitle": "$meetingTitle"
             }
         """
         mockMvc.perform(
@@ -118,7 +121,7 @@ class MeetingControllerTest(@Autowired val mockMvc: MockMvc) {
                 .content(requestBody)
         )
             .andExpect(status().isOk)
-            .andExpect(content().json(expectedResponse))
+            .andExpect(content().json(expectedResponse, true))
     }
 
     @TestFactory
@@ -160,7 +163,8 @@ class MeetingControllerTest(@Autowired val mockMvc: MockMvc) {
             meetingApplicationService.proposeMeeting(
                 userId, ProposeMeetingCommand(
                     meetingIntentCode,
-                    listOf(proposedSlot)
+                    listOf(proposedSlot),
+                    meetingTitle
                 )
             )
         ).thenReturn(
@@ -179,6 +183,7 @@ class MeetingControllerTest(@Autowired val mockMvc: MockMvc) {
         val requestBody = """
             {
                 "meetingIntentCode": "${meetingIntentCode.code}",
+                "title": "$meetingTitle", 
                 "proposedSlots": [{
                     "startDateTime": "2021-01-01T12:00:00Z",
                     "endDateTime": "2021-01-01T13:00:00Z"
