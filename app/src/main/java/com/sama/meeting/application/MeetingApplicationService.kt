@@ -33,6 +33,7 @@ import com.sama.meeting.domain.ProposedMeeting
 import com.sama.meeting.domain.SamaNonSamaProposedMeeting
 import com.sama.meeting.domain.SamaSamaProposedMeeting
 import com.sama.meeting.domain.UserRecipient
+import com.sama.slotsuggestion.application.DefaultSlotSuggestionService
 import com.sama.slotsuggestion.application.MultiUserSlotSuggestionRequest
 import com.sama.slotsuggestion.application.SlotSuggestionRequest
 import com.sama.slotsuggestion.application.SlotSuggestionService
@@ -43,6 +44,8 @@ import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset.UTC
 import java.time.ZonedDateTime
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.scheduling.TaskScheduler
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
@@ -65,6 +68,7 @@ class MeetingApplicationService(
     private val taskScheduler: TaskScheduler,
     private val clock: Clock,
 ) {
+    private var logger: Logger = LoggerFactory.getLogger(javaClass)
 
     fun dispatchInitiateMeetingCommand(userId: UserId, command: InitiateMeetingCommand): MeetingIntentDTO {
         return if (command.recipientId != null) {
@@ -321,6 +325,7 @@ class MeetingApplicationService(
             return
         }
         meetingRepository.saveAllExpired(expiringMeetings)
+        logger.info("Expired ${expiringMeetings.size} meetings... ")
     }
 }
 

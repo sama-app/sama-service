@@ -184,7 +184,7 @@ class GoogleOauth2ApplicationService(
 
     @SentryTransaction(operation = "deleteOauth2States")
     @Scheduled(cron = "0 0 * * * *")
-    fun expireMeetings() {
+    fun deleteOauth2States() {
         oauth2StateRepository.deleteByCreatedAtLessThan(Instant.now().minusSeconds(600))
     }
 }

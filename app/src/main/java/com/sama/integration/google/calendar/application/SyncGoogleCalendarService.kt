@@ -23,12 +23,14 @@ import com.sama.integration.google.calendar.domain.insert
 import com.sama.integration.google.calendar.domain.toDomain
 import com.sama.integration.google.calendar.domain.toGoogleCalendarDateTime
 import com.sama.integration.google.translatedGoogleException
-import com.sama.integration.sentry.sentrySpan
 import com.sama.users.domain.UserId
+import io.sentry.spring.tracing.SentryTransaction
 import java.time.Clock
 import java.time.Instant
 import java.time.ZonedDateTime
 import java.util.UUID
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 
@@ -43,6 +45,7 @@ class SyncGoogleCalendarService(
     private val googleCalendarSyncer: GoogleCalendarSyncer,
     private val clock: Clock,
 ) : GoogleCalendarService {
+    private var logger: Logger = LoggerFactory.getLogger(javaClass)
 
     // https://developers.google.com/calendar/v3/reference/events/list
     // https://developers.google.com/calendar/v3/reference/events#resource
@@ -153,23 +156,23 @@ class SyncGoogleCalendarService(
         }
     }
 
+    @SentryTransaction(operation = "syncUserCalendarLists")
     @Scheduled(initialDelay = 30000, fixedDelay = 25000)
     fun syncUserCalendarLists() {
-        sentrySpan(method = "syncUserCalendarLists") {
-            val userCalendarListsToSync = calendarListSyncRepository.findSyncable(Instant.now())
-            userCalendarListsToSync.forEach { userId ->
-                googleCalendarSyncer.syncUserCalendarList(userId)
-            }
+        val userCalendarListsToSync = calendarListSyncRepository.findSyncable(Instant.now())
+        userCalendarListsToSync.forEach { userId ->
+            googleCalendarSyncer.syncUserCalendarList(userId)
         }
+        logger.info("Synced ${userCalendarListsToSync.size} Google Calendar lists")
     }
 
+    @SentryTransaction(operation = "syncUserCalendars")
     @Scheduled(initialDelay = 30000, fixedDelay = 25000)
     fun syncUserCalendars() {
-        sentrySpan(method = "syncUserCalendars") {
-            val userCalendarsToSync = calendarSyncRepository.findSyncable(Instant.now())
-            userCalendarsToSync.forEach { (accountId, calendarId) ->
-                googleCalendarSyncer.syncUserCalendar(accountId, calendarId)
-            }
+        val userCalendarsToSync = calendarSyncRepository.findSyncable(Instant.now())
+        userCalendarsToSync.forEach { (accountId, calendarId) ->
+            googleCalendarSyncer.syncUserCalendar(accountId, calendarId)
         }
+        logger.info("Synced ${userCalendarsToSync.size} Google Calendars")
     }
 }
