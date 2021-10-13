@@ -61,7 +61,7 @@ class WebMvcConfiguration(
     fun logFilter(): RequestLoggingFilter {
         val filter = RequestLoggingFilter()
         filter.setIncludeQueryString(true)
-        filter.setIncludeClientInfo(true)
+        filter.setIncludeClientInfo(false)
         filter.setIncludePayload(true)
         filter.setMaxPayloadLength(10000)
         filter.setIncludeHeaders(true)
