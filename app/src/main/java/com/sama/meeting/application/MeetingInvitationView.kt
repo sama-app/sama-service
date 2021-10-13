@@ -7,7 +7,6 @@ import com.sama.meeting.configuration.toUrl
 import com.sama.meeting.domain.MeetingSlot
 import com.sama.meeting.domain.ProposedMeeting
 import com.sama.users.application.UserService
-import com.sama.users.application.UserSettingsDTO
 import com.sama.users.application.UserSettingsService
 import com.samskivert.mustache.Template
 import java.time.ZoneId
@@ -26,9 +25,12 @@ class MeetingInvitationView(
     private val userSettingsService: UserSettingsService,
     private val meetingUrlConfiguration: MeetingUrlConfiguration,
     private val meetingProposalMessageTemplate: Template,
+    private val timeZonesToLocales: Map<ZoneId, Locale?>
 ) {
-    private val dateFormatterTemplate = DateTimeFormatter.ofPattern("EEE, MMMM d")
-    private val timeFormatterTemplate = ofLocalizedTime(SHORT)
+    companion object {
+        private val DATE_FORMATTER = DateTimeFormatter.ofPattern("EEE, MMMM d")
+            .withLocale(ENGLISH)
+    }
 
     fun render(proposedMeeting: ProposedMeeting, recipientTimeZone: ZoneId): MeetingInvitationDTO {
         val initiator = userService.find(proposedMeeting.initiatorId)
@@ -66,7 +68,7 @@ class MeetingInvitationView(
         initiatorLocale: Locale,
         recipientTimeZone: ZoneId
     ): String {
-        val (dateFormatter, timeFormatter) = dateTimeFormatters(initiatorTimeZone, initiatorLocale, recipientTimeZone)
+        val timeFormatter = timeFormatter(initiatorLocale, recipientTimeZone)
         val sortedProposedSots = slots
             .map { it.atTimeZone(recipientTimeZone) }
             .sortedBy { it.startDateTime }
@@ -77,7 +79,7 @@ class MeetingInvitationView(
                 showTimeZone, timeZone,
                 sortedProposedSots
                     .groupBy { it.startDateTime.toLocalDate() }
-                    .mapKeys { (date, _) -> dateFormatter.format(date).removeYear() }
+                    .mapKeys { (date, _) -> DATE_FORMATTER.format(date).removeYear() }
                     .mapValues { (_, slots) ->
                         slots.map { it.formatTimeRange(timeFormatter) }
                     }.entries,
@@ -86,19 +88,10 @@ class MeetingInvitationView(
         )
     }
 
-    private fun dateTimeFormatters(initiatorTimeZone: ZoneId, initiatorLocale: Locale, recipientTimeZone: ZoneId) =
-        when {
-            initiatorTimeZone != recipientTimeZone -> {
-                dateFormatterTemplate.withLocale(ENGLISH) to
-                timeFormatterTemplate
-                        .withLocale(initiatorLocale)
-                        .withZone(recipientTimeZone)
-            }
-            else -> {
-                dateFormatterTemplate.withLocale(ENGLISH) to
-                        timeFormatterTemplate.withLocale(initiatorLocale)
-            }
-        }
+    private fun timeFormatter(initiatorLocale: Locale, recipientTimeZone: ZoneId): DateTimeFormatter {
+        val locale = timeZonesToLocales[recipientTimeZone] ?: initiatorLocale
+        return ofLocalizedTime(SHORT).withLocale(locale).withZone(recipientTimeZone)
+    }
 
     private fun timeZone(initiatorTimeZone: ZoneId, recipientTimeZone: ZoneId): Pair<Boolean, String> {
         val showTimeZone = initiatorTimeZone != recipientTimeZone
