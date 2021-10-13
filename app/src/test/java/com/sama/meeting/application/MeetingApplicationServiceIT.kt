@@ -83,7 +83,7 @@ class MeetingApplicationServiceIT : BaseApplicationIntegrationTest() {
                 it.id!!,
                 ProposeMeetingCommand(
                     meetingIntentDTO.meetingIntentCode,
-                    listOf(proposedSlot)
+                    listOf(proposedSlot),
                 )
             )
         }
@@ -99,6 +99,7 @@ class MeetingApplicationServiceIT : BaseApplicationIntegrationTest() {
         ).thenReturn(FetchEventsDTO(emptyList(), emptyList()))
 
         val meetingProposal = underTest.loadMeetingProposal(null, meetingInvitationDTO.meetingCode)
+        assertThat(meetingProposal.title).isEqualTo("Meeting with ${initiator().fullName}") // Verify default title created
 
         // confirm meeting
         underTest.confirmMeeting(
@@ -557,14 +558,21 @@ class MeetingApplicationServiceIT : BaseApplicationIntegrationTest() {
         val proposedSlotStart = ZonedDateTime.now(clock).plusHours(2)
         val proposedSlotEnd = proposedSlotStart.plusHours(3)
         val proposedSlot = MeetingSlotDTO(proposedSlotStart, proposedSlotEnd)
+        val initialTitle = "My initial title"
         val meetingInvitationDTO = asInitiator {
             underTest.proposeMeeting(
                 it.id!!,
                 ProposeMeetingCommand(
                     meetingIntentDTO.meetingIntentCode,
-                    listOf(proposedSlot)
+                    listOf(proposedSlot),
+                    initialTitle
                 )
             )
+        }
+
+        run {
+            val meetingProposal = underTest.loadMeetingProposal(null, meetingInvitationDTO.meetingCode)
+            assertThat(meetingProposal.title).isEqualTo(initialTitle) // verify new title is here
         }
 
         // update title

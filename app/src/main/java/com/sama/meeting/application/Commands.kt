@@ -39,6 +39,7 @@ data class InitiateSamaSamaMeetingCommand(
 data class ProposeMeetingCommand(
     val meetingIntentCode: MeetingIntentCode,
     val proposedSlots: List<MeetingSlotDTO>,
+    val title: String? = null
 )
 
 data class ProposeNewMeetingSlotsCommand(

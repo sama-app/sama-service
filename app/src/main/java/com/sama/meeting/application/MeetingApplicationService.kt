@@ -89,8 +89,9 @@ class MeetingApplicationService(
             command.timeZone,
             suggestedSlots
         ).let { meetingIntentRepository.save(it) }
+        val meetingTitle = generateMeetingTitle(meetingIntent)
 
-        return meetingIntent.toDTO()
+        return meetingIntent.toDTO(meetingTitle)
     }
 
     @Transactional
@@ -118,8 +119,9 @@ class MeetingApplicationService(
             recipient.settings.timeZone,
             suggestedSlots
         ).let { meetingIntentRepository.save(it) }
+        val meetingTitle = generateMeetingTitle(meetingIntent)
 
-        return meetingIntent.toDTO()
+        return meetingIntent.toDTO(meetingTitle)
     }
 
     @Transactional
@@ -129,7 +131,7 @@ class MeetingApplicationService(
 
         val meetingId = meetingRepository.nextIdentity()
         val meetingCode = meetingCodeGenerator.generate()
-        val meetingTitle = generateMeetingTitle(meetingIntent)
+        val meetingTitle = command.title ?: generateMeetingTitle(meetingIntent)
 
         val proposedSlots = command.proposedSlots.map { it.toValueObject() }
         val proposedMeeting = meetingIntent
