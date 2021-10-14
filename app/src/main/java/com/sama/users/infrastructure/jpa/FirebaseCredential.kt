@@ -9,7 +9,7 @@ import javax.persistence.Table
 
 @Entity
 @Table(schema = "sama", name = "user_firebase_credential")
-data class FirebaseCredential(
+class FirebaseCredential(
     @Id
     var deviceId: UUID,
 
@@ -21,4 +21,11 @@ data class FirebaseCredential(
 
     @Column
     var updatedAt: Instant,
-)
+) {
+
+    fun update(registrationToken: String): FirebaseCredential {
+        this.registrationToken = registrationToken
+        this.updatedAt = Instant.now()
+        return this
+    }
+}
