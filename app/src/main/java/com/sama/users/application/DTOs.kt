@@ -48,7 +48,10 @@ data class UserSettingsDTO(
     val format24HourTime: Boolean,
     val workingHours: List<DayWorkingHoursDTO>,
     val grantedPermissions: Set<UserPermission>,
+    val marketingPreferences: MarketingPreferencesDTO
 )
+
+data class MarketingPreferencesDTO(val newsletterSubscriptionEnabled: Boolean)
 
 data class DayWorkingHoursDTO(
     val dayOfWeek: DayOfWeek,

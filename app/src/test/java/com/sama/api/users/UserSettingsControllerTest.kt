@@ -4,6 +4,7 @@ import com.sama.api.ApiTestConfiguration
 import com.sama.api.config.WebMvcConfiguration
 import com.sama.users.application.DayWorkingHoursDTO
 import com.sama.users.application.GrantUserPermissionsCommand
+import com.sama.users.application.MarketingPreferencesDTO
 import com.sama.users.application.RevokeUserPermissionsCommand
 import com.sama.users.application.UpdateMarketingPreferencesCommand
 import com.sama.users.application.UpdateTimeZoneCommand
@@ -71,7 +72,8 @@ class UserSettingsControllerTest(
                         DayWorkingHoursDTO(MONDAY, LocalTime.of(10, 0), LocalTime.of(12, 0)),
                         DayWorkingHoursDTO(WEDNESDAY, LocalTime.of(13, 0), LocalTime.of(17, 30))
                     ),
-                    setOf(PAST_EVENT_CONTACT_SCAN)
+                    setOf(PAST_EVENT_CONTACT_SCAN),
+                    MarketingPreferencesDTO(true)
                 )
             )
 
@@ -92,7 +94,10 @@ class UserSettingsControllerTest(
                     "endTime": "17:30:00"
                 }
             ],
-            "grantedPermissions": [ "PAST_EVENT_CONTACT_SCAN" ]
+            "grantedPermissions": [ "PAST_EVENT_CONTACT_SCAN" ],
+            "marketingPreferences": {
+                "newsletterSubscriptionEnabled": true
+            }
         }
         """
 
