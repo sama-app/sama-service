@@ -29,7 +29,7 @@
         <root level="info">
             <appender-ref ref="ColouredConsole"/>
         </root>
-        <logger level="info" name="com.sama"/>
+        <logger name="com.sama" level="debug"/>
         <logger level="debug" name="org.hibernate.SQL"/>
         <logger level="debug" name="com.google.api.client.http.HttpTransport"/>
     </springProfile>
@@ -38,9 +38,9 @@
         <root level="info">
             <appender-ref ref="ConsoleJson"/>
         </root>
-        <logger name="com.sama" level="info"/>
+        <logger name="com.sama" level="debug"/>
         <logger name="org.hibernate.SQL" level="debug"/>
-        <logger level="debug" name="com.google.api.client.http.HttpTransport"/>
+        <logger name="com.google.api.client.http.HttpTransport" level="debug"/>
     </springProfile>
 
     <springProfile name="prod">
@@ -48,7 +48,7 @@
             <appender-ref ref="ConsoleJson"/>
         </root>
         <logger name="com.sama" level="debug"/>
-        <logger level="debug" name="org.hibernate.SQL"/>
-        <logger level="info" name="com.google.api.client.http.HttpTransport"/>
+        <logger name="org.hibernate.SQL" level="debug"/>
+        <logger name="com.google.api.client.http.HttpTransport" level="info"/>
     </springProfile>
 </configuration>
