@@ -80,7 +80,7 @@ fun UserEntity.applyChanges(user: UserDeviceRegistrations): UserEntity {
         user.deviceRegistrations.mapTo(mutableListOf())
         { (deviceId, firebaseRegistrationToken) ->
             existing[deviceId]
-                ?.copy(registrationToken = firebaseRegistrationToken, updatedAt = Instant.now())
+                ?.update(firebaseRegistrationToken)
                 ?: FirebaseCredential(
                     deviceId,
                     user.userId.id,
