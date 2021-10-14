@@ -9,6 +9,7 @@ import com.sama.integration.google.calendar.domain.EventData
 import com.sama.integration.google.calendar.domain.GoogleCalendarEventKey
 import com.sama.meeting.domain.EmailRecipient
 import com.sama.users.application.InternalUserService
+import com.sama.users.application.MarketingPreferencesDTO
 import com.sama.users.application.UserSettingsDTO
 import com.sama.users.application.toInternalDTO
 import java.time.Clock
@@ -66,7 +67,10 @@ class EventApplicationServiceIT : BaseApplicationIntegrationTest() {
     fun `create event with e-mail recipient`() {
         val userId = initiator().id!!
 
-        val userSettings = UserSettingsDTO(Locale.ENGLISH, clock.zone, true, emptyList(), emptySet())
+        val userSettings = UserSettingsDTO(
+            Locale.ENGLISH, clock.zone, true, emptyList(),
+            emptySet(), MarketingPreferencesDTO(true)
+        )
         val user = initiator().toInternalDTO(userSettings)
         whenever(internalUserService.findInternal(userId)).thenReturn(user)
         val recipientEmail = recipient().email
@@ -105,7 +109,10 @@ class EventApplicationServiceIT : BaseApplicationIntegrationTest() {
         val initiatorId = initiator().id!!
         val recipientId = recipient().id!!
 
-        val userSettings = UserSettingsDTO(Locale.ENGLISH, clock.zone, true, emptyList(), emptySet())
+        val userSettings = UserSettingsDTO(
+            Locale.ENGLISH, clock.zone, true, emptyList(), emptySet(),
+            MarketingPreferencesDTO(true)
+        )
         val initiator = initiator().toInternalDTO(userSettings)
         val recipient = recipient().toInternalDTO(userSettings)
         whenever(internalUserService.findInternal(initiatorId)).thenReturn(initiator)

@@ -53,7 +53,8 @@ class UserSettingsApplicationServiceIT : BaseApplicationIntegrationTest() {
             true,
             listOf(MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY)
                 .map { DayWorkingHoursDTO(it, LocalTime.of(9, 0), LocalTime.of(17, 0)) },
-            emptySet()
+            emptySet(),
+            MarketingPreferencesDTO(false)
         )
 
 

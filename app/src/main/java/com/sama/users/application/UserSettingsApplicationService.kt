@@ -93,6 +93,7 @@ fun UserSettings.toDTO(): UserSettingsDTO {
         dayWorkingHours
             .map { wh -> DayWorkingHoursDTO(wh.key, wh.value.startTime, wh.value.endTime) }
             .sortedBy { wh -> wh.dayOfWeek },
-        grantedPermissions
+        grantedPermissions,
+        MarketingPreferencesDTO(newsletterSubscriptionEnabled)
     )
 }

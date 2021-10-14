@@ -8,6 +8,7 @@ import com.sama.meeting.domain.MeetingId
 import com.sama.meeting.domain.MeetingIntentId
 import com.sama.meeting.domain.MeetingSlot
 import com.sama.meeting.domain.SamaNonSamaProposedMeeting
+import com.sama.users.application.MarketingPreferencesDTO
 import com.sama.users.application.UserPublicDTO
 import com.sama.users.application.UserService
 import com.sama.users.application.UserSettingsDTO
@@ -86,7 +87,10 @@ class MeetingInvitationViewTest {
         val initiator = UserPublicDTO(UserPublicId.random(), "test", "test@meetsama.com")
         val recipientZoneId = ZoneOffset.UTC
         val initiatorZoneId = ZoneOffset.UTC
-        val settings = UserSettingsDTO(Locale.forLanguageTag("en"), initiatorZoneId, true, emptyList(), emptySet())
+        val settings = UserSettingsDTO(
+            Locale.forLanguageTag("en"), initiatorZoneId, true,
+            emptyList(), emptySet(), MarketingPreferencesDTO(true)
+        )
         whenever(userService.find(userId)).thenReturn(initiator)
         whenever(userSettingsService.find(userId)).thenReturn(settings)
 
