@@ -15,6 +15,14 @@ enum class MeetingStatus {
     EXPIRED,
 }
 
+data class MeetingPreferences(
+    val permanentLink: Boolean
+) {
+    companion object {
+        fun default() = MeetingPreferences(false)
+    }
+}
+
 @DomainEntity
 data class ConfirmedMeeting(
     override val meetingId: MeetingId,

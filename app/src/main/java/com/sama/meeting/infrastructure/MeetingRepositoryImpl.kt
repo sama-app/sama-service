@@ -8,12 +8,13 @@ import com.sama.meeting.domain.ExpiredMeeting
 import com.sama.meeting.domain.Meeting
 import com.sama.meeting.domain.MeetingCode
 import com.sama.meeting.domain.MeetingId
+import com.sama.meeting.domain.MeetingPreferences
 import com.sama.meeting.domain.MeetingRecipient
 import com.sama.meeting.domain.MeetingRepository
 import com.sama.meeting.domain.MeetingSlot
 import com.sama.meeting.domain.MeetingStatus
-import com.sama.meeting.domain.SamaNonSamaProposedMeeting
 import com.sama.meeting.domain.RejectedMeeting
+import com.sama.meeting.domain.SamaNonSamaProposedMeeting
 import com.sama.meeting.domain.SamaSamaProposedMeeting
 import com.sama.meeting.domain.UserRecipient
 import com.sama.meeting.infrastructure.jpa.MeetingEntity
@@ -27,7 +28,6 @@ import com.sama.meeting.infrastructure.jpa.findLockedByCodeOrThrow
 import com.sama.users.domain.UserId
 import com.sama.users.infrastructure.toUserId
 import java.time.Duration
-import java.time.ZoneOffset
 import java.time.ZoneOffset.UTC
 import java.time.ZonedDateTime
 import org.springframework.data.repository.findByIdOrNull
@@ -122,7 +122,8 @@ class MeetingRepositoryImpl(
                         proposedSlots.map { MeetingSlot(it.startDateTime, it.endDateTime) },
                         rejectedSlots.map { MeetingSlot(it.startDateTime, it.endDateTime) },
                         meetingEntity.code!!.toMeetingCode(),
-                        meetingEntity.title!!
+                        meetingEntity.title!!,
+                        MeetingPreferences(meetingEntity.permanentLink ?: false)
                     )
                 } else {
                     SamaNonSamaProposedMeeting(
@@ -133,6 +134,7 @@ class MeetingRepositoryImpl(
                         proposedSlots.map { MeetingSlot(it.startDateTime, it.endDateTime) },
                         meetingEntity.code!!.toMeetingCode(),
                         meetingEntity.title!!,
+                        MeetingPreferences(meetingEntity.permanentLink ?: false),
                         ZonedDateTime.ofInstant(meetingEntity.createdAt!!, UTC)
                     )
                 }
