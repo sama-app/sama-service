@@ -85,7 +85,6 @@ class MeetingEntity {
         title = proposedMeeting.meetingTitle
         permanentLink = proposedMeeting.meetingPreferences.permanentLink
         val now = Instant.now()
-        this.confirmedAt = now
         this.updatedAt = now
         return this
     }
@@ -105,7 +104,6 @@ class MeetingEntity {
         this.proposedSlots.addAll(proposedSlots)
         this.proposedSlots.addAll(rejectedSlots)
         val now = Instant.now()
-        this.confirmedAt = now
         this.updatedAt = now
         return this
     }
