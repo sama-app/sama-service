@@ -176,7 +176,7 @@ class SlotSuggestionServiceTest {
             googleCalendarService.findEvents(
                 userId,
                 now.minusDays(config.historicalDays),
-                now.plusDays(config.futureDays)
+                now.plusDays(config.futureDays),
             )
         ).willReturn(persona.pastBlocks().plus(persona.futureBlocks()))
     }

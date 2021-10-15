@@ -96,7 +96,7 @@ class CalendarEventRepositoryTest : BasePersistenceIT<JdbcCalendarEventRepositor
 
 
     @Test
-    fun `save and find by created from`() {
+    fun `save and find by created from & min attendees`() {
         val now = ZonedDateTime.now()
         val eventData = EventData("title", false, 1, "recurring-id", now)
         val eventCreatedNow = CalendarEvent(
@@ -115,9 +115,24 @@ class CalendarEventRepositoryTest : BasePersistenceIT<JdbcCalendarEventRepositor
             GoogleCalendarEventKey(googleAccount.id!!, "default", "event-no-created-date"),
             now, now.plusHours(1), eventData.copy(created = null)
         )
-        underTest.saveAll(listOf(eventCreatedNow, eventCreatedInThePast, eventCreatedInTheFuture, eventWithoutCreatedDate))
+        val eventWithoutAttendees = CalendarEvent(
+            GoogleCalendarEventKey(googleAccount.id!!, "default", "event-without-attendees"),
+            now, now.plusHours(1), eventData.copy(created = now.plusHours(1), attendeeCount = 0)
+        )
+        underTest.saveAll(
+            listOf(
+                eventCreatedNow,
+                eventCreatedInThePast,
+                eventCreatedInTheFuture,
+                eventWithoutCreatedDate,
+                eventWithoutAttendees
+            )
+        )
 
-        val actual = underTest.findAll(googleAccount.id!!, "default", now, now.plusHours(3), createdFrom = now)
+        val actual = underTest.findAll(
+            googleAccount.id!!, "default", now, now.plusHours(3),
+            createdFrom = now, minAttendeeCount = 1
+        )
 
         assertThat(actual)
             .usingRecursiveComparison()

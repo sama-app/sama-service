@@ -13,6 +13,7 @@ import java.sql.Types
 import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
+import liquibase.pro.packaged.it
 import org.springframework.dao.EmptyResultDataAccessException
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations
@@ -77,7 +78,8 @@ class JdbcCalendarEventRepository(
         calendarId: GoogleCalendarId,
         from: ZonedDateTime,
         to: ZonedDateTime,
-        createdFrom: ZonedDateTime?
+        createdFrom: ZonedDateTime?,
+        minAttendeeCount: Int?,
     ): List<CalendarEvent> {
         val namedParameters = MapSqlParameterSource()
             .addValue("google_account_id", accountId.id)
@@ -98,6 +100,13 @@ class JdbcCalendarEventRepository(
             query += """
                 AND ((e.event_data ->> 'created')::timestamp without time zone >= :created_from OR 
                     (e.event_data ->> 'created') IS NULL)
+            """
+        }
+
+        minAttendeeCount?.let {
+            namedParameters.addValue("min_attendee_count", minAttendeeCount)
+            query += """
+                AND (e.event_data ->> 'attendeeCount')::int >= :min_attendee_count
             """
         }
 

@@ -10,7 +10,8 @@ interface GoogleCalendarService {
         userId: UserId,
         startDateTime: ZonedDateTime,
         endDateTime: ZonedDateTime,
-        createdFrom: ZonedDateTime? = null
+        createdFrom: ZonedDateTime? = null,
+        hasAttendees: Boolean? = null
     ): List<CalendarEvent>
 
     fun insertEvent(userId: UserId, command: InsertGoogleCalendarEventCommand): CalendarEvent

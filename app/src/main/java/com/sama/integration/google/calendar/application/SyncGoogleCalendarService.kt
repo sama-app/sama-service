@@ -53,7 +53,8 @@ class SyncGoogleCalendarService(
         userId: UserId,
         startDateTime: ZonedDateTime,
         endDateTime: ZonedDateTime,
-        createdFrom: ZonedDateTime?
+        createdFrom: ZonedDateTime?,
+        hasAttendees: Boolean?
     ): List<CalendarEvent> {
         val accountIds = googleAccountRepository.findAllByUserId(userId)
             .filter { it.linked }
@@ -66,16 +67,31 @@ class SyncGoogleCalendarService(
                 .map { sync ->
                     val isSynced = sync.isSyncedFor(startDateTime, endDateTime, clock)
                     if (isSynced) {
-                        calendarEventRepository.findAll(sync.accountId, sync.calendarId, startDateTime, endDateTime, createdFrom)
+                        val minAttendeeCount = if (hasAttendees == true) 1 else null
+                        calendarEventRepository.findAll(
+                            sync.accountId,
+                            sync.calendarId,
+                            startDateTime,
+                            endDateTime,
+                            createdFrom,
+                            minAttendeeCount
+                        )
                     } else {
-                        forceLoadCalendarEvents(sync.accountId, sync.calendarId, startDateTime, endDateTime, createdFrom)
+                        forceLoadCalendarEvents(
+                            sync.accountId,
+                            sync.calendarId,
+                            startDateTime,
+                            endDateTime,
+                            createdFrom,
+                            hasAttendees
+                        )
                     }
                 }
                 .flatten()
         } else {
             // If there aren't any synced calendars, load the primary calendar for all accounts
             accountIds
-                .map { forceLoadCalendarEvents(it, PRIMARY_CALENDAR_ID, startDateTime, endDateTime, createdFrom) }
+                .map { forceLoadCalendarEvents(it, PRIMARY_CALENDAR_ID, startDateTime, endDateTime, createdFrom, hasAttendees) }
                 .flatten()
         }
 
@@ -98,10 +114,15 @@ class SyncGoogleCalendarService(
         calendarId: GoogleCalendarId,
         startDateTime: ZonedDateTime,
         endDateTime: ZonedDateTime,
-        createdFrom: ZonedDateTime?
+        createdFrom: ZonedDateTime?,
+        hasAttendees: Boolean?
     ) = try {
         val calendarService = googleServiceFactory.calendarService(accountId)
-        val (events, timeZone) = calendarService.findAllEvents(calendarId, startDateTime, endDateTime, createdFrom = createdFrom)
+        val minAttendeeCount = if (hasAttendees == true) 1 else null
+        val (events, timeZone) = calendarService.findAllEvents(
+            calendarId, startDateTime, endDateTime,
+            createdFrom = createdFrom, minAttendeeCount = minAttendeeCount
+        )
         events.toDomain(accountId, PRIMARY_CALENDAR_ID, timeZone)
     } catch (e: Exception) {
         throw translatedGoogleException(e)
