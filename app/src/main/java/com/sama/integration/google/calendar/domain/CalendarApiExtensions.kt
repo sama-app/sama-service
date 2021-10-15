@@ -43,7 +43,8 @@ fun Calendar.findAllEvents(
     endDateTime: ZonedDateTime,
     singleEvents: Boolean = true,
     createdFrom: ZonedDateTime? = null,
-) = findAllEvents(calendarId, startDateTime, endDateTime, null, singleEvents, createdFrom)
+    minAttendeeCount: Int? = null
+) = findAllEvents(calendarId, startDateTime, endDateTime, null, singleEvents, createdFrom, minAttendeeCount)
 
 fun Calendar.findAllEvents(calendarId: GoogleCalendarId, syncToken: String, singleEvents: Boolean = true) =
     findAllEvents(calendarId, null, null, syncToken, singleEvents)
@@ -55,6 +56,7 @@ private fun Calendar.findAllEvents(
     syncToken: String? = null,
     singleEvents: Boolean = true,
     createdFrom: ZonedDateTime? = null,
+    minAttendeeCount: Int? = null
 ): GoogleCalendarEventsResponse {
     sentrySpan(method = "Calendar.findAllEvents") {
         val calendarEvents = mutableListOf<GoogleCalendarEvent>()
@@ -70,9 +72,10 @@ private fun Calendar.findAllEvents(
             nextSyncToken = result.nextSyncToken
 
             var items = result.items
-            if (createdFrom != null) {
+            if (createdFrom != null || minAttendeeCount != null) {
                 items = items.filter {
-                    it.created == null || !it.created.toZonedDateTime().isBefore(createdFrom)
+                    (createdFrom == null || it.created == null || !it.created.toZonedDateTime().isBefore(createdFrom))
+                            && (minAttendeeCount == null || it.attendeeCount() >= minAttendeeCount)
                 }
             }
 

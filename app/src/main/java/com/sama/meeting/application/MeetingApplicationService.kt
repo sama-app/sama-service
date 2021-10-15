@@ -1,6 +1,7 @@
 package com.sama.meeting.application
 
 import com.sama.calendar.application.CalendarEventConsumer
+import com.sama.calendar.application.EventSearchCriteria
 import com.sama.calendar.application.EventService
 import com.sama.common.ApplicationService
 import com.sama.common.DomainValidationException
@@ -291,8 +292,9 @@ class MeetingApplicationService(
     private fun availableSlots(proposedMeeting: SamaNonSamaProposedMeeting): AvailableSlots {
         val (start, end) = proposedMeeting.proposedSlotsRange()
         val meetingProposedAt = proposedMeeting.createdAt!!
+        val searchCriteria = EventSearchCriteria(createdFrom = meetingProposedAt, hasAttendees = true)
         val blockingCalendarEvents = eventService.fetchEvents(
-            proposedMeeting.initiatorId, start.toLocalDate(), end.toLocalDate(), UTC, meetingProposedAt
+            proposedMeeting.initiatorId, start.toLocalDate(), end.toLocalDate(), UTC, searchCriteria
         ).events
         return AvailableSlots.of(proposedMeeting, blockingCalendarEvents, clock)
     }

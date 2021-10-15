@@ -40,6 +40,6 @@ class EventController(private val eventService: EventService) {
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "'endDate' must be after 'startDate'")
         }
 
-        return eventService.fetchEvents(userId!!, startDate, endDate, timezone, null)
+        return eventService.fetchEvents(userId!!, startDate, endDate, timezone)
     }
 }
