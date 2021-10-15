@@ -191,7 +191,7 @@ class MeetingApplicationService(
 
         val freeSlots = heatMap.slots.asSequence()
             .map { it.totalWeight }
-            .windowed(slotWindowSize) { it.reduce { acc, d -> acc * d } }
+            .windowed(slotWindowSize) { it.reduce { acc, d -> acc + d } }
             .withIndex()
             .filter { (_, value) -> value == 0.0 }
             .map { (idx, _) ->
