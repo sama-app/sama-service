@@ -4,6 +4,7 @@ import com.sama.common.View
 import com.sama.meeting.configuration.MeetingProposalMessageModel
 import com.sama.meeting.configuration.MeetingUrlConfiguration
 import com.sama.meeting.configuration.toUrl
+import com.sama.meeting.domain.MeetingCode
 import com.sama.meeting.domain.MeetingSlot
 import com.sama.meeting.domain.ProposedMeeting
 import com.sama.users.application.UserService
@@ -32,13 +33,17 @@ class MeetingInvitationView(
             .withLocale(ENGLISH)
     }
 
+    fun renderMeetingUrl(meetingCode: MeetingCode): String {
+        return meetingCode.toUrl(meetingUrlConfiguration)
+    }
+
     fun render(proposedMeeting: ProposedMeeting, recipientTimeZone: ZoneId): MeetingInvitationDTO {
         val initiator = userService.find(proposedMeeting.initiatorId)
         val initiatorSettings = userSettingsService.find(proposedMeeting.initiatorId)
         val sortedProposedSots = proposedMeeting.proposedSlots
             .map { it.atTimeZone(recipientTimeZone) }
             .sortedBy { it.startDateTime }
-        val meetingUrl = proposedMeeting.meetingCode.toUrl(meetingUrlConfiguration)
+        val meetingUrl = renderMeetingUrl(proposedMeeting.meetingCode)
 
         val shareableMessage = renderShareableMessage(
             sortedProposedSots,

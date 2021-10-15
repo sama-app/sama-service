@@ -3,6 +3,7 @@ package com.sama.api.meeting
 import com.sama.api.config.AuthUserId
 import com.sama.meeting.application.ConfirmMeetingCommand
 import com.sama.meeting.application.ConnectWithMeetingInitiatorCommand
+import com.sama.meeting.application.CreateFullAvailabilityLinkCommand
 import com.sama.meeting.application.InitiateMeetingCommand
 import com.sama.meeting.application.MeetingApplicationService
 import com.sama.meeting.application.MeetingIntentDTO
@@ -54,6 +55,20 @@ class MeetingController(
         @AuthUserId userId: UserId?,
         @RequestBody command: ProposeMeetingCommand,
     ) = meetingApplicationService.proposeMeeting(userId!!, command)
+
+    @Operation(
+        summary = "Propose a meeting with a slot selection",
+        security = [SecurityRequirement(name = "user-auth")]
+    )
+    @PostMapping(
+        "/api/meeting/full-availability-link",
+        consumes = [APPLICATION_JSON_VALUE],
+        produces = [APPLICATION_JSON_VALUE]
+    )
+    fun fullAvailabilityLink(
+        @AuthUserId userId: UserId?,
+        @RequestBody command: CreateFullAvailabilityLinkCommand,
+    ) = meetingApplicationService.createFullAvailabilityLink(userId!!, command)
 
     @Operation(
         summary = "Propose new slots for an existing sama to sama meeting",

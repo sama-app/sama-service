@@ -69,6 +69,10 @@ data class SamaNonSamaProposedMeeting(
     override fun isModifiableBy(userId: UserId?) = true
     override fun updateTitle(title: String) = copy(meetingTitle = title)
 
+    fun makeLinkPermanent(): SamaNonSamaProposedMeeting {
+        return copy(meetingPreferences = meetingPreferences.copy(permanentLink = true))
+    }
+
     fun claimAsRecipient(recipientId: UserId): SamaSamaProposedMeeting {
         check(recipientId != initiatorId) { "Cannot claim one's own meeting" }
         return SamaSamaProposedMeeting(

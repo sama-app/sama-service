@@ -26,6 +26,37 @@ class HeatMapService(
     private val clock: Clock,
 ) {
 
+    fun generateFreeBusy(userId: UserId): HeatMap {
+        val user = userRepository.findById(userId)
+
+        val today = LocalDate.now(clock.withZone(user.timeZone)).atStartOfDay(user.timeZone)
+        val futureBlockEndDate = today.plusDays(heatMapConfiguration.futureDays)
+        val futureBlocks = googleCalendarService.findEvents(
+            userId = userId,
+            startDateTime = today,
+            endDateTime = futureBlockEndDate
+        ).map { it.toBlock(user.timeZone) }
+
+        sentrySpan(method = "HeatMap.createFreeBusy") {
+            val baseHeatMap = HeatMap.create(
+                user.userId,
+                user.timeZone,
+                today.toLocalDate(),
+                futureBlockEndDate.toLocalDate(),
+                heatMapConfiguration.intervalMinutes
+            )
+
+            val weigher = weigher {
+                searchBoundary()
+                futureBlocks(futureBlocks)
+                workingHours(user.workingHours)
+            }
+
+            val heatMap = weigher.apply(baseHeatMap)
+            return heatMap
+        }
+    }
+
     fun generate(userId: UserId, recipientTimeZone: ZoneId?): HeatMap {
         val user = userRepository.findById(userId)
         val targetTimeZone = recipientTimeZone ?: user.timeZone

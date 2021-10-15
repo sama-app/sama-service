@@ -34,6 +34,7 @@ import com.sama.meeting.domain.ProposedMeeting
 import com.sama.meeting.domain.SamaNonSamaProposedMeeting
 import com.sama.meeting.domain.SamaSamaProposedMeeting
 import com.sama.meeting.domain.UserRecipient
+import com.sama.slotsuggestion.application.HeatMapService
 import com.sama.slotsuggestion.application.MultiUserSlotSuggestionRequest
 import com.sama.slotsuggestion.application.SlotSuggestionRequest
 import com.sama.slotsuggestion.application.SlotSuggestionService
@@ -44,6 +45,7 @@ import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset.UTC
 import java.time.ZonedDateTime
+import kotlin.math.ceil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.TaskScheduler
@@ -57,6 +59,7 @@ class MeetingApplicationService(
     private val meetingIntentRepository: MeetingIntentRepository,
     private val meetingRepository: MeetingRepository,
     private val slotSuggestionService: SlotSuggestionService,
+    private val heatMapService: HeatMapService,
     private val meetingInvitationView: MeetingInvitationView,
     private val meetingView: MeetingView,
     private val meetingCodeGenerator: MeetingCodeGenerator,
@@ -163,6 +166,49 @@ class MeetingApplicationService(
             meetingIntent.isSamaSama -> "$initiatorName / $recipientName"
             else -> "Meeting with $initiatorName"
         }
+    }
+
+    // TODO: Temporary hack
+    @Transactional
+    fun createFullAvailabilityLink(userId: UserId, command: CreateFullAvailabilityLinkCommand): String {
+        val user = userService.findInternal(userId)
+        val duration = command.durationMinutes.toMinutes()
+        val meetingIntent = MeetingIntent(
+            meetingIntentRepository.nextIdentity(),
+            userId,
+            duration,
+            null,
+            user.settings.timeZone,
+            emptyList()
+        ).let { meetingIntentRepository.save(it) }
+
+        val meetingId = meetingRepository.nextIdentity()
+        val meetingCode = MeetingCode(command.meetingCode)
+        val meetingTitle = generateMeetingTitle(meetingIntent)
+
+        val heatMap = heatMapService.generateFreeBusy(userId)
+        val slotWindowSize = ceil(duration.toMinutes().toDouble() / heatMap.intervalMinutes).toInt()
+
+        val freeSlots = heatMap.slots.asSequence()
+            .map { it.totalWeight }
+            .windowed(slotWindowSize) { it.reduce { acc, d -> acc * d } }
+            .withIndex()
+            .filter { (_, value) -> value == 0.0 }
+            .map { (idx, _) ->
+                val start = heatMap.slots[idx].startDateTime.atZone(heatMap.userTimeZone)
+                val end = start.plus(duration)
+                MeetingSlot(start, end)
+            }
+            .toList()
+
+        var proposedMeeting = meetingIntent
+            .propose(meetingId, meetingCode, freeSlots, meetingTitle)
+        check(proposedMeeting is SamaNonSamaProposedMeeting)
+
+        proposedMeeting = proposedMeeting.makeLinkPermanent()
+        meetingRepository.save(proposedMeeting)
+
+        return meetingInvitationView.renderMeetingUrl(meetingCode)
     }
 
     @Transactional
