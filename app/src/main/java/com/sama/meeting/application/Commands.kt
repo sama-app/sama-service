@@ -42,6 +42,12 @@ data class ProposeMeetingCommand(
     val title: String? = null
 )
 
+data class CreateFullAvailabilityLinkCommand(
+    val durationMinutes: Long,
+    val meetingCode: String
+)
+
+
 data class ProposeNewMeetingSlotsCommand(
     val proposedSlots: List<MeetingSlotDTO>
 )
