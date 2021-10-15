@@ -2,17 +2,16 @@ package com.sama.meeting.infrastructure
 
 import com.sama.common.BasePersistenceIT
 import com.sama.common.NotFoundException
-import com.sama.common.usingLaxDateTimePrecision
 import com.sama.meeting.domain.Actor
 import com.sama.meeting.domain.ConfirmedMeeting
 import com.sama.meeting.domain.ExpiredMeeting
 import com.sama.meeting.domain.MeetingCode
 import com.sama.meeting.domain.MeetingId
 import com.sama.meeting.domain.MeetingIntentId
+import com.sama.meeting.domain.MeetingPreferences
 import com.sama.meeting.domain.MeetingRepository
 import com.sama.meeting.domain.MeetingSlot
 import com.sama.meeting.domain.MeetingStatus
-import com.sama.meeting.domain.ProposedMeeting
 import com.sama.meeting.domain.SamaNonSamaProposedMeeting
 import com.sama.meeting.domain.SamaSamaProposedMeeting
 import com.sama.meeting.domain.UserRecipient
@@ -76,6 +75,7 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
             ),
             MeetingCode("VGsUTGno"),
             "Meeting title",
+            MeetingPreferences.default(),
             null
         )
 
@@ -109,7 +109,8 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
             ),
             emptyList(),
             MeetingCode("VGsUTGno"),
-            "Meeting title"
+            "Meeting title",
+            MeetingPreferences.default()
         )
 
         // act
@@ -142,6 +143,7 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
             ),
             meetingCode,
             meetingTitle,
+            MeetingPreferences.default(),
             null
         )
 
@@ -185,6 +187,7 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
             ),
             meetingCode,
             "Meeting title",
+            MeetingPreferences.default(),
             null
         )
 
@@ -224,7 +227,8 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
             ),
             emptyList(),
             meetingCode,
-            "Meeting title"
+            "Meeting title",
+            MeetingPreferences.default()
         )
 
         underTest.save(proposedMeeting)
@@ -271,6 +275,7 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
             ),
             MeetingCode("VGsUTGno"),
             "Meeting title",
+            MeetingPreferences.default(),
             null
         )
         underTest.save(proposedMeeting)
@@ -305,6 +310,7 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
             ),
             MeetingCode("one"),
             "Meeting title",
+            MeetingPreferences.default(),
             null
         )
 
@@ -326,6 +332,7 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
             ),
             MeetingCode("two"),
             "Meeting title",
+            MeetingPreferences.default(),
             null
         )
         underTest.save(validMeeting)
@@ -354,6 +361,7 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
             ),
             MeetingCode("VGsUTGno"),
             "Meeting title",
+            MeetingPreferences.default(),
             null
         )
         underTest.save(expiringMeeting)

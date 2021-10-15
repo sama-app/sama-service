@@ -48,6 +48,7 @@ class MeetingEntity {
             entity.updatedAt = Instant.now()
             entity.status = proposedMeeting.status
             entity.title = proposedMeeting.meetingTitle
+            entity.permanentLink = proposedMeeting.meetingPreferences.permanentLink
             val proposedSlots = proposedMeeting.proposedSlots.map {
                 it.toEntity(proposedMeeting.meetingId, MeetingSlotStatus.PROPOSED)
             }
@@ -64,6 +65,7 @@ class MeetingEntity {
             entity.currentActor = proposedMeeting.currentActor
             entity.status = proposedMeeting.status
             entity.title = proposedMeeting.meetingTitle
+            entity.permanentLink = proposedMeeting.meetingPreferences.permanentLink
             val proposedSlots = proposedMeeting.proposedSlots.map {
                 it.toEntity(proposedMeeting.meetingId, MeetingSlotStatus.PROPOSED)
             }
@@ -81,6 +83,7 @@ class MeetingEntity {
 
     fun applyChanges(proposedMeeting: SamaNonSamaProposedMeeting): MeetingEntity {
         title = proposedMeeting.meetingTitle
+        permanentLink = proposedMeeting.meetingPreferences.permanentLink
         val now = Instant.now()
         this.confirmedAt = now
         this.updatedAt = now
@@ -89,6 +92,7 @@ class MeetingEntity {
 
     fun applyChanges(proposedMeeting: SamaSamaProposedMeeting): MeetingEntity {
         title = proposedMeeting.meetingTitle
+        permanentLink = proposedMeeting.meetingPreferences.permanentLink
         meetingRecipient = MeetingRecipientEntity(proposedMeeting.recipientId.id, null)
         currentActor = proposedMeeting.currentActor
         val proposedSlots = proposedMeeting.proposedSlots.map {
@@ -134,6 +138,9 @@ class MeetingEntity {
 
     @Column(nullable = false)
     var title: String? = null
+
+    @Column
+    var permanentLink: Boolean? = null
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)

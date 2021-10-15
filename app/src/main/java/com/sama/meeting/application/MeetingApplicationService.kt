@@ -33,7 +33,6 @@ import com.sama.meeting.domain.ProposedMeeting
 import com.sama.meeting.domain.SamaNonSamaProposedMeeting
 import com.sama.meeting.domain.SamaSamaProposedMeeting
 import com.sama.meeting.domain.UserRecipient
-import com.sama.slotsuggestion.application.DefaultSlotSuggestionService
 import com.sama.slotsuggestion.application.MultiUserSlotSuggestionRequest
 import com.sama.slotsuggestion.application.SlotSuggestionRequest
 import com.sama.slotsuggestion.application.SlotSuggestionService
@@ -273,7 +272,10 @@ class MeetingApplicationService(
             }
         }
 
-        meetingRepository.save(confirmedMeeting)
+        // TODO: temporary hack for permalinks
+        if (!proposedMeeting.meetingPreferences.permanentLink) {
+            meetingRepository.save(confirmedMeeting)
+        }
 
         // "manual" event publishing
         val event = MeetingConfirmedEvent(userId, confirmedMeeting)

@@ -6,6 +6,7 @@ import com.sama.meeting.domain.AvailableSlots
 import com.sama.meeting.domain.MeetingCode
 import com.sama.meeting.domain.MeetingId
 import com.sama.meeting.domain.MeetingIntentId
+import com.sama.meeting.domain.MeetingPreferences
 import com.sama.meeting.domain.MeetingSlot
 import com.sama.meeting.domain.SamaNonSamaProposedMeeting
 import com.sama.users.application.UserPublicDTO
@@ -83,6 +84,7 @@ class MeetingViewTest {
                 proposedSlots,
                 meetingCode,
                 meetingTitle,
+                MeetingPreferences.default(),
                 ZonedDateTime.now()
             ),
             AvailableSlots(MeetingId(21), proposedSlots)
@@ -133,6 +135,7 @@ class MeetingViewTest {
                 proposedSlots,
                 meetingCode,
                 meetingTitle,
+                MeetingPreferences.default(),
                 ZonedDateTime.now()
             ),
             AvailableSlots(MeetingId(21), proposedSlots)

@@ -9,7 +9,6 @@ import com.sama.meeting.domain.SamaNonSamaProposedMeeting
 import com.sama.meeting.domain.SamaSamaProposedMeeting
 import com.sama.users.application.UserService
 import com.sama.users.domain.UserId
-import liquibase.pro.packaged.it
 import org.springframework.stereotype.Component
 
 @View

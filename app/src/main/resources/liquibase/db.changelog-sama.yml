@@ -47,3 +47,5 @@ databaseChangeLog:
       file: classpath*:liquibase/change-sets/2021_10_01-user-marketing-preferences.yml
   - include:
       file: classpath*:liquibase/change-sets/2021_10_05-gcal-channel-sync.yml
+  - include:
+      file: classpath*:liquibase/change-sets/2021_10_15-meeting-permalinks.yml

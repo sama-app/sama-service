@@ -6,6 +6,7 @@ import com.sama.meeting.configuration.MeetingUrlConfiguration
 import com.sama.meeting.domain.MeetingCode
 import com.sama.meeting.domain.MeetingId
 import com.sama.meeting.domain.MeetingIntentId
+import com.sama.meeting.domain.MeetingPreferences
 import com.sama.meeting.domain.MeetingSlot
 import com.sama.meeting.domain.SamaNonSamaProposedMeeting
 import com.sama.users.application.MarketingPreferencesDTO
@@ -101,6 +102,7 @@ class MeetingInvitationViewTest {
                 slots,
                 meetingCode,
                 meetingTitle,
+                MeetingPreferences.default(),
                 ZonedDateTime.now()
             ),
             recipientZoneId

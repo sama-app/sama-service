@@ -9,7 +9,6 @@ import java.time.LocalTime
 import java.time.ZoneId.systemDefault
 import java.time.ZoneOffset.UTC
 import java.time.ZonedDateTime
-import java.time.temporal.ChronoUnit
 import kotlin.test.assertEquals
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -44,7 +43,7 @@ class MeetingTest {
 
     private val proposedMeetingID1 = SamaNonSamaProposedMeeting(
         meetingId, meetingIntentId, ofMinutes(30), initiatorId,
-        listOf(proposedSlotID1), validMeetingCode, meetingTitle, ZonedDateTime.now()
+        listOf(proposedSlotID1), validMeetingCode, meetingTitle, MeetingPreferences.default(), ZonedDateTime.now()
     )
 
     @TestFactory
@@ -97,6 +96,7 @@ class MeetingTest {
             listOf(proposedSlotID1.copy()) to SamaNonSamaProposedMeeting(
                 meetingId, meetingIntentId, ofHours(1), initiatorId,
                 listOf(proposedSlotID1), validMeetingCode, meetingTitle,
+                MeetingPreferences.default(),
                 createdAt
             ),
 
@@ -108,6 +108,7 @@ class MeetingTest {
                 listOf(proposedSlotID1, proposedSlotID3),
                 validMeetingCode,
                 meetingTitle,
+                MeetingPreferences.default(),
                 createdAt
             ),
 
@@ -119,6 +120,7 @@ class MeetingTest {
                 listOf(MeetingSlot(proposedSlotID1.startDateTime, proposedSlotID3.endDateTime)),
                 validMeetingCode,
                 meetingTitle,
+                MeetingPreferences.default(),
                 createdAt
             ),
 
@@ -188,7 +190,7 @@ class MeetingTest {
     fun `propose new slots`() {
         val proposedMeeting = SamaSamaProposedMeeting(
             meetingId, meetingIntentId, ofHours(1), initiatorId, recipientId,
-            Actor.RECIPIENT, listOf(proposedSlotID1), emptyList(), validMeetingCode, meetingTitle
+            Actor.RECIPIENT, listOf(proposedSlotID1), emptyList(), validMeetingCode, meetingTitle, MeetingPreferences.default()
         )
 
         val newProposedMeeting = proposedMeeting.proposeNewSlots(listOf(proposedSlotID2, proposedSlotID3))
@@ -201,7 +203,7 @@ class MeetingTest {
     fun `propose previously rejected slots`() {
         val proposedMeeting = SamaSamaProposedMeeting(
             meetingId, meetingIntentId, ofHours(1), initiatorId, recipientId,
-            Actor.RECIPIENT, listOf(proposedSlotID1), emptyList(), validMeetingCode, meetingTitle
+            Actor.RECIPIENT, listOf(proposedSlotID1), emptyList(), validMeetingCode, meetingTitle, MeetingPreferences.default()
         )
 
         val newProposedMeeting = proposedMeeting
@@ -218,7 +220,7 @@ class MeetingTest {
         val meetingTitle = meetingTitle
         val proposedMeeting = SamaNonSamaProposedMeeting(
             meetingId, meetingIntentId, ofHours(1), initiatorId,
-            listOf(slot), validMeetingCode, meetingTitle, ZonedDateTime.now()
+            listOf(slot), validMeetingCode, meetingTitle, MeetingPreferences.default(), ZonedDateTime.now()
         )
         val recipient = UserRecipient.of(UserId(11L))
         val slotToConfirm = proposedSlotID1.copy()
@@ -238,7 +240,7 @@ class MeetingTest {
         val slot = proposedSlotID1
         val proposedMeeting = SamaNonSamaProposedMeeting(
             meetingId, meetingIntentId, ofHours(1), initiatorId,
-            listOf(slot), validMeetingCode, meetingTitle, ZonedDateTime.now()
+            listOf(slot), validMeetingCode, meetingTitle, MeetingPreferences.default(), ZonedDateTime.now()
         )
         val recipient = EmailRecipient.of("test@meetsama.com")
 

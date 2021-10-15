@@ -42,7 +42,8 @@ data class MeetingIntent(
                 proposedSlots.combineContinuous(),
                 emptyList(),
                 meetingCode,
-                meetingTitle
+                meetingTitle,
+                MeetingPreferences.default()
             )
             false -> SamaNonSamaProposedMeeting(
                 meetingId,
@@ -52,6 +53,7 @@ data class MeetingIntent(
                 proposedSlots.combineContinuous(),
                 meetingCode,
                 meetingTitle,
+                MeetingPreferences.default(),
                 ZonedDateTime.now()
             )
         }

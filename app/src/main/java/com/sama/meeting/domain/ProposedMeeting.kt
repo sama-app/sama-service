@@ -26,6 +26,7 @@ sealed interface ProposedMeeting : Meeting {
                 listOf(slot)
             }
         }
+    val meetingPreferences: MeetingPreferences
 
     fun isReadableBy(userId: UserId?): Boolean
     fun isModifiableBy(userId: UserId?): Boolean
@@ -53,6 +54,7 @@ data class SamaNonSamaProposedMeeting(
     override val proposedSlots: List<MeetingSlot>,
     override val meetingCode: MeetingCode,
     override val meetingTitle: String,
+    override val meetingPreferences: MeetingPreferences,
     val createdAt: ZonedDateTime?
 ) : ProposedMeeting {
 
@@ -71,7 +73,7 @@ data class SamaNonSamaProposedMeeting(
         check(recipientId != initiatorId) { "Cannot claim one's own meeting" }
         return SamaSamaProposedMeeting(
             meetingId, meetingIntentId, duration, initiatorId, recipientId, Actor.RECIPIENT,
-            proposedSlots, emptyList(), meetingCode, meetingTitle
+            proposedSlots, emptyList(), meetingCode, meetingTitle, meetingPreferences
         )
     }
 
@@ -112,6 +114,7 @@ data class SamaSamaProposedMeeting(
     val rejectedSlots: List<MeetingSlot>,
     override val meetingCode: MeetingCode,
     override val meetingTitle: String,
+    override val meetingPreferences: MeetingPreferences,
 ) : ProposedMeeting {
     val isInvitation = proposedSlots.isEmpty()
 
