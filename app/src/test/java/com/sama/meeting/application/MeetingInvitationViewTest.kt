@@ -113,10 +113,11 @@ class MeetingInvitationViewTest {
             Wed, July 7:
             * 9:00 AM - 9:15 AM
             * 10:00 AM - 11:00 AM
+
             Thu, July 8:
             * 10:00 AM - 11:00 AM
             
-            You can pick a suitable time here: https://app.meetsama.com/VGsUTGno
+            You can book a suitable time here: https://app.meetsama.com/VGsUTGno
         """.trimIndent()
         val expected = MeetingInvitationDTO(
             meeting = MeetingDTO(
@@ -151,10 +152,11 @@ class MeetingInvitationViewTest {
             Wed, July 7:
             * 10:00 - 10:15
             * 11:00 - 12:00
+
             Thu, July 8:
             * 11:00 - 12:00
 
-            You can pick a suitable time here: https://app.meetsama.com/VGsUTGno
+            You can book a suitable time here: https://app.meetsama.com/VGsUTGno
         """.trimIndent(),
 
         TestInput(ZoneId.of("America/New_York"), Locale.US, ZoneId.of("Europe/London")) to """
@@ -163,10 +165,11 @@ class MeetingInvitationViewTest {
             Wed, July 7:
             * 10:00 - 10:15
             * 11:00 - 12:00
+
             Thu, July 8:
             * 11:00 - 12:00
             
-            You can pick a suitable time here: https://app.meetsama.com/VGsUTGno
+            You can book a suitable time here: https://app.meetsama.com/VGsUTGno
         """.trimIndent(),
 
         TestInput(ZoneId.of("Europe/London"), Locale.UK, ZoneId.of("Europe/Vilnius")) to """
@@ -175,10 +178,11 @@ class MeetingInvitationViewTest {
             Wed, July 7:
             * 12:00 - 12:15
             * 13:00 - 14:00
+
             Thu, July 8:
             * 13:00 - 14:00
 
-            You can pick a suitable time here: https://app.meetsama.com/VGsUTGno
+            You can book a suitable time here: https://app.meetsama.com/VGsUTGno
         """.trimIndent(),
 
         TestInput(ZoneId.of("Europe/Vilnius"), Locale.forLanguageTag("LT"), ZoneId.of("Europe/Vilnius")) to """
@@ -187,10 +191,11 @@ class MeetingInvitationViewTest {
             Wed, July 7:
             * 12:00 - 12:15
             * 13:00 - 14:00
+
             Thu, July 8:
             * 13:00 - 14:00
 
-            You can pick a suitable time here: https://app.meetsama.com/VGsUTGno
+            You can book a suitable time here: https://app.meetsama.com/VGsUTGno
         """.trimIndent(),
 
         TestInput(ZoneId.of("Europe/London"), Locale.UK, ZoneId.of("America/New_York")) to """
@@ -199,10 +204,11 @@ class MeetingInvitationViewTest {
             Wed, July 7:
             * 5:00 AM - 5:15 AM
             * 6:00 AM - 7:00 AM
+
             Thu, July 8:
             * 6:00 AM - 7:00 AM
 
-            You can pick a suitable time here: https://app.meetsama.com/VGsUTGno
+            You can book a suitable time here: https://app.meetsama.com/VGsUTGno
         """.trimIndent(),
 
         TestInput(ZoneId.of("America/New_York"), Locale.US, ZoneId.of("America/New_York")) to """
@@ -211,10 +217,11 @@ class MeetingInvitationViewTest {
             Wed, July 7:
             * 5:00 AM - 5:15 AM
             * 6:00 AM - 7:00 AM
+
             Thu, July 8:
             * 6:00 AM - 7:00 AM
 
-            You can pick a suitable time here: https://app.meetsama.com/VGsUTGno
+            You can book a suitable time here: https://app.meetsama.com/VGsUTGno
         """.trimIndent(),
 
         TestInput(ZoneId.of("America/New_York"), Locale.US, ZoneId.of("America/New_York")) to """
@@ -223,10 +230,11 @@ class MeetingInvitationViewTest {
             Wed, July 7:
             * 5:00 AM - 5:15 AM
             * 6:00 AM - 7:00 AM
+
             Thu, July 8:
             * 6:00 AM - 7:00 AM
 
-            You can pick a suitable time here: https://app.meetsama.com/VGsUTGno
+            You can book a suitable time here: https://app.meetsama.com/VGsUTGno
         """.trimIndent(),
     )
         .map { (input, expected) ->
