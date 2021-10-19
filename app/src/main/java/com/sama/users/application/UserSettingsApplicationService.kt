@@ -1,11 +1,15 @@
 package com.sama.users.application
 
 import com.sama.common.ApplicationService
+import com.sama.integration.mailerlite.MailerLiteClient
 import com.sama.users.domain.UserId
+import com.sama.users.domain.UserRepository
 import com.sama.users.domain.UserSettings
 import com.sama.users.domain.UserSettingsDefaultsRepository
 import com.sama.users.domain.UserSettingsRepository
 import com.sama.users.domain.WorkingHours
+import java.time.Instant
+import org.springframework.scheduling.TaskScheduler
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -14,6 +18,9 @@ import org.springframework.transaction.annotation.Transactional
 class UserSettingsApplicationService(
     private val userSettingsRepository: UserSettingsRepository,
     private val userSettingsDefaultsRepository: UserSettingsDefaultsRepository,
+    private val userRepository: UserRepository,
+    private val mailerLiteClient: MailerLiteClient,
+    private val taskScheduler: TaskScheduler,
 ) : UserSettingsService {
 
     @Transactional
@@ -54,6 +61,7 @@ class UserSettingsApplicationService(
     @Transactional
     override fun updateMarketingPreferences(userId: UserId, command: UpdateMarketingPreferencesCommand): Boolean {
         val userSettings = userSettingsRepository.findByIdOrThrow(userId)
+        val updated = userSettings
             .let {
                 if (command.newsletterSubscriptionEnabled) {
                     it.enableNewsletterSubscription()
@@ -62,7 +70,18 @@ class UserSettingsApplicationService(
                 }
             }
 
-        userSettingsRepository.save(userSettings)
+        if (userSettings != updated) {
+            userSettingsRepository.save(updated)
+
+            taskScheduler.schedule({
+                val user = userRepository.findByIdOrThrow(userId)
+                if (updated.newsletterSubscriptionEnabled) {
+                    mailerLiteClient.addSubscriber(user.email, user.fullName)
+                } else {
+                    mailerLiteClient.removeSubscriber(user.email)
+                }
+            }, Instant.now())
+        }
         return true
     }
 
