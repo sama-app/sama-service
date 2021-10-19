@@ -11,7 +11,7 @@ import org.springframework.stereotype.Repository
 @Repository
 interface ChannelRepository : CrudRepository<Channel, UUID> {
     fun findByGoogleAccountIdAndResourceType(googleAccountId: GoogleAccountId, resourceType: ResourceType): List<Channel>
-    fun findByExpiresAtLessThan(expiredAt: Instant): List<Channel>
+    fun findByExpiresAtLessThanAndStatusNot(expiredAt: Instant, status: ChannelStatus): List<Channel>
 
     @Modifying
     @Query("DELETE FROM gcal.channel c WHERE c.status = 'CLOSED'")

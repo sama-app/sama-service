@@ -121,10 +121,17 @@ class GoogleChannelManager(
     fun runChannelMaintenance() {
         sentrySpan(method = "runChannelMaintenance") {
             val cleanupLeadTime = Instant.now().plus(channelConfiguration.cleanupLeadTimeHours, HOURS)
-            val channelToRecreate = channelRepository.findByExpiresAtLessThan(cleanupLeadTime)
+            val channelToRecreate = channelRepository.findByExpiresAtLessThanAndStatusNot(cleanupLeadTime, ChannelStatus.CLOSED)
+            logger.info("Recreating ${channelToRecreate.size} channels...")
             channelToRecreate.forEach { channel ->
                 logger.debug("Recreating channel ${channel.debugString()} due to expiry...")
-                transactionTemplate.execute { createChannel(channel.googleAccountId, channel.resourceType, channel.resourceId) }
+                transactionTemplate.execute {
+                    try {
+                        createChannel(channel.googleAccountId, channel.resourceType, channel.resourceId)
+                    } catch (e: Exception) {
+                        logger.error("Failed to recreate channel ${channel.debugString()}: ${e.message}", e)
+                    }
+                }
             }
 
             val affectedCount = channelRepository.deleteAllClosed()
