@@ -10,13 +10,12 @@ import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RestController
 
 @Hidden
-@Tag(name = "integration.google")
 @RestController
 class GoogleChannelNotificationController(
     private val channelNotificationReceiver: GoogleChannelNotificationReceiver
 ) {
 
-    @Operation(summary = "Receive push notification from Google Calendar API")
+    @Hidden
     @PostMapping("/api/integration/google/channel-notification")
     fun receiveChannelNotification(
         @RequestHeader("X-Goog-Channel-ID") channelId: String,
