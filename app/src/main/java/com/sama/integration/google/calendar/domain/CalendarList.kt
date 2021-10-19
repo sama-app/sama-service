@@ -18,10 +18,14 @@ data class CalendarList(
 
 data class Calendar(
     val timeZone: ZoneId?,
+    val primary: Boolean,
     val selected: Boolean,
-    val isOwner: Boolean
+    val isOwner: Boolean,
+    val summary: String?,
+    val backgroundColor: String?,
+    val foregroundColor: String?
 ) {
-    val syncable = selected && isOwner
+    val syncable = (primary || selected) && isOwner
 }
 
 
@@ -42,8 +46,12 @@ fun GoogleCalendar.toDomain(): Calendar {
     val primary = primary ?: false
     return Calendar(
         timeZone?.let { ZoneId.of(it) },
-        selected ?: primary,
-        isOwner
+        primary,
+        selected ?: false,
+        isOwner,
+        summaryOverride ?: summary,
+        backgroundColor,
+        foregroundColor
     )
 }
 
