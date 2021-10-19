@@ -103,8 +103,8 @@ management:
       application: ${spring.application.name}
 
 logging.level:
-    org.springframework.jdbc.core: DEBUG
-
+  org.springframework.jdbc.core: DEBUG
+  org.springframework.web.client.RestTemplate: DEBUG
 springdoc:
   api-docs:
     path: /api/docs
@@ -176,6 +176,10 @@ integration:
         isi: 1586527998 # AppStore ID
         efr: 0 # Do not skip preview page
         ofl: https://apps.apple.com/lt/app/sama-scheduling-assistant/id1586527998
+
+  mailerlite:
+    api-url: "https://api.mailerlite.com/api/v2/"
+    api-key: "dummy-value-this-is-loaded-from-AWS-SM"
 
 sentry:
   dsn: https://b8c06b0aa478447bbdc330ad9fef42f1@o877832.ingest.sentry.io/5828928
