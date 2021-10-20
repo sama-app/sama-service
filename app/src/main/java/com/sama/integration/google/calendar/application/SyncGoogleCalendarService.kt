@@ -3,6 +3,7 @@ package com.sama.integration.google.calendar.application
 import com.google.api.services.calendar.model.ConferenceData
 import com.google.api.services.calendar.model.ConferenceSolutionKey
 import com.google.api.services.calendar.model.CreateConferenceRequest
+import com.google.api.services.calendar.model.Event
 import com.google.api.services.calendar.model.EventAttendee
 import com.google.api.services.calendar.model.EventDateTime
 import com.sama.common.ApplicationService
@@ -16,6 +17,7 @@ import com.sama.integration.google.calendar.domain.CalendarEventRepository
 import com.sama.integration.google.calendar.domain.CalendarListSyncRepository
 import com.sama.integration.google.calendar.domain.CalendarSyncRepository
 import com.sama.integration.google.calendar.domain.GoogleCalendarEvent
+import com.sama.integration.google.calendar.domain.GoogleCalendarEventId
 import com.sama.integration.google.calendar.domain.GoogleCalendarId
 import com.sama.integration.google.calendar.domain.PRIMARY_CALENDAR_ID
 import com.sama.integration.google.calendar.domain.findAllEvents
@@ -109,6 +111,26 @@ class SyncGoogleCalendarService(
         return eventsWithAggregateDate
     }
 
+    override fun findIdsByExtendedProperties(
+        userId: UserId,
+        extendedProperties: Map<String, String>
+    ): List<GoogleCalendarEventId> {
+        val primaryAccountId = googleAccountRepository.findByUserIdAndPrimary(userId)
+            ?: throw NoPrimaryGoogleAccountException(userId)
+        val calendarId = PRIMARY_CALENDAR_ID
+
+        val calendarService = googleServiceFactory.calendarService(primaryAccountId)
+
+        return calendarService.events().list(calendarId)
+            .apply {
+                maxResults = 250
+                privateExtendedProperty = extendedProperties.map { (k, v) -> "$k=$v" }
+                fields = "items(id)"
+            }.execute()
+            .items
+            .map { it.id }
+    }
+
     private fun forceLoadCalendarEvents(
         accountId: GoogleAccountId,
         calendarId: GoogleCalendarId,
@@ -140,25 +162,28 @@ class SyncGoogleCalendarService(
                 end = EventDateTime()
                     .setDateTime(command.endDateTime.toGoogleCalendarDateTime())
                     .setTimeZone(timeZone.id)
-                attendees = listOf(
+                attendees = command.attendees.map { attendee ->
                     EventAttendee().apply {
-                        email = command.initiatorEmail
+                        email = attendee.email
                         responseStatus = "accepted"
-                    },
-                    EventAttendee().apply {
-                        email = command.recipientEmail
-                        responseStatus = "accepted"
-                    },
-                )
+                    }
+                }
                 summary = command.title
                 description = command.description
-                conferenceData = ConferenceData().apply {
-                    createRequest = CreateConferenceRequest().apply {
-                        requestId = UUID.randomUUID().toString()
-                        conferenceSolutionKey = ConferenceSolutionKey().apply {
-                            type = "hangoutsMeet"
+                conferenceData = command.conferenceType?.let { conferenceType ->
+                    ConferenceData().apply {
+                        createRequest = CreateConferenceRequest().apply {
+                            requestId = UUID.randomUUID().toString()
+                            conferenceSolutionKey = ConferenceSolutionKey().apply {
+                                type = when (conferenceType) {
+                                    ConferenceType.GOOGLE_MEET -> "hangoutsMeet"
+                                }
+                            }
                         }
                     }
+                }
+                extendedProperties = Event.ExtendedProperties().apply {
+                    private = command.privateExtendedProperties
                 }
             }
 
@@ -175,6 +200,16 @@ class SyncGoogleCalendarService(
         } catch (e: Exception) {
             throw translatedGoogleException(e)
         }
+    }
+
+    override fun deleteEvent(userId: UserId, eventId: GoogleCalendarEventId) {
+        val primaryAccountId = googleAccountRepository.findByUserIdAndPrimary(userId)
+            ?: throw NoPrimaryGoogleAccountException(userId)
+        val calendarId = PRIMARY_CALENDAR_ID
+
+        val calendarService = googleServiceFactory.calendarService(primaryAccountId)
+
+        calendarService.events().delete(calendarId, eventId).execute()
     }
 
     @SentryTransaction(operation = "syncUserCalendarLists")

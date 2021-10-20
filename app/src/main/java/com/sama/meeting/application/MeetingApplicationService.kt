@@ -25,6 +25,7 @@ import com.sama.meeting.domain.MeetingCodeGenerator
 import com.sama.meeting.domain.MeetingConfirmedEvent
 import com.sama.meeting.domain.MeetingIntent
 import com.sama.meeting.domain.MeetingIntentRepository
+import com.sama.meeting.domain.MeetingPreferences
 import com.sama.meeting.domain.MeetingProposedEvent
 import com.sama.meeting.domain.MeetingRepository
 import com.sama.meeting.domain.MeetingSlot
@@ -147,10 +148,20 @@ class MeetingApplicationService(
 
         val proposedSlots = command.proposedSlots.map { it.toValueObject() }
         val proposedMeeting = meetingIntent
-            .propose(meetingId, meetingCode, proposedSlots, meetingTitle)
+            .propose(
+                meetingId,
+                meetingCode,
+                proposedSlots,
+                meetingTitle,
+                MeetingPreferences(blockOutSlots = command.blockOutSlots ?: false)
+            )
             .also { meetingRepository.save(it) }
 
         val event = MeetingProposedEvent(userId, proposedMeeting)
+        taskScheduler.schedule(
+            { calendarEventConsumer.onMeetingProposed(event) },
+            Instant.now()
+        )
         commsEventConsumer.onMeetingProposed(event)
 
         return meetingInvitationView.render(proposedMeeting, meetingIntent.recipientTimeZone)
@@ -202,7 +213,7 @@ class MeetingApplicationService(
             .toList()
 
         var proposedMeeting = meetingIntent
-            .propose(meetingId, meetingCode, freeSlots, meetingTitle)
+            .propose(meetingId, meetingCode, freeSlots, meetingTitle, MeetingPreferences.default())
         check(proposedMeeting is SamaNonSamaProposedMeeting)
 
         proposedMeeting = proposedMeeting.makeLinkPermanent()

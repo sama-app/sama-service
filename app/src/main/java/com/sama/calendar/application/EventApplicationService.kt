@@ -1,6 +1,7 @@
 package com.sama.calendar.application
 
 import com.sama.common.ApplicationService
+import com.sama.integration.google.calendar.application.EventAttendee
 import com.sama.integration.google.calendar.application.GoogleCalendarService
 import com.sama.integration.google.calendar.application.InsertGoogleCalendarEventCommand
 import com.sama.meeting.domain.EmailRecipient
@@ -9,8 +10,14 @@ import com.sama.users.application.InternalUserService
 import com.sama.users.domain.UserId
 import java.time.LocalDate
 import java.time.ZoneId
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+
+private const val MEETING_CODE_PROPERTY_KEY = "meeting_code"
 
 @ApplicationService
 @Service
@@ -45,15 +52,57 @@ class EventApplicationService(
             is UserRecipient -> internalUserService.find(recipient.recipientId).email
         }
 
+        val extendedProperties = mapOf(MEETING_CODE_PROPERTY_KEY to command.meetingCode.code)
+
+        val blockedOutTimesEventIds = googleCalendarService.findIdsByExtendedProperties(userId, extendedProperties)
+
         val insertCommand = InsertGoogleCalendarEventCommand(
             command.startDateTime.withZoneSameInstant(timeZone),
             command.endDateTime.withZoneSameInstant(timeZone),
             command.title,
-            "Time for this meeting was created via <a href=$samaWebUrl>Sama app</a>",
-            initiatorEmail,
-            recipientEmail
+            description = "Time for this meeting was created via <a href=$samaWebUrl>Sama app</a>",
+            listOf(EventAttendee(initiatorEmail), EventAttendee(recipientEmail)),
+            privateExtendedProperties = extendedProperties
         )
-        return googleCalendarService.insertEvent(userId = userId, command = insertCommand)
-            .let { EventDTO(it.startDateTime, it.endDateTime, it.eventData.allDay, it.eventData.title) }
+
+        val createdEvent = runBlocking(Dispatchers.IO) {
+            val insertEvent = async {
+                googleCalendarService.insertEvent(userId = userId, command = insertCommand)
+                    .let { EventDTO(it.startDateTime, it.endDateTime, it.eventData.allDay, it.eventData.title) }
+            }
+
+            blockedOutTimesEventIds.forEach {
+                launch { googleCalendarService.deleteEvent(userId, it) }
+            }
+
+            insertEvent.await()
+        }
+
+        return createdEvent
+    }
+
+    override fun blockOutTimes(userId: UserId, command: BlockOutTimesCommand) {
+        if (command.slots.isEmpty()) {
+            return
+        }
+
+        val meetingCode = command.meetingCode.code
+
+        val commands = command.slots
+            .map {
+                InsertGoogleCalendarEventCommand(
+                    it.startDateTime,
+                    it.endDateTime,
+                    "Blocked for ${command.meetingTitle}",
+                    description = null,
+                    attendees = emptyList(),
+                    conferenceType = null,
+                    privateExtendedProperties = mapOf(MEETING_CODE_PROPERTY_KEY to meetingCode)
+                )
+            }
+
+        runBlocking(Dispatchers.IO) {
+            commands.forEach { launch { googleCalendarService.insertEvent(userId, it) } }
+        }
     }
 }

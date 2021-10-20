@@ -136,7 +136,13 @@ class MeetingTest {
             )
 
             dynamicTest("proposing slots $proposedSlots throws $expected") {
-                val proposedMeeting = initiatedMeeting.propose(meetingId, validMeetingCode, proposedSlots, meetingTitle)
+                val proposedMeeting = initiatedMeeting.propose(
+                    meetingId,
+                    validMeetingCode,
+                    proposedSlots,
+                    meetingTitle,
+                    MeetingPreferences.default()
+                )
 
                 assertThat(expected)
                     .usingLaxDateTimePrecision()
@@ -181,7 +187,7 @@ class MeetingTest {
 
         dynamicTest("proposing slots $proposedSlots throws $expected") {
             assertThrows(expected) {
-                initiatedMeeting.propose(meetingId, meetingCode, proposedSlots, meetingTitle)
+                initiatedMeeting.propose(meetingId, meetingCode, proposedSlots, meetingTitle, MeetingPreferences.default())
             }
         }
     }
@@ -229,7 +235,7 @@ class MeetingTest {
 
         assertEquals(
             ConfirmedMeeting(
-                meetingId, initiatorId, recipient, slotToConfirm,
+                meetingId, validMeetingCode, initiatorId, recipient, slotToConfirm,
                 meetingTitle
             ), actual
         )

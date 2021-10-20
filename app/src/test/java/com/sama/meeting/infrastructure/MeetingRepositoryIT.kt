@@ -150,7 +150,7 @@ class MeetingRepositoryIT : BasePersistenceIT<MeetingRepository>() {
         underTest.save(proposedMeeting)
 
         val confirmedMeeting = ConfirmedMeeting(
-            meetingId, initiatorId, UserRecipient.of(UserId(2)),
+            meetingId, meetingCode, initiatorId, UserRecipient.of(UserId(2)),
             MeetingSlot(
                 ZonedDateTime.now(clock).plusHours(3),
                 ZonedDateTime.now(clock).plusHours(4)

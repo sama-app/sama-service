@@ -30,6 +30,7 @@ data class MeetingIntent(
         meetingCode: MeetingCode,
         proposedSlots: List<MeetingSlot>,
         meetingTitle: String,
+        meetingPreferences: MeetingPreferences,
     ): ProposedMeeting {
         return when (isSamaSama) {
             true -> SamaSamaProposedMeeting(
@@ -43,7 +44,7 @@ data class MeetingIntent(
                 emptyList(),
                 meetingCode,
                 meetingTitle,
-                MeetingPreferences.default()
+                meetingPreferences
             )
             false -> SamaNonSamaProposedMeeting(
                 meetingId,
@@ -53,7 +54,7 @@ data class MeetingIntent(
                 proposedSlots.combineContinuous(),
                 meetingCode,
                 meetingTitle,
-                MeetingPreferences.default(),
+                meetingPreferences,
                 ZonedDateTime.now()
             )
         }

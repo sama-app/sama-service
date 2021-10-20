@@ -84,7 +84,7 @@ data class SamaNonSamaProposedMeeting(
     fun confirm(slot: MeetingSlot, recipient: MeetingRecipient): ConfirmedMeeting {
         val confirmedSlot = expandedSlots.find { it == slot }
             ?: throw MeetingSlotUnavailableException(meetingCode, slot)
-        return ConfirmedMeeting(meetingId, initiatorId, recipient, confirmedSlot, meetingTitle)
+        return ConfirmedMeeting(meetingId, meetingCode, initiatorId, recipient, confirmedSlot, meetingTitle)
     }
 }
 
@@ -146,7 +146,7 @@ data class SamaSamaProposedMeeting(
         val confirmedSlot = expandedSlots.find { it == slot }
             ?: throw MeetingSlotUnavailableException(meetingCode, slot)
         return ConfirmedMeeting(
-            meetingId, initiatorId, UserRecipient.of(recipientId), confirmedSlot, meetingTitle
+            meetingId, meetingCode, initiatorId, UserRecipient.of(recipientId), confirmedSlot, meetingTitle
         )
     }
 

@@ -1,0 +1,12 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-meeting-permalinks
+      author: balys
+      changes:
+        - addColumn:
+            schemaName: sama
+            tableName: meeting
+            columns:
+              - column:
+                  name: block_out_slots
+                  type: BOOLEAN

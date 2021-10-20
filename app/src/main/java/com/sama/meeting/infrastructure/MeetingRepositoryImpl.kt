@@ -123,7 +123,10 @@ class MeetingRepositoryImpl(
                         rejectedSlots.map { MeetingSlot(it.startDateTime, it.endDateTime) },
                         meetingEntity.code!!.toMeetingCode(),
                         meetingEntity.title!!,
-                        MeetingPreferences(meetingEntity.permanentLink ?: false)
+                        MeetingPreferences(
+                            meetingEntity.permanentLink ?: false,
+                            meetingEntity.blockOutSlots ?: false
+                        )
                     )
                 } else {
                     SamaNonSamaProposedMeeting(
@@ -134,13 +137,17 @@ class MeetingRepositoryImpl(
                         proposedSlots.map { MeetingSlot(it.startDateTime, it.endDateTime) },
                         meetingEntity.code!!.toMeetingCode(),
                         meetingEntity.title!!,
-                        MeetingPreferences(meetingEntity.permanentLink ?: false),
+                        MeetingPreferences(
+                            meetingEntity.permanentLink ?: false,
+                            meetingEntity.blockOutSlots ?: false
+                        ),
                         ZonedDateTime.ofInstant(meetingEntity.createdAt!!, UTC)
                     )
                 }
             }
             MeetingStatus.CONFIRMED -> ConfirmedMeeting(
                 meetingEntity.id!!.toMeetingId(),
+                meetingEntity.code!!.toMeetingCode(),
                 meetingIntentEntity.initiatorId!!.toUserId(),
                 meetingEntity.meetingRecipient!!.toDomainObject(),
                 meetingEntity.confirmedSlot!!,
