@@ -16,16 +16,24 @@ enum class MeetingStatus {
 }
 
 data class MeetingPreferences(
-    val permanentLink: Boolean
+    val permanentLink: Boolean = false,
+    val blockOutSlots: Boolean = false
 ) {
+    init {
+        if (permanentLink) {
+            check(!blockOutSlots) { "Cannot block out slots for permanent links" }
+        }
+    }
+
     companion object {
-        fun default() = MeetingPreferences(false)
+        fun default() = MeetingPreferences()
     }
 }
 
 @DomainEntity
 data class ConfirmedMeeting(
     override val meetingId: MeetingId,
+    val meetingCode: MeetingCode,
     val initiatorId: UserId,
     val recipient: MeetingRecipient,
     val slot: MeetingSlot,

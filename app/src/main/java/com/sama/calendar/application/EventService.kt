@@ -24,4 +24,6 @@ interface EventService {
     ): FetchEventsDTO
 
     fun createEvent(userId: UserId, command: CreateEventCommand): EventDTO
+
+    fun blockOutTimes(userId: UserId, command: BlockOutTimesCommand)
 }

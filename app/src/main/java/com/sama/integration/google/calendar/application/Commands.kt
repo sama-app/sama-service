@@ -7,6 +7,13 @@ data class InsertGoogleCalendarEventCommand(
     val endDateTime: ZonedDateTime,
     val title: String,
     val description: String?,
-    val initiatorEmail: String,
-    val recipientEmail: String,
+    val attendees: List<EventAttendee>,
+    val conferenceType: ConferenceType? = ConferenceType.GOOGLE_MEET,
+    val privateExtendedProperties: Map<String, String> = emptyMap()
 )
+
+data class EventAttendee(val email: String)
+
+enum class ConferenceType {
+    GOOGLE_MEET
+}

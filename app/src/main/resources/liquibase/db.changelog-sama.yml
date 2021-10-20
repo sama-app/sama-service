@@ -49,3 +49,5 @@ databaseChangeLog:
       file: classpath*:liquibase/change-sets/2021_10_05-gcal-channel-sync.yml
   - include:
       file: classpath*:liquibase/change-sets/2021_10_15-meeting-permalinks.yml
+  - include:
+      file: classpath*:liquibase/change-sets/2021_10_20-meeting-block-out-slots.yml

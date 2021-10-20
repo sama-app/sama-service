@@ -164,7 +164,8 @@ class MeetingControllerTest(@Autowired val mockMvc: MockMvc) {
                 userId, ProposeMeetingCommand(
                     meetingIntentCode,
                     listOf(proposedSlot),
-                    meetingTitle
+                    meetingTitle,
+                    blockOutSlots = true
                 )
             )
         ).thenReturn(
@@ -187,7 +188,8 @@ class MeetingControllerTest(@Autowired val mockMvc: MockMvc) {
                 "proposedSlots": [{
                     "startDateTime": "2021-01-01T12:00:00Z",
                     "endDateTime": "2021-01-01T13:00:00Z"
-                }]
+                }],
+                "blockOutSlots": true
             }
         """
 

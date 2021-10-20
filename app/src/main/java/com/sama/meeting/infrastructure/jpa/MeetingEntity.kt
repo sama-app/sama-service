@@ -140,6 +140,9 @@ class MeetingEntity {
     @Column
     var permanentLink: Boolean? = null
 
+    @Column
+    var blockOutSlots: Boolean? = null
+
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     var currentActor: Actor? = null

@@ -18,7 +18,6 @@ import com.sama.slotsuggestion.application.SlotSuggestionRequest
 import com.sama.slotsuggestion.application.SlotSuggestionResponse
 import com.sama.slotsuggestion.application.SlotSuggestionService
 import com.sama.slotsuggestion.domain.SlotSuggestion
-import io.mockk.called
 import io.mockk.every
 import io.mockk.verify
 import java.time.Clock
@@ -87,6 +86,8 @@ class MeetingApplicationServiceIT : BaseApplicationIntegrationTest() {
             )
         }
 
+        verify { calendarEventConsumer.onMeetingProposed(any()) }
+
         // load proposal from meeting code with initiator's calendar non-blocked
         every {
             eventService.fetchEvents(
@@ -144,6 +145,8 @@ class MeetingApplicationServiceIT : BaseApplicationIntegrationTest() {
             )
         }
 
+        verify { calendarEventConsumer.onMeetingProposed(any()) }
+
         asRecipient {
             underTest.confirmMeeting(
                 it.id!!,
@@ -182,6 +185,8 @@ class MeetingApplicationServiceIT : BaseApplicationIntegrationTest() {
                 )
             )
         }
+
+        verify { calendarEventConsumer.onMeetingProposed(any()) }
 
         // propose new time
         val now = ZonedDateTime.now(clock)
@@ -234,6 +239,8 @@ class MeetingApplicationServiceIT : BaseApplicationIntegrationTest() {
                 )
             )
         }
+
+        verify { calendarEventConsumer.onMeetingProposed(any()) }
 
         // propose new time
         val meetingCode = meetingInvitationDTO.meetingCode
@@ -317,6 +324,8 @@ class MeetingApplicationServiceIT : BaseApplicationIntegrationTest() {
                 )
             )
         }
+
+        verify { calendarEventConsumer.onMeetingProposed(any()) }
 
         // propose new time
         val meetingCode = meetingInvitationDTO.meetingCode
@@ -452,6 +461,8 @@ class MeetingApplicationServiceIT : BaseApplicationIntegrationTest() {
             )
         }
 
+        verify { calendarEventConsumer.onMeetingProposed(any()) }
+
         asRecipient {
             val r = underTest.getSlotSuggestions(it.id!!, meetingInvitationDTO.meetingCode)
             assertThat(r.suggestedSlots).containsExactly(suggestedSlot)
@@ -558,6 +569,8 @@ class MeetingApplicationServiceIT : BaseApplicationIntegrationTest() {
             )
         }
 
+        verify { calendarEventConsumer.onMeetingProposed(any()) }
+
         every {
             eventService.fetchEvents(
                 initiator().id!!, proposedSlotStart.toLocalDate(), proposedSlotEnd.toLocalDate(), UTC, any()
@@ -633,6 +646,8 @@ class MeetingApplicationServiceIT : BaseApplicationIntegrationTest() {
             )
         }
 
+        verify { calendarEventConsumer.onMeetingProposed(any()) }
+
         // load proposal from meeting code with initiator's calendar blocked completely
         every {
             eventService.fetchEvents(
@@ -662,7 +677,7 @@ class MeetingApplicationServiceIT : BaseApplicationIntegrationTest() {
             )
         }
 
-        verify { calendarEventConsumer wasNot called }
+        verify(exactly = 0) { calendarEventConsumer.onMeetingConfirmed(any()) }
     }
 
     @Test
@@ -700,6 +715,8 @@ class MeetingApplicationServiceIT : BaseApplicationIntegrationTest() {
                 )
             )
         }
+
+        verify { calendarEventConsumer.onMeetingProposed(any()) }
 
         // load proposal from meeting code with initiator's calendar non-blocked
         every {
@@ -764,6 +781,8 @@ class MeetingApplicationServiceIT : BaseApplicationIntegrationTest() {
             )
         }
 
+        verify { calendarEventConsumer.onMeetingProposed(any()) }
+
         // load proposal from meeting code with initiator's calendar non-blocked
         every {
             eventService.fetchEvents(
@@ -824,6 +843,7 @@ class MeetingApplicationServiceIT : BaseApplicationIntegrationTest() {
                 )
             )
         }
+
 
         // Connect with initiator and propose new slots
         every {

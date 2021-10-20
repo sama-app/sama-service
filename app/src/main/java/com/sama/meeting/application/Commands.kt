@@ -39,7 +39,8 @@ data class InitiateSamaSamaMeetingCommand(
 data class ProposeMeetingCommand(
     val meetingIntentCode: MeetingIntentCode,
     val proposedSlots: List<MeetingSlotDTO>,
-    val title: String? = null
+    val title: String? = null,
+    val blockOutSlots: Boolean? = null
 )
 
 data class CreateFullAvailabilityLinkCommand(
