@@ -62,7 +62,6 @@ class EventApplicationService(
             command.title,
             description = "Time for this meeting was created via <a href=$samaWebUrl>Sama app</a>",
             listOf(EventAttendee(initiatorEmail), EventAttendee(recipientEmail)),
-            privateExtendedProperties = extendedProperties
         )
 
         val createdEvent = runBlocking(Dispatchers.IO) {

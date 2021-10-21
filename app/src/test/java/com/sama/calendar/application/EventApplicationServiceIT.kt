@@ -97,7 +97,6 @@ class EventApplicationServiceIT : BaseApplicationIntegrationTest() {
                     startDateTime, endDateTime, "title",
                     "Time for this meeting was created via <a href=http://localhost:8080>Sama app</a>",
                     listOf(EventAttendee(initiator().email), EventAttendee((recipientEmail))),
-                    privateExtendedProperties = mapOf("meeting_code" to meetingCode.code)
                 )
             )
         ).thenReturn(createdEvent)
@@ -142,7 +141,6 @@ class EventApplicationServiceIT : BaseApplicationIntegrationTest() {
                     startDateTime, endDateTime, "title",
                     "Time for this meeting was created via <a href=http://localhost:8080>Sama app</a>",
                     listOf(EventAttendee(initiator().email), EventAttendee((recipient().email))),
-                    privateExtendedProperties = mapOf("meeting_code" to meetingCode.code)
                 )
             )
         ).thenReturn(createdEvent)
@@ -186,7 +184,6 @@ class EventApplicationServiceIT : BaseApplicationIntegrationTest() {
                     startDateTime, endDateTime, "title",
                     "Time for this meeting was created via <a href=http://localhost:8080>Sama app</a>",
                     listOf(EventAttendee(initiator().email), EventAttendee((recipientEmail))),
-                    privateExtendedProperties = extendedProperties
                 )
             )
         ).thenReturn(createdEvent)
