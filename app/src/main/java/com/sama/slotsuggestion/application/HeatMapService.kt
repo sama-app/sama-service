@@ -1,8 +1,8 @@
 package com.sama.slotsuggestion.application
 
 import com.sama.common.ApplicationService
+import com.sama.integration.google.calendar.application.CalendarEventDTO
 import com.sama.integration.google.calendar.application.GoogleCalendarService
-import com.sama.integration.google.calendar.domain.CalendarEvent
 import com.sama.integration.sentry.sentrySpan
 import com.sama.meeting.application.MeetingDataService
 import com.sama.slotsuggestion.configuration.HeatMapConfiguration
@@ -98,10 +98,11 @@ class HeatMapService(
         }
     }
 
-    private fun CalendarEvent.toBlock(timeZone: ZoneId): Block {
-        return Block(startDateTime, endDateTime, eventData.allDay,
+    private fun CalendarEventDTO.toBlock(timeZone: ZoneId): Block {
+        return Block(
+            startDateTime, endDateTime, eventData.allDay,
             eventData.attendeeCount > 0,
-            aggregatedData!!.recurrenceCount
+            aggregatedData.recurrenceCount
         ).atTimeZone(timeZone)
     }
 }

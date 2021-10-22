@@ -42,6 +42,23 @@ class JdbcCalendarListRepository(
         }
     }
 
+    override fun findAll(accountIds: Collection<GoogleAccountId>): Collection<CalendarList> {
+        if (accountIds.isEmpty()) {
+            return emptyList()
+        }
+        val namedParameters: SqlParameterSource = MapSqlParameterSource()
+            .addValue("account_ids", accountIds.map { it.id })
+
+        return jdbcTemplate.query(
+            """
+                   SELECT * FROM gcal.calendar_list e 
+                   WHERE e.google_account_id in (:account_ids)
+                """,
+            namedParameters,
+            rowMapper
+        )
+    }
+
     override fun save(calendarList: CalendarList) {
         jdbcTemplate.update(
             """

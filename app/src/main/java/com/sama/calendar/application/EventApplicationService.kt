@@ -40,10 +40,15 @@ class EventApplicationService(
         createdFrom = searchCriteria.createdFrom,
         hasAttendees = searchCriteria.hasAttendees
     )
-        .map { EventDTO(it.startDateTime, it.endDateTime, it.eventData.allDay, it.eventData.title) }
-        .let { FetchEventsDTO(it) }
+        .map {
+            EventDTO(
+                it.startDateTime, it.endDateTime, it.eventData.allDay, it.eventData.title,
+                it.accountId, it.calendarId, it.eventId
+            )
+        }
+        .let { EventsDTO(it) }
 
-    override fun createEvent(userId: UserId, command: CreateEventCommand): EventDTO {
+    override fun createEvent(userId: UserId, command: CreateEventCommand): Boolean {
         val initiator = internalUserService.findInternal(userId)
         val initiatorEmail = initiator.email
         val timeZone = initiator.settings.timeZone
@@ -64,10 +69,9 @@ class EventApplicationService(
             listOf(EventAttendee(initiatorEmail), EventAttendee(recipientEmail)),
         )
 
-        val createdEvent = runBlocking(Dispatchers.IO) {
+        runBlocking(Dispatchers.IO) {
             val insertEvent = async {
                 googleCalendarService.insertEvent(userId = userId, command = insertCommand)
-                    .let { EventDTO(it.startDateTime, it.endDateTime, it.eventData.allDay, it.eventData.title) }
             }
 
             blockedOutTimesEventIds.forEach {
@@ -77,7 +81,7 @@ class EventApplicationService(
             insertEvent.await()
         }
 
-        return createdEvent
+        return true
     }
 
     override fun blockOutTimes(userId: UserId, command: BlockOutTimesCommand) {

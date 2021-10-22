@@ -159,7 +159,7 @@ private fun Calendar.findCalendarsPage(nextPageToken: String?, syncToken: String
     requestBuilder.syncToken = syncToken
     requestBuilder.fields =
         """
-            nextPageToken,nextSyncToken,items(id,timeZone,accessRole,primary,selected,summary,summaryOverride,backgroundColor,foregroundColor)
+            nextPageToken,nextSyncToken,items(id,timeZone,accessRole,primary,selected,summary,summaryOverride,backgroundColor,foregroundColor,deleted)
         """.trimIndent()
     nextPageToken?.run { requestBuilder.setPageToken(this) }
     return requestBuilder

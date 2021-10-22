@@ -1,5 +1,7 @@
 package com.sama.integration.google.calendar.application
 
+import com.sama.integration.google.auth.domain.GoogleAccountPublicId
+import com.sama.integration.google.calendar.domain.GoogleCalendarId
 import java.time.ZonedDateTime
 
 data class InsertGoogleCalendarEventCommand(
@@ -17,3 +19,6 @@ data class EventAttendee(val email: String)
 enum class ConferenceType {
     GOOGLE_MEET
 }
+
+data class AddSelectedCalendarCommand(val accountId: GoogleAccountPublicId, val calendarId: GoogleCalendarId)
+data class RemoveSelectedCalendarCommand(val accountId: GoogleAccountPublicId, val calendarId: GoogleCalendarId)
