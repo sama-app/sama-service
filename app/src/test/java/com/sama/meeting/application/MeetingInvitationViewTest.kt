@@ -110,7 +110,7 @@ class MeetingInvitationViewTest {
 
         // verify
         val expectedMessage = """
-            Would any of these work for you?
+            Would any of these times work for you?
             
             Wed, July 7:
             * 9:00 AM - 9:15 AM
@@ -119,7 +119,7 @@ class MeetingInvitationViewTest {
             Thu, July 8:
             * 10:00 AM - 11:00 AM
             
-            You can book a suitable time here: https://app.meetsama.com/VGsUTGno
+            You can simply book here: https://app.meetsama.com/VGsUTGno
         """.trimIndent()
         val expected = MeetingInvitationDTO(
             meeting = MeetingDTO(
@@ -149,7 +149,7 @@ class MeetingInvitationViewTest {
     @TestFactory
     fun renderShareableMessage() = listOf(
         TestInput(ZoneId.of("Europe/London"), Locale.UK, ZoneId.of("Europe/London")) to """
-            Would any of these work for you?
+            Would any of these times work for you?
             
             Wed, July 7:
             * 10:00 - 10:15
@@ -158,11 +158,11 @@ class MeetingInvitationViewTest {
             Thu, July 8:
             * 11:00 - 12:00
 
-            You can book a suitable time here: https://app.meetsama.com/VGsUTGno
+            You can simply book here: https://app.meetsama.com/VGsUTGno
         """.trimIndent(),
 
         TestInput(ZoneId.of("America/New_York"), Locale.US, ZoneId.of("Europe/London")) to """
-            Would any of these work for you? Times are in GMT.
+            Would any of these times (GMT) work for you?
             
             Wed, July 7:
             * 10:00 - 10:15
@@ -171,11 +171,11 @@ class MeetingInvitationViewTest {
             Thu, July 8:
             * 11:00 - 12:00
             
-            You can book a suitable time here: https://app.meetsama.com/VGsUTGno
+            You can simply book here: https://app.meetsama.com/VGsUTGno
         """.trimIndent(),
 
         TestInput(ZoneId.of("Europe/London"), Locale.UK, ZoneId.of("Europe/Vilnius")) to """
-            Would any of these work for you? Times are in EET.
+            Would any of these times (EET) work for you?
             
             Wed, July 7:
             * 12:00 - 12:15
@@ -184,11 +184,11 @@ class MeetingInvitationViewTest {
             Thu, July 8:
             * 13:00 - 14:00
 
-            You can book a suitable time here: https://app.meetsama.com/VGsUTGno
+            You can simply book here: https://app.meetsama.com/VGsUTGno
         """.trimIndent(),
 
         TestInput(ZoneId.of("Europe/Vilnius"), Locale.forLanguageTag("LT"), ZoneId.of("Europe/Vilnius")) to """
-            Would any of these work for you?
+            Would any of these times work for you?
             
             Wed, July 7:
             * 12:00 - 12:15
@@ -197,11 +197,11 @@ class MeetingInvitationViewTest {
             Thu, July 8:
             * 13:00 - 14:00
 
-            You can book a suitable time here: https://app.meetsama.com/VGsUTGno
+            You can simply book here: https://app.meetsama.com/VGsUTGno
         """.trimIndent(),
 
         TestInput(ZoneId.of("Europe/London"), Locale.UK, ZoneId.of("America/New_York")) to """
-            Would any of these work for you? Times are in EST.
+            Would any of these times (EST) work for you?
             
             Wed, July 7:
             * 5:00 AM - 5:15 AM
@@ -210,11 +210,11 @@ class MeetingInvitationViewTest {
             Thu, July 8:
             * 6:00 AM - 7:00 AM
 
-            You can book a suitable time here: https://app.meetsama.com/VGsUTGno
+            You can simply book here: https://app.meetsama.com/VGsUTGno
         """.trimIndent(),
 
         TestInput(ZoneId.of("America/New_York"), Locale.US, ZoneId.of("America/New_York")) to """
-            Would any of these work for you?
+            Would any of these times work for you?
             
             Wed, July 7:
             * 5:00 AM - 5:15 AM
@@ -223,11 +223,11 @@ class MeetingInvitationViewTest {
             Thu, July 8:
             * 6:00 AM - 7:00 AM
 
-            You can book a suitable time here: https://app.meetsama.com/VGsUTGno
+            You can simply book here: https://app.meetsama.com/VGsUTGno
         """.trimIndent(),
 
         TestInput(ZoneId.of("America/New_York"), Locale.US, ZoneId.of("America/New_York")) to """
-            Would any of these work for you?
+            Would any of these times work for you?
             
             Wed, July 7:
             * 5:00 AM - 5:15 AM
@@ -236,7 +236,7 @@ class MeetingInvitationViewTest {
             Thu, July 8:
             * 6:00 AM - 7:00 AM
 
-            You can book a suitable time here: https://app.meetsama.com/VGsUTGno
+            You can simply book here: https://app.meetsama.com/VGsUTGno
         """.trimIndent(),
     )
         .map { (input, expected) ->
