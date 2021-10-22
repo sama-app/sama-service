@@ -54,62 +54,6 @@ class GoogleOauth2ControllerTest(
             "Mobile/14E5239e Safari/602.1"
 
     @Test
-    fun `google sign in successful`() {
-        val accessToken = "access-jwt"
-        val refreshToken = "refresh-jwt"
-
-        whenever((googleOauth2ApplicationService.googleSignIn(any())))
-            .thenReturn(GoogleSignSuccessDTO(accessToken, refreshToken))
-
-        val requestBody = """
-            {
-                "authCode": "some-auth-code"
-            }
-        """.trimIndent()
-
-        val expected = """
-           {
-                "accessToken": $accessToken,
-                "refreshToken": $refreshToken
-            }
-        """.trimIndent()
-
-        mockMvc.perform(
-            post("/api/auth/google-sign-in")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(requestBody)
-        )
-            .andExpect(status().isOk)
-            .andExpect(content().json(expected))
-    }
-
-    @Test
-    fun `google sign in without required scopes`() {
-        whenever((googleOauth2ApplicationService.googleSignIn(any())))
-            .thenThrow(GoogleInsufficientPermissionsException(RuntimeException("")))
-
-        val requestBody = """
-            {
-                "authCode": "some-auth-code"
-            }
-        """.trimIndent()
-
-        val expected = """
-           {
-                "reason": "google_insufficient_permissions"
-            }
-        """.trimIndent()
-
-        mockMvc.perform(
-            post("/api/auth/google-sign-in")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(requestBody)
-        )
-            .andExpect(status().isForbidden)
-            .andExpect(content().json(expected, false))
-    }
-
-    @Test
     fun `google authorize returns the authorization url`() {
         val redirectUri = "https://accounts.google.com/o/oauth2/auth?access_type=offline"
         whenever(googleOauth2ApplicationService.generateAuthorizationUrl(any(), isNull()))
@@ -126,33 +70,6 @@ class GoogleOauth2ControllerTest(
             .andExpect(
                 content().json(expectedJson, true)
             )
-    }
-
-    @Test
-    fun `link google account`() {
-        val inputUrl = "http://localhost/api/auth/google-oauth2"
-        val redirectUri = "https://accounts.google.com/o/oauth2/auth?access_type=offline"
-        whenever(googleOauth2ApplicationService.generateAuthorizationUrl(inputUrl, userId))
-            .thenReturn(GoogleOauth2Redirect(redirectUri))
-
-        val expectedJson = """
-        {
-            "authorizationUrl": "${redirectUri}"
-        }
-        """
-
-        mockMvc.perform(
-            post("/api/auth/link-google-account")
-                .header("Authorization", "Bearer $jwt")
-        )
-            .andExpect(status().isOk)
-            .andExpect(content().json(expectedJson, true))
-    }
-
-    @Test
-    fun `link google account without authorization fails`() {
-        mockMvc.perform(post("/api/auth/link-google-account"))
-            .andExpect(status().isUnauthorized)
     }
 
     @Test

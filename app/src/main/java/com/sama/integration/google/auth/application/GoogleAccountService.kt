@@ -28,10 +28,11 @@ class GoogleAccountService(
     }
 
     @Transactional(readOnly = true)
-    fun findAll(userId: UserId): Collection<GoogleAccountDTO> {
+    fun findAllLinked(userId: UserId): GoogleIntegrationsDTO {
         return googleAccountRepository.findAllByUserId(userId)
             .filter { it.linked }
-            .map { GoogleAccountDTO(it.publicId!!, it.email) }
+            .map { GoogleAccountDTO(it.publicId!!) }
+            .let { GoogleIntegrationsDTO(it) }
     }
 
     @Transactional

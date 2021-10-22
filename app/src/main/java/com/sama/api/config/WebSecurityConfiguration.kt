@@ -42,13 +42,18 @@ class WebSecurityConfiguration(
             .authorizeRequests()
             // OpenApi Spec
             .antMatchers(HttpMethod.GET, "/api/docs/**", "/api/swagger-ui.html", "/api/swagger-ui/**").permitAll()
+            // Google integration
+            .antMatchers(HttpMethod.POST, "/api/integration/google/channel-notification").permitAll()
+            .antMatchers(HttpMethod.GET, "/api/integration/google/callback").permitAll()
             // Google OAuth2
-            .antMatchers(HttpMethod.POST, "/api/auth/link-google-account").authenticated()
             .antMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
             .antMatchers(HttpMethod.GET, "/api/auth/**").permitAll()
+            .antMatchers(HttpMethod.GET, "/api/integration/google/**").authenticated()
+            .antMatchers(HttpMethod.POST, "/api/integration/google/**").authenticated()
+            // Meeting
             .antMatchers(HttpMethod.GET, "/api/meeting/by-code/*").permitAll()
             .antMatchers(HttpMethod.POST, "/api/meeting/by-code/*/confirm").permitAll()
-            .antMatchers(HttpMethod.POST, "/api/integration/google/channel-notification").permitAll()
+            // Debug
             .antMatchers(HttpMethod.GET, "/api/__debug/auth/**").permitAll()
             .antMatchers(HttpMethod.GET, "/api/__debug/auth/link-google-account").authenticated()
             .antMatchers(HttpMethod.POST, "/api/__migration/**").permitAll()
