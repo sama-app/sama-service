@@ -7,13 +7,16 @@ import com.google.api.services.calendar.model.Event
 import com.google.api.services.calendar.model.EventAttendee
 import com.google.api.services.calendar.model.EventDateTime
 import com.sama.common.ApplicationService
+import com.sama.common.NotFoundException
+import com.sama.common.checkAccess
 import com.sama.integration.google.GoogleServiceFactory
 import com.sama.integration.google.NoPrimaryGoogleAccountException
 import com.sama.integration.google.auth.domain.GoogleAccountId
 import com.sama.integration.google.auth.domain.GoogleAccountRepository
 import com.sama.integration.google.calendar.domain.AggregatedData
-import com.sama.integration.google.calendar.domain.CalendarEvent
 import com.sama.integration.google.calendar.domain.CalendarEventRepository
+import com.sama.integration.google.calendar.domain.CalendarList
+import com.sama.integration.google.calendar.domain.CalendarListRepository
 import com.sama.integration.google.calendar.domain.CalendarListSyncRepository
 import com.sama.integration.google.calendar.domain.CalendarSyncRepository
 import com.sama.integration.google.calendar.domain.GoogleCalendarEvent
@@ -35,12 +38,14 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 
 @Service
 @ApplicationService
 class SyncGoogleCalendarService(
     private val googleServiceFactory: GoogleServiceFactory,
     private val googleAccountRepository: GoogleAccountRepository,
+    private val calendarListRepository: CalendarListRepository,
     private val calendarEventRepository: CalendarEventRepository,
     private val calendarListSyncRepository: CalendarListSyncRepository,
     private val calendarSyncRepository: CalendarSyncRepository,
@@ -57,12 +62,12 @@ class SyncGoogleCalendarService(
         endDateTime: ZonedDateTime,
         createdFrom: ZonedDateTime?,
         hasAttendees: Boolean?
-    ): List<CalendarEvent> {
-        val accountIds = googleAccountRepository.findAllByUserId(userId)
+    ): List<CalendarEventDTO> {
+        val linkedAccounts = googleAccountRepository.findAllByUserId(userId)
             .filter { it.linked }
-            .map { it.id!! }
-            .toSet()
-        val calendarSyncs = calendarSyncRepository.findAll(accountIds)
+            .associateBy { it.id!! }
+        val linkedAccountIds = linkedAccounts.keys
+        val calendarSyncs = calendarSyncRepository.findAll(linkedAccountIds)
 
         val calendarEvents = if (calendarSyncs.isNotEmpty()) {
             calendarSyncs
@@ -92,7 +97,7 @@ class SyncGoogleCalendarService(
                 .flatten()
         } else {
             // If there aren't any synced calendars, load the primary calendar for all accounts
-            accountIds
+            linkedAccountIds
                 .map { forceLoadCalendarEvents(it, PRIMARY_CALENDAR_ID, startDateTime, endDateTime, createdFrom, hasAttendees) }
                 .flatten()
         }
@@ -103,12 +108,13 @@ class SyncGoogleCalendarService(
             .groupingBy { it.eventData.recurringEventId }
             .eachCount()
 
-        val eventsWithAggregateDate = calendarEvents.map { event ->
-            val recurrenceCount = event.eventData.recurringEventId?.let { recurringEventCounts[it] } ?: 0
-            event.copy(aggregatedData = AggregatedData(recurrenceCount))
+        return calendarEvents.map { (key, start, end, eventData) ->
+            val recurrenceCount = eventData.recurringEventId?.let { recurringEventCounts[it] } ?: 0
+            CalendarEventDTO(
+                linkedAccounts[key.accountId]!!.publicId!!, key.calendarId, key.eventId,
+                start, end, eventData, AggregatedData(recurrenceCount)
+            )
         }
-
-        return eventsWithAggregateDate
     }
 
     override fun findIdsByExtendedProperties(
@@ -152,8 +158,8 @@ class SyncGoogleCalendarService(
 
     // https://developers.google.com/calendar/api/v3/reference/events/insert
     // https://developers.google.com/calendar/api/v3/reference/events/insert#request-body
-    override fun insertEvent(userId: UserId, command: InsertGoogleCalendarEventCommand): CalendarEvent {
-        return try {
+    override fun insertEvent(userId: UserId, command: InsertGoogleCalendarEventCommand): Boolean {
+        try {
             val timeZone = command.startDateTime.zone
             val googleCalendarEvent = GoogleCalendarEvent().apply {
                 start = EventDateTime()
@@ -192,11 +198,10 @@ class SyncGoogleCalendarService(
             val calendarId = PRIMARY_CALENDAR_ID
 
             val calendarService = googleServiceFactory.calendarService(primaryAccountId)
-            val inserted = calendarService.insert(calendarId, googleCalendarEvent)
+            calendarService.insert(calendarId, googleCalendarEvent)
 
             googleCalendarSyncer.syncUserCalendar(primaryAccountId, calendarId)
-
-            inserted.toDomain(primaryAccountId, calendarId, timeZone)
+            return true
         } catch (e: Exception) {
             throw translatedGoogleException(e)
         }
@@ -210,6 +215,51 @@ class SyncGoogleCalendarService(
         val calendarService = googleServiceFactory.calendarService(primaryAccountId)
 
         calendarService.events().delete(calendarId, eventId).execute()
+    }
+
+    @Transactional(readOnly = true)
+    override fun findCalendars(userId: UserId): CalendarsDTO {
+        val accountIds = googleAccountRepository.findAllByUserId(userId)
+            .associateBy { it.id!! }
+
+        return calendarListRepository.findAll(accountIds.keys)
+            .flatMap { (googleAccountId, calendars) ->
+                val accountId = accountIds[googleAccountId]!!.publicId!!
+                calendars.map { (calendarId, calendar) ->
+                    CalendarDTO(accountId, calendarId, calendar.selected, calendar.summary, calendar.backgroundColor)
+                }
+            }
+            .let { CalendarsDTO(it) }
+    }
+
+    @Transactional
+    override fun addSelectedCalendar(userId: UserId, command: AddSelectedCalendarCommand): Boolean {
+        val googleAccount = googleAccountRepository.findByPublicIdOrThrow(command.accountId)
+        checkAccess(googleAccount.userId == userId)
+
+        val calendarList = calendarListRepository.find(googleAccount.id!!)
+            ?: throw NotFoundException(CalendarList::class, command.accountId)
+
+        calendarList.addSelection(command.calendarId)
+            .also { calendarListRepository.save(it) }
+
+        googleCalendarSyncer.enableCalendarSync(googleAccount.id, command.calendarId)
+        return true
+    }
+
+    @Transactional
+    override fun removeSelectedCalendar(userId: UserId, command: RemoveSelectedCalendarCommand): Boolean {
+        val googleAccount = googleAccountRepository.findByPublicIdOrThrow(command.accountId)
+        checkAccess(googleAccount.userId == userId)
+
+        val calendarList = calendarListRepository.find(googleAccount.id!!)
+            ?: throw NotFoundException(CalendarList::class, command.accountId)
+
+        calendarList.removeSelection(command.calendarId)
+            .also { calendarListRepository.save(it) }
+
+        googleCalendarSyncer.disableCalendarSync(googleAccount.id, command.calendarId)
+        return true
     }
 
     @SentryTransaction(operation = "syncUserCalendarLists")

@@ -2,9 +2,12 @@ package com.sama.calendar.application
 
 import com.sama.common.BaseApplicationIntegrationTest
 import com.sama.integration.google.auth.domain.GoogleAccountId
+import com.sama.integration.google.auth.domain.GoogleAccountPublicId
+import com.sama.integration.google.calendar.application.CalendarEventDTO
 import com.sama.integration.google.calendar.application.EventAttendee
 import com.sama.integration.google.calendar.application.GoogleCalendarService
 import com.sama.integration.google.calendar.application.InsertGoogleCalendarEventCommand
+import com.sama.integration.google.calendar.domain.AggregatedData
 import com.sama.integration.google.calendar.domain.CalendarEvent
 import com.sama.integration.google.calendar.domain.EventData
 import com.sama.integration.google.calendar.domain.GoogleCalendarEventKey
@@ -18,11 +21,9 @@ import java.time.Clock
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.util.Locale
+import java.util.UUID
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import org.mockito.kotlin.KArgumentCaptor
-import org.mockito.kotlin.argumentCaptor
-import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import org.springframework.beans.factory.annotation.Autowired
@@ -50,13 +51,15 @@ class EventApplicationServiceIT : BaseApplicationIntegrationTest() {
 
         val startDateTime = startDate.atStartOfDay(clock.zone)
         val endDateTime = endDate.plusDays(1).atStartOfDay(clock.zone)
+        val accountId = GoogleAccountPublicId(UUID.randomUUID())
         whenever(googleCalendarService.findEvents(userId, startDateTime, endDateTime))
             .thenReturn(
                 listOf(
-                    CalendarEvent(
-                        GoogleCalendarEventKey(GoogleAccountId(1L), "primary", "id#1"),
+                    CalendarEventDTO(
+                        accountId, "primary", "id#1",
                         startDateTime, startDateTime.plusHours(1),
-                        EventData("title", false, 3)
+                        EventData("title", false, 3),
+                        AggregatedData(0)
                     )
                 )
             )
@@ -65,8 +68,8 @@ class EventApplicationServiceIT : BaseApplicationIntegrationTest() {
             underTest.fetchEvents(userId, startDate, endDate, clock.zone)
         }
 
-        val expected = EventDTO(startDateTime, startDateTime.plusHours(1), false, "title")
-        assertThat(result).isEqualTo(FetchEventsDTO(listOf(expected)))
+        val expected = EventDTO(startDateTime, startDateTime.plusHours(1), false, "title", accountId, "primary", "id#1")
+        assertThat(result).isEqualTo(EventsDTO(listOf(expected)))
     }
 
     @Test
@@ -99,16 +102,14 @@ class EventApplicationServiceIT : BaseApplicationIntegrationTest() {
                     listOf(EventAttendee(initiator().email), EventAttendee((recipientEmail))),
                 )
             )
-        ).thenReturn(createdEvent)
+        ).thenReturn(true)
 
         val actual = underTest.createEvent(
             userId,
             CreateEventCommand(meetingCode, startDateTime, endDateTime, EmailRecipient.of(recipientEmail), "title")
         )
 
-        assertThat(actual).isEqualTo(
-            EventDTO(createdEvent.startDateTime, createdEvent.endDateTime, false, "title")
-        )
+        assertThat(actual).isTrue()
     }
 
     @Test
@@ -143,16 +144,14 @@ class EventApplicationServiceIT : BaseApplicationIntegrationTest() {
                     listOf(EventAttendee(initiator().email), EventAttendee((recipient().email))),
                 )
             )
-        ).thenReturn(createdEvent)
+        ).thenReturn(true)
 
         val actual = underTest.createEvent(
             initiatorId,
             CreateEventCommand(meetingCode, startDateTime, endDateTime, EmailRecipient.of(recipient().email), "title")
         )
 
-        assertThat(actual).isEqualTo(
-            EventDTO(createdEvent.startDateTime, createdEvent.endDateTime, false, "title")
-        )
+        assertThat(actual).isTrue()
     }
 
     @Test
@@ -186,7 +185,7 @@ class EventApplicationServiceIT : BaseApplicationIntegrationTest() {
                     listOf(EventAttendee(initiator().email), EventAttendee((recipientEmail))),
                 )
             )
-        ).thenReturn(createdEvent)
+        ).thenReturn(true)
 
         val blockedOutEventIds = listOf("event_id_1")
         whenever(googleCalendarService.findIdsByExtendedProperties(userId, extendedProperties))
@@ -197,9 +196,7 @@ class EventApplicationServiceIT : BaseApplicationIntegrationTest() {
             CreateEventCommand(meetingCode, startDateTime, endDateTime, EmailRecipient.of(recipientEmail), "title")
         )
 
-        assertThat(actual).isEqualTo(
-            EventDTO(createdEvent.startDateTime, createdEvent.endDateTime, false, "title")
-        )
+        assertThat(actual).isTrue()
 
         verify(googleCalendarService).deleteEvent(userId, blockedOutEventIds[0])
     }

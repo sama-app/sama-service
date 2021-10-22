@@ -2,7 +2,7 @@ package com.sama.api.calendar
 
 import com.sama.api.config.AuthUserId
 import com.sama.calendar.application.EventService
-import com.sama.calendar.application.FetchEventsDTO
+import com.sama.calendar.application.EventsDTO
 import com.sama.users.domain.UserId
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
@@ -35,7 +35,7 @@ class EventController(private val eventService: EventService) {
         @RequestParam @DateTimeFormat(iso = DATE) startDate: LocalDate,
         @RequestParam @DateTimeFormat(iso = DATE) endDate: LocalDate,
         @RequestParam timezone: ZoneId,
-    ): FetchEventsDTO {
+    ): EventsDTO {
         if (endDate.isBefore(startDate)) {
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "'endDate' must be after 'startDate'")
         }

@@ -94,30 +94,24 @@ class GoogleCalendarSyncer(
         logger.debug("Syncing GoogleAccount${accountId.id} CalendarList...")
         val calendarService = googleServiceFactory.calendarService(accountId)
         try {
-            val (newCalendarList, newSyncToken) =
-                if (forceFullSync || calendarListSync.needsFullSync()) {
-                    val (calendars, syncToken) = calendarService.findAllCalendars(null)
-                    val newCalendarList = calendars.toDomain(accountId)
-                    newCalendarList to syncToken
-                } else {
-                    val (calendars, syncToken) = calendarService.findAllCalendars(calendarListSync.syncToken)
-                    val calendarListDiff = calendars.toDomain(accountId)
-                    val existingCalendarList = calendarListRepository.find(accountId)!!
-                    val newCalendarList = existingCalendarList.merge(calendarListDiff)
-                    newCalendarList to syncToken
-                }
+            val existingCalendarList = calendarListRepository.find(accountId)
+            val syncToken = if (forceFullSync || calendarListSync.needsFullSync()) null else calendarListSync.syncToken
+
+            val (calendars, newSyncToken) = calendarService.findAllCalendars(syncToken)
+            val updatedCalendarList = existingCalendarList
+                ?.mergeFromSource(calendars)
+                ?: calendars.toDomain(accountId)
 
             val currentlySyncedCalendars = calendarSyncRepository.findAllCalendarIds(accountId)
-            val calendarsToEnable = newCalendarList.syncableCalendars
+            val calendarsToEnable = updatedCalendarList.syncableCalendars
                 .minus(currentlySyncedCalendars)
-
             val calendarsToDisable = currentlySyncedCalendars
-                .minus(newCalendarList.syncableCalendars)
+                .minus(updatedCalendarList.syncableCalendars)
 
             calendarsToEnable.forEach { enableCalendarSync(accountId, it) }
             calendarsToDisable.forEach { disableCalendarSync(accountId, it) }
 
-            calendarListRepository.save(newCalendarList)
+            calendarListRepository.save(updatedCalendarList)
 
             val updatedSync = calendarListSync.complete(newSyncToken!!, syncConfiguration, clock)
             calendarListSyncRepository.save(updatedSync)

@@ -4,12 +4,14 @@ import com.sama.api.ApiTestConfiguration
 import com.sama.api.config.WebMvcConfiguration
 import com.sama.calendar.application.EventApplicationService
 import com.sama.calendar.application.EventDTO
-import com.sama.calendar.application.FetchEventsDTO
+import com.sama.calendar.application.EventsDTO
+import com.sama.integration.google.auth.domain.GoogleAccountPublicId
 import com.sama.users.domain.UserId
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
+import java.util.UUID
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.kotlin.whenever
@@ -52,9 +54,10 @@ class EventControllerTest(
 
         val startDateTime = ZonedDateTime.of(startDate, LocalTime.of(12, 15), zoneId)
         val endDateTime = ZonedDateTime.of(startDate, LocalTime.of(12, 30), zoneId)
-        val eventDTO = EventDTO(startDateTime, endDateTime, false, "test")
+        val accountId = GoogleAccountPublicId(UUID.randomUUID())
+        val eventDTO = EventDTO(startDateTime, endDateTime, false, "test", accountId, "primary", "eventId")
         whenever(eventApplicationService.fetchEvents(userId, startDate, endDate, zoneId))
-            .thenReturn(FetchEventsDTO(listOf(eventDTO)))
+            .thenReturn(EventsDTO(listOf(eventDTO)))
 
         val expectedJson = """
         {
@@ -63,7 +66,10 @@ class EventControllerTest(
                     "startDateTime": "2021-01-01T11:15:00Z",
                     "endDateTime": "2021-01-01T11:30:00Z",
                     "allDay": false,
-                    "title": "test"
+                    "title": "test",
+                    "accountId": "${accountId.id}",
+                    "calendarId": "primary",
+                    "eventId": "eventId"
                 }
             ]
         }
@@ -87,7 +93,7 @@ class EventControllerTest(
         val zoneId = ZoneId.of("Europe/Rome")
 
         whenever(eventApplicationService.fetchEvents(userId, startDate, endDate, zoneId))
-            .thenReturn(FetchEventsDTO(emptyList()))
+            .thenReturn(EventsDTO(emptyList()))
 
         val expectedJson = """
         {

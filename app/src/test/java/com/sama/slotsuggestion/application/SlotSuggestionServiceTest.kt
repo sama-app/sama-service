@@ -1,13 +1,14 @@
 package com.sama.slotsuggestion.application
 
+import com.sama.calendar.application.EventDTO
 import com.sama.common.datesUtil
 import com.sama.integration.google.auth.domain.GoogleAccountId
+import com.sama.integration.google.auth.domain.GoogleAccountPublicId
+import com.sama.integration.google.calendar.application.CalendarEventDTO
 import com.sama.integration.google.calendar.application.GoogleCalendarService
 import com.sama.integration.google.calendar.application.SyncGoogleCalendarService
 import com.sama.integration.google.calendar.domain.AggregatedData
-import com.sama.integration.google.calendar.domain.CalendarEvent
 import com.sama.integration.google.calendar.domain.EventData
-import com.sama.integration.google.calendar.domain.GoogleCalendarEventKey
 import com.sama.meeting.application.MeetingDataService
 import com.sama.slotsuggestion.configuration.HeatMapConfiguration
 import com.sama.slotsuggestion.domain.User
@@ -28,6 +29,7 @@ import java.time.ZoneId
 import java.time.ZoneOffset.UTC
 import java.time.ZonedDateTime
 import java.util.TimeZone
+import java.util.UUID
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -43,8 +45,8 @@ import org.springframework.test.context.junit.jupiter.SpringExtension
 
 
 interface Persona {
-    fun pastBlocks(): Collection<CalendarEvent>
-    fun futureBlocks(): Collection<CalendarEvent>
+    fun pastBlocks(): Collection<CalendarEventDTO>
+    fun futureBlocks(): Collection<CalendarEventDTO>
     fun workingHours(): Map<DayOfWeek, WorkingHours>
 }
 
@@ -59,21 +61,21 @@ private val nineToFive = listOf(MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY)
 private val userId = UserId(1)
 private val googleAccountId = GoogleAccountId(1)
 val nonCalendarUser = object : Persona {
-    override fun pastBlocks(): Collection<CalendarEvent> = emptyList()
+    override fun pastBlocks(): Collection<CalendarEventDTO> = emptyList()
 
-    override fun futureBlocks(): Collection<CalendarEvent> = emptyList()
+    override fun futureBlocks(): Collection<CalendarEventDTO> = emptyList()
 
     override fun workingHours(): Map<DayOfWeek, WorkingHours> = nineToFive
 }
 
 val fullyBlockedCalendarUser = object : Persona {
-    override fun pastBlocks(): Collection<CalendarEvent> = emptyList()
+    override fun pastBlocks(): Collection<CalendarEventDTO> = emptyList()
 
-    override fun futureBlocks(): Collection<CalendarEvent> = fixedDate
+    override fun futureBlocks(): Collection<CalendarEventDTO> = fixedDate
         .datesUtil(fixedDate.plusDays(14))
         .map {
-            CalendarEvent(
-                GoogleCalendarEventKey(googleAccountId, "primary", "eventID"),
+            CalendarEventDTO(
+                GoogleAccountPublicId(UUID.randomUUID()), "primary", "eventID",
                 ZonedDateTime.of(it, LocalTime.MIN, UTC),
                 ZonedDateTime.of(it, LocalTime.MAX, UTC),
                 EventData(allDay = false, attendeeCount = 2),

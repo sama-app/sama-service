@@ -4,12 +4,13 @@ import com.ninjasquad.springmockk.MockkBean
 import com.sama.calendar.application.CalendarEventConsumer
 import com.sama.calendar.application.EventDTO
 import com.sama.calendar.application.EventService
-import com.sama.calendar.application.FetchEventsDTO
+import com.sama.calendar.application.EventsDTO
 import com.sama.common.BaseApplicationIntegrationTest
 import com.sama.common.NotFoundException
 import com.sama.comms.application.CommsEventConsumer
 import com.sama.connection.application.CreateUserConnectionCommand
 import com.sama.connection.application.UserConnectionService
+import com.sama.integration.google.auth.domain.GoogleAccountPublicId
 import com.sama.meeting.domain.InvalidMeetingInitiationException
 import com.sama.meeting.domain.MeetingCode
 import com.sama.meeting.domain.MeetingSlotUnavailableException
@@ -24,6 +25,7 @@ import java.time.Clock
 import java.time.Duration.ofMinutes
 import java.time.ZoneOffset.UTC
 import java.time.ZonedDateTime
+import java.util.UUID
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -93,7 +95,7 @@ class MeetingApplicationServiceIT : BaseApplicationIntegrationTest() {
             eventService.fetchEvents(
                 initiator().id!!, proposedSlotStart.toLocalDate(), proposedSlotEnd.toLocalDate(), UTC, any()
             )
-        } returns FetchEventsDTO(emptyList())
+        } returns EventsDTO(emptyList())
 
         val meetingProposal = underTest.loadMeetingProposal(null, meetingInvitationDTO.meetingCode)
         assertThat(meetingProposal.title).isEqualTo("Meeting with ${initiator().fullName}") // Verify default title created
@@ -575,7 +577,7 @@ class MeetingApplicationServiceIT : BaseApplicationIntegrationTest() {
             eventService.fetchEvents(
                 initiator().id!!, proposedSlotStart.toLocalDate(), proposedSlotEnd.toLocalDate(), UTC, any()
             )
-        } returns FetchEventsDTO(emptyList())
+        } returns EventsDTO(emptyList())
 
         run {
             val meetingProposal = underTest.loadMeetingProposal(null, meetingInvitationDTO.meetingCode)
@@ -658,7 +660,14 @@ class MeetingApplicationServiceIT : BaseApplicationIntegrationTest() {
                 any()
             )
         }.returns(
-            FetchEventsDTO(listOf(EventDTO(proposedSlotStart, proposedSlotTwoEnd, false, "Title")))
+            EventsDTO(
+                listOf(
+                    EventDTO(
+                        proposedSlotStart, proposedSlotTwoEnd, false, "Title",
+                        GoogleAccountPublicId(UUID.randomUUID()), "primary", "eventId"
+                    )
+                )
+            )
         )
         val meetingProposal = underTest.loadMeetingProposal(null, meetingInvitationDTO.meetingCode)
 
@@ -723,7 +732,7 @@ class MeetingApplicationServiceIT : BaseApplicationIntegrationTest() {
             eventService.fetchEvents(
                 initiator().id!!, proposedSlotStart.toLocalDate(), proposedSlotEnd.toLocalDate(), UTC, any()
             )
-        } returns FetchEventsDTO(emptyList())
+        } returns EventsDTO(emptyList())
 
         // confirm meeting
         asRecipient {
@@ -788,7 +797,7 @@ class MeetingApplicationServiceIT : BaseApplicationIntegrationTest() {
             eventService.fetchEvents(
                 initiator().id!!, proposedSlotStart.toLocalDate(), proposedSlotEnd.toLocalDate(), UTC, any()
             )
-        } returns FetchEventsDTO(emptyList())
+        } returns EventsDTO(emptyList())
 
         // confirm meeting
         asInitiator {

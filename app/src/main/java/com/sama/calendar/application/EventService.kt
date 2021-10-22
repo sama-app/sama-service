@@ -21,9 +21,9 @@ interface EventService {
         endDate: LocalDate,
         timezone: ZoneId,
         searchCriteria: EventSearchCriteria
-    ): FetchEventsDTO
+    ): EventsDTO
 
-    fun createEvent(userId: UserId, command: CreateEventCommand): EventDTO
+    fun createEvent(userId: UserId, command: CreateEventCommand): Boolean
 
     fun blockOutTimes(userId: UserId, command: BlockOutTimesCommand)
 }
