@@ -6,4 +6,4 @@ data class GoogleUserInfo(val email: String, val fullName: String?)
 
 data class GoogleIntegrationsDTO(val linkedAccounts: List<GoogleAccountDTO>)
 
-data class GoogleAccountDTO(val id: GoogleAccountPublicId)
+data class GoogleAccountDTO(val id: GoogleAccountPublicId, val email: String)
