@@ -67,7 +67,7 @@ class GoogleOauth2ControllerTest(
 
     @Test
     fun `list linked google accounts`() {
-        val googleAccount = GoogleAccountDTO(GoogleAccountPublicId(UUID.randomUUID()))
+        val googleAccount = GoogleAccountDTO(GoogleAccountPublicId(UUID.randomUUID()), "test@meetsama.com")
         whenever(googleAccountService.findAllLinked(userId))
             .thenReturn(GoogleIntegrationsDTO(listOf(googleAccount)))
 
@@ -75,7 +75,8 @@ class GoogleOauth2ControllerTest(
             {
                 "linkedAccounts": [
                     {
-                        "id": "${googleAccount.id.id}"
+                        "id": "${googleAccount.id.id}",
+                        "email": "${googleAccount.email}"
                     }
                 ]
             }

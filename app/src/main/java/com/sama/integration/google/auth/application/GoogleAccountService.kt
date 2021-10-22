@@ -31,7 +31,7 @@ class GoogleAccountService(
     fun findAllLinked(userId: UserId): GoogleIntegrationsDTO {
         return googleAccountRepository.findAllByUserId(userId)
             .filter { it.linked }
-            .map { GoogleAccountDTO(it.publicId!!) }
+            .map { GoogleAccountDTO(it.publicId!!, it.email) }
             .let { GoogleIntegrationsDTO(it) }
     }
 
