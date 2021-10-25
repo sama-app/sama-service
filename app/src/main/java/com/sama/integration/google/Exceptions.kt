@@ -9,6 +9,13 @@ import com.sama.users.domain.UserId
 fun translatedGoogleException(ex: Throwable): Throwable {
     if (ex is GoogleJsonResponseException) {
         return when (ex.statusCode) {
+            400 -> {
+                if (ex.details?.details?.find { it?.reason == "pushNotSupportedForRequestedResource" } != null) {
+                    GoogleChannelCreationUnsupportedException(ex)
+                } else {
+                    GoogleBadRequestException(ex)
+                }
+            }
             401 -> GoogleInvalidCredentialsException(ex)
             403 -> {
                 if (ex.details?.details?.find { it?.reason == "rateLimitExceeded" } != null) {
@@ -28,6 +35,12 @@ fun translatedGoogleException(ex: Throwable): Throwable {
 
 sealed class GoogleException(override val message: String, originalEx: Exception?) :
     RuntimeException(message, originalEx)
+
+class GoogleBadRequestException(originalEx: Exception) :
+    GoogleException("Bad request", originalEx)
+
+class GoogleChannelCreationUnsupportedException(originalEx: Exception) :
+    GoogleException("Channel creation unsupported", originalEx)
 
 class GoogleInvalidCredentialsException(originalEx: Exception?) :
     GoogleException("User Google credentials invalid", originalEx), HasReason {
