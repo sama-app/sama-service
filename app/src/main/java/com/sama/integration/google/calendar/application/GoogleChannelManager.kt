@@ -1,6 +1,7 @@
 package com.sama.integration.google.calendar.application
 
 import com.sama.integration.google.ChannelConfiguration
+import com.sama.integration.google.GoogleChannelCreationUnsupportedException
 import com.sama.integration.google.GoogleServiceFactory
 import com.sama.integration.google.auth.domain.GoogleAccountId
 import com.sama.integration.google.calendar.domain.Channel
@@ -55,8 +56,16 @@ class GoogleChannelManager(
                 }
             }.execute()
         } catch (e: Exception) {
-            logger.error("Error creating channel for GoogleAccount#${accountId.id} $resourceType: $resourceId...", e)
-            throw translatedGoogleException(e)
+            when (val googleException = translatedGoogleException(e)) {
+                is GoogleChannelCreationUnsupportedException -> {
+                    logger.info("Channel creation unsupported for GoogleAccount#${accountId.id} $resourceType: $resourceId...", e)
+                    return
+                }
+                else -> {
+                    logger.error("Error creating channel for GoogleAccount#${accountId.id} $resourceType: $resourceId...", e)
+                    throw googleException
+                }
+            }
         }
 
         try {
