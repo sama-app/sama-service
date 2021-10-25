@@ -11,6 +11,7 @@ import com.sama.users.application.UserService
 import com.sama.users.application.UserSettingsService
 import com.samskivert.mustache.Template
 import java.time.ZoneId
+import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeFormatter.ofLocalizedTime
 import java.time.format.FormatStyle.SHORT
@@ -77,7 +78,9 @@ class MeetingInvitationView(
         val sortedProposedSots = slots
             .map { it.atTimeZone(recipientTimeZone) }
             .sortedBy { it.startDateTime }
-        val (showTimeZone, timeZone) = timeZone(initiatorTimeZone, recipientTimeZone)
+        val (showTimeZone, timeZone) = timeZone(
+            initiatorTimeZone, recipientTimeZone, sortedProposedSots.firstOrNull()?.startDateTime
+        )
 
         return meetingProposalMessageTemplate.execute(
             MeetingProposalMessageModel(
@@ -98,10 +101,9 @@ class MeetingInvitationView(
         return ofLocalizedTime(SHORT).withLocale(locale).withZone(recipientTimeZone)
     }
 
-    private fun timeZone(initiatorTimeZone: ZoneId, recipientTimeZone: ZoneId): Pair<Boolean, String> {
+    private fun timeZone(initiatorTimeZone: ZoneId, recipientTimeZone: ZoneId, dateTime: ZonedDateTime?): Pair<Boolean, String> {
         val showTimeZone = initiatorTimeZone != recipientTimeZone
-        // val daylightSaving = recipientTimeZone.rules.isDaylightSavings(sortedProposedSots.first().startDateTime.toInstant())
-        val daylightSaving = false
+        val daylightSaving = dateTime?.let { recipientTimeZone.rules.isDaylightSavings(it.toInstant()) } ?: false
         val timeZone = TimeZone.getTimeZone(recipientTimeZone).getDisplayName(daylightSaving, TimeZone.SHORT, ENGLISH)
         return showTimeZone to timeZone
     }
