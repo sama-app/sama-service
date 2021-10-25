@@ -5,6 +5,7 @@ import com.sama.common.component2
 import com.sama.common.to
 import com.sama.connection.application.AddDiscoveredUsersCommand
 import com.sama.connection.application.UserConnectionService
+import com.sama.integration.google.GoogleInvalidCredentialsException
 import com.sama.integration.google.GoogleServiceFactory
 import com.sama.integration.google.GoogleSyncTokenInvalidatedException
 import com.sama.integration.google.SyncConfiguration
@@ -117,18 +118,24 @@ class GoogleCalendarSyncer(
             calendarListSyncRepository.save(updatedSync)
             logger.info("Completed sync for GoogleAccount${accountId.id} CalendarList...")
         } catch (e: Exception) {
-            val ex = translatedGoogleException(e)
-            if (ex is GoogleSyncTokenInvalidatedException) {
-                logger.error("CalendarList sync token expired for GoogleAccount${accountId.id}", e)
-                val updatedSync = calendarListSync.reset(clock)
-                calendarListSyncRepository.save(updatedSync)
-            } else {
-                val updatedSync = calendarListSync.fail(syncConfiguration, clock)
-                logger.error(
-                    "Failed to sync CalendarList for GoogleAccount#${accountId.id} ${updatedSync.failedSyncCount} times",
-                    e
-                )
-                calendarListSyncRepository.save(updatedSync)
+            when (translatedGoogleException(e)) {
+                is GoogleSyncTokenInvalidatedException -> {
+                    logger.info("CalendarList sync token expired for GoogleAccount${accountId.id}", e)
+                    val updatedSync = calendarListSync.reset(clock)
+                    calendarListSyncRepository.save(updatedSync)
+                }
+                is GoogleInvalidCredentialsException -> {
+                    logger.info("Disabling CalendarList sync for GoogleAccount${accountId.id}", e)
+                    disableCalendarListSync(accountId)
+                }
+                else -> {
+                    val updatedSync = calendarListSync.fail(syncConfiguration, clock)
+                    logger.error(
+                        "Failed to sync CalendarList for GoogleAccount#${accountId.id} ${updatedSync.failedSyncCount} times",
+                        e
+                    )
+                    calendarListSyncRepository.save(updatedSync)
+                }
             }
         }
     }
@@ -219,16 +226,22 @@ class GoogleCalendarSyncer(
             calendarSyncRepository.save(updatedSync)
             logger.info("Completed sync for GoogleAccount${accountId.id} Calendar#${calendarId}...")
         } catch (e: Exception) {
-            val ex = translatedGoogleException(e)
-            if (ex is GoogleSyncTokenInvalidatedException) {
-                logger.error("Calendar sync token expired for GoogleAccount${accountId.id}", e)
-                val updated = calendarSync.reset(clock)
-                calendarEventRepository.deleteBy(accountId, calendarId)
-                calendarSyncRepository.save(updated)
-            } else {
-                val updated = calendarSync.fail(syncConfiguration, clock)
-                logger.error("Failed to sync Calendar for GoogleAccount${accountId.id} ${updated.failedSyncCount} times", e)
-                calendarSyncRepository.save(updated)
+            when (translatedGoogleException(e)) {
+                is GoogleSyncTokenInvalidatedException -> {
+                    logger.info("Calendar sync token expired for GoogleAccount${accountId.id}", e)
+                    val updated = calendarSync.reset(clock)
+                    calendarEventRepository.deleteBy(accountId, calendarId)
+                    calendarSyncRepository.save(updated)
+                }
+                is GoogleInvalidCredentialsException -> {
+                    logger.info("Disabling Calendar sync for GoogleAccount${accountId.id}", e)
+                    disableCalendarSync(accountId, calendarId)
+                }
+                else -> {
+                    val updated = calendarSync.fail(syncConfiguration, clock)
+                    logger.error("Failed to sync Calendar for GoogleAccount${accountId.id} ${updated.failedSyncCount} times", e)
+                    calendarSyncRepository.save(updated)
+                }
             }
         }
     }
