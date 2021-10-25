@@ -60,6 +60,7 @@ class MeetingInvitationServiceTestConfiguration {
 )
 class MeetingInvitationViewTest {
     private val userId = UserId(1)
+    // Date is during daylight saving time
     private val _9am = ZonedDateTime.of(
         LocalDate.of(2021, 7, 7),
         LocalTime.of(9, 0), ZoneOffset.UTC
@@ -162,7 +163,7 @@ class MeetingInvitationViewTest {
         """.trimIndent(),
 
         TestInput(ZoneId.of("America/New_York"), Locale.US, ZoneId.of("Europe/London")) to """
-            Would any of these times (GMT) work for you?
+            Would any of these times (BST) work for you?
             
             Wed, July 7:
             * 10:00 - 10:15
@@ -175,7 +176,7 @@ class MeetingInvitationViewTest {
         """.trimIndent(),
 
         TestInput(ZoneId.of("Europe/London"), Locale.UK, ZoneId.of("Europe/Vilnius")) to """
-            Would any of these times (EET) work for you?
+            Would any of these times (EEST) work for you?
             
             Wed, July 7:
             * 12:00 - 12:15
@@ -201,7 +202,7 @@ class MeetingInvitationViewTest {
         """.trimIndent(),
 
         TestInput(ZoneId.of("Europe/London"), Locale.UK, ZoneId.of("America/New_York")) to """
-            Would any of these times (EST) work for you?
+            Would any of these times (EDT) work for you?
             
             Wed, July 7:
             * 5:00 AM - 5:15 AM
