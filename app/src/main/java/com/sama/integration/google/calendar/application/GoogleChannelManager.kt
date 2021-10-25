@@ -2,6 +2,7 @@ package com.sama.integration.google.calendar.application
 
 import com.sama.integration.google.ChannelConfiguration
 import com.sama.integration.google.GoogleChannelCreationUnsupportedException
+import com.sama.integration.google.GoogleInvalidCredentialsException
 import com.sama.integration.google.GoogleServiceFactory
 import com.sama.integration.google.auth.domain.GoogleAccountId
 import com.sama.integration.google.calendar.domain.Channel
@@ -120,8 +121,14 @@ class GoogleChannelManager(
                     calendarService.stopChannel(channel.id, channel.externalResourceId).execute()
                     logger.info("Channel closed for ${channel.debugString()}...")
                 } catch (e: Exception) {
-                    val googleException = translatedGoogleException(e)
-                    logger.error("Error closing channel for ${channel.debugString()}...", googleException)
+                    when (val googleException = translatedGoogleException(e)) {
+                        is GoogleInvalidCredentialsException -> {
+                            logger.info("Credentials expired when closing channel for ${channel.debugString()}...")
+                        }
+                        else -> {
+                            logger.error("Error closing channel for ${channel.debugString()}...", googleException)
+                        }
+                    }
                 }
             }
     }
