@@ -26,7 +26,6 @@ data class GoogleAccount(
     }
 
     fun unlink(): GoogleAccount {
-        check(!primary)
         return copy(linked = false)
     }
 

@@ -1,7 +1,6 @@
 package com.sama.integration.google.calendar.application
 
 import com.sama.integration.google.GoogleServiceFactory
-import com.sama.integration.google.auth.application.GoogleAccountService
 import com.sama.integration.google.auth.domain.GoogleAccountRepository
 import com.sama.users.domain.UserId
 import com.sama.users.domain.UserSettingsDefaults

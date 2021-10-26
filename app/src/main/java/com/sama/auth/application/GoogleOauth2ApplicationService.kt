@@ -11,7 +11,7 @@ import com.sama.auth.domain.toLinkAccountOauth2State
 import com.sama.auth.domain.toLinkAccountOauth2UserId
 import com.sama.common.ApplicationService
 import com.sama.integration.google.GoogleInsufficientPermissionsException
-import com.sama.integration.google.auth.application.GoogleAccountService
+import com.sama.integration.google.auth.application.GoogleAccountApplicationService
 import com.sama.integration.google.auth.application.GoogleOauth2Credential
 import com.sama.integration.google.auth.application.LinkGoogleAccountCommand
 import com.sama.users.application.GoogleOauth2Redirect
@@ -36,7 +36,7 @@ class GoogleOauth2ApplicationService(
     private val userTokenService: UserTokenService,
     private val googleAuthorizationCodeFlow: GoogleAuthorizationCodeFlow,
     private val googleIdTokenVerifier: GoogleIdTokenVerifier,
-    private val googleAccountService: GoogleAccountService,
+    private val googleAccountService: GoogleAccountApplicationService,
     private val oauth2StateRepository: Oauth2StateRepository,
     @Value("\${integration.google.scopes}") private val requiredGoogleOauthScopes: List<String>,
 ) {
