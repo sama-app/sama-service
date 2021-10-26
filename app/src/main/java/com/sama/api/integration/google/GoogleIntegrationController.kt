@@ -5,7 +5,7 @@ import com.sama.api.config.AuthUserId
 import com.sama.auth.application.GoogleOauth2ApplicationService
 import com.sama.auth.application.LinkGoogleAccountErrorDTO
 import com.sama.auth.application.LinkGoogleAccountSuccessDTO
-import com.sama.integration.google.auth.application.GoogleAccountService
+import com.sama.integration.google.auth.application.GoogleAccountApplicationService
 import com.sama.integration.google.auth.application.UnlinkGoogleAccountCommand
 import com.sama.users.domain.UserId
 import io.swagger.v3.oas.annotations.Operation
@@ -27,7 +27,7 @@ import org.springframework.web.servlet.view.RedirectView
 @RestController
 class GoogleIntegrationController(
     private val googleOauth2ApplicationService: GoogleOauth2ApplicationService,
-    private val googleAccountService: GoogleAccountService
+    private val googleAccountService: GoogleAccountApplicationService
 ) {
 
     @Operation(

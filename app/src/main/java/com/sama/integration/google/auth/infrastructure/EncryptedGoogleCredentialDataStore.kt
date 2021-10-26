@@ -4,7 +4,9 @@ import com.google.api.client.auth.oauth2.StoredCredential
 import com.google.api.client.util.store.AbstractDataStore
 import com.google.api.client.util.store.DataStore
 import com.sama.integration.google.GoogleInvalidCredentialsException
+import com.sama.integration.google.auth.domain.GoogleCredentialRepository
 import java.sql.ResultSet
+import java.time.Instant
 import org.apache.commons.logging.LogFactory
 import org.springframework.dao.EmptyResultDataAccessException
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
@@ -16,10 +18,22 @@ class EncryptedGoogleCredentialDataStore internal constructor(
     private val jdbcTemplate: NamedParameterJdbcTemplate,
     dataStoreId: String,
     dataStoreFactory: GoogleCredentialDataStoreFactory,
-) :
-    AbstractDataStore<StoredCredential>(dataStoreFactory, dataStoreId),
-    DataStore<StoredCredential> {
+) : AbstractDataStore<StoredCredential>(dataStoreFactory, dataStoreId),
+    GoogleCredentialRepository {
+
     private val logger = LogFactory.getLog(EncryptedGoogleCredentialDataStore::class.java)
+
+    override fun findInvalidatedIds(): Collection<Long> {
+        return jdbcTemplate.queryForList(
+            """
+                   SELECT google_account_id FROM sama.user_google_credential 
+                   WHERE google_access_token_encrypted IS NULL AND
+                         google_token_expiration_time_ms IS NULL
+                """,
+            MapSqlParameterSource(),
+            Long::class.java
+        )
+    }
 
     override fun get(id: String): StoredCredential? {
         return try {
@@ -90,7 +104,7 @@ class EncryptedGoogleCredentialDataStore internal constructor(
 
         // throw only after storing the invalid credentials so that Google's SDK
         // can handle the missing tokens itself
-        if (!c.isUsable()) {
+        if (!c.isInvalid()) {
             logger.warn("User#$id received invalid Google Credentials")
             throw GoogleInvalidCredentialsException(null)
         }
@@ -100,7 +114,7 @@ class EncryptedGoogleCredentialDataStore internal constructor(
     override fun delete(id: String): DataStore<StoredCredential> {
         jdbcTemplate.update(
             """
-               DELETE sama.user_google_credential 
+               DELETE FROM sama.user_google_credential 
                WHERE google_account_id = :google_account_id
             """,
             MapSqlParameterSource()
@@ -109,11 +123,12 @@ class EncryptedGoogleCredentialDataStore internal constructor(
         return this
     }
 
-    private fun StoredCredential.isUsable(): Boolean {
+    private fun StoredCredential.isInvalid(): Boolean {
         // access token sent as null when credentials are invalidated or permissions
         // are removed
         return accessToken != null
     }
+
 
     override fun keySet(): Set<String> {
         throw UnsupportedOperationException("Unsupported")

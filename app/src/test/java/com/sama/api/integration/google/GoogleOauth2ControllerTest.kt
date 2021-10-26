@@ -6,7 +6,7 @@ import com.sama.auth.application.GoogleOauth2ApplicationService
 import com.sama.auth.application.LinkGoogleAccountErrorDTO
 import com.sama.auth.application.LinkGoogleAccountSuccessDTO
 import com.sama.integration.google.auth.application.GoogleAccountDTO
-import com.sama.integration.google.auth.application.GoogleAccountService
+import com.sama.integration.google.auth.application.GoogleAccountApplicationService
 import com.sama.integration.google.auth.application.GoogleIntegrationsDTO
 import com.sama.integration.google.auth.application.UnlinkGoogleAccountCommand
 import com.sama.integration.google.auth.domain.GoogleAccountPublicId
@@ -52,7 +52,7 @@ class GoogleOauth2ControllerTest(
     lateinit var googleOauth2ApplicationService: GoogleOauth2ApplicationService
 
     @MockBean
-    lateinit var googleAccountService: GoogleAccountService
+    lateinit var googleAccountService: GoogleAccountApplicationService
 
     private val userId = UserId(1)
     private val jwt = "eyJraWQiOiJrZXktaWQiLCJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9." +
