@@ -4,11 +4,6 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier
 import com.sama.auth.domain.Oauth2State
 import com.sama.auth.domain.Oauth2StateRepository
-import com.sama.auth.domain.STATE_REGISTER
-import com.sama.auth.domain.isLinkAccountOauth2State
-import com.sama.auth.domain.isRegisterState
-import com.sama.auth.domain.toLinkAccountOauth2State
-import com.sama.auth.domain.toLinkAccountOauth2UserId
 import com.sama.common.ApplicationService
 import com.sama.integration.google.GoogleInsufficientPermissionsException
 import com.sama.integration.google.auth.application.GoogleAccountApplicationService
@@ -45,12 +40,7 @@ class GoogleOauth2ApplicationService(
     fun generateAuthorizationUrl(redirectUri: String, userId: UserId? = null): GoogleOauth2Redirect {
         // Pass in user public identifier as "State" to link the authorized Google Account to
         // an existing Sama account
-        val stateValue = when {
-            userId != null -> userId.toLinkAccountOauth2State()
-            else -> STATE_REGISTER
-        }
-
-        val oauth2State = Oauth2State(value = stateValue)
+        val oauth2State = Oauth2State.of(userId)
         val stateKey = oauth2StateRepository.save(oauth2State).key!!
 
         val authorizationUrl = googleAuthorizationCodeFlow.newAuthorizationUrl()
@@ -66,11 +56,10 @@ class GoogleOauth2ApplicationService(
         require(oauth2State != null) { "Invalid Oauth2 state" }
         oauth2StateRepository.delete(oauth2State)
 
-        val stateValue = oauth2State.value
         // If there is no state value -> initiate registration flow
         // If there is state value -> validate that it's a userId and link the Google Account to it
         return when {
-            stateValue.isRegisterState() ->
+            oauth2State.isRegisterState() ->
                 when {
                     code != null -> try {
                         registerUser(redirectUri, code)
@@ -86,8 +75,8 @@ class GoogleOauth2ApplicationService(
                     }
                     else -> GoogleSignErrorDTO("sama-invalid-oauth-callback")
                 }
-            stateValue.isLinkAccountOauth2State() -> {
-                val userId = stateValue.toLinkAccountOauth2UserId()
+            oauth2State.isLinkAccountState() -> {
+                val userId = oauth2State.toLinkAccountStateOrNull()!!
                 when {
                     code != null -> try {
                         linkGoogleAccount(redirectUri, code, userId)

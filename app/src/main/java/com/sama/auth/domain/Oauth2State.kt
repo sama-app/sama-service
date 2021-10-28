@@ -15,21 +15,34 @@ import org.springframework.security.crypto.keygen.KeyGenerators
 import org.springframework.security.crypto.keygen.StringKeyGenerator
 import org.springframework.stereotype.Repository
 
-const val STATE_REGISTER = "register"
-const val STATE_LINK_ACCOUNT = "link_account"
-
-fun String.isRegisterState() = this == STATE_REGISTER
-fun UserId.toLinkAccountOauth2State() = "${STATE_LINK_ACCOUNT}#$id"
-fun String.isLinkAccountOauth2State() = startsWith("${STATE_LINK_ACCOUNT}#")
-fun String.toLinkAccountOauth2UserId(): UserId {
-    require(isLinkAccountOauth2State())
-    return UserId(substringAfter("#").toLong())
-}
-
 @Table("oauth2_state")
-data class Oauth2State(@Id var key: String? = null, val value: String = "", val createdAt: Instant = Instant.now()) {
+data class Oauth2State(
+    @Id var key: String? = null,
+    val value: String = "",
+    val createdAt: Instant = Instant.now()
+) {
     companion object {
-        private val tokenGenerator = KeyGenerators.string()
+        private const val STATE_REGISTER = "register"
+        private const val STATE_LINK_ACCOUNT = "link_account"
+
+        fun of(value: Any?): Oauth2State {
+            val state = when (value) {
+                is UserId -> "${STATE_LINK_ACCOUNT}#${value.id}"
+                else -> STATE_REGISTER
+            }
+            return Oauth2State(value = state)
+        }
+    }
+
+    fun isRegisterState() = value == STATE_REGISTER
+
+    fun isLinkAccountState() = value.startsWith("${STATE_LINK_ACCOUNT}#")
+    fun toLinkAccountStateOrNull(): UserId? {
+        return if (isLinkAccountState()) {
+            UserId(value.substringAfter("#").toLong())
+        } else {
+            null
+        }
     }
 }
 
