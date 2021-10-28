@@ -8,19 +8,25 @@ import org.springframework.transaction.annotation.Transactional
 
 @ApplicationService
 @Service
-class UserDeviceRegistrationApplicationService(private val userRepository: UserRepository) :
-    UserDeviceRegistrationService {
+class UserDeviceRegistrationApplicationService(
+    private val userRepository: UserRepository,
+    private val authUserService: AuthUserService
+) : UserDeviceRegistrationService {
 
     @Transactional(readOnly = true)
-    override fun findByUserId(userId: UserId): UserDeviceRegistrationsDTO {
-        return userRepository.findDeviceRegistrationsByIdOrThrow(userId)
-            .deviceRegistrations
+    override fun me(): UserDeviceRegistrationsDTO {
+        return find(authUserService.currentUserId())
+    }
+
+    override fun find(userId: UserId): UserDeviceRegistrationsDTO {
+        return userRepository.findDeviceRegistrationsByIdOrThrow(userId).deviceRegistrations
             .map { FirebaseDeviceRegistrationDTO(it.deviceId, it.firebaseRegistrationToken) }
             .let { UserDeviceRegistrationsDTO(it) }
     }
 
     @Transactional
-    override fun register(userId: UserId, command: RegisterDeviceCommand): Boolean {
+    override fun register(command: RegisterDeviceCommand): Boolean {
+        val userId = authUserService.currentUserId()
         val changes = userRepository.findDeviceRegistrationsByIdOrThrow(userId)
             .register(command.deviceId, command.firebaseRegistrationToken)
         userRepository.save(changes)
@@ -28,7 +34,8 @@ class UserDeviceRegistrationApplicationService(private val userRepository: UserR
     }
 
     @Transactional
-    override fun unregister(userId: UserId, command: UnregisterDeviceCommand): Boolean {
+    override fun unregister(command: UnregisterDeviceCommand): Boolean {
+        val userId = authUserService.currentUserId()
         val changes = userRepository.findDeviceRegistrationsByIdOrThrow(userId)
             .unregister(command.deviceId)
         userRepository.save(changes)

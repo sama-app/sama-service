@@ -13,6 +13,7 @@ import com.sama.connection.domain.UserConnection
 import com.sama.connection.domain.UserConnectionRepository
 import com.sama.connection.domain.UserConnectionRequestCreatedEvent
 import com.sama.connection.domain.UserConnectionRequestRejectedEvent
+import com.sama.users.application.AuthUserService
 import com.sama.users.application.InternalUserService
 import com.sama.users.domain.UserId
 import org.springframework.stereotype.Service
@@ -22,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class UserConnectionApplicationService(
     private val userService: InternalUserService,
+    private val authUserService: AuthUserService,
     private val connectionRequestRepository: ConnectionRequestRepository,
     private val userConnectionRepository: UserConnectionRepository,
     private val discoveredUserListRepository: DiscoveredUserListRepository,
@@ -35,7 +37,8 @@ class UserConnectionApplicationService(
     }
 
     @Transactional(readOnly = true)
-    override fun findUserConnections(userId: UserId): UserConnectionsDTO {
+    override fun findUserConnections(): UserConnectionsDTO {
+        val userId = authUserService.currentUserId()
         val discoveredUsers = discoveredUserListRepository.findById(userId).discoveredUsers
         val connectedUsers = userConnectionRepository.findConnectedUserIds(userId)
         return userConnectionViews.renderUserConnections(discoveredUsers, connectedUsers)
@@ -58,7 +61,8 @@ class UserConnectionApplicationService(
     }
 
     @Transactional
-    override fun removeUserConnection(userId: UserId, command: RemoveUserConnectionCommand): Boolean {
+    override fun removeUserConnection(command: RemoveUserConnectionCommand): Boolean {
+        val userId = authUserService.currentUserId()
         val recipientId = userService.translatePublicId(command.userId)
         userConnectionRepository.delete(UserConnection(userId, recipientId))
         return true
@@ -80,14 +84,16 @@ class UserConnectionApplicationService(
     }
 
     @Transactional(readOnly = true)
-    override fun findConnectionRequests(userId: UserId): ConnectionRequestsDTO {
+    override fun findConnectionRequests(): ConnectionRequestsDTO {
+        val userId = authUserService.currentUserId()
         val initiatedConnectionRequests = connectionRequestRepository.findPendingByInitiatorId(userId)
         val pendingConnectionRequests = connectionRequestRepository.findPendingByRecipientId(userId)
         return userConnectionViews.renderConnectionRequests(initiatedConnectionRequests, pendingConnectionRequests)
     }
 
     @Transactional
-    override fun createConnectionRequest(userId: UserId, command: CreateConnectionRequestCommand): ConnectionRequestDTO {
+    override fun createConnectionRequest(command: CreateConnectionRequestCommand): ConnectionRequestDTO {
+        val userId = authUserService.currentUserId()
         val recipientId = userService.translatePublicId(command.recipientId)
 
         val connectionRequest = connectionRequestRepository.findPendingByUserIds(userId, recipientId)
@@ -109,7 +115,8 @@ class UserConnectionApplicationService(
     }
 
     @Transactional
-    override fun approveConnectionRequest(userId: UserId, connectionRequestId: ConnectionRequestId): Boolean {
+    override fun approveConnectionRequest(connectionRequestId: ConnectionRequestId): Boolean {
+        val userId = authUserService.currentUserId()
         val connectionRequest = connectionRequestRepository.findByIdOrThrow(connectionRequestId)
         checkAccess(connectionRequest.recipientUserId == userId)
         { "User#${userId.id} does not have access to ConnectionRequest#$connectionRequestId" }
@@ -125,7 +132,8 @@ class UserConnectionApplicationService(
     }
 
     @Transactional
-    override fun rejectConnectionRequest(userId: UserId, connectionRequestId: ConnectionRequestId): Boolean {
+    override fun rejectConnectionRequest(connectionRequestId: ConnectionRequestId): Boolean {
+        val userId = authUserService.currentUserId()
         val connectionRequest = connectionRequestRepository.findByIdOrThrow(connectionRequestId)
         checkAccess(connectionRequest.recipientUserId == userId)
         { "User#${userId.id} does not have access to ConnectionRequest#$connectionRequestId" }

@@ -6,7 +6,7 @@ import org.springframework.transaction.annotation.Transactional
 
 interface GoogleAccountService {
     fun getUserInfo(accessToken: String): GoogleUserInfo
-    fun findAllLinked(userId: UserId): GoogleIntegrationsDTO
-    fun linkAccount(userId: UserId, command: LinkGoogleAccountCommand): GoogleAccountPublicId
-    fun unlinkAccount(userId: UserId, command: UnlinkGoogleAccountCommand): Boolean
+    fun findAllLinked(): GoogleIntegrationsDTO
+    fun linkAccount(command: LinkGoogleAccountCommand): GoogleAccountPublicId
+    fun unlinkAccount(command: UnlinkGoogleAccountCommand): Boolean
 }

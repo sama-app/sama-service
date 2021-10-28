@@ -6,6 +6,7 @@ import com.sama.integration.google.calendar.application.GoogleCalendarService
 import com.sama.integration.google.calendar.application.InsertGoogleCalendarEventCommand
 import com.sama.meeting.domain.EmailRecipient
 import com.sama.meeting.domain.UserRecipient
+import com.sama.users.application.AuthUserService
 import com.sama.users.application.InternalUserService
 import com.sama.users.domain.UserId
 import java.time.LocalDate
@@ -24,29 +25,30 @@ private const val MEETING_CODE_PROPERTY_KEY = "meeting_code"
 class EventApplicationService(
     private val googleCalendarService: GoogleCalendarService,
     private val internalUserService: InternalUserService,
+    private val authUserService: AuthUserService,
     @Value("\${sama.landing.url}") private val samaWebUrl: String,
 ) : EventService {
 
     override fun fetchEvents(
-        userId: UserId,
-        startDate: LocalDate,
-        endDate: LocalDate,
-        timezone: ZoneId,
-        searchCriteria: EventSearchCriteria
-    ) = googleCalendarService.findEvents(
-        userId = userId,
-        startDateTime = startDate.atStartOfDay(timezone),
-        endDateTime = endDate.plusDays(1).atStartOfDay(timezone),
-        createdFrom = searchCriteria.createdFrom,
-        hasAttendees = searchCriteria.hasAttendees
-    )
-        .map {
-            EventDTO(
-                it.startDateTime, it.endDateTime, it.eventData.allDay, it.eventData.title,
-                it.accountId, it.calendarId, it.eventId
-            )
-        }
-        .let { EventsDTO(it) }
+        startDate: LocalDate, endDate: LocalDate, timezone: ZoneId, criteria: EventSearchCriteria
+    ): EventsDTO {
+        val userId = authUserService.currentUserId()
+        val events = googleCalendarService.findEvents(
+            userId = userId,
+            startDateTime = startDate.atStartOfDay(timezone),
+            endDateTime = endDate.plusDays(1).atStartOfDay(timezone),
+            createdFrom = criteria.createdFrom,
+            hasAttendees = criteria.hasAttendees
+        )
+        return events
+            .map {
+                EventDTO(
+                    it.startDateTime, it.endDateTime, it.eventData.allDay, it.eventData.title,
+                    it.accountId, it.calendarId, it.eventId
+                )
+            }
+            .let { EventsDTO(it) }
+    }
 
     override fun createEvent(userId: UserId, command: CreateEventCommand): Boolean {
         val initiator = internalUserService.findInternal(userId)

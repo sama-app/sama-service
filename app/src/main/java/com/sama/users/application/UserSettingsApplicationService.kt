@@ -19,6 +19,7 @@ class UserSettingsApplicationService(
     private val userSettingsRepository: UserSettingsRepository,
     private val userSettingsDefaultsRepository: UserSettingsDefaultsRepository,
     private val userRepository: UserRepository,
+    private val authUserService: AuthUserService,
     private val mailerLiteClient: MailerLiteClient,
     private val taskScheduler: TaskScheduler,
 ) : UserSettingsService {
@@ -32,13 +33,15 @@ class UserSettingsApplicationService(
     }
 
     @Transactional(readOnly = true)
-    override fun find(userId: UserId): UserSettingsDTO {
-        val userSettings = userSettingsRepository.findByIdOrThrow(userId)
-        return userSettings.toDTO()
-    }
+    override fun me() = find(authUserService.currentUserId())
+
+    @Transactional(readOnly = true)
+    override fun find(userId: UserId) =
+        userSettingsRepository.findByIdOrThrow(userId).toDTO()
 
     @Transactional
-    override fun updateWorkingHours(userId: UserId, command: UpdateWorkingHoursCommand): Boolean {
+    override fun updateWorkingHours(command: UpdateWorkingHoursCommand): Boolean {
+        val userId = authUserService.currentUserId()
         val workingHours = command.workingHours
             .associate { Pair(it.dayOfWeek, WorkingHours(it.startTime, it.endTime)) }
 
@@ -50,7 +53,8 @@ class UserSettingsApplicationService(
     }
 
     @Transactional
-    override fun updateTimeZone(userId: UserId, command: UpdateTimeZoneCommand): Boolean {
+    override fun updateTimeZone(command: UpdateTimeZoneCommand): Boolean {
+        val userId = authUserService.currentUserId()
         val userSettings = userSettingsRepository.findByIdOrThrow(userId)
             .updateTimeZone(command.timeZone)
 
@@ -59,7 +63,8 @@ class UserSettingsApplicationService(
     }
 
     @Transactional
-    override fun updateMarketingPreferences(userId: UserId, command: UpdateMarketingPreferencesCommand): Boolean {
+    override fun updateMarketingPreferences(command: UpdateMarketingPreferencesCommand): Boolean {
+        val userId = authUserService.currentUserId()
         val userSettings = userSettingsRepository.findByIdOrThrow(userId)
         val updated = userSettings
             .let {
@@ -86,7 +91,8 @@ class UserSettingsApplicationService(
     }
 
     @Transactional
-    override fun grantPermissions(userId: UserId, command: GrantUserPermissionsCommand): Boolean {
+    override fun grantPermissions(command: GrantUserPermissionsCommand): Boolean {
+        val userId = authUserService.currentUserId()
         val userSettings = userSettingsRepository.findByIdOrThrow(userId)
             .grantPermissions(command.permissions)
 
@@ -95,7 +101,8 @@ class UserSettingsApplicationService(
     }
 
     @Transactional
-    override fun revokePermissions(userId: UserId, command: RevokeUserPermissionsCommand): Boolean {
+    override fun revokePermissions(command: RevokeUserPermissionsCommand): Boolean {
+        val userId = authUserService.currentUserId()
         val userSettings = userSettingsRepository.findByIdOrThrow(userId)
             .revokePermissions(command.permissions)
 

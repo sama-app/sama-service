@@ -59,7 +59,7 @@ class UserConnectionControllerTest(@Autowired val mockMvc: MockMvc) {
 
     @Test
     fun `find user connections`() {
-        whenever(userConnectionService.findUserConnections(userId))
+        whenever(userConnectionService.findUserConnections())
             .thenReturn(
                 UserConnectionsDTO(
                     connectedUsers = listOf(userOne),
@@ -98,7 +98,7 @@ class UserConnectionControllerTest(@Autowired val mockMvc: MockMvc) {
     @Test
     fun `disconnect user`() {
         val targetUserId = UserPublicId(randomUUID())
-        whenever(userConnectionService.removeUserConnection(userId, RemoveUserConnectionCommand(targetUserId)))
+        whenever(userConnectionService.removeUserConnection(RemoveUserConnectionCommand(targetUserId)))
             .thenReturn(true)
 
         val payload = """
@@ -122,7 +122,7 @@ class UserConnectionControllerTest(@Autowired val mockMvc: MockMvc) {
         val initiatedRequest = ConnectionRequestDTO(randomUUID(), initiator = userInitiator, recipient = userOne)
         val pendingRequest = ConnectionRequestDTO(randomUUID(), initiator = userTwo, recipient = userInitiator)
 
-        whenever(userConnectionService.findConnectionRequests(userId))
+        whenever(userConnectionService.findConnectionRequests())
             .thenReturn(
                 ConnectionRequestsDTO(
                     initiatedConnectionRequests = listOf(initiatedRequest),
@@ -177,7 +177,7 @@ class UserConnectionControllerTest(@Autowired val mockMvc: MockMvc) {
     fun `create connection request`() {
         val targetUserId = userOne.userId
         val connectionRequest = ConnectionRequestDTO(randomUUID(), initiator = userInitiator, recipient = userOne)
-        whenever(userConnectionService.createConnectionRequest(userId, CreateConnectionRequestCommand(targetUserId)))
+        whenever(userConnectionService.createConnectionRequest(CreateConnectionRequestCommand(targetUserId)))
             .thenReturn(connectionRequest)
 
         val payload = """
@@ -215,7 +215,7 @@ class UserConnectionControllerTest(@Autowired val mockMvc: MockMvc) {
     @Test
     fun `approve connection request`() {
         val connectionRequestId = randomUUID()
-        whenever(userConnectionService.approveConnectionRequest(userId, connectionRequestId))
+        whenever(userConnectionService.approveConnectionRequest(connectionRequestId))
             .thenReturn(true)
 
         mockMvc.perform(
@@ -230,7 +230,7 @@ class UserConnectionControllerTest(@Autowired val mockMvc: MockMvc) {
     @Test
     fun `reject connection request`() {
         val connectionRequestId = randomUUID()
-        whenever(userConnectionService.rejectConnectionRequest(userId, connectionRequestId))
+        whenever(userConnectionService.rejectConnectionRequest(connectionRequestId))
             .thenReturn(true)
 
         mockMvc.perform(

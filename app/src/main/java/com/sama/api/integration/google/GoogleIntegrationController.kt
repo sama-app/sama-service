@@ -1,13 +1,11 @@
 package com.sama.api.integration.google
 
 import com.google.api.client.http.GenericUrl
-import com.sama.api.config.AuthUserId
 import com.sama.auth.application.GoogleOauth2ApplicationService
 import com.sama.auth.application.LinkGoogleAccountErrorDTO
 import com.sama.auth.application.LinkGoogleAccountSuccessDTO
-import com.sama.integration.google.auth.application.GoogleAccountApplicationService
+import com.sama.integration.google.auth.application.GoogleAccountService
 import com.sama.integration.google.auth.application.UnlinkGoogleAccountCommand
-import com.sama.users.domain.UserId
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
@@ -27,7 +25,7 @@ import org.springframework.web.servlet.view.RedirectView
 @RestController
 class GoogleIntegrationController(
     private val googleOauth2ApplicationService: GoogleOauth2ApplicationService,
-    private val googleAccountService: GoogleAccountApplicationService
+    private val googleAccountService: GoogleAccountService
 ) {
 
     @Operation(
@@ -35,8 +33,8 @@ class GoogleIntegrationController(
         security = [SecurityRequirement(name = "user-auth")]
     )
     @GetMapping("/api/integration/google")
-    fun listLinkedGoogleAccounts(@AuthUserId userId: UserId?) =
-        googleAccountService.findAllLinked(userId!!)
+    fun listLinkedGoogleAccounts() =
+        googleAccountService.findAllLinked()
 
     @Operation(
         summary = "Link an additional Google Calendar account using an OAuth2 token",
@@ -53,16 +51,16 @@ class GoogleIntegrationController(
         security = [SecurityRequirement(name = "user-auth")]
     )
     @PostMapping("/api/integration/google/link-account")
-    fun linkGoogleAccount(@AuthUserId userId: UserId?, request: HttpServletRequest) =
-        googleOauth2ApplicationService.generateAuthorizationUrl(redirectUri(request), userId)
+    fun linkGoogleAccount(request: HttpServletRequest) =
+        googleOauth2ApplicationService.generateAuthorizationUrl(redirectUri(request))
 
     @Operation(
         summary = "Unlink an additional Google Calendar account",
         security = [SecurityRequirement(name = "user-auth")]
     )
     @PostMapping("/api/integration/google/unlink-account")
-    fun unlinkGoogleAccount(@AuthUserId userId: UserId?, @RequestBody command: UnlinkGoogleAccountCommand) =
-        googleAccountService.unlinkAccount(userId!!, command)
+    fun unlinkGoogleAccount(@RequestBody command: UnlinkGoogleAccountCommand) =
+        googleAccountService.unlinkAccount(command)
 
     @Operation(
         summary = "Callback for Google OAuth2 process",

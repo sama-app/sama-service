@@ -29,7 +29,7 @@ class UserSettingsApplicationServiceIT : BaseApplicationIntegrationTest() {
 
     @BeforeEach
     fun setupUserSettingsDefaults() {
-        val userId = initiator().id!!
+        val userId = initiator().id
         whenever(userSettingsDefaultsRepository.findById(userId))
             .thenReturn(
                 UserSettingsDefaults(
@@ -42,7 +42,7 @@ class UserSettingsApplicationServiceIT : BaseApplicationIntegrationTest() {
 
     @Test
     fun `create user settings from defaults`() {
-        val userId = initiator().id!!
+        val userId = initiator().id
         underTest.create(userId)
 
         val actual = underTest.find(userId)
@@ -63,16 +63,17 @@ class UserSettingsApplicationServiceIT : BaseApplicationIntegrationTest() {
 
     @Test
     fun `update user settings`() {
-        val userId = initiator().id!!
+        val userId = initiator().id
         underTest.create(userId)
 
         val newTimeZone = ZoneId.of("Europe/Vilnius")
-        underTest.updateTimeZone(userId, UpdateTimeZoneCommand(newTimeZone))
+        asInitiator { underTest.updateTimeZone(UpdateTimeZoneCommand(newTimeZone)) }
 
         assertThat(underTest.find(userId).timeZone).isEqualTo(newTimeZone)
 
         val newWorkingHours = listOf(DayWorkingHoursDTO(MONDAY, LocalTime.of(10, 0), LocalTime.of(12, 0)))
-        underTest.updateWorkingHours(userId, UpdateWorkingHoursCommand(newWorkingHours))
+        asInitiator { underTest.updateWorkingHours(UpdateWorkingHoursCommand(newWorkingHours)) }
+
         assertThat(underTest.find(userId).workingHours).isEqualTo(newWorkingHours)
     }
 }

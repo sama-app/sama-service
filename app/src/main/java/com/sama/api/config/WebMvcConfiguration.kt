@@ -51,7 +51,6 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 @Import(WebSecurityConfiguration::class, GlobalWebMvcExceptionHandler::class)
 @EnableWebMvc
 class WebMvcConfiguration(
-    private val userIdAttributeResolver: UserIdAttributeResolver,
     @Value("\${sama.api.cors.allowed-origins}") private val corsAllowedOrigins: List<String>,
 ) : WebMvcConfigurer {
     private val headerBlacklist = listOf("authorization", "cookie")
@@ -94,10 +93,6 @@ class WebMvcConfiguration(
 
     override fun addInterceptors(registry: InterceptorRegistry) {
         registry.addInterceptor(DeviceResolverHandlerInterceptor())
-    }
-
-    override fun addArgumentResolvers(resolvers: MutableList<HandlerMethodArgumentResolver>) {
-        resolvers.add(userIdAttributeResolver)
     }
 }
 

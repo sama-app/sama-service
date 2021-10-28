@@ -13,22 +13,20 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class UserApplicationService(
     private val userRepository: UserRepository,
-    private val userSettingsRepository: UserSettingsRepository
+    private val userSettingsRepository: UserSettingsRepository,
+    private val authUserService: AuthUserService
 ) : InternalUserService, UserService {
 
     @Transactional(readOnly = true)
-    override fun find(userId: UserId): UserPublicDTO {
-        val userDetails = userRepository.findByIdOrThrow(userId)
-        return userDetails.let {
-            UserPublicDTO(it.publicId!!, it.fullName, it.email)
-        }
-    }
+    override fun me() = find(authUserService.currentUserId())
 
     @Transactional(readOnly = true)
-    override fun findAll(userIds: Collection<UserId>): Map<UserId, UserPublicDTO> {
-        return userRepository.findByIds(userIds)
-            .associate { it.id!! to UserPublicDTO(it.publicId!!, it.fullName, it.email) }
-    }
+    override fun find(userId: UserId) = userRepository.findByIdOrThrow(userId)
+        .let { UserPublicDTO(it.publicId!!, it.fullName, it.email) }
+
+    @Transactional(readOnly = true)
+    override fun findAll(userIds: Collection<UserId>) = userRepository.findByIds(userIds)
+        .associate { it.id!! to UserPublicDTO(it.publicId!!, it.fullName, it.email) }
 
     @Transactional
     override fun register(command: RegisterUserCommand): UserId {
@@ -67,11 +65,9 @@ class UserApplicationService(
         return user.let { user.toInternalDTO(userSettings.toDTO()) }
     }
 
-    override fun translatePublicId(userPublicId: UserPublicId): UserId {
-        return userRepository.findIdByPublicIdOrThrow(userPublicId)
-    }
+    override fun translatePublicId(userPublicId: UserPublicId) =
+        userRepository.findIdByPublicIdOrThrow(userPublicId)
 
-    override fun findIdsByEmail(emails: Set<String>): Set<UserId> {
-        return userRepository.findIdsByEmail(emails)
-    }
+    override fun findIdsByEmail(emails: Set<String>) =
+        userRepository.findIdsByEmail(emails)
 }

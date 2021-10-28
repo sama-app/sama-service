@@ -8,20 +8,10 @@ import java.time.ZonedDateTime
 data class EventSearchCriteria(val createdFrom: ZonedDateTime?, val hasAttendees: Boolean?)
 
 interface EventService {
-    fun fetchEvents(
-        userId: UserId,
-        startDate: LocalDate,
-        endDate: LocalDate,
-        timezone: ZoneId,
-    ) = fetchEvents(userId, startDate, endDate, timezone, EventSearchCriteria(null, null))
+    fun fetchEvents(startDate: LocalDate, endDate: LocalDate, timezone: ZoneId) =
+        fetchEvents(startDate, endDate, timezone, EventSearchCriteria(null, null))
 
-    fun fetchEvents(
-        userId: UserId,
-        startDate: LocalDate,
-        endDate: LocalDate,
-        timezone: ZoneId,
-        searchCriteria: EventSearchCriteria
-    ): EventsDTO
+    fun fetchEvents(startDate: LocalDate, endDate: LocalDate, timezone: ZoneId, criteria: EventSearchCriteria): EventsDTO
 
     fun createEvent(userId: UserId, command: CreateEventCommand): Boolean
 

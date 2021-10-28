@@ -1,12 +1,9 @@
 package com.sama.api.users
 
-import com.sama.api.config.AuthUserId
 import com.sama.users.application.RegisterDeviceCommand
 import com.sama.users.application.UnregisterDeviceCommand
 import com.sama.users.application.UserDeviceRegistrationService
-import com.sama.users.application.UserPublicDTO
 import com.sama.users.application.UserService
-import com.sama.users.domain.UserId
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -31,8 +28,7 @@ class UserController(
         "/api/user/me/",
         produces = [APPLICATION_JSON_VALUE]
     )
-    fun getPublicDetails(@AuthUserId userId: UserId?): UserPublicDTO =
-        userApplicationService.find(userId!!)
+    fun me() = userApplicationService.me()
 
     @Operation(
         summary = "Register a device for push notifications via Firebase",
@@ -42,8 +38,8 @@ class UserController(
         "/api/user/me/register-device",
         consumes = [APPLICATION_JSON_VALUE]
     )
-    fun registerDevice(@AuthUserId userId: UserId?, @RequestBody command: RegisterDeviceCommand) =
-        userDeviceRegistrationService.register(userId!!, command)
+    fun registerDevice(@RequestBody command: RegisterDeviceCommand) =
+        userDeviceRegistrationService.register(command)
 
 
     @Operation(
@@ -54,6 +50,6 @@ class UserController(
         "/api/user/me/unregister-device",
         consumes = [APPLICATION_JSON_VALUE]
     )
-    fun unregisterDevice(@AuthUserId userId: UserId?, @RequestBody command: UnregisterDeviceCommand) =
-        userDeviceRegistrationService.unregister(userId!!, command)
+    fun unregisterDevice(@RequestBody command: UnregisterDeviceCommand) =
+        userDeviceRegistrationService.unregister(command)
 }

@@ -1,10 +1,8 @@
 package com.sama.api.calendar
 
-import com.sama.api.config.AuthUserId
 import com.sama.calendar.application.CalendarService
 import com.sama.integration.google.calendar.application.AddSelectedCalendarCommand
 import com.sama.integration.google.calendar.application.RemoveSelectedCalendarCommand
-import com.sama.users.domain.UserId
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -26,21 +24,21 @@ class CalendarController(private val calendarService: CalendarService) {
         value = ["/api/calendar/calendars"],
         produces = [MediaType.APPLICATION_JSON_VALUE]
     )
-    fun fetchCalendars(@AuthUserId userId: UserId?) = calendarService.findAll(userId!!)
+    fun fetchCalendars() = calendarService.findAll()
 
     @Operation(
         summary = "Add a selected calendar",
         security = [SecurityRequirement(name = "user-auth")]
     )
     @PostMapping(value = ["/api/calendar/calendars/add"])
-    fun addSelectedCalendar(@AuthUserId userId: UserId?, @RequestBody command: AddSelectedCalendarCommand) =
-        calendarService.addSelectedCalendar(userId!!, command)
+    fun addSelectedCalendar(@RequestBody command: AddSelectedCalendarCommand) =
+        calendarService.addSelectedCalendar(command)
 
     @Operation(
         summary = "Remove a selected calendar",
         security = [SecurityRequirement(name = "user-auth")]
     )
     @PostMapping(value = ["/api/calendar/calendars/remove"])
-    fun removeSelectedCalendar(@AuthUserId userId: UserId?, @RequestBody command: RemoveSelectedCalendarCommand) =
-        calendarService.removeSelectedCalendar(userId!!, command)
+    fun removeSelectedCalendar(@RequestBody command: RemoveSelectedCalendarCommand) =
+        calendarService.removeSelectedCalendar(command)
 }

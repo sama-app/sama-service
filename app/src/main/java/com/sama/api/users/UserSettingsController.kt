@@ -1,6 +1,5 @@
 package com.sama.api.users
 
-import com.sama.api.config.AuthUserId
 import com.sama.users.application.GrantUserPermissionsCommand
 import com.sama.users.application.RevokeUserPermissionsCommand
 import com.sama.users.application.UpdateMarketingPreferencesCommand
@@ -8,7 +7,6 @@ import com.sama.users.application.UpdateTimeZoneCommand
 import com.sama.users.application.UpdateWorkingHoursCommand
 import com.sama.users.application.UserSettingsDTO
 import com.sama.users.application.UserSettingsService
-import com.sama.users.domain.UserId
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -30,8 +28,8 @@ class UserSettingsController(private val userSettingsService: UserSettingsServic
         "/api/user/me/settings",
         produces = [APPLICATION_JSON_VALUE]
     )
-    fun getSettings(@AuthUserId userId: UserId?): UserSettingsDTO =
-        userSettingsService.find(userId!!)
+    fun me(): UserSettingsDTO =
+        userSettingsService.me()
 
     @Operation(
         summary = "Update user working hours",
@@ -41,8 +39,8 @@ class UserSettingsController(private val userSettingsService: UserSettingsServic
         "/api/user/me/update-working-hours",
         consumes = [APPLICATION_JSON_VALUE]
     )
-    fun updateWorkingHours(@AuthUserId userId: UserId?, @RequestBody command: UpdateWorkingHoursCommand) =
-        userSettingsService.updateWorkingHours(userId!!, command)
+    fun updateWorkingHours(@RequestBody command: UpdateWorkingHoursCommand) =
+        userSettingsService.updateWorkingHours(command)
 
     @Operation(
         summary = "Update user time zone",
@@ -52,8 +50,8 @@ class UserSettingsController(private val userSettingsService: UserSettingsServic
         "/api/user/me/update-time-zone",
         consumes = [APPLICATION_JSON_VALUE]
     )
-    fun updateTimeZone(@AuthUserId userId: UserId?, @RequestBody command: UpdateTimeZoneCommand) =
-        userSettingsService.updateTimeZone(userId!!, command)
+    fun updateTimeZone(@RequestBody command: UpdateTimeZoneCommand) =
+        userSettingsService.updateTimeZone(command)
 
     @Operation(
         summary = "Grant Sama permissions to enable features",
@@ -63,8 +61,8 @@ class UserSettingsController(private val userSettingsService: UserSettingsServic
         "/api/user/me/grant-permissions",
         consumes = [APPLICATION_JSON_VALUE]
     )
-    fun grantPermissions(@AuthUserId userId: UserId?, @RequestBody command: GrantUserPermissionsCommand) =
-        userSettingsService.grantPermissions(userId!!, command)
+    fun grantPermissions(@RequestBody command: GrantUserPermissionsCommand) =
+        userSettingsService.grantPermissions(command)
 
     @Operation(
         summary = "Revoke Sama permissions disabling some features",
@@ -74,8 +72,8 @@ class UserSettingsController(private val userSettingsService: UserSettingsServic
         "/api/user/me/revoke-permissions",
         consumes = [APPLICATION_JSON_VALUE]
     )
-    fun revokePermissions(@AuthUserId userId: UserId?, @RequestBody command: RevokeUserPermissionsCommand) =
-        userSettingsService.revokePermissions(userId!!, command)
+    fun revokePermissions(@RequestBody command: RevokeUserPermissionsCommand) =
+        userSettingsService.revokePermissions(command)
 
     @Operation(
         summary = "Update user marketing preferences",
@@ -85,6 +83,6 @@ class UserSettingsController(private val userSettingsService: UserSettingsServic
         "/api/user/me/update-marketing-preferences",
         consumes = [APPLICATION_JSON_VALUE]
     )
-    fun updateMarketingPreferences(@AuthUserId userId: UserId?, @RequestBody command: UpdateMarketingPreferencesCommand) =
-        userSettingsService.updateMarketingPreferences(userId!!, command)
+    fun updateMarketingPreferences(@RequestBody command: UpdateMarketingPreferencesCommand) =
+        userSettingsService.updateMarketingPreferences(command)
 }
