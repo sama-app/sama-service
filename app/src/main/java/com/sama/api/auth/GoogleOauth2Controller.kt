@@ -1,24 +1,19 @@
 package com.sama.api.auth
 
 import com.google.api.client.http.GenericUrl
-import com.sama.api.config.AuthUserId
 import com.sama.auth.application.GoogleOauth2ApplicationService
 import com.sama.auth.application.GoogleSignErrorDTO
-import com.sama.auth.application.GoogleSignInCommand
 import com.sama.auth.application.GoogleSignSuccessDTO
 import com.sama.auth.application.LinkGoogleAccountErrorDTO
 import com.sama.auth.application.LinkGoogleAccountSuccessDTO
-import com.sama.users.domain.UserId
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
-import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
 import javax.servlet.http.HttpServletRequest
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.servlet.view.RedirectView

@@ -39,6 +39,7 @@ import com.sama.slotsuggestion.application.HeatMapService
 import com.sama.slotsuggestion.application.MultiUserSlotSuggestionRequest
 import com.sama.slotsuggestion.application.SlotSuggestionRequest
 import com.sama.slotsuggestion.application.SlotSuggestionService
+import com.sama.users.application.AuthUserService
 import com.sama.users.application.InternalUserService
 import com.sama.users.domain.UserId
 import io.sentry.spring.tracing.SentryTransaction
@@ -67,14 +68,16 @@ class MeetingApplicationService(
     private val userService: InternalUserService,
     private val userConnectionService: UserConnectionService,
     private val eventService: EventService,
+    private val authUserService: AuthUserService,
     private val calendarEventConsumer: CalendarEventConsumer,
     private val commsEventConsumer: CommsEventConsumer,
     private val taskScheduler: TaskScheduler,
     private val clock: Clock,
-) {
+) : MeetingService {
     private var logger: Logger = LoggerFactory.getLogger(javaClass)
 
-    fun dispatchInitiateMeetingCommand(userId: UserId, command: InitiateMeetingCommand): MeetingIntentDTO {
+    override fun dispatchInitiateMeetingCommand(command: InitiateMeetingCommand): MeetingIntentDTO {
+        val userId = authUserService.currentUserId()
         return if (command.recipientId != null) {
             initiateSamaToSamaMeeting(userId, command.asSamaSama())
         } else {
@@ -138,7 +141,8 @@ class MeetingApplicationService(
     }
 
     @Transactional
-    fun proposeMeeting(userId: UserId, command: ProposeMeetingCommand): MeetingInvitationDTO {
+    override fun proposeMeeting(command: ProposeMeetingCommand): MeetingInvitationDTO {
+        val userId = authUserService.currentUserId()
         val meetingIntent = meetingIntentRepository.findByCodeOrThrow(command.meetingIntentCode)
         checkAccess(meetingIntent.isReadableBy(userId)) { "User does not have access to read MeetingIntent#${meetingIntent.code}" }
 
@@ -181,12 +185,12 @@ class MeetingApplicationService(
 
     // TODO: Temporary hack
     @Transactional
-    fun createFullAvailabilityLink(userId: UserId, command: CreateFullAvailabilityLinkCommand): String {
-        val user = userService.findInternal(userId)
+    override fun createFullAvailabilityLink(command: CreateFullAvailabilityLinkCommand): String {
+        val user = authUserService.currentUser()
         val duration = command.durationMinutes.toMinutes()
         val meetingIntent = MeetingIntent(
             meetingIntentRepository.nextIdentity(),
-            userId,
+            user.id,
             duration,
             null,
             user.settings.timeZone,
@@ -197,7 +201,7 @@ class MeetingApplicationService(
         val meetingCode = MeetingCode(command.meetingCode)
         val meetingTitle = generateMeetingTitle(meetingIntent)
 
-        val heatMap = heatMapService.generateFreeBusy(userId)
+        val heatMap = heatMapService.generateFreeBusy(user.id)
         val slotWindowSize = ceil(duration.toMinutes().toDouble() / heatMap.intervalMinutes).toInt()
 
         val freeSlots = heatMap.slots.asSequence()
@@ -223,22 +227,24 @@ class MeetingApplicationService(
     }
 
     @Transactional
-    fun loadMeetingProposal(userId: UserId?, meetingCode: MeetingCode): ProposedMeetingDTO {
+    override fun loadMeetingProposal(meetingCode: MeetingCode): ProposedMeetingDTO {
+        val currentUserId = authUserService.currentUserIdOrNull()
         val proposedMeeting = findProposedMeetingOrThrow(meetingCode)
-        checkAccess(proposedMeeting.isReadableBy(userId)) { "User does not have access to read Meeting#${meetingCode}" }
+        checkAccess(proposedMeeting.isReadableBy(currentUserId)) { "User does not have access to read Meeting#${meetingCode}" }
 
         return when (proposedMeeting) {
             is SamaNonSamaProposedMeeting -> {
                 val availableSlots = availableSlots(proposedMeeting)
-                meetingView.render(userId, proposedMeeting, availableSlots)
+                meetingView.render(currentUserId, proposedMeeting, availableSlots)
             }
 
-            is SamaSamaProposedMeeting -> meetingView.render(userId, proposedMeeting)
+            is SamaSamaProposedMeeting -> meetingView.render(currentUserId, proposedMeeting)
         }
     }
 
     @Transactional
-    fun proposeNewMeetingSlots(userId: UserId, meetingCode: MeetingCode, command: ProposeNewMeetingSlotsCommand): Boolean {
+    override fun proposeNewMeetingSlots(meetingCode: MeetingCode, command: ProposeNewMeetingSlotsCommand): Boolean {
+        val userId = authUserService.currentUserId()
         val proposedMeeting = findProposedMeetingOrThrow(meetingCode, true)
         checkAccess(proposedMeeting.isModifiableBy(userId)) { "User does not have access to modify Meeting#${meetingCode}" }
         require(proposedMeeting is SamaSamaProposedMeeting)
@@ -254,7 +260,8 @@ class MeetingApplicationService(
     }
 
     @Transactional(readOnly = true)
-    fun getSlotSuggestions(userId: UserId, meetingCode: MeetingCode): MeetingSlotSuggestionDTO {
+    override fun getSlotSuggestions(meetingCode: MeetingCode): MeetingSlotSuggestionDTO {
+        val userId = authUserService.currentUserId()
         val proposedMeeting = findProposedMeetingOrThrow(meetingCode)
         checkAccess(proposedMeeting.isReadableBy(userId))
         { "User does not have access to Meeting#${meetingCode.code}" }
@@ -274,7 +281,8 @@ class MeetingApplicationService(
     }
 
     @Transactional
-    fun updateMeetingTitle(userId: UserId, meetingCode: MeetingCode, command: UpdateMeetingTitleCommand): Boolean {
+    override fun updateMeetingTitle(meetingCode: MeetingCode, command: UpdateMeetingTitleCommand): Boolean {
+        val userId = authUserService.currentUserId()
         val proposedMeeting = findProposedMeetingOrThrow(meetingCode)
         when (proposedMeeting) {
             is SamaNonSamaProposedMeeting -> {
@@ -292,7 +300,8 @@ class MeetingApplicationService(
     }
 
     @Transactional
-    fun connectWithInitiator(userId: UserId, meetingCode: MeetingCode, command: ConnectWithMeetingInitiatorCommand): Boolean {
+    override fun connectWithInitiator(meetingCode: MeetingCode, command: ConnectWithMeetingInitiatorCommand): Boolean {
+        val userId = authUserService.currentUserId()
         val proposedMeeting = findProposedMeetingOrThrow(meetingCode)
         checkAccess(proposedMeeting.isModifiableBy(userId)) { "User does not have access to modify Meeting#${meetingCode}" }
         require(proposedMeeting is SamaNonSamaProposedMeeting)
@@ -308,9 +317,10 @@ class MeetingApplicationService(
     }
 
     @Transactional
-    fun confirmMeeting(userId: UserId?, meetingCode: MeetingCode, command: ConfirmMeetingCommand): Boolean {
+    override fun confirmMeeting(meetingCode: MeetingCode, command: ConfirmMeetingCommand): Boolean {
+        val currentUserId = authUserService.currentUserIdOrNull()
         val proposedMeeting = findProposedMeetingOrThrow(meetingCode, true)
-        checkAccess(proposedMeeting.isModifiableBy(userId)) { "User does not have access to modify Meeting#${meetingCode}" }
+        checkAccess(proposedMeeting.isModifiableBy(currentUserId)) { "User does not have access to modify Meeting#${meetingCode}" }
 
         val confirmedSlot = command.slot.toValueObject()
 
@@ -320,7 +330,7 @@ class MeetingApplicationService(
             }
 
             is SamaNonSamaProposedMeeting -> {
-                val recipient = meetingRecipient(command.recipientEmail, userId)
+                val recipient = meetingRecipient(command.recipientEmail, currentUserId)
                     ?: throw DomainValidationException("Missing recipient details")
                 val availableSlots = availableSlots(proposedMeeting)
                 if (!availableSlots.isSlotAvailable(confirmedSlot)) {
@@ -336,7 +346,7 @@ class MeetingApplicationService(
         }
 
         // "manual" event publishing
-        val event = MeetingConfirmedEvent(userId, confirmedMeeting)
+        val event = MeetingConfirmedEvent(currentUserId, confirmedMeeting)
         calendarEventConsumer.onMeetingConfirmed(event)
 
         taskScheduler.schedule(
@@ -351,7 +361,7 @@ class MeetingApplicationService(
         val meetingProposedAt = proposedMeeting.createdAt!!
         val searchCriteria = EventSearchCriteria(createdFrom = meetingProposedAt, hasAttendees = true)
         val blockingCalendarEvents = eventService.fetchEvents(
-            proposedMeeting.initiatorId, start.toLocalDate(), end.toLocalDate(), UTC, searchCriteria
+            start.toLocalDate(), end.toLocalDate(), UTC, searchCriteria
         ).events
         return AvailableSlots.of(proposedMeeting, blockingCalendarEvents, clock)
     }

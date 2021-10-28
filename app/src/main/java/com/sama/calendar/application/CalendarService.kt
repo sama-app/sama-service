@@ -6,9 +6,7 @@ import com.sama.integration.google.calendar.application.RemoveSelectedCalendarCo
 import com.sama.users.domain.UserId
 
 interface CalendarService {
-    fun findAll(userId: UserId): CalendarsDTO
-
-    fun addSelectedCalendar(userId: UserId, command: AddSelectedCalendarCommand): Boolean
-
-    fun removeSelectedCalendar(userId: UserId, command: RemoveSelectedCalendarCommand): Boolean
+    fun findAll(): CalendarsDTO
+    fun addSelectedCalendar(command: AddSelectedCalendarCommand): Boolean
+    fun removeSelectedCalendar(command: RemoveSelectedCalendarCommand): Boolean
 }

@@ -5,22 +5,28 @@ import com.sama.integration.google.calendar.application.AddSelectedCalendarComma
 import com.sama.integration.google.calendar.application.CalendarsDTO
 import com.sama.integration.google.calendar.application.GoogleCalendarService
 import com.sama.integration.google.calendar.application.RemoveSelectedCalendarCommand
-import com.sama.users.domain.UserId
+import com.sama.users.application.AuthUserService
 import org.springframework.stereotype.Service
 
 @ApplicationService
 @Service
-class CalendarApplicationService(private val googleCalendarService: GoogleCalendarService) : CalendarService {
+class CalendarApplicationService(
+    private val googleCalendarService: GoogleCalendarService,
+    private val authUserService: AuthUserService
+) : CalendarService {
 
-    override fun findAll(userId: UserId): CalendarsDTO {
+    override fun findAll(): CalendarsDTO {
+        val userId = authUserService.currentUserId()
         return googleCalendarService.findCalendars(userId)
     }
 
-    override fun addSelectedCalendar(userId: UserId, command: AddSelectedCalendarCommand): Boolean {
+    override fun addSelectedCalendar(command: AddSelectedCalendarCommand): Boolean {
+        val userId = authUserService.currentUserId()
         return googleCalendarService.addSelectedCalendar(userId, command)
     }
 
-    override fun removeSelectedCalendar(userId: UserId, command: RemoveSelectedCalendarCommand): Boolean {
+    override fun removeSelectedCalendar(command: RemoveSelectedCalendarCommand): Boolean {
+        val userId = authUserService.currentUserId()
         return googleCalendarService.removeSelectedCalendar(userId, command)
     }
 }

@@ -68,7 +68,7 @@ class GoogleOauth2ControllerTest(
     @Test
     fun `list linked google accounts`() {
         val googleAccount = GoogleAccountDTO(GoogleAccountPublicId(UUID.randomUUID()), "test@meetsama.com")
-        whenever(googleAccountService.findAllLinked(userId))
+        whenever(googleAccountService.findAllLinked())
             .thenReturn(GoogleIntegrationsDTO(listOf(googleAccount)))
 
         val expected = """
@@ -92,7 +92,7 @@ class GoogleOauth2ControllerTest(
     @Test
     fun `unlink google account`() {
         val googleAccountId = GoogleAccountPublicId(UUID.randomUUID())
-        whenever(googleAccountService.unlinkAccount(userId, UnlinkGoogleAccountCommand(googleAccountId)))
+        whenever(googleAccountService.unlinkAccount(UnlinkGoogleAccountCommand(googleAccountId)))
             .thenReturn(true)
 
         val request = """
@@ -115,7 +115,7 @@ class GoogleOauth2ControllerTest(
     fun `link google account`() {
         val inputUrl = "http://localhost/api/integration/google/callback"
         val redirectUri = "https://accounts.google.com/o/oauth2/auth?access_type=offline"
-        whenever(googleOauth2ApplicationService.generateAuthorizationUrl(inputUrl, userId))
+        whenever(googleOauth2ApplicationService.generateAuthorizationUrl(inputUrl))
             .thenReturn(GoogleOauth2Redirect(redirectUri))
 
         val expectedJson = """

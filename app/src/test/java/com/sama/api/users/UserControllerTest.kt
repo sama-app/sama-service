@@ -7,7 +7,6 @@ import com.sama.users.application.UnregisterDeviceCommand
 import com.sama.users.application.UserApplicationService
 import com.sama.users.application.UserDeviceRegistrationService
 import com.sama.users.application.UserPublicDTO
-import com.sama.users.domain.UserId
 import com.sama.users.domain.UserPublicId
 import java.util.UUID
 import org.junit.jupiter.api.DynamicTest
@@ -38,16 +37,13 @@ import org.springframework.test.web.servlet.result.isEqualTo
     ]
 )
 @AutoConfigureMockMvc
-class UserControllerTest(
-    @Autowired val mockMvc: MockMvc
-) {
+class UserControllerTest(@Autowired val mockMvc: MockMvc) {
     @MockBean
     lateinit var userApplicationService: UserApplicationService
 
     @MockBean
     lateinit var userDeviceRegistrationService: UserDeviceRegistrationService
 
-    private val userId = UserId(1)
     private val jwt = "eyJraWQiOiJrZXktaWQiLCJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9." +
             "eyJzdWIiOiJiYWx5c0B5b3Vyc2FtYS5jb20iLCJ1c2VyX2lkIjoiNjViOTc3ZWEtODk4MC00YjFhLWE2ZWUtZjhmY2MzZjFmYzI0Iiwi" +
             "ZXhwIjoxNjIyNTA1NjYwLCJpYXQiOjE2MjI1MDU2MDAsImp0aSI6IjNlNWE3NTY3LWZmYmQtNDcxYi1iYTI2LTU2YjMwOTgwMWZlZSJ9." +
@@ -60,7 +56,7 @@ class UserControllerTest(
             "test name",
             "test@meetsama.com"
         )
-        whenever(userApplicationService.find(userId))
+        whenever(userApplicationService.me())
             .thenReturn(userPublicDTO)
 
         val expectedJson = """
@@ -84,12 +80,9 @@ class UserControllerTest(
         val deviceId = UUID.fromString("075f7e8a-e01c-4f2f-9c3b-ce5d412e618c")
         val registrationToken = "some-token"
         whenever(
-            (userDeviceRegistrationService.register(
-                userId,
-                RegisterDeviceCommand(deviceId, registrationToken)
-            ))
-        )
-            .thenReturn(true)
+            userDeviceRegistrationService
+                .register(RegisterDeviceCommand(deviceId, registrationToken))
+        ).thenReturn(true)
 
         val requestBody = """
             {
@@ -111,12 +104,10 @@ class UserControllerTest(
     fun `unregister device`() {
         val deviceId = UUID.fromString("075f7e8a-e01c-4f2f-9c3b-ce5d412e618c")
         whenever(
-            (userDeviceRegistrationService.unregister(
-                userId,
+            userDeviceRegistrationService.unregister(
                 UnregisterDeviceCommand(deviceId)
-            ))
-        )
-            .thenReturn(true)
+            )
+        ).thenReturn(true)
 
         val requestBody = """
             {

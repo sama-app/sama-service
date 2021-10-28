@@ -1,17 +1,15 @@
 package com.sama.api.meeting
 
-import com.sama.api.config.AuthUserId
 import com.sama.meeting.application.ConfirmMeetingCommand
 import com.sama.meeting.application.ConnectWithMeetingInitiatorCommand
 import com.sama.meeting.application.CreateFullAvailabilityLinkCommand
 import com.sama.meeting.application.InitiateMeetingCommand
-import com.sama.meeting.application.MeetingApplicationService
 import com.sama.meeting.application.MeetingIntentDTO
+import com.sama.meeting.application.MeetingService
 import com.sama.meeting.application.ProposeMeetingCommand
 import com.sama.meeting.application.ProposeNewMeetingSlotsCommand
 import com.sama.meeting.application.UpdateMeetingTitleCommand
 import com.sama.meeting.domain.MeetingCode
-import com.sama.users.domain.UserId
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -25,9 +23,7 @@ import org.springframework.web.bind.annotation.RestController
 
 @Tag(name = "meeting")
 @RestController
-class MeetingController(
-    private val meetingApplicationService: MeetingApplicationService,
-) {
+class MeetingController(private val meetingService: MeetingService) {
 
     @Operation(
         summary = "Initiate a meeting giving basic parameters",
@@ -38,8 +34,8 @@ class MeetingController(
         consumes = [APPLICATION_JSON_VALUE],
         produces = [APPLICATION_JSON_VALUE],
     )
-    fun initiateMeeting(@AuthUserId userId: UserId?, @RequestBody @Valid command: InitiateMeetingCommand): MeetingIntentDTO {
-        return meetingApplicationService.dispatchInitiateMeetingCommand(userId!!, command)
+    fun initiateMeeting(@RequestBody @Valid command: InitiateMeetingCommand): MeetingIntentDTO {
+        return meetingService.dispatchInitiateMeetingCommand(command)
     }
 
     @Operation(
@@ -51,10 +47,8 @@ class MeetingController(
         consumes = [APPLICATION_JSON_VALUE],
         produces = [APPLICATION_JSON_VALUE]
     )
-    fun proposeMeeting(
-        @AuthUserId userId: UserId?,
-        @RequestBody command: ProposeMeetingCommand,
-    ) = meetingApplicationService.proposeMeeting(userId!!, command)
+    fun proposeMeeting(@RequestBody command: ProposeMeetingCommand) =
+        meetingService.proposeMeeting(command)
 
     @Operation(
         summary = "Propose a meeting with a slot selection",
@@ -65,10 +59,8 @@ class MeetingController(
         consumes = [APPLICATION_JSON_VALUE],
         produces = [APPLICATION_JSON_VALUE]
     )
-    fun fullAvailabilityLink(
-        @AuthUserId userId: UserId?,
-        @RequestBody command: CreateFullAvailabilityLinkCommand,
-    ) = meetingApplicationService.createFullAvailabilityLink(userId!!, command)
+    fun fullAvailabilityLink(@RequestBody command: CreateFullAvailabilityLinkCommand) =
+        meetingService.createFullAvailabilityLink(command)
 
     @Operation(
         summary = "Propose new slots for an existing sama to sama meeting",
@@ -79,11 +71,8 @@ class MeetingController(
         consumes = [APPLICATION_JSON_VALUE],
         produces = [APPLICATION_JSON_VALUE]
     )
-    fun proposeNewMeetingSlots(
-        @AuthUserId userId: UserId?,
-        @PathVariable meetingCode: MeetingCode,
-        @RequestBody command: ProposeNewMeetingSlotsCommand,
-    ) = meetingApplicationService.proposeNewMeetingSlots(userId!!, meetingCode, command)
+    fun proposeNewMeetingSlots(@PathVariable meetingCode: MeetingCode, @RequestBody command: ProposeNewMeetingSlotsCommand) =
+        meetingService.proposeNewMeetingSlots(meetingCode, command)
 
     @Operation(
         summary = "Connect with meeting initiator",
@@ -94,28 +83,24 @@ class MeetingController(
         consumes = [APPLICATION_JSON_VALUE],
         produces = [APPLICATION_JSON_VALUE]
     )
-    fun connectWithInitiator(
-        @AuthUserId userId: UserId?,
-        @PathVariable meetingCode: MeetingCode,
-        @RequestBody command: ConnectWithMeetingInitiatorCommand,
-    ) = meetingApplicationService.connectWithInitiator(userId!!, meetingCode, command)
+    fun connectWithInitiator(@PathVariable meetingCode: MeetingCode, @RequestBody command: ConnectWithMeetingInitiatorCommand) =
+        meetingService.connectWithInitiator(meetingCode, command)
 
     @Operation(summary = "Retrieve meeting proposal details using a shared meeting code")
     @GetMapping(
         "/api/meeting/by-code/{meetingCode}",
         produces = [APPLICATION_JSON_VALUE]
     )
-    fun loadMeetingProposal(@AuthUserId userId: UserId?, @PathVariable meetingCode: MeetingCode) =
-        meetingApplicationService.loadMeetingProposal(userId, meetingCode)
-
+    fun loadMeetingProposal(@PathVariable meetingCode: MeetingCode) =
+        meetingService.loadMeetingProposal(meetingCode)
 
     @Operation(summary = "Get slot suggestions for a proposed meeting")
     @GetMapping(
         "/api/meeting/by-code/{meetingCode}/suggestions",
         produces = [APPLICATION_JSON_VALUE]
     )
-    fun getSlotSuggestions(@AuthUserId userId: UserId?, @PathVariable meetingCode: MeetingCode) =
-        meetingApplicationService.getSlotSuggestions(userId!!, meetingCode)
+    fun getSlotSuggestions(@PathVariable meetingCode: MeetingCode) =
+        meetingService.getSlotSuggestions(meetingCode)
 
     @Operation(
         summary = "Update meeting title to be used on the confirmed calendar event",
@@ -125,24 +110,15 @@ class MeetingController(
         "/api/meeting/by-code/{meetingCode}/update-title",
         consumes = [APPLICATION_JSON_VALUE],
     )
-    fun updateMeetingTitle(
-        @AuthUserId userId: UserId?,
-        @PathVariable meetingCode: MeetingCode,
-        @RequestBody command: UpdateMeetingTitleCommand,
-    ) = meetingApplicationService.updateMeetingTitle(userId!!, meetingCode, command)
+    fun updateMeetingTitle(@PathVariable meetingCode: MeetingCode, @RequestBody command: UpdateMeetingTitleCommand) =
+        meetingService.updateMeetingTitle(meetingCode, command)
 
     @Operation(summary = "Confirm a meeting using a meeting code")
     @PostMapping(
         "/api/meeting/by-code/{meetingCode}/confirm",
         consumes = [APPLICATION_JSON_VALUE]
     )
-    fun confirmMeeting(
-        @AuthUserId userId: UserId?,
-        @PathVariable meetingCode: MeetingCode,
-        @RequestBody command: ConfirmMeetingCommand,
-    ): Boolean {
-        require(userId != null || command.recipientEmail != null)
-        return meetingApplicationService.confirmMeeting(userId, meetingCode, command)
-    }
+    fun confirmMeeting(@PathVariable meetingCode: MeetingCode, @RequestBody command: ConfirmMeetingCommand) =
+        meetingService.confirmMeeting(meetingCode, command)
 }
 

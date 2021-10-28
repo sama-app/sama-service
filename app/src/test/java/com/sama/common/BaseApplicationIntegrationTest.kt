@@ -3,6 +3,9 @@ package com.sama.common
 import com.sama.AppTestConfiguration
 import com.sama.IntegrationOverrides
 import com.sama.api.config.security.UserPrincipal
+import com.sama.users.application.UserInternalDTO
+import com.sama.users.application.toDTO
+import com.sama.users.application.toInternalDTO
 import com.sama.users.domain.UserDetails
 import com.sama.users.domain.UserRepository
 import com.sama.users.domain.UserSettings
@@ -53,10 +56,11 @@ class BaseApplicationIntegrationTest {
     @Autowired
     lateinit var userSettingsRepository: UserSettingsRepository
 
-
     // test data
     private lateinit var initiatorUser: UserDetails
+    private lateinit var initiatorSettings: UserSettings
     private lateinit var recipientUser: UserDetails
+    private lateinit var recipientSettings: UserSettings
 
     @BeforeEach
     fun setupUsers() {
@@ -67,8 +71,12 @@ class BaseApplicationIntegrationTest {
                 active = true
             )
         )
-        userSettingsRepository.save(UserSettings(initiatorUser.id!!,
-            ENGLISH, UTC, true, emptyMap(), false, emptySet()))
+        initiatorSettings = userSettingsRepository.save(
+            UserSettings(
+                initiatorUser.id!!,
+                ENGLISH, UTC, true, emptyMap(), false, emptySet()
+            )
+        )
 
         recipientUser = userRepository.save(
             UserDetails(
@@ -77,8 +85,12 @@ class BaseApplicationIntegrationTest {
                 active = true
             )
         )
-        userSettingsRepository.save(UserSettings(recipientUser.id!!,
-            ENGLISH, UTC, true, emptyMap(), false, emptySet()))
+        recipientSettings = userSettingsRepository.save(
+            UserSettings(
+                recipientUser.id!!,
+                ENGLISH, UTC, true, emptyMap(), false, emptySet()
+            )
+        )
     }
 
     @AfterEach
@@ -86,31 +98,27 @@ class BaseApplicationIntegrationTest {
         userRepository.deleteAll()
     }
 
-    fun initiator(): UserDetails {
-        return initiatorUser
-    }
+    fun initiator() = initiatorUser.toInternalDTO(initiatorSettings.toDTO())
 
-    fun recipient(): UserDetails {
-        return recipientUser
-    }
+    fun recipient() = recipientUser.toInternalDTO(recipientSettings.toDTO())
 
     /**
      * Execute an action as a logged in "initiator" user
      */
-    fun <T> asInitiator(executable: (user: UserDetails) -> T): T {
+    fun <T> asInitiator(executable: (user: UserInternalDTO) -> T): T {
         return asUser(initiator(), executable)
     }
 
     /**
      * Execute an action as a logged in "recipient" user
      */
-    fun <T> asRecipient(executable: (user: UserDetails) -> T): T {
+    fun <T> asRecipient(executable: (user: UserInternalDTO) -> T): T {
         return asUser(recipient(), executable)
     }
 
     private fun <T> asUser(
-        user: UserDetails,
-        executable: (user: UserDetails) -> T,
+        user: UserInternalDTO,
+        executable: (user: UserInternalDTO) -> T,
     ): T {
         val userPrincipal = UserPrincipal(user.email, user.publicId)
         val auth = UsernamePasswordAuthenticationToken(userPrincipal, null, null)

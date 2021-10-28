@@ -25,45 +25,45 @@ class UserConnectionApplicationServiceIT : BaseApplicationIntegrationTest() {
     @Test
     fun `connect two users via request`() {
         val connectionRequest = asInitiator {
-            underTest.createConnectionRequest(it.id!!, CreateConnectionRequestCommand(recipient().publicId!!))
+            underTest.createConnectionRequest(CreateConnectionRequestCommand(recipient().publicId))
         }
 
         verify(commsEventConsumer).onConnectionRequestCreated(anyOrNull())
 
         asRecipient {
-            underTest.approveConnectionRequest(it.id!!, connectionRequest.connectionRequestId)
+            underTest.approveConnectionRequest(connectionRequest.connectionRequestId)
         }
 
         verify(commsEventConsumer).onUserConnected(anyOrNull())
 
         asInitiator {
-            val connections = underTest.findUserConnections(it.id!!)
-            val connectionRequests = underTest.findConnectionRequests(it.id!!)
+            val connections = underTest.findUserConnections()
+            val connectionRequests = underTest.findConnectionRequests()
             assertThat(connections.connectedUsers)
-                .containsExactly(UserPublicDTO(recipient().publicId!!, recipient().fullName, recipient().email))
+                .containsExactly(UserPublicDTO(recipient().publicId, recipient().fullName, recipient().email))
             assertThat(connectionRequests.initiatedConnectionRequests).isEmpty()
         }
 
         asRecipient {
-            val connections = underTest.findUserConnections(it.id!!)
-            val connectionRequests = underTest.findConnectionRequests(it.id!!)
+            val connections = underTest.findUserConnections()
+            val connectionRequests = underTest.findConnectionRequests()
             assertThat(connections.connectedUsers)
-                .containsExactly(UserPublicDTO(initiator().publicId!!, initiator().fullName, initiator().email))
+                .containsExactly(UserPublicDTO(initiator().publicId, initiator().fullName, initiator().email))
             assertThat(connectionRequests.pendingConnectionRequests).isEmpty()
         }
 
-        assertTrue { underTest.isConnected(initiator().id!!, recipient().id!!) }
+        assertTrue { underTest.isConnected(initiator().id, recipient().id) }
     }
 
     @Test
     fun `connect two users directly`() {
-        underTest.createUserConnection(initiator().id!!, CreateUserConnectionCommand(recipient().id!!), )
+        underTest.createUserConnection(initiator().id, CreateUserConnectionCommand(recipient().id), )
 
         assertThrows<UserAlreadyConnectedException> {
-            underTest.createUserConnection(initiator().id!!, CreateUserConnectionCommand(recipient().id!!), )
+            underTest.createUserConnection(initiator().id, CreateUserConnectionCommand(recipient().id), )
         }
 
-        assertTrue { underTest.isConnected(initiator().id!!, recipient().id!!) }
+        assertTrue { underTest.isConnected(initiator().id, recipient().id) }
 
         verify(commsEventConsumer).onUserConnected(anyOrNull())
     }
@@ -72,14 +72,14 @@ class UserConnectionApplicationServiceIT : BaseApplicationIntegrationTest() {
     fun `cannot manipulate own connection request`() {
         asInitiator {
             val connectionRequest =
-                underTest.createConnectionRequest(it.id!!, CreateConnectionRequestCommand(recipient().publicId!!))
+                underTest.createConnectionRequest(CreateConnectionRequestCommand(recipient().publicId))
 
             assertThrows<AccessDeniedException> {
-                underTest.approveConnectionRequest(it.id!!, connectionRequest.connectionRequestId)
+                underTest.approveConnectionRequest(connectionRequest.connectionRequestId)
             }
 
             assertThrows<AccessDeniedException> {
-                underTest.rejectConnectionRequest(it.id!!, connectionRequest.connectionRequestId)
+                underTest.rejectConnectionRequest(connectionRequest.connectionRequestId)
             }
         }
     }
@@ -87,24 +87,24 @@ class UserConnectionApplicationServiceIT : BaseApplicationIntegrationTest() {
     @Test
     fun `reject user connection request`() {
         val connectionRequest = asInitiator {
-            underTest.createConnectionRequest(it.id!!, CreateConnectionRequestCommand(recipient().publicId!!))
+            underTest.createConnectionRequest(CreateConnectionRequestCommand(recipient().publicId))
         }
 
         verify(commsEventConsumer).onConnectionRequestCreated(anyOrNull())
 
         asRecipient {
-            underTest.rejectConnectionRequest(recipient().id!!, connectionRequest.connectionRequestId)
+            underTest.rejectConnectionRequest(connectionRequest.connectionRequestId)
         }
 
         verify(commsEventConsumer).onConnectionRequestRejected(anyOrNull())
 
         asInitiator {
-            val connections = underTest.findUserConnections(it.id!!)
+            val connections = underTest.findUserConnections()
             assertThat(connections.connectedUsers).isEmpty()
         }
 
         asRecipient {
-            val connections = underTest.findUserConnections(it.id!!)
+            val connections = underTest.findUserConnections()
             assertThat(connections.connectedUsers).isEmpty()
         }
     }
@@ -112,24 +112,24 @@ class UserConnectionApplicationServiceIT : BaseApplicationIntegrationTest() {
     @Test
     fun `disconnect users after connection`() {
         val connectionRequest = asInitiator {
-            underTest.createConnectionRequest(it.id!!, CreateConnectionRequestCommand(recipient().publicId!!))
+            underTest.createConnectionRequest(CreateConnectionRequestCommand(recipient().publicId))
         }
 
         asRecipient {
-            underTest.approveConnectionRequest(it.id!!, connectionRequest.connectionRequestId)
+            underTest.approveConnectionRequest(connectionRequest.connectionRequestId)
         }
 
         asInitiator {
-            underTest.removeUserConnection(it.id!!, RemoveUserConnectionCommand(recipient().publicId!!))
+            underTest.removeUserConnection(RemoveUserConnectionCommand(recipient().publicId))
         }
 
         asInitiator {
-            val connections = underTest.findUserConnections(it.id!!)
+            val connections = underTest.findUserConnections()
             assertThat(connections.connectedUsers).isEmpty()
         }
 
         asRecipient {
-            val connections = underTest.findUserConnections(recipient().id!!)
+            val connections = underTest.findUserConnections()
             assertThat(connections.connectedUsers).isEmpty()
         }
     }
@@ -138,25 +138,24 @@ class UserConnectionApplicationServiceIT : BaseApplicationIntegrationTest() {
     fun `list connection requests for two users`() {
         val connectionRequestDTO = asInitiator {
             val request = underTest.createConnectionRequest(
-                it.id!!,
-                CreateConnectionRequestCommand(recipient().publicId!!)
+                CreateConnectionRequestCommand(recipient().publicId)
             )
             ConnectionRequestDTO(
                 request.connectionRequestId,
-                initiator = UserPublicDTO(it.publicId!!, it.fullName, it.email),
-                recipient = UserPublicDTO(recipient().publicId!!, recipient().fullName, recipient().email)
+                initiator = UserPublicDTO(it.publicId, it.fullName, it.email),
+                recipient = UserPublicDTO(recipient().publicId, recipient().fullName, recipient().email)
             )
         }
 
         asInitiator {
-            val connectionRequests = underTest.findConnectionRequests(it.id!!)
+            val connectionRequests = underTest.findConnectionRequests()
             assertThat(connectionRequests.initiatedConnectionRequests)
                 .containsExactly(connectionRequestDTO)
             assertThat(connectionRequests.pendingConnectionRequests).isEmpty()
         }
 
         asRecipient {
-            val connectionRequests = underTest.findConnectionRequests(it.id!!)
+            val connectionRequests = underTest.findConnectionRequests()
             assertThat(connectionRequests.pendingConnectionRequests)
                 .containsExactly(connectionRequestDTO)
             assertThat(connectionRequests.initiatedConnectionRequests).isEmpty()

@@ -3,6 +3,7 @@ package com.sama.integration.google.auth.application
 import com.google.api.client.auth.oauth2.StoredCredential
 import com.google.api.client.util.store.DataStoreFactory
 import com.sama.common.ApplicationService
+import com.sama.common.checkAccess
 import com.sama.integration.google.GoogleServiceFactory
 import com.sama.integration.google.auth.domain.GoogleAccount
 import com.sama.integration.google.auth.domain.GoogleAccountId
@@ -11,7 +12,7 @@ import com.sama.integration.google.auth.domain.GoogleAccountRepository
 import com.sama.integration.google.auth.domain.GoogleCredentialRepository
 import com.sama.integration.google.auth.domain.toStorageKey
 import com.sama.integration.google.calendar.application.GoogleCalendarSyncer
-import com.sama.users.domain.UserId
+import com.sama.users.application.AuthUserService
 import io.sentry.spring.tracing.SentryTransaction
 import org.apache.commons.logging.LogFactory
 import org.springframework.scheduling.annotation.Scheduled
@@ -24,6 +25,7 @@ import org.springframework.transaction.support.TransactionTemplate
 @ApplicationService
 class GoogleAccountApplicationService(
     private val googleAccountRepository: GoogleAccountRepository,
+    private val authUserService: AuthUserService,
     private val credentialDataStoreFactory: DataStoreFactory,
     private val googleServiceFactory: GoogleServiceFactory,
     private val googleCalendarSyncer: GoogleCalendarSyncer,
@@ -38,7 +40,8 @@ class GoogleAccountApplicationService(
     }
 
     @Transactional(readOnly = true)
-    override fun findAllLinked(userId: UserId): GoogleIntegrationsDTO {
+    override fun findAllLinked(): GoogleIntegrationsDTO {
+        val userId = authUserService.currentUserId()
         return googleAccountRepository.findAllByUserId(userId)
             .filter { it.linked }
             .map { GoogleAccountDTO(it.publicId!!, it.email) }
@@ -46,7 +49,8 @@ class GoogleAccountApplicationService(
     }
 
     @Transactional
-    override fun linkAccount(userId: UserId, command: LinkGoogleAccountCommand): GoogleAccountPublicId {
+    override fun linkAccount(command: LinkGoogleAccountCommand): GoogleAccountPublicId {
+        val userId = authUserService.currentUserId()
         val googleAccounts = googleAccountRepository.findAllByUserId(userId)
         val existingGoogleAccount = googleAccounts.find { it.email == command.email }
 
@@ -64,8 +68,10 @@ class GoogleAccountApplicationService(
     }
 
     @Transactional
-    override fun unlinkAccount(userId: UserId, command: UnlinkGoogleAccountCommand): Boolean {
+    override fun unlinkAccount(command: UnlinkGoogleAccountCommand): Boolean {
+        val userId = authUserService.currentUserId()
         val googleAccount = googleAccountRepository.findByPublicIdOrThrow(command.googleAccountId)
+        checkAccess(googleAccount.userId == userId)
         return unlinkAccount(googleAccount)
     }
 

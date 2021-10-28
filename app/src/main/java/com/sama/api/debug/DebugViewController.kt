@@ -1,18 +1,16 @@
 package com.sama.api.debug
 
 import com.google.api.client.http.GenericUrl
-import com.sama.api.config.AuthUserId
 import com.sama.auth.application.GoogleOauth2ApplicationService
 import com.sama.auth.application.GoogleSignErrorDTO
 import com.sama.auth.application.GoogleSignSuccessDTO
-import com.sama.integration.google.auth.domain.GoogleAccountRepository
-import com.sama.integration.google.calendar.application.GoogleCalendarSyncer
 import com.sama.slotsuggestion.application.HeatMapService
 import com.sama.slotsuggestion.domain.SlotSuggestionEngine
 import com.sama.slotsuggestion.domain.SuggestedSlotWeigher
 import com.sama.slotsuggestion.domain.ThisOrNextWeekTemplateWeigher
 import com.sama.slotsuggestion.domain.UserRepository
 import com.sama.slotsuggestion.domain.sigmoid
+import com.sama.users.application.AuthUserService
 import com.sama.users.domain.UserId
 import io.swagger.v3.oas.annotations.Hidden
 import java.time.Duration
@@ -23,7 +21,6 @@ import javax.servlet.http.HttpServletResponse
 import kotlin.math.round
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.servlet.ModelAndView
@@ -35,8 +32,7 @@ class DebugViewController(
     private val googleOauth2ApplicationService: GoogleOauth2ApplicationService,
     private val userRepository: UserRepository,
     private val heatMapService: HeatMapService,
-    private val googleAccountRepository: GoogleAccountRepository,
-    private val googleCalendarSyncer: GoogleCalendarSyncer
+    private val authUserService: AuthUserService
 ) {
 
     @GetMapping("/api/__debug/auth/google-authorize")
@@ -46,8 +42,8 @@ class DebugViewController(
     }
 
     @GetMapping("/api/__debug/auth/link-google-account")
-    fun linkGoogleAccount(@AuthUserId userId: UserId?, request: HttpServletRequest): RedirectView {
-        val googleOAuth2Redirect = googleOauth2ApplicationService.generateAuthorizationUrl(redirectUri(request), userId)
+    fun linkGoogleAccount(request: HttpServletRequest): RedirectView {
+        val googleOAuth2Redirect = googleOauth2ApplicationService.generateAuthorizationUrl(redirectUri(request))
         return RedirectView(googleOAuth2Redirect.authorizationUrl)
     }
 
@@ -79,25 +75,23 @@ class DebugViewController(
 
     @GetMapping("/api/__debug/user/heatmap")
     fun renderUserHeatMap(
-        @AuthUserId userId: UserId?,
         @RequestParam(defaultValue = "3") count: Int,
         model: MutableMap<String, Any>,
-    ) = createHeatMap(userId!!, null, count, model)
+    ) = createHeatMap(null, count, model)
 
     @GetMapping("/api/__debug/user/heatmap-overlay")
     fun renderUserHeatMapOverlay(
-        @AuthUserId userId: UserId?,
         @RequestParam recipientId: UserId,
         @RequestParam(defaultValue = "3") count: Int,
         model: MutableMap<String, Any>,
-    ) = createHeatMap(userId!!, recipientId, count, model)
+    ) = createHeatMap(recipientId, count, model)
 
     private fun createHeatMap(
-        userId: UserId,
         recipientId: UserId?,
         count: Int,
         model: MutableMap<String, Any>,
     ): ModelAndView {
+        val userId = authUserService.currentUserId()
         val user = userRepository.findById(userId)
         val userTimeZone = user.timeZone
         val baseHeatMap = heatMapService.generate(userId, null)

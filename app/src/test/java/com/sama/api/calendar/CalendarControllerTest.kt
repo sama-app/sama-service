@@ -8,7 +8,6 @@ import com.sama.integration.google.calendar.application.AddSelectedCalendarComma
 import com.sama.integration.google.calendar.application.CalendarDTO
 import com.sama.integration.google.calendar.application.CalendarsDTO
 import com.sama.integration.google.calendar.application.RemoveSelectedCalendarCommand
-import com.sama.users.domain.UserId
 import java.util.UUID
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
@@ -44,7 +43,6 @@ class CalendarControllerTest(
     @MockBean
     lateinit var calendarService: CalendarService
 
-    private val userId = UserId(1)
     private val jwt = "eyJraWQiOiJrZXktaWQiLCJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9." +
             "eyJzdWIiOiJiYWx5c0B5b3Vyc2FtYS5jb20iLCJ1c2VyX2lkIjoiNjViOTc3ZWEtODk4MC00YjFhLWE2ZWUtZjhmY2MzZjFmYzI0Iiwi" +
             "ZXhwIjoxNjIyNTA1NjYwLCJpYXQiOjE2MjI1MDU2MDAsImp0aSI6IjNlNWE3NTY3LWZmYmQtNDcxYi1iYTI2LTU2YjMwOTgwMWZlZSJ9." +
@@ -53,7 +51,7 @@ class CalendarControllerTest(
     @Test
     fun `fetch calendars`() {
         val accountId = GoogleAccountPublicId(UUID.randomUUID())
-        whenever(calendarService.findAll(userId)).thenReturn(
+        whenever(calendarService.findAll()).thenReturn(
             CalendarsDTO(
                 listOf(
                     CalendarDTO(
@@ -91,7 +89,7 @@ class CalendarControllerTest(
 
     @Test
     fun `fetch calendars empty`() {
-        whenever(calendarService.findAll(userId)).thenReturn(CalendarsDTO(emptyList()))
+        whenever(calendarService.findAll()).thenReturn(CalendarsDTO(emptyList()))
 
         val expectedJson = """
         {
@@ -111,7 +109,7 @@ class CalendarControllerTest(
     fun `add selected calendar`() {
         val accountId = GoogleAccountPublicId(UUID.randomUUID())
         val calendarId = "primary"
-        whenever(calendarService.addSelectedCalendar(userId, AddSelectedCalendarCommand(accountId, calendarId)))
+        whenever(calendarService.addSelectedCalendar(AddSelectedCalendarCommand(accountId, calendarId)))
             .thenReturn(true)
 
         val body = """
@@ -135,7 +133,7 @@ class CalendarControllerTest(
     fun `remove selected calendar`() {
         val accountId = GoogleAccountPublicId(UUID.randomUUID())
         val calendarId = "primary"
-        whenever(calendarService.removeSelectedCalendar(userId, RemoveSelectedCalendarCommand(accountId, calendarId)))
+        whenever(calendarService.removeSelectedCalendar(RemoveSelectedCalendarCommand(accountId, calendarId)))
             .thenReturn(true)
 
         val body = """

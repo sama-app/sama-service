@@ -9,7 +9,6 @@ import com.sama.comms.domain.NotificationSender
 import com.sama.users.application.UnregisterDeviceCommand
 import com.sama.users.application.UserDeviceRegistrationService
 import com.sama.users.domain.UserId
-import liquibase.pro.packaged.it
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
@@ -19,7 +18,7 @@ class FirebaseNotificationSender(private val deviceRegistrationService: UserDevi
     private var logger: Logger = LoggerFactory.getLogger(FirebaseNotificationSender::class.java)
 
     override fun send(receiverUserId: UserId, notification: Notification) {
-        val response = deviceRegistrationService.findByUserId(receiverUserId)
+        val response = deviceRegistrationService.find(receiverUserId)
         if (response.firebaseDeviceRegistrations.isEmpty()) {
             logger.info("No Firebase device registrations found for User#${receiverUserId.id}")
             return
@@ -44,7 +43,7 @@ class FirebaseNotificationSender(private val deviceRegistrationService: UserDevi
                     // Remove unregistered devices
                     if (e.messagingErrorCode == MessagingErrorCode.UNREGISTERED) {
                         kotlin.runCatching {
-                            deviceRegistrationService.unregister(receiverUserId, UnregisterDeviceCommand(it.deviceId))
+                            deviceRegistrationService.unregister(UnregisterDeviceCommand(it.deviceId))
                         }
                     }
                 }

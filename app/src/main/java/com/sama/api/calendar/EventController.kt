@@ -1,9 +1,7 @@
 package com.sama.api.calendar
 
-import com.sama.api.config.AuthUserId
 import com.sama.calendar.application.EventService
 import com.sama.calendar.application.EventsDTO
-import com.sama.users.domain.UserId
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -31,7 +29,6 @@ class EventController(private val eventService: EventService) {
         produces = [MediaType.APPLICATION_JSON_VALUE]
     )
     fun fetchEvents(
-        @AuthUserId userId: UserId?,
         @RequestParam @DateTimeFormat(iso = DATE) startDate: LocalDate,
         @RequestParam @DateTimeFormat(iso = DATE) endDate: LocalDate,
         @RequestParam timezone: ZoneId,
@@ -40,6 +37,6 @@ class EventController(private val eventService: EventService) {
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "'endDate' must be after 'startDate'")
         }
 
-        return eventService.fetchEvents(userId!!, startDate, endDate, timezone)
+        return eventService.fetchEvents(startDate, endDate, timezone)
     }
 }

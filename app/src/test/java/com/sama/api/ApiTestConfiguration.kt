@@ -1,8 +1,6 @@
 package com.sama.api
 
-import com.sama.api.config.UserIdAttributeResolver
 import com.sama.users.domain.JwtConfiguration
-import com.sama.users.domain.UserId
 import com.sama.users.domain.UserPublicId
 import com.sama.users.domain.UserRepository
 import org.mockito.Mockito.mock
@@ -32,14 +30,6 @@ class ApiTestConfiguration {
             override val keyId: String
                 get() = jwtKeyId
         }
-    }
-
-    @Bean
-    fun fixedUserIdAttributeResolver(): UserIdAttributeResolver {
-        val authUserRepository = mock(UserRepository::class.java)
-        whenever(authUserRepository.findIdByPublicIdOrThrow(anyPublicId())).thenAnswer { 1L }
-        whenever(authUserRepository.findIdByEmailOrThrow(any())).thenAnswer { 1L }
-        return UserIdAttributeResolver(authUserRepository)
     }
 
     @Bean

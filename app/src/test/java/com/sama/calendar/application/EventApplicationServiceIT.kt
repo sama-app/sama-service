@@ -14,13 +14,9 @@ import com.sama.integration.google.calendar.domain.GoogleCalendarEventKey
 import com.sama.meeting.domain.EmailRecipient
 import com.sama.meeting.domain.MeetingCode
 import com.sama.users.application.InternalUserService
-import com.sama.users.application.MarketingPreferencesDTO
-import com.sama.users.application.UserSettingsDTO
-import com.sama.users.application.toInternalDTO
 import java.time.Clock
 import java.time.LocalDate
 import java.time.ZonedDateTime
-import java.util.Locale
 import java.util.UUID
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -45,7 +41,7 @@ class EventApplicationServiceIT : BaseApplicationIntegrationTest() {
 
     @Test
     fun `fetch events`() {
-        val userId = initiator().id!!
+        val userId = initiator().id
         val startDate = LocalDate.now(clock)
         val endDate = LocalDate.now(clock).plusDays(7)
 
@@ -65,7 +61,7 @@ class EventApplicationServiceIT : BaseApplicationIntegrationTest() {
             )
 
         val result = asInitiator {
-            underTest.fetchEvents(userId, startDate, endDate, clock.zone)
+            underTest.fetchEvents(startDate, endDate, clock.zone)
         }
 
         val expected = EventDTO(startDateTime, startDateTime.plusHours(1), false, "title", accountId, "primary", "id#1")
@@ -74,28 +70,17 @@ class EventApplicationServiceIT : BaseApplicationIntegrationTest() {
 
     @Test
     fun `create event with e-mail recipient`() {
-        val userId = initiator().id!!
-
-        val userSettings = UserSettingsDTO(
-            Locale.ENGLISH, clock.zone, true, emptyList(),
-            emptySet(), MarketingPreferencesDTO(true)
-        )
-        val user = initiator().toInternalDTO(userSettings)
-        whenever(internalUserService.findInternal(userId)).thenReturn(user)
+        val user = initiator()
+        whenever(internalUserService.findInternal(user.id)).thenReturn(user)
         val recipientEmail = recipient().email
 
         val meetingCode = MeetingCode("code")
         val startDateTime = ZonedDateTime.now(clock)
         val endDateTime = startDateTime.plusHours(1)
 
-        val createdEvent = CalendarEvent(
-            GoogleCalendarEventKey(GoogleAccountId(1L), "primary", "id#1"),
-            startDateTime, startDateTime.plusHours(1),
-            EventData("title", false, 3)
-        )
         whenever(
             googleCalendarService.insertEvent(
-                userId,
+                user.id,
                 InsertGoogleCalendarEventCommand(
                     startDateTime, endDateTime, "title",
                     "Time for this meeting was created via <a href=http://localhost:8080>Sama app</a>",
@@ -105,7 +90,7 @@ class EventApplicationServiceIT : BaseApplicationIntegrationTest() {
         ).thenReturn(true)
 
         val actual = underTest.createEvent(
-            userId,
+            user.id,
             CreateEventCommand(meetingCode, startDateTime, endDateTime, EmailRecipient.of(recipientEmail), "title")
         )
 
@@ -114,30 +99,18 @@ class EventApplicationServiceIT : BaseApplicationIntegrationTest() {
 
     @Test
     fun `create event with sama recipient`() {
-        val initiatorId = initiator().id!!
-        val recipientId = recipient().id!!
-
-        val userSettings = UserSettingsDTO(
-            Locale.ENGLISH, clock.zone, true, emptyList(), emptySet(),
-            MarketingPreferencesDTO(true)
-        )
-        val initiator = initiator().toInternalDTO(userSettings)
-        val recipient = recipient().toInternalDTO(userSettings)
-        whenever(internalUserService.findInternal(initiatorId)).thenReturn(initiator)
-        whenever(internalUserService.findInternal(recipientId)).thenReturn(recipient)
+        val initiator = initiator()
+        val recipient = recipient()
+        whenever(internalUserService.findInternal(initiator.id)).thenReturn(initiator)
+        whenever(internalUserService.findInternal(recipient.id)).thenReturn(recipient)
 
         val meetingCode = MeetingCode("code")
         val startDateTime = ZonedDateTime.now(clock)
         val endDateTime = startDateTime.plusHours(1)
 
-        val createdEvent = CalendarEvent(
-            GoogleCalendarEventKey(GoogleAccountId(1L), "primary", "id#1"),
-            startDateTime, startDateTime.plusHours(1),
-            EventData("title", false, 3)
-        )
         whenever(
             googleCalendarService.insertEvent(
-                initiatorId,
+                initiator.id,
                 InsertGoogleCalendarEventCommand(
                     startDateTime, endDateTime, "title",
                     "Time for this meeting was created via <a href=http://localhost:8080>Sama app</a>",
@@ -147,7 +120,7 @@ class EventApplicationServiceIT : BaseApplicationIntegrationTest() {
         ).thenReturn(true)
 
         val actual = underTest.createEvent(
-            initiatorId,
+            initiator.id,
             CreateEventCommand(meetingCode, startDateTime, endDateTime, EmailRecipient.of(recipient().email), "title")
         )
 
@@ -156,14 +129,8 @@ class EventApplicationServiceIT : BaseApplicationIntegrationTest() {
 
     @Test
     fun `create event with blocked out times`() {
-        val userId = initiator().id!!
-
-        val userSettings = UserSettingsDTO(
-            Locale.ENGLISH, clock.zone, true, emptyList(),
-            emptySet(), MarketingPreferencesDTO(true)
-        )
-        val user = initiator().toInternalDTO(userSettings)
-        whenever(internalUserService.findInternal(userId)).thenReturn(user)
+        val user = initiator()
+        whenever(internalUserService.findInternal(user.id)).thenReturn(user)
         val recipientEmail = recipient().email
 
         val meetingCode = MeetingCode("code")
@@ -171,14 +138,9 @@ class EventApplicationServiceIT : BaseApplicationIntegrationTest() {
         val endDateTime = startDateTime.plusHours(1)
         val extendedProperties = mapOf("meeting_code" to meetingCode.code)
 
-        val createdEvent = CalendarEvent(
-            GoogleCalendarEventKey(GoogleAccountId(1L), "primary", "id#1"),
-            startDateTime, startDateTime.plusHours(1),
-            EventData("title", false, 3)
-        )
         whenever(
             googleCalendarService.insertEvent(
-                userId,
+                user.id,
                 InsertGoogleCalendarEventCommand(
                     startDateTime, endDateTime, "title",
                     "Time for this meeting was created via <a href=http://localhost:8080>Sama app</a>",
@@ -188,23 +150,23 @@ class EventApplicationServiceIT : BaseApplicationIntegrationTest() {
         ).thenReturn(true)
 
         val blockedOutEventIds = listOf("event_id_1")
-        whenever(googleCalendarService.findIdsByExtendedProperties(userId, extendedProperties))
+        whenever(googleCalendarService.findIdsByExtendedProperties(user.id, extendedProperties))
             .thenReturn(blockedOutEventIds)
 
         val actual = underTest.createEvent(
-            userId,
+            user.id,
             CreateEventCommand(meetingCode, startDateTime, endDateTime, EmailRecipient.of(recipientEmail), "title")
         )
 
         assertThat(actual).isTrue()
 
-        verify(googleCalendarService).deleteEvent(userId, blockedOutEventIds[0])
+        verify(googleCalendarService).deleteEvent(user.id, blockedOutEventIds[0])
     }
 
 
     @Test
     fun `block out slots`() {
-        val initiatorId = initiator().id!!
+        val initiatorId = initiator().id
         val meetingCode = MeetingCode("code")
 
         val startDateTime = ZonedDateTime.now(clock)

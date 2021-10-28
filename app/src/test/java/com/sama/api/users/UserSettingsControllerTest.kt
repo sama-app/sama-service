@@ -12,7 +12,6 @@ import com.sama.users.application.UpdateWorkingHoursCommand
 import com.sama.users.application.UserSettingsApplicationService
 import com.sama.users.application.UserSettingsDTO
 import com.sama.users.domain.UserId
-import com.sama.users.domain.UserPermission
 import com.sama.users.domain.UserPermission.PAST_EVENT_CONTACT_SCAN
 import java.time.DayOfWeek.MONDAY
 import java.time.DayOfWeek.TUESDAY
@@ -54,7 +53,6 @@ class UserSettingsControllerTest(
     @MockBean
     lateinit var userSettingsApplicationService: UserSettingsApplicationService
 
-    private val userId = UserId(1)
     private val jwt = "eyJraWQiOiJrZXktaWQiLCJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9." +
             "eyJzdWIiOiJiYWx5c0B5b3Vyc2FtYS5jb20iLCJ1c2VyX2lkIjoiNjViOTc3ZWEtODk4MC00YjFhLWE2ZWUtZjhmY2MzZjFmYzI0Iiwi" +
             "ZXhwIjoxNjIyNTA1NjYwLCJpYXQiOjE2MjI1MDU2MDAsImp0aSI6IjNlNWE3NTY3LWZmYmQtNDcxYi1iYTI2LTU2YjMwOTgwMWZlZSJ9." +
@@ -62,7 +60,7 @@ class UserSettingsControllerTest(
 
     @Test
     fun `get settings`() {
-        whenever(userSettingsApplicationService.find(userId))
+        whenever(userSettingsApplicationService.me())
             .thenReturn(
                 UserSettingsDTO(
                     Locale.ENGLISH,
@@ -113,7 +111,6 @@ class UserSettingsControllerTest(
     fun `update working hours`() {
         whenever(
             userSettingsApplicationService.updateWorkingHours(
-                userId,
                 UpdateWorkingHoursCommand(
                     listOf(DayWorkingHoursDTO(TUESDAY, LocalTime.of(10, 0), LocalTime.of(12, 0)))
                 )
@@ -145,7 +142,7 @@ class UserSettingsControllerTest(
     @Test
     fun `update time zone`() {
         val timeZone = "Europe/Rome"
-        whenever(userSettingsApplicationService.updateTimeZone(userId, UpdateTimeZoneCommand(ZoneId.of(timeZone))))
+        whenever(userSettingsApplicationService.updateTimeZone(UpdateTimeZoneCommand(ZoneId.of(timeZone))))
             .thenReturn(true)
 
         val requestBody = """
@@ -165,8 +162,7 @@ class UserSettingsControllerTest(
 
     @Test
     fun `grant permissions`() {
-        whenever(userSettingsApplicationService.grantPermissions(userId,
-            GrantUserPermissionsCommand(setOf(PAST_EVENT_CONTACT_SCAN))))
+        whenever(userSettingsApplicationService.grantPermissions(GrantUserPermissionsCommand(setOf(PAST_EVENT_CONTACT_SCAN))))
             .thenReturn(true)
 
         val requestBody = """
@@ -186,8 +182,7 @@ class UserSettingsControllerTest(
 
     @Test
     fun `revoke permissions`() {
-        whenever(userSettingsApplicationService.revokePermissions(userId,
-            RevokeUserPermissionsCommand(setOf(PAST_EVENT_CONTACT_SCAN))))
+        whenever(userSettingsApplicationService.revokePermissions(RevokeUserPermissionsCommand(setOf(PAST_EVENT_CONTACT_SCAN))))
             .thenReturn(true)
 
         val requestBody = """
@@ -207,7 +202,7 @@ class UserSettingsControllerTest(
 
     @Test
     fun `update marketing preferences`() {
-        whenever(userSettingsApplicationService.updateMarketingPreferences(userId, UpdateMarketingPreferencesCommand(true)))
+        whenever(userSettingsApplicationService.updateMarketingPreferences(UpdateMarketingPreferencesCommand(true)))
             .thenReturn(true)
 
         val requestBody = """

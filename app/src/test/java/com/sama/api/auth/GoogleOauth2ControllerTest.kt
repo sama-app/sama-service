@@ -5,7 +5,6 @@ import com.sama.api.config.WebMvcConfiguration
 import com.sama.auth.application.GoogleOauth2ApplicationService
 import com.sama.auth.application.GoogleSignErrorDTO
 import com.sama.auth.application.GoogleSignSuccessDTO
-import com.sama.integration.google.GoogleInsufficientPermissionsException
 import com.sama.users.application.GoogleOauth2Redirect
 import com.sama.users.domain.UserId
 import org.junit.jupiter.api.Test
@@ -18,7 +17,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.mock.mockito.MockBean
-import org.springframework.http.MediaType
 import org.springframework.test.context.junit.jupiter.SpringExtension
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
@@ -56,7 +54,7 @@ class GoogleOauth2ControllerTest(
     @Test
     fun `google authorize returns the authorization url`() {
         val redirectUri = "https://accounts.google.com/o/oauth2/auth?access_type=offline"
-        whenever(googleOauth2ApplicationService.generateAuthorizationUrl(any(), isNull()))
+        whenever(googleOauth2ApplicationService.generateAuthorizationUrl(any()))
             .thenReturn(GoogleOauth2Redirect(redirectUri))
 
         val expectedJson = """

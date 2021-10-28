@@ -5,16 +5,19 @@ import com.sama.connection.domain.ConnectionRequestId
 import com.sama.users.domain.UserId
 
 interface UserConnectionService {
+    @InternalApi
     fun isConnected(userOneId: UserId, userTwoId: UserId): Boolean
-    fun findUserConnections(userId: UserId): UserConnectionsDTO
+    fun findUserConnections(): UserConnectionsDTO
+
     @InternalApi
     fun createUserConnection(userId: UserId, command: CreateUserConnectionCommand): Boolean
-    fun removeUserConnection(userId: UserId, command: RemoveUserConnectionCommand): Boolean
+    fun removeUserConnection(command: RemoveUserConnectionCommand): Boolean
+
     @InternalApi
     fun addDiscoveredUsers(userId: UserId, command: AddDiscoveredUsersCommand): Boolean
 
-    fun findConnectionRequests(userId: UserId): ConnectionRequestsDTO
-    fun createConnectionRequest(userId: UserId, command: CreateConnectionRequestCommand): ConnectionRequestDTO
-    fun approveConnectionRequest(userId: UserId, connectionRequestId: ConnectionRequestId): Boolean
-    fun rejectConnectionRequest(userId: UserId, connectionRequestId: ConnectionRequestId): Boolean
+    fun findConnectionRequests(): ConnectionRequestsDTO
+    fun createConnectionRequest(command: CreateConnectionRequestCommand): ConnectionRequestDTO
+    fun approveConnectionRequest(connectionRequestId: ConnectionRequestId): Boolean
+    fun rejectConnectionRequest(connectionRequestId: ConnectionRequestId): Boolean
 }
