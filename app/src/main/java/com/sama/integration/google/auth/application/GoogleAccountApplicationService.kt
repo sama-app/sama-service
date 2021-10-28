@@ -13,6 +13,7 @@ import com.sama.integration.google.auth.domain.GoogleCredentialRepository
 import com.sama.integration.google.auth.domain.toStorageKey
 import com.sama.integration.google.calendar.application.GoogleCalendarSyncer
 import com.sama.users.application.AuthUserService
+import com.sama.users.domain.UserId
 import io.sentry.spring.tracing.SentryTransaction
 import org.apache.commons.logging.LogFactory
 import org.springframework.scheduling.annotation.Scheduled
@@ -49,8 +50,7 @@ class GoogleAccountApplicationService(
     }
 
     @Transactional
-    override fun linkAccount(command: LinkGoogleAccountCommand): GoogleAccountPublicId {
-        val userId = authUserService.currentUserId()
+    override fun linkAccount(userId: UserId, command: LinkGoogleAccountCommand): GoogleAccountPublicId {
         val googleAccounts = googleAccountRepository.findAllByUserId(userId)
         val existingGoogleAccount = googleAccounts.find { it.email == command.email }
 

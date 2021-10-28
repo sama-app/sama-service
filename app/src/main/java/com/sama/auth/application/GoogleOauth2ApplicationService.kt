@@ -119,7 +119,7 @@ class GoogleOauth2ApplicationService(
         // Step #3: Register a user or refresh their credentials if already registered
         val userId = kotlin.runCatching {
             val userId = userApplicationService.register(RegisterUserCommand(verifiedToken.email, googleUser.fullName))
-            googleAccountService.linkAccount(LinkGoogleAccountCommand(verifiedToken.email, verifiedToken.credential))
+            googleAccountService.linkAccount(userId, LinkGoogleAccountCommand(verifiedToken.email, verifiedToken.credential))
             userSettingsApplicationService.create(userId)
             userId
         }.recover {
@@ -127,7 +127,7 @@ class GoogleOauth2ApplicationService(
                 throw it
             }
             val userId = userApplicationService.findIdsByEmail(setOf(verifiedToken.email)).first()
-            googleAccountService.linkAccount(LinkGoogleAccountCommand(verifiedToken.email, verifiedToken.credential))
+            googleAccountService.linkAccount(userId, LinkGoogleAccountCommand(verifiedToken.email, verifiedToken.credential))
             userId
         }.getOrThrow()
 
@@ -142,6 +142,7 @@ class GoogleOauth2ApplicationService(
 
         // Step #2: Link Google Account
         val googleAccountPublicId = googleAccountService.linkAccount(
+            userId,
             LinkGoogleAccountCommand(verifiedToken.email, verifiedToken.credential)
         )
 
