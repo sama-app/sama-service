@@ -18,19 +18,24 @@ class SpringAuthUserService(
     private val userSettingsRepository: UserSettingsRepository
 ) : AuthUserService {
     override fun currentUserIdOrNull(): UserId? {
-        val principal = SecurityContextHolder.getContext().authentication?.principal as UserPrincipal?
-        val userId = principal?.userId
-        return userId?.let { userRepository.findIdByPublicIdOrThrow(it) }
+        val principal = SecurityContextHolder.getContext().authentication?.principal
+        if (principal == null || principal !is UserPrincipal) {
+            return null
+        }
+        return principal.userId?.let { userRepository.findIdByPublicIdOrThrow(it) }
     }
 
     override fun currentUserId() = currentUserIdOrNull()
         ?: throw AuthenticationCredentialsNotFoundException("Missing authentication credentials")
 
     override fun currentUserOrNull(): UserInternalDTO? {
-        val principal = SecurityContextHolder.getContext().authentication?.principal as UserPrincipal?
-        val userId = principal?.userId ?: return null
+        val principal = SecurityContextHolder.getContext().authentication?.principal
+        if (principal == null || principal !is UserPrincipal) {
+            return null
+        }
 
-        val user = userRepository.findByPublicIdOrThrow(userId)
+        val userPublicId = principal.userId!!
+        val user = userRepository.findByPublicIdOrThrow(userPublicId)
         val userSettings = userSettingsRepository.findByIdOrThrow(user.id!!)
             .toDTO()
         return user.toInternalDTO(userSettings)
