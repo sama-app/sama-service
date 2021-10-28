@@ -19,12 +19,12 @@
     <properties>
         <!-- Java / Kotlin -->
         <java.version>16</java.version>
-        <kotlin.version>1.5.21</kotlin.version>
+        <kotlin.version>1.5.31</kotlin.version>
         <kotlin.coroutines.version>1.5.2</kotlin.coroutines.version>
         <!-- Spring -->
         <spring.cloud.version>2020.0.3</spring.cloud.version>
         <spring.cloud.aws.version>2.3.0</spring.cloud.aws.version>
-        <springdoc.openapi.version>1.5.10</springdoc.openapi.version>
+        <springdoc.openapi.version>1.5.12</springdoc.openapi.version>
         <!-- DB -->
         <postgresql.version>42.2.18</postgresql.version>
         <liquibase.version>4.3.5</liquibase.version>
@@ -32,18 +32,18 @@
         <google.api.client.version>1.32.1</google.api.client.version>
         <google.api.services.oauth2.version>v2-rev20200213-1.32.1</google.api.services.oauth2.version>
         <google.api.services.calendar.version>v3-rev20210804-1.32.1</google.api.services.calendar.version>
-        <firebase.sdk.version>8.0.0</firebase.sdk.version>
+        <firebase.sdk.version>8.1.0</firebase.sdk.version>
         <!-- Misc -->
         <logstash.logback.encoder.version>6.6</logstash.logback.encoder.version>
         <jackson.version>2.12.4</jackson.version>
-        <sentry.version>5.2.0</sentry.version>
-        <java.jwt.version>3.15.0</java.jwt.version>
+        <sentry.version>5.2.4</sentry.version>
+        <java.jwt.version>3.18.2</java.jwt.version>
         <jnanoid.version>2.0.0</jnanoid.version>
         <lib.recur.version>0.12.2</lib.recur.version>
         <commons.validator.version>1.7</commons.validator.version>
         <threethen.extra.version>1.7.0</threethen.extra.version>
         <!-- Testing -->
-        <mockito.kotlin.version>3.2.0</mockito.kotlin.version>
+        <mockito.kotlin.version>4.0.0</mockito.kotlin.version>
         <springmockk.version>3.0.1</springmockk.version>
         <testcontainers.version>1.15.2</testcontainers.version>
         <junit-jupiter.version>5.7.1</junit-jupiter.version>
