@@ -26,9 +26,11 @@ class EncryptedGoogleCredentialDataStore internal constructor(
     override fun findInvalidatedIds(): Collection<Long> {
         return jdbcTemplate.queryForList(
             """
-                   SELECT google_account_id FROM sama.user_google_credential 
-                   WHERE google_access_token_encrypted IS NULL AND
-                         google_token_expiration_time_ms IS NULL
+                   SELECT google_account_id FROM sama.user_google_credential sgc 
+                   JOIN sama.user_google_account uga ON sgc.google_account_id = uga.id
+                   WHERE sgc.google_access_token_encrypted IS NULL AND
+                         sgc.google_token_expiration_time_ms IS NULL AND
+                         uga.linked IS TRUE
                 """,
             MapSqlParameterSource(),
             Long::class.java
