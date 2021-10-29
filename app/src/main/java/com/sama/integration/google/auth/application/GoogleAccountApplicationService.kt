@@ -75,7 +75,6 @@ class GoogleAccountApplicationService(
         return unlinkAccount(googleAccount)
     }
 
-    @Transactional
     private fun unlinkAccount(googleAccount: GoogleAccount): Boolean {
         val updated = googleAccount.unlink()
 
@@ -91,6 +90,9 @@ class GoogleAccountApplicationService(
                 as GoogleCredentialRepository
         val accountIds = credentialRepository.findInvalidatedIds()
             .map { GoogleAccountId(it) }
+        if (accountIds.isEmpty()) {
+            return
+        }
 
         logger.debug("Unlinking ${accountIds.size} Google Accounts...")
         accountIds.forEach { googleAccountId ->
