@@ -7,7 +7,6 @@ import com.google.api.client.http.HttpRequestInitializer
 import com.google.api.client.http.HttpTransport
 import com.google.api.client.json.JsonFactory
 import com.google.api.services.calendar.Calendar
-import com.google.api.services.directory.Directory
 import com.google.api.services.oauth2.Oauth2
 import com.sama.SamaApplication
 import com.sama.integration.google.auth.domain.GoogleAccountId
@@ -24,13 +23,6 @@ class GoogleServiceFactory(
     fun calendarService(accountId: GoogleAccountId): Calendar {
         val credential = googleAuthorizationCodeFlow.loadCredential(accountId.toStorageKey())
         return Calendar.Builder(googleHttpTransport, jsonFactory, httpRequestInitializer(credential))
-            .setApplicationName(SamaApplication::class.simpleName)
-            .build()
-    }
-
-    fun directoryService(accountId: GoogleAccountId): Directory {
-        val credential = googleAuthorizationCodeFlow.loadCredential(accountId.toStorageKey())
-        return Directory.Builder(googleHttpTransport, jsonFactory, httpRequestInitializer(credential))
             .setApplicationName(SamaApplication::class.simpleName)
             .build()
     }
