@@ -150,9 +150,7 @@ integration:
       https://www.googleapis.com/auth/calendar.events,
       https://www.googleapis.com/auth/calendar.readonly,
       https://www.googleapis.com/auth/userinfo.email,
-      https://www.googleapis.com/auth/userinfo.profile,
-      https://www.googleapis.com/auth/admin.directory.resource.calendar.readonly,
-      https://www.googleapis.com/auth/admin.directory.user
+      https://www.googleapis.com/auth/userinfo.profile
     credentials: "dummy-value-this-is-loaded-from-AWS-SM"
     tokens.encryption:
       password: 632c851465175f96507475446996dd9b79a44a66f6205bee473f8647ab696a5b43f671da75f47f9356e945dd815e5d3cca222ff3260c9f727ae55da78614e24f
