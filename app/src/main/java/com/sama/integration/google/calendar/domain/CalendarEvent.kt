@@ -19,8 +19,7 @@ data class CalendarEvent(
     val startDateTime: ZonedDateTime,
     val endDateTime: ZonedDateTime,
     val eventData: EventData,
-    val labels: Set<EventLabel>,
-    val aggregatedData: AggregatedData? = null,
+    val labels: Set<EventLabel>
 )
 
 data class EventData(
@@ -28,7 +27,8 @@ data class EventData(
     val allDay: Boolean,
     val attendeeCount: Int,
     val recurringEventId: GoogleCalendarEventId? = null,
-    val created: ZonedDateTime? = null
+    val created: ZonedDateTime? = null,
+    val privateExtendedProperties: Map<String, String> = emptyMap()
 )
 
 data class AggregatedData(
@@ -103,7 +103,14 @@ fun GoogleCalendarEvent.toDomain(account: GoogleAccount, calendarId: GoogleCalen
         toKey(account.id!!, calendarId),
         start.toZonedDateTime(timeZone),
         end.toZonedDateTime(timeZone),
-        EventData(summary, isAllDay(), attendeeCount(), recurringEventId, created?.toZonedDateTime()),
+        EventData(
+            summary,
+            isAllDay(),
+            attendeeCount(),
+            recurringEventId,
+            created?.toZonedDateTime(),
+            extendedProperties?.private ?: emptyMap()
+        ),
         EventLabel.labelsOf(this, account)
     )
 }

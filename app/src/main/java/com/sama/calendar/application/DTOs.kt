@@ -11,7 +11,8 @@ data class EventDTO(
     val title: String?,
     val accountId: GoogleAccountPublicId,
     val calendarId: String,
-    val eventId: GoogleCalendarEventId
+    val eventId: GoogleCalendarEventId,
+    val meetingBlock: Boolean
 )
 
 data class EventsDTO(

@@ -64,7 +64,7 @@ class EventApplicationServiceIT : BaseApplicationIntegrationTest() {
             underTest.fetchEvents(startDate, endDate, clock.zone)
         }
 
-        val expected = EventDTO(startDateTime, startDateTime.plusHours(1), false, "title", accountId, "primary", "id#1")
+        val expected = EventDTO(startDateTime, startDateTime.plusHours(1), false, "title", accountId, "primary", "id#1", false)
         assertThat(result).isEqualTo(EventsDTO(listOf(expected)))
     }
 
@@ -136,7 +136,10 @@ class EventApplicationServiceIT : BaseApplicationIntegrationTest() {
         val meetingCode = MeetingCode("code")
         val startDateTime = ZonedDateTime.now(clock)
         val endDateTime = startDateTime.plusHours(1)
-        val extendedProperties = mapOf("meeting_code" to meetingCode.code)
+        val extendedProperties = mapOf(
+            "meeting_code" to meetingCode.code,
+            "event_type" to "meeting_block"
+        )
 
         whenever(
             googleCalendarService.insertEvent(
@@ -187,7 +190,10 @@ class EventApplicationServiceIT : BaseApplicationIntegrationTest() {
                     description = null,
                     attendees = emptyList(),
                     conferenceType = null,
-                    privateExtendedProperties = mapOf("meeting_code" to meetingCode.code)
+                    privateExtendedProperties = mapOf(
+                        "event_type" to "meeting_block",
+                        "meeting_code" to meetingCode.code
+                    )
                 )
             )
     }
