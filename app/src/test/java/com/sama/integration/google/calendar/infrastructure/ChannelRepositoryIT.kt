@@ -2,25 +2,57 @@ package com.sama.integration.google.calendar.infrastructure
 
 import com.sama.common.BasePersistenceIT
 import com.sama.common.findByIdOrThrow
+import com.sama.integration.google.auth.domain.GoogleAccount
 import com.sama.integration.google.auth.domain.GoogleAccountId
+import com.sama.integration.google.auth.domain.GoogleAccountRepository
+import com.sama.integration.google.auth.infrastructure.JdbcGoogleAccountRepository
 import com.sama.integration.google.calendar.domain.Channel
 import com.sama.integration.google.calendar.domain.ChannelRepository
 import com.sama.integration.google.calendar.domain.ResourceType
+import com.sama.users.infrastructure.jpa.UserEntity
+import com.sama.users.infrastructure.jpa.UserJpaRepository
+import com.sama.users.infrastructure.toUserId
 import java.time.Instant
 import java.util.UUID
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
 
 
-@ContextConfiguration(classes = [ChannelRepository::class])
+@ContextConfiguration(classes = [ChannelRepository::class, JdbcGoogleAccountRepository::class])
 class ChannelRepositoryIT : BasePersistenceIT<ChannelRepository>() {
+
+    @Autowired
+    lateinit var userRepository: UserJpaRepository
+
+    @Autowired
+    lateinit var googleAccountRepository: GoogleAccountRepository
+
+    private lateinit var user: UserEntity
+    private lateinit var googleAccount: GoogleAccount
+
+    @BeforeEach
+    fun setup() {
+        val email = "one@meetsama.com"
+        user = userRepository.save(UserEntity(email))
+        userRepository.flush()
+        googleAccount = googleAccountRepository.save(GoogleAccount.new(user.id!!.toUserId(), email, true))
+    }
+
+    @AfterEach
+    fun cleanup() {
+        userRepository.deleteAll()
+        userRepository.flush()
+    }
 
     @Test
     fun save() {
         val channel = Channel.new(
             UUID.randomUUID(),
-            GoogleAccountId(1L),
+            googleAccount.id!!,
             "token",
             ResourceType.CALENDAR,
             "primary",
@@ -36,10 +68,9 @@ class ChannelRepositoryIT : BasePersistenceIT<ChannelRepository>() {
     @Test
     fun find() {
         val channelId = UUID.randomUUID()
-        val accountId = GoogleAccountId(1L)
         val channel = Channel.new(
             channelId,
-            accountId,
+            googleAccount.id!!,
             "token",
             ResourceType.CALENDAR,
             "primary",
@@ -54,7 +85,7 @@ class ChannelRepositoryIT : BasePersistenceIT<ChannelRepository>() {
 
     @Test
     fun findByGoogleAccountIdAndResourceType() {
-        val accountId = GoogleAccountId(1L)
+        val accountId = googleAccount.id!!
         val channelOneId = UUID.randomUUID()
         val channelOne = Channel.new(
             channelOneId,
@@ -93,7 +124,7 @@ class ChannelRepositoryIT : BasePersistenceIT<ChannelRepository>() {
     fun delete() {
         val channel = Channel.new(
             UUID.randomUUID(),
-            GoogleAccountId(1L),
+            googleAccount.id!!,
             "token",
             ResourceType.CALENDAR,
             "primary",
@@ -109,7 +140,7 @@ class ChannelRepositoryIT : BasePersistenceIT<ChannelRepository>() {
     fun deleteClosed() {
         val channel = Channel.new(
             UUID.randomUUID(),
-            GoogleAccountId(1L),
+            googleAccount.id!!,
             "token",
             ResourceType.CALENDAR,
             "primary",
@@ -118,7 +149,7 @@ class ChannelRepositoryIT : BasePersistenceIT<ChannelRepository>() {
         )
         val closedChannel = Channel.new(
             UUID.randomUUID(),
-            GoogleAccountId(1L),
+            googleAccount.id!!,
             "token",
             ResourceType.CALENDAR,
             "primary",
