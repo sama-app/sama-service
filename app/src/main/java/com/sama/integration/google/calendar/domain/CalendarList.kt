@@ -7,39 +7,52 @@ import java.time.ZoneId
 
 data class CalendarList(
     val accountId: GoogleAccountId,
-    val calendars: Map<GoogleCalendarId, Calendar>
+    val calendars: Map<GoogleCalendarId, Calendar>,
+    val selected: Set<GoogleCalendarId>
 ) {
-    val syncableCalendars = calendars.filter { (_, calendar) -> calendar.selected }.keys
+    companion object {
+        fun new(accountId: GoogleAccountId, calendarList: List<GoogleCalendar>): CalendarList {
+            val calendars = calendarList.filter { !(it.deleted ?: false) }
+                .associate { it.calendarId() to it.toDomain() }
+            return CalendarList(accountId, calendars, calendars.filter { it.value.selected }.keys)
+        }
+    }
 
     fun mergeFromSource(newCalendarList: List<GoogleCalendar>): CalendarList {
-        val deletedCalendars = newCalendarList.filter { it.deleted ?: false }.map { it.id }
-        val updatedCalendars = newCalendarList.toDomain(accountId)
-        val newCalendars = updatedCalendars.calendars - calendars.keys
+        val deletedCalendars = newCalendarList
+            .filter { it.deleted ?: false }
+            .map { it.id }
+        val updatedCalendars = newCalendarList
+            .filterNot { it.deleted ?: false }
+            .associate { it.calendarId() to it.toDomain() }
+        val newCalendars = updatedCalendars - calendars.keys
 
         val mergedCalendars = calendars
             .minus(deletedCalendars)
             .mapValues { (calendarId, existingCalendar) ->
-                updatedCalendars.calendars[calendarId]
-                    ?.copy(selected = existingCalendar.selected)
-                    ?: existingCalendar
+                updatedCalendars[calendarId] ?: existingCalendar
             }
             .plus(newCalendars)
 
-        return copy(calendars = mergedCalendars)
+        val selected = selected
+            .minus(deletedCalendars)
+            .plus(newCalendars.filter { it.value.selected }.keys)
+
+        return copy(calendars = mergedCalendars, selected = selected)
     }
 
     fun addSelection(calendarId: GoogleCalendarId): CalendarList {
-        val updated = calendars[calendarId]
-            ?.copy(selected = true)
+        calendars[calendarId]
             ?: throw NotFoundException(Calendar::class, calendarId)
-        return copy(calendars = calendars + (calendarId to updated))
+
+        return copy(selected = selected + calendarId)
     }
 
     fun removeSelection(calendarId: GoogleCalendarId): CalendarList {
-        val updated = calendars[calendarId]
-            ?.copy(selected = false)
+        calendars[calendarId]
             ?: throw NotFoundException(Calendar::class, calendarId)
-        return copy(calendars = calendars + (calendarId to updated))
+
+        return copy(selected = selected - calendarId)
     }
 }
 
@@ -58,12 +71,6 @@ typealias GoogleCalendarId = String
 data class GoogleCalendarListResponse(
     val calendars: List<GoogleCalendar>, val syncToken: String?
 )
-
-fun Collection<GoogleCalendar>.toDomain(accountId: GoogleAccountId): CalendarList {
-    val calendars = filter { !(it.deleted ?: false) }
-        .associate { it.calendarId() to it.toDomain() }
-    return CalendarList(accountId, calendars)
-}
 
 fun GoogleCalendar.toDomain(): Calendar {
     val isOwner = accessRole == "owner"

@@ -55,3 +55,5 @@ databaseChangeLog:
       file: classpath*:liquibase/change-sets/2021_11_02-gcal-channel-fk.yml
   - include:
       file: classpath*:liquibase/change-sets/2021_11_02_1-gcal-event-labels.yml
+  - include:
+      file: classpath*:liquibase/change-sets/2021_11_02_2-selected-calendars.yml

@@ -62,14 +62,15 @@ class JdbcCalendarListRepository(
     override fun save(calendarList: CalendarList) {
         jdbcTemplate.update(
             """
-                INSERT INTO gcal.calendar_list (google_account_id, calendars, updated_at)  
-                VALUES (:account_id, :calendars, :updated_at)
+                INSERT INTO gcal.calendar_list (google_account_id, calendars, selected, updated_at)  
+                VALUES (:account_id, :calendars, :selected, :updated_at)
                 ON CONFLICT (google_account_id) DO UPDATE 
-                SET calendars = :calendars, updated_at = :updated_at
+                SET calendars = :calendars, selected = :selected, updated_at = :updated_at
             """,
             MapSqlParameterSource()
                 .addValue("account_id", calendarList.accountId.id)
                 .addValue("calendars", objectMapper.writeValueAsString(calendarList.calendars), Types.OTHER)
+                .addValue("selected", objectMapper.writeValueAsString(calendarList.selected), Types.OTHER)
                 .addValue("updated_at", OffsetDateTime.now(ZoneId.of("UTC")))
         )
     }
@@ -87,12 +88,15 @@ class JdbcCalendarListRepository(
 
 
     private val rowMapper: (ResultSet, rowNum: Int) -> CalendarList = { rs, _ ->
-        val typeRef: TypeReference<HashMap<GoogleCalendarId, Calendar>> =
+        val calendarsTypeRef: TypeReference<HashMap<GoogleCalendarId, Calendar>> =
             object : TypeReference<HashMap<GoogleCalendarId, Calendar>>() {}
+        val selectedTypeRef: TypeReference<Set<GoogleCalendarId>> =
+            object : TypeReference<Set<GoogleCalendarId>>() {}
 
         CalendarList(
             rs.getLong("google_account_id").toGoogleAccountId(),
-            objectMapper.readValue(rs.getBinaryStream("calendars"), typeRef)
+            objectMapper.readValue(rs.getBinaryStream("calendars"), calendarsTypeRef),
+            objectMapper.readValue(rs.getBinaryStream("selected"), selectedTypeRef),
         )
     }
 }

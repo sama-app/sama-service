@@ -1,0 +1,26 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-gcal-event-labels
+      author: balys
+      changes:
+        - addColumn:
+            schemaName: gcal
+            tableName: calendar_list
+            columns:
+              - column:
+                  name: selected
+                  type: jsonb
+                  constraints:
+                    nullable: false
+                  defaultValueNumeric: "'[]'::jsonb"
+
+        - sql:
+            sql: >
+                UPDATE gcal.calendar_list SET selected = temp.selected
+                FROM (
+                  SELECT google_account_id,  json_agg(cals.key) as selected FROM gcal.calendar_list
+                  JOIN jsonb_each(calendars) cals ON TRUE
+                  WHERE cals.value->>'selected' = 'true'
+                  GROUP BY google_account_id
+                ) temp
+                WHERE calendar_list.google_account_id = temp.google_account_id
