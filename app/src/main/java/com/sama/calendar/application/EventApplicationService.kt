@@ -19,6 +19,8 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 
 private const val MEETING_CODE_PROPERTY_KEY = "meeting_code"
+private const val EVENT_TYPE_PROPERTY_KEY = "event_type"
+private const val TYPE_MEETING_BLOCK = "meeting_block"
 
 @ApplicationService
 @Service
@@ -42,9 +44,10 @@ class EventApplicationService(
         )
         return events
             .map {
+                val isMeetingBlock = it.eventData.privateExtendedProperties[EVENT_TYPE_PROPERTY_KEY] == TYPE_MEETING_BLOCK
                 EventDTO(
-                    it.startDateTime, it.endDateTime, it.eventData.allDay, it.eventData.title,
-                    it.accountId, it.calendarId, it.eventId
+                    it.startDateTime, it.endDateTime, it.eventData.allDay, it.eventData.title, it.accountId,
+                    it.calendarId, it.eventId, isMeetingBlock
                 )
             }
             .let { EventsDTO(it) }
@@ -59,7 +62,10 @@ class EventApplicationService(
             is UserRecipient -> internalUserService.find(recipient.recipientId).email
         }
 
-        val extendedProperties = mapOf(MEETING_CODE_PROPERTY_KEY to command.meetingCode.code)
+        val extendedProperties = mapOf(
+            MEETING_CODE_PROPERTY_KEY to command.meetingCode.code,
+            EVENT_TYPE_PROPERTY_KEY to TYPE_MEETING_BLOCK
+        )
 
         val blockedOutTimesEventIds = googleCalendarService.findIdsByExtendedProperties(userId, extendedProperties)
 
@@ -102,7 +108,10 @@ class EventApplicationService(
                     description = null,
                     attendees = emptyList(),
                     conferenceType = null,
-                    privateExtendedProperties = mapOf(MEETING_CODE_PROPERTY_KEY to meetingCode)
+                    privateExtendedProperties = mapOf(
+                        MEETING_CODE_PROPERTY_KEY to meetingCode,
+                        EVENT_TYPE_PROPERTY_KEY to TYPE_MEETING_BLOCK
+                    )
                 )
             }
 

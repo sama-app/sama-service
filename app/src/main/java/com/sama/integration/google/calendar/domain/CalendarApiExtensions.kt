@@ -105,7 +105,7 @@ private fun Calendar.findEventsPage(
         requestBuilder.timeMax = endDateTime?.toGoogleCalendarDateTime()
     }
     requestBuilder.fields =
-        "nextPageToken,nextSyncToken,timeZone,items(id,status,start,end,summary,attendees,recurringEventId,created)"
+        "nextPageToken,nextSyncToken,timeZone,items(id,status,start,end,summary,attendees,recurringEventId,created,extendedProperties)"
 
     nextPageToken?.run { requestBuilder.setPageToken(this) }
     return requestBuilder

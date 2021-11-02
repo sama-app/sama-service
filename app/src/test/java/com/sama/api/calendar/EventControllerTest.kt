@@ -55,7 +55,7 @@ class EventControllerTest(
         val startDateTime = ZonedDateTime.of(startDate, LocalTime.of(12, 15), zoneId)
         val endDateTime = ZonedDateTime.of(startDate, LocalTime.of(12, 30), zoneId)
         val accountId = GoogleAccountPublicId(UUID.randomUUID())
-        val eventDTO = EventDTO(startDateTime, endDateTime, false, "test", accountId, "primary", "eventId")
+        val eventDTO = EventDTO(startDateTime, endDateTime, false, "test", accountId, "primary", "eventId", true)
         whenever(eventApplicationService.fetchEvents(startDate, endDate, zoneId))
             .thenReturn(EventsDTO(listOf(eventDTO)))
 
@@ -69,7 +69,8 @@ class EventControllerTest(
                     "title": "test",
                     "accountId": "${accountId.id}",
                     "calendarId": "primary",
-                    "eventId": "eventId"
+                    "eventId": "eventId",
+                    "meetingBlock": true
                 }
             ]
         }

@@ -645,7 +645,7 @@ class MeetingApplicationServiceIT : BaseApplicationIntegrationTest() {
                 listOf(
                     EventDTO(
                         proposedSlotStart, proposedSlotTwoEnd, false, "Title",
-                        GoogleAccountPublicId(UUID.randomUUID()), "primary", "eventId"
+                        GoogleAccountPublicId(UUID.randomUUID()), "primary", "eventId", false
                     )
                 )
             )
