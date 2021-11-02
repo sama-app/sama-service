@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-gcal-channel-foreign-key
+      author: balys
+      changes:
+        - addForeignKeyConstraint:
+            baseTableSchemaName: gcal
+            baseTableName: channel
+            baseColumnNames: google_account_id
+            constraintName: FK_channel_google_account_id
+            referencedTableSchemaName: sama
+            referencedTableName: user_google_account
+            referencedColumnNames: id
+            onDelete: CASCADE
