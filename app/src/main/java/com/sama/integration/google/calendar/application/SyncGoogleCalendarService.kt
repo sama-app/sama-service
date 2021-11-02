@@ -222,10 +222,10 @@ class SyncGoogleCalendarService(
             .associateBy { it.id!! }
 
         return calendarListRepository.findAll(accountIds.keys)
-            .flatMap { (googleAccountId, calendars) ->
+            .flatMap { (googleAccountId, calendars, selected) ->
                 val accountId = accountIds[googleAccountId]!!.publicId!!
                 calendars.map { (calendarId, calendar) ->
-                    CalendarDTO(accountId, calendarId, calendar.selected, calendar.summary, calendar.backgroundColor)
+                    CalendarDTO(accountId, calendarId, calendarId in selected, calendar.summary, calendar.backgroundColor)
                 }
             }
             .let { CalendarsDTO(it) }

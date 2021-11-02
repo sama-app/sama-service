@@ -13,6 +13,7 @@ import com.sama.integration.google.auth.domain.GoogleAccountId
 import com.sama.integration.google.auth.domain.GoogleAccountRepository
 import com.sama.integration.google.calendar.domain.ACCEPTED_EVENT_STATUSES
 import com.sama.integration.google.calendar.domain.CalendarEventRepository
+import com.sama.integration.google.calendar.domain.CalendarList
 import com.sama.integration.google.calendar.domain.CalendarListRepository
 import com.sama.integration.google.calendar.domain.CalendarListSync
 import com.sama.integration.google.calendar.domain.CalendarListSyncRepository
@@ -101,13 +102,13 @@ class GoogleCalendarSyncer(
             val (calendars, newSyncToken) = calendarService.findAllCalendars(syncToken)
             val updatedCalendarList = existingCalendarList
                 ?.mergeFromSource(calendars)
-                ?: calendars.toDomain(accountId)
+                ?: CalendarList.new(accountId, calendars)
 
             val currentlySyncedCalendars = calendarSyncRepository.findAllCalendarIds(accountId)
-            val calendarsToEnable = updatedCalendarList.syncableCalendars
+            val calendarsToEnable = updatedCalendarList.selected
                 .minus(currentlySyncedCalendars)
             val calendarsToDisable = currentlySyncedCalendars
-                .minus(updatedCalendarList.syncableCalendars)
+                .minus(updatedCalendarList.selected)
 
             calendarsToEnable.forEach { enableCalendarSync(accountId, it) }
             calendarsToDisable.forEach { disableCalendarSync(accountId, it) }
