@@ -11,7 +11,7 @@ import com.sama.common.NotFoundException
 import com.sama.common.checkAccess
 import com.sama.integration.google.GoogleServiceFactory
 import com.sama.integration.google.NoPrimaryGoogleAccountException
-import com.sama.integration.google.auth.domain.GoogleAccountId
+import com.sama.integration.google.auth.domain.GoogleAccount
 import com.sama.integration.google.auth.domain.GoogleAccountRepository
 import com.sama.integration.google.calendar.domain.AggregatedData
 import com.sama.integration.google.calendar.domain.CalendarEventRepository
@@ -66,8 +66,7 @@ class SyncGoogleCalendarService(
         val linkedAccounts = googleAccountRepository.findAllByUserId(userId)
             .filter { it.linked }
             .associateBy { it.id!! }
-        val linkedAccountIds = linkedAccounts.keys
-        val calendarSyncs = calendarSyncRepository.findAll(linkedAccountIds)
+        val calendarSyncs = calendarSyncRepository.findAll(linkedAccounts.keys)
 
         val calendarEvents = if (calendarSyncs.isNotEmpty()) {
             calendarSyncs
@@ -85,7 +84,7 @@ class SyncGoogleCalendarService(
                         )
                     } else {
                         forceLoadCalendarEvents(
-                            sync.accountId,
+                            linkedAccounts[sync.accountId]!!,
                             sync.calendarId,
                             startDateTime,
                             endDateTime,
@@ -97,7 +96,7 @@ class SyncGoogleCalendarService(
                 .flatten()
         } else {
             // If there aren't any synced calendars, load the primary calendar for all accounts
-            linkedAccountIds
+            linkedAccounts.values
                 .map { forceLoadCalendarEvents(it, PRIMARY_CALENDAR_ID, startDateTime, endDateTime, createdFrom, hasAttendees) }
                 .flatten()
         }
@@ -138,20 +137,20 @@ class SyncGoogleCalendarService(
     }
 
     private fun forceLoadCalendarEvents(
-        accountId: GoogleAccountId,
+        account: GoogleAccount,
         calendarId: GoogleCalendarId,
         startDateTime: ZonedDateTime,
         endDateTime: ZonedDateTime,
         createdFrom: ZonedDateTime?,
         hasAttendees: Boolean?
     ) = try {
-        val calendarService = googleServiceFactory.calendarService(accountId)
+        val calendarService = googleServiceFactory.calendarService(account.id!!)
         val minAttendeeCount = if (hasAttendees == true) 1 else null
         val (events, timeZone) = calendarService.findAllEvents(
             calendarId, startDateTime, endDateTime,
             createdFrom = createdFrom, minAttendeeCount = minAttendeeCount
         )
-        events.toDomain(accountId, PRIMARY_CALENDAR_ID, timeZone)
+        events.toDomain(account, PRIMARY_CALENDAR_ID, timeZone)
     } catch (e: Exception) {
         throw translatedGoogleException(e)
     }

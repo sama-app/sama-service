@@ -1,0 +1,15 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-gcal-event-labels
+      author: balys
+      changes:
+        - addColumn:
+            schemaName: gcal
+            tableName: event
+            columns:
+              - column:
+                  name: labels
+                  type: jsonb
+                  constraints:
+                    nullable: false
+                  defaultValueNumeric: "'[]'::jsonb"
