@@ -1,11 +1,13 @@
 package com.sama.integration.google.calendar.infrastructure
 
+import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.sama.integration.google.auth.domain.GoogleAccountId
 import com.sama.integration.google.auth.infrastructure.toGoogleAccountId
 import com.sama.integration.google.calendar.domain.CalendarEvent
 import com.sama.integration.google.calendar.domain.CalendarEventRepository
 import com.sama.integration.google.calendar.domain.EventData
+import com.sama.integration.google.calendar.domain.EventLabel
 import com.sama.integration.google.calendar.domain.GoogleCalendarEventKey
 import com.sama.integration.google.calendar.domain.GoogleCalendarId
 import java.sql.ResultSet
@@ -13,7 +15,6 @@ import java.sql.Types
 import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
-import liquibase.pro.packaged.it
 import org.springframework.dao.EmptyResultDataAccessException
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations
@@ -123,20 +124,21 @@ class JdbcCalendarEventRepository(
         }
         jdbcTemplate.batchUpdate(
             """
-                INSERT INTO gcal.event (google_account_id, calendar_id, event_id, start_date_time, end_date_time, event_data, updated_at)
-                VALUES (:google_account_id, :calendar_id, :event_id, :start_date_time, :end_date_time, :event_data, :updated_at)
+                INSERT INTO gcal.event (google_account_id, calendar_id, event_id, start_date_time, end_date_time, event_data, labels, updated_at)
+                VALUES (:google_account_id, :calendar_id, :event_id, :start_date_time, :end_date_time, :event_data, :labels, :updated_at)
                 ON CONFLICT (google_account_id, calendar_id, event_id) DO UPDATE 
                 SET start_date_time = :start_date_time, end_date_time = :end_date_time, 
-                    event_data = :event_data, updated_at = :updated_at
+                    event_data = :event_data, labels = :labels, updated_at = :updated_at
             """,
-            events.map { event ->
+            events.map { (key, startDateTime, endDateTime, eventData, labels) ->
                 MapSqlParameterSource()
-                    .addValue("google_account_id", event.key.accountId.id)
-                    .addValue("calendar_id", event.key.calendarId)
-                    .addValue("event_id", event.key.eventId)
-                    .addValue("start_date_time", event.startDateTime.withZoneSameInstant(UTC).toLocalDateTime())
-                    .addValue("end_date_time", event.endDateTime.withZoneSameInstant(UTC).toLocalDateTime())
-                    .addValue("event_data", objectMapper.writeValueAsString(event.eventData), Types.OTHER)
+                    .addValue("google_account_id", key.accountId.id)
+                    .addValue("calendar_id", key.calendarId)
+                    .addValue("event_id", key.eventId)
+                    .addValue("start_date_time", startDateTime.withZoneSameInstant(UTC).toLocalDateTime())
+                    .addValue("end_date_time", endDateTime.withZoneSameInstant(UTC).toLocalDateTime())
+                    .addValue("event_data", objectMapper.writeValueAsString(eventData), Types.OTHER)
+                    .addValue("labels", objectMapper.writeValueAsString(labels), Types.OTHER)
                     .addValue("updated_at", OffsetDateTime.now(ZoneId.of("UTC")))
             }.toTypedArray()
         )
@@ -167,6 +169,8 @@ class JdbcCalendarEventRepository(
     }
 
 
+    private val listTypeRef: TypeReference<Set<EventLabel>> = object : TypeReference<Set<EventLabel>>() {}
+
     private val rowMapper: (ResultSet, rowNum: Int) -> CalendarEvent = { rs, _ ->
         CalendarEvent(
             GoogleCalendarEventKey(
@@ -176,7 +180,8 @@ class JdbcCalendarEventRepository(
             ),
             rs.getTimestamp("start_date_time").toLocalDateTime().atZone(UTC),
             rs.getTimestamp("end_date_time").toLocalDateTime().atZone(UTC),
-            objectMapper.readValue(rs.getBinaryStream("event_data"), EventData::class.java)
+            objectMapper.readValue(rs.getBinaryStream("event_data"), EventData::class.java),
+            objectMapper.readValue(rs.getBinaryStream("labels"), listTypeRef)
         )
     }
 }

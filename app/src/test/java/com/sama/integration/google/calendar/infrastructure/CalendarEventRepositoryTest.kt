@@ -52,7 +52,7 @@ class CalendarEventRepositoryTest : BasePersistenceIT<JdbcCalendarEventRepositor
         val eventKey = GoogleCalendarEventKey(googleAccount.id!!, "default", "event-id")
         val event = CalendarEvent(
             eventKey,
-            now, now.plusHours(1), EventData("title", false, 1, "recurring-id", now.minusHours(1))
+            now, now.plusHours(1), EventData("title", false, 1, "recurring-id", now.minusHours(1)), emptySet()
         )
         underTest.save(event)
 
@@ -70,15 +70,15 @@ class CalendarEventRepositoryTest : BasePersistenceIT<JdbcCalendarEventRepositor
         val eventData = EventData("title", false, 1, "recurring-id", now.minusHours(1))
         val eventEndingNow = CalendarEvent(
             GoogleCalendarEventKey(googleAccount.id!!, "default", "event-ends-now"),
-            now.minusHours(1), now, eventData
+            now.minusHours(1), now, eventData, emptySet()
         )
         val pastEvent = CalendarEvent(
             GoogleCalendarEventKey(googleAccount.id!!, "default", "event-in-the-past"),
-            now.minusHours(2), now.minusHours(1), eventData
+            now.minusHours(2), now.minusHours(1), eventData, emptySet()
         )
         val futureEvent = CalendarEvent(
             GoogleCalendarEventKey(googleAccount.id!!, "default", "event-in-the-future"),
-            now.plusHours(1), now.plusHours(2), eventData
+            now.plusHours(1), now.plusHours(2), eventData, emptySet()
         )
         underTest.saveAll(listOf(eventEndingNow, pastEvent, futureEvent))
 
@@ -101,23 +101,23 @@ class CalendarEventRepositoryTest : BasePersistenceIT<JdbcCalendarEventRepositor
         val eventData = EventData("title", false, 1, "recurring-id", now)
         val eventCreatedNow = CalendarEvent(
             GoogleCalendarEventKey(googleAccount.id!!, "default", "event-ends-now"),
-            now, now.plusHours(1), eventData.copy(created = now)
+            now, now.plusHours(1), eventData.copy(created = now), emptySet()
         )
         val eventCreatedInThePast = CalendarEvent(
             GoogleCalendarEventKey(googleAccount.id!!, "default", "event-in-the-past"),
-            now, now.plusHours(1), eventData.copy(created = now.minusHours(1))
+            now, now.plusHours(1), eventData.copy(created = now.minusHours(1)), emptySet()
         )
         val eventCreatedInTheFuture = CalendarEvent(
             GoogleCalendarEventKey(googleAccount.id!!, "default", "event-in-the-future"),
-            now, now.plusHours(1), eventData.copy(created = now.plusHours(1))
+            now, now.plusHours(1), eventData.copy(created = now.plusHours(1)), emptySet()
         )
         val eventWithoutCreatedDate = CalendarEvent(
             GoogleCalendarEventKey(googleAccount.id!!, "default", "event-no-created-date"),
-            now, now.plusHours(1), eventData.copy(created = null)
+            now, now.plusHours(1), eventData.copy(created = null), emptySet()
         )
         val eventWithoutAttendees = CalendarEvent(
             GoogleCalendarEventKey(googleAccount.id!!, "default", "event-without-attendees"),
-            now, now.plusHours(1), eventData.copy(created = now.plusHours(1), attendeeCount = 0)
+            now, now.plusHours(1), eventData.copy(created = now.plusHours(1), attendeeCount = 0), emptySet()
         )
         underTest.saveAll(
             listOf(

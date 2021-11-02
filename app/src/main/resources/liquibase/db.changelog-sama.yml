@@ -53,3 +53,5 @@ databaseChangeLog:
       file: classpath*:liquibase/change-sets/2021_10_20-meeting-block-out-slots.yml
   - include:
       file: classpath*:liquibase/change-sets/2021_11_02-gcal-channel-fk.yml
+  - include:
+      file: classpath*:liquibase/change-sets/2021_11_02_1-gcal-event-labels.yml

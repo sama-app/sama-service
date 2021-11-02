@@ -21,6 +21,8 @@ data class GoogleAccount(
     val primary: Boolean,
     val linked: Boolean
 ) {
+    val domain = email.split('@').last()
+
     fun link(): GoogleAccount {
         return copy(linked = true)
     }

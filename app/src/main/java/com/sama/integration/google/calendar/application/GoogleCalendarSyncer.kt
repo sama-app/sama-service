@@ -197,7 +197,7 @@ class GoogleCalendarSyncer(
                 val (events, timeZone, syncToken) = calendarService
                     .findAllEvents(calendarId, startDate, endDate)
 
-                val calendarEvents = events.toDomain(accountId, calendarId, timeZone)
+                val calendarEvents = events.toDomain(googleAccount, calendarId, timeZone)
                 calendarEventRepository.deleteBy(accountId, calendarId)
                 calendarEventRepository.saveAll(calendarEvents)
 
@@ -212,7 +212,7 @@ class GoogleCalendarSyncer(
                     .findAllEvents(calendarId, calendarSync.syncToken!!)
 
                 val (toAdd, toRemove) = events.partition { it.status in ACCEPTED_EVENT_STATUSES }
-                calendarEventRepository.saveAll(toAdd.toDomain(accountId, calendarId, timeZone))
+                calendarEventRepository.saveAll(toAdd.toDomain(googleAccount, calendarId, timeZone))
                 calendarEventRepository.deleteAll(toRemove.map { it.toKey(accountId, calendarId) })
 
                 if (pastEventContactScanEnabled) {
