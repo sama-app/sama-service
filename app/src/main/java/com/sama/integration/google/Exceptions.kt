@@ -10,7 +10,7 @@ fun translatedGoogleException(ex: Throwable): Throwable {
     if (ex is GoogleJsonResponseException) {
         return when (ex.statusCode) {
             400 -> {
-                if (ex.details?.details?.find { it?.reason == "pushNotSupportedForRequestedResource" } != null) {
+                if (ex.details?.errors?.find { it?.reason == "pushNotSupportedForRequestedResource" } != null) {
                     GoogleChannelCreationUnsupportedException(ex)
                 } else {
                     GoogleBadRequestException(ex)
@@ -18,7 +18,7 @@ fun translatedGoogleException(ex: Throwable): Throwable {
             }
             401 -> GoogleInvalidCredentialsException(ex)
             403 -> {
-                if (ex.details?.details?.find { it?.reason == "rateLimitExceeded" } != null) {
+                if (ex.details?.errors?.find { it?.reason == "rateLimitExceeded" } != null) {
                     GoogleApiRateLimitException(ex)
                 } else {
                     GoogleInsufficientPermissionsException(ex)
