@@ -45,6 +45,7 @@ class GoogleAccountApplicationService(
         val userId = authUserService.currentUserId()
         return googleAccountRepository.findAllByUserId(userId)
             .filter { it.linked }
+            .sortedBy { !it.primary } // primary first
             .map { GoogleAccountDTO(it.publicId!!, it.email) }
             .let { GoogleIntegrationsDTO(it) }
     }
