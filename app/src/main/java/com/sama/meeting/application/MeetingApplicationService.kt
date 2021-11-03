@@ -361,7 +361,7 @@ class MeetingApplicationService(
         val meetingProposedAt = proposedMeeting.createdAt!!
         val searchCriteria = EventSearchCriteria(createdFrom = meetingProposedAt, hasAttendees = true)
         val blockingCalendarEvents = eventService.fetchEvents(
-            start.toLocalDate(), end.toLocalDate(), UTC, searchCriteria
+            proposedMeeting.initiatorId, start.toLocalDate(), end.toLocalDate(), UTC, searchCriteria
         ).events
         return AvailableSlots.of(proposedMeeting, blockingCalendarEvents, clock)
     }

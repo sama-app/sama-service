@@ -32,9 +32,12 @@ class EventApplicationService(
 ) : EventService {
 
     override fun fetchEvents(
-        startDate: LocalDate, endDate: LocalDate, timezone: ZoneId, criteria: EventSearchCriteria
+        userId: UserId,
+        startDate: LocalDate,
+        endDate: LocalDate,
+        timezone: ZoneId,
+        criteria: EventSearchCriteria
     ): EventsDTO {
-        val userId = authUserService.currentUserId()
         val events = googleCalendarService.findEvents(
             userId = userId,
             startDateTime = startDate.atStartOfDay(timezone),
@@ -52,6 +55,9 @@ class EventApplicationService(
             }
             .let { EventsDTO(it) }
     }
+
+    override fun fetchEvents(startDate: LocalDate, endDate: LocalDate, timezone: ZoneId, criteria: EventSearchCriteria) =
+        fetchEvents(authUserService.currentUserId(), startDate, endDate, timezone, criteria)
 
     override fun createEvent(userId: UserId, command: CreateEventCommand): Boolean {
         val initiator = internalUserService.findInternal(userId)
