@@ -92,7 +92,7 @@ class MeetingApplicationServiceIT : BaseApplicationIntegrationTest() {
         // load proposal from meeting code with initiator's calendar non-blocked
         every {
             eventService.fetchEvents(
-                proposedSlotStart.toLocalDate(), proposedSlotEnd.toLocalDate(), UTC, any()
+                initiator().id, proposedSlotStart.toLocalDate(), proposedSlotEnd.toLocalDate(), UTC, any()
             )
         } returns EventsDTO(emptyList())
 
@@ -560,7 +560,7 @@ class MeetingApplicationServiceIT : BaseApplicationIntegrationTest() {
 
         every {
             eventService.fetchEvents(
-                proposedSlotStart.toLocalDate(), proposedSlotEnd.toLocalDate(), UTC, any()
+                initiator().id, proposedSlotStart.toLocalDate(), proposedSlotEnd.toLocalDate(), UTC, any()
             )
         } returns EventsDTO(emptyList())
 
@@ -635,6 +635,7 @@ class MeetingApplicationServiceIT : BaseApplicationIntegrationTest() {
         // load proposal from meeting code with initiator's calendar blocked completely
         every {
             eventService.fetchEvents(
+                initiator().id,
                 proposedSlotStart.toLocalDate(),
                 proposedSlotTwoEnd.toLocalDate(),
                 UTC,
@@ -709,7 +710,7 @@ class MeetingApplicationServiceIT : BaseApplicationIntegrationTest() {
         // load proposal from meeting code with initiator's calendar non-blocked
         every {
             eventService.fetchEvents(
-                proposedSlotStart.toLocalDate(), proposedSlotEnd.toLocalDate(), UTC, any()
+                initiator().id, proposedSlotStart.toLocalDate(), proposedSlotEnd.toLocalDate(), UTC, any()
             )
         } returns EventsDTO(emptyList())
 
@@ -772,7 +773,7 @@ class MeetingApplicationServiceIT : BaseApplicationIntegrationTest() {
         // load proposal from meeting code with initiator's calendar non-blocked
         every {
             eventService.fetchEvents(
-                proposedSlotStart.toLocalDate(), proposedSlotEnd.toLocalDate(), UTC, any()
+                initiator().id, proposedSlotStart.toLocalDate(), proposedSlotEnd.toLocalDate(), UTC, any()
             )
         } returns EventsDTO(emptyList())
 
