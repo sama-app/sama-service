@@ -122,15 +122,8 @@ class JdbcCalendarEventRepository(
         if (events.isEmpty()) {
             return
         }
-        jdbcTemplate.batchUpdate(
-            """
-                INSERT INTO gcal.event (google_account_id, calendar_id, event_id, start_date_time, end_date_time, event_data, labels, updated_at)
-                VALUES (:google_account_id, :calendar_id, :event_id, :start_date_time, :end_date_time, :event_data, :labels, :updated_at)
-                ON CONFLICT (google_account_id, calendar_id, event_id) DO UPDATE 
-                SET start_date_time = :start_date_time, end_date_time = :end_date_time, 
-                    event_data = :event_data, labels = :labels, updated_at = :updated_at
-            """,
-            events.map { (key, startDateTime, endDateTime, eventData, labels) ->
+        events.chunked(250) {
+            it.map { (key, startDateTime, endDateTime, eventData, labels) ->
                 MapSqlParameterSource()
                     .addValue("google_account_id", key.accountId.id)
                     .addValue("calendar_id", key.calendarId)
@@ -141,20 +134,35 @@ class JdbcCalendarEventRepository(
                     .addValue("labels", objectMapper.writeValueAsString(labels), Types.OTHER)
                     .addValue("updated_at", OffsetDateTime.now(ZoneId.of("UTC")))
             }.toTypedArray()
-        )
+        }.forEach { params ->
+            jdbcTemplate.batchUpdate(
+                """
+                    INSERT INTO gcal.event (google_account_id, calendar_id, event_id, start_date_time, end_date_time, event_data, labels, updated_at)
+                    VALUES (:google_account_id, :calendar_id, :event_id, :start_date_time, :end_date_time, :event_data, :labels, :updated_at)
+                    ON CONFLICT (google_account_id, calendar_id, event_id) DO UPDATE 
+                    SET start_date_time = :start_date_time, end_date_time = :end_date_time, 
+                        event_data = :event_data, labels = :labels, updated_at = :updated_at
+                    """,
+                params
+            )
+        }
     }
 
     override fun deleteAll(eventKeys: Collection<GoogleCalendarEventKey>) {
         if (eventKeys.isEmpty()) {
             return
         }
-        jdbcTemplate.update(
-            """
-                DELETE FROM gcal.event WHERE (google_account_id, calendar_id, event_id) in (:event_keys)
-            """,
-            MapSqlParameterSource().addValue("event_keys", eventKeys
-                .map { arrayOf(it.accountId.id, it.calendarId, it.eventId) })
-        )
+        eventKeys
+            .chunked(250)
+            .forEach { chunk ->
+                jdbcTemplate.update(
+                    """
+                    DELETE FROM gcal.event WHERE (google_account_id, calendar_id, event_id) in (:event_keys)
+                    """,
+                    MapSqlParameterSource().addValue("event_keys", chunk
+                        .map { arrayOf(it.accountId.id, it.calendarId, it.eventId) })
+                )
+            }
     }
 
     override fun deleteBy(accountId: GoogleAccountId, calendarId: GoogleCalendarId) {
