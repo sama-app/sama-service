@@ -96,7 +96,7 @@ private fun Calendar.findEventsPage(
 ): Calendar.Events.List {
     val requestBuilder = this.events().list(calendarId)
     requestBuilder.singleEvents = singleEvents
-    requestBuilder.maxResults = 2500
+    requestBuilder.maxResults = 250
 
     if (syncToken != null) {
         requestBuilder.syncToken = syncToken
