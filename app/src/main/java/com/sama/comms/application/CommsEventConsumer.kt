@@ -76,7 +76,7 @@ class CommsEventConsumer(
         } else if (meetingRecipient is UserRecipient) {
             val receiver = receiverCommsUser(event.actorId, confirmedMeeting.initiatorId, meetingRecipient.recipientId)
                 ?: return
-            val sender = event.actorId?.let { commsUserRepository.find(it) }
+            val sender = senderCommsUser(event.actorId, confirmedMeeting.initiatorId, meetingRecipient.recipientId)
                 ?: return
             if (sender.userId == receiver.userId) {
                 return
@@ -123,6 +123,18 @@ class CommsEventConsumer(
             actorId == null || recipientId == null -> initiatorId
             actorId == initiatorId -> recipientId
             actorId == recipientId -> initiatorId
+            else -> {
+                logger.warn("Could not determine comms recipient id")
+                null
+            }
+        }?.let { commsUserRepository.find(it) }
+    }
+
+    private fun senderCommsUser(actorId: UserId?, initiatorId: UserId, recipientId: UserId): CommsUser? {
+        return when (actorId) {
+            null -> recipientId
+            initiatorId -> initiatorId
+            recipientId -> recipientId
             else -> {
                 logger.warn("Could not determine comms recipient id")
                 null

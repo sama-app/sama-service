@@ -24,7 +24,7 @@ class FirebaseNotificationSender(private val deviceRegistrationService: UserDevi
             return
         }
 
-        response.firebaseDeviceRegistrations.forEach {
+        response.firebaseDeviceRegistrations.forEach { (deviceId, registrationToken) ->
             val message = Message.builder()
                 .setNotification(
                     com.google.firebase.messaging.Notification.builder()
@@ -33,22 +33,24 @@ class FirebaseNotificationSender(private val deviceRegistrationService: UserDevi
                         .build()
                 )
                 .putAllData(notification.additionalData)
-                .setToken(it.registrationToken)
+                .setToken(registrationToken)
                 .build()
             try {
                 FirebaseMessaging.getInstance().send(message)
-                logger.debug("Notifications sent to User#${receiverUserId.id}  Device#${it.deviceId}")
+                logger.debug("Notifications sent to User#${receiverUserId.id}  Device#${deviceId}")
             } catch (e: Exception) {
                 if (e is FirebaseMessagingException) {
                     // Remove unregistered devices
                     if (e.messagingErrorCode == MessagingErrorCode.UNREGISTERED) {
                         kotlin.runCatching {
-                            deviceRegistrationService.unregister(UnregisterDeviceCommand(it.deviceId))
+                            deviceRegistrationService.unregister(UnregisterDeviceCommand(deviceId))
+                        }.onFailure {
+                            logger.error("Error unregistering device#${deviceId}", it)
                         }
                     }
                 }
                 val code = if (e is FirebaseMessagingException) e.messagingErrorCode.toString() else "OTHER"
-                logger.warn("Could not send Firebase notification to User#${receiverUserId.id} Device#${it.deviceId}: $code", e)
+                logger.warn("Could not send Firebase notification to User#${receiverUserId.id} Device#${deviceId}: $code", e)
             }
         }
     }
