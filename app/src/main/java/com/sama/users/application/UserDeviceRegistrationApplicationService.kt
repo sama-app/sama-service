@@ -18,6 +18,7 @@ class UserDeviceRegistrationApplicationService(
         return find(authUserService.currentUserId())
     }
 
+    @Transactional(readOnly = true)
     override fun find(userId: UserId): UserDeviceRegistrationsDTO {
         return userRepository.findDeviceRegistrationsByIdOrThrow(userId).deviceRegistrations
             .map { FirebaseDeviceRegistrationDTO(it.deviceId, it.firebaseRegistrationToken) }
