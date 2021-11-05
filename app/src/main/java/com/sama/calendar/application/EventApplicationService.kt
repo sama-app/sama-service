@@ -4,6 +4,8 @@ import com.sama.common.ApplicationService
 import com.sama.integration.google.calendar.application.EventAttendee
 import com.sama.integration.google.calendar.application.GoogleCalendarService
 import com.sama.integration.google.calendar.application.InsertGoogleCalendarEventCommand
+import com.sama.meeting.configuration.MeetingUrlConfiguration
+import com.sama.meeting.configuration.toUrl
 import com.sama.meeting.domain.EmailRecipient
 import com.sama.meeting.domain.UserRecipient
 import com.sama.users.application.AuthUserService
@@ -28,6 +30,7 @@ class EventApplicationService(
     private val googleCalendarService: GoogleCalendarService,
     private val internalUserService: InternalUserService,
     private val authUserService: AuthUserService,
+    private val meetingUrlConfiguration: MeetingUrlConfiguration,
     @Value("\${sama.landing.url}") private val samaWebUrl: String,
 ) : EventService {
 
@@ -110,8 +113,12 @@ class EventApplicationService(
                 InsertGoogleCalendarEventCommand(
                     it.startDateTime,
                     it.endDateTime,
-                    "Blocked for ${command.meetingTitle}",
-                    description = null,
+                    "Reserved by Sama",
+                    description = """
+                        Blocked for ${command.meetingTitle}
+                        
+                        Meeting link: ${command.meetingCode.toUrl(meetingUrlConfiguration)}
+                    """.trimIndent(),
                     attendees = emptyList(),
                     conferenceType = null,
                     privateExtendedProperties = mapOf(
