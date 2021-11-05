@@ -2,13 +2,13 @@ package com.sama.integration.google.calendar.application
 
 import com.sama.common.NotFoundException
 import com.sama.common.afterCommit
+import com.sama.common.execute
 import com.sama.common.findByIdOrThrow
 import com.sama.integration.google.GoogleServiceFactory
 import com.sama.integration.google.calendar.domain.ChannelClosedException
 import com.sama.integration.google.calendar.domain.ChannelRepository
 import com.sama.integration.google.calendar.domain.ResourceType
 import com.sama.integration.google.calendar.domain.stopChannel
-import java.time.Instant
 import java.util.UUID
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -62,20 +62,14 @@ class GoogleChannelNotificationReceiver(
                 ResourceType.CALENDAR_LIST -> {
                     calendarSyncer.markCalendarListNeedsSync(channel.googleAccountId)
                     afterCommit {
-                        taskScheduler.schedule(
-                            { calendarSyncer.syncUserCalendarList(channel.googleAccountId) },
-                            Instant.now()
-                        )
+                        taskScheduler.execute { calendarSyncer.syncUserCalendarList(channel.googleAccountId) }
                     }
                 }
                 ResourceType.CALENDAR -> {
                     check(channel.resourceId != null) { "Received notification for invalid channel: ${channel.debugString()}" }
                     calendarSyncer.markCalendarNeedsSync(channel.googleAccountId, channel.resourceId)
                     afterCommit {
-                        taskScheduler.schedule(
-                            { calendarSyncer.syncUserCalendar(channel.googleAccountId, channel.resourceId) },
-                            Instant.now()
-                        )
+                        taskScheduler.execute { calendarSyncer.syncUserCalendar(channel.googleAccountId, channel.resourceId) }
                     }
                 }
             }

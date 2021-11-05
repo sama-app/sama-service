@@ -1,6 +1,7 @@
 package com.sama.users.application
 
 import com.sama.common.ApplicationService
+import com.sama.common.execute
 import com.sama.integration.mailerlite.MailerLiteClient
 import com.sama.users.domain.MeetingPreferences
 import com.sama.users.domain.UserId
@@ -9,7 +10,6 @@ import com.sama.users.domain.UserSettings
 import com.sama.users.domain.UserSettingsDefaultsRepository
 import com.sama.users.domain.UserSettingsRepository
 import com.sama.users.domain.WorkingHours
-import java.time.Instant
 import org.springframework.scheduling.TaskScheduler
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -88,14 +88,14 @@ class UserSettingsApplicationService(
         if (userSettings != updated) {
             userSettingsRepository.save(updated)
 
-            taskScheduler.schedule({
+            taskScheduler.execute {
                 val user = userRepository.findByIdOrThrow(userId)
                 if (updated.newsletterSubscriptionEnabled) {
                     mailerLiteClient.addSubscriber(user.email, user.fullName)
                 } else {
                     mailerLiteClient.removeSubscriber(user.email)
                 }
-            }, Instant.now())
+            }
         }
         return true
     }

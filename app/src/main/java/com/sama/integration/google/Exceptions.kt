@@ -27,6 +27,7 @@ fun translatedGoogleException(ex: Throwable): Throwable {
             404 -> GoogleNotFoundException(ex)
             429 -> GoogleApiRateLimitException(ex)
             410 -> GoogleSyncTokenInvalidatedException(ex)
+            in (500..599) -> GoogleInternalServerException(ex)
             else -> GoogleUnhandledException(ex)
         }
     }
@@ -58,8 +59,11 @@ class GoogleNotFoundException(originalEx: GoogleJsonResponseException) : GoogleE
 class GoogleSyncTokenInvalidatedException(originalEx: GoogleJsonResponseException) :
     GoogleException("Sync token invalidated", originalEx)
 
-class GoogleApiRateLimitException(originalEx: GoogleJsonResponseException) :
-    GoogleException("Rate limited: ${originalEx.message}", originalEx)
+class GoogleApiRateLimitException(originalEx: GoogleJsonResponseException?) :
+    GoogleException("Rate limited: ${originalEx?.message}", originalEx)
+
+class GoogleInternalServerException(originalEx: GoogleJsonResponseException) :
+    GoogleException("Internal error: ${originalEx.message}", originalEx)
 
 class GoogleUnhandledException(originalEx: GoogleJsonResponseException) :
     GoogleException("Bad request to Google Calendar: ${originalEx.message}", originalEx)

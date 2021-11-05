@@ -47,6 +47,7 @@ class UserApplicationService(
         return true
     }
 
+    @Transactional(readOnly = true)
     override fun findInternal(userId: UserId): UserInternalDTO {
         val user = userRepository.findByIdOrThrow(userId)
         val userSettings = userSettingsRepository.findByIdOrThrow(user.id!!)
