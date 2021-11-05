@@ -3,6 +3,7 @@ package com.sama.api.users
 import com.sama.users.application.GrantUserPermissionsCommand
 import com.sama.users.application.RevokeUserPermissionsCommand
 import com.sama.users.application.UpdateMarketingPreferencesCommand
+import com.sama.users.application.UpdateMeetingPreferencesCommand
 import com.sama.users.application.UpdateTimeZoneCommand
 import com.sama.users.application.UpdateWorkingHoursCommand
 import com.sama.users.application.UserSettingsDTO
@@ -85,4 +86,15 @@ class UserSettingsController(private val userSettingsService: UserSettingsServic
     )
     fun updateMarketingPreferences(@RequestBody command: UpdateMarketingPreferencesCommand) =
         userSettingsService.updateMarketingPreferences(command)
+
+    @Operation(
+        summary = "Update user marketing preferences",
+        security = [SecurityRequirement(name = "user-auth")]
+    )
+    @PostMapping(
+        "/api/user/me/update-meeting-preferences",
+        consumes = [APPLICATION_JSON_VALUE]
+    )
+    fun updateMeetingPreferences(@RequestBody command: UpdateMeetingPreferencesCommand) =
+        userSettingsService.updateMeetingPreferences(command)
 }
