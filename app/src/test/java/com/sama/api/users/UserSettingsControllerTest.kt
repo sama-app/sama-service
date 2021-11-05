@@ -9,6 +9,7 @@ import com.sama.users.application.MarketingPreferencesDTO
 import com.sama.users.application.MeetingPreferencesDTO
 import com.sama.users.application.RevokeUserPermissionsCommand
 import com.sama.users.application.UpdateMarketingPreferencesCommand
+import com.sama.users.application.UpdateMeetingPreferencesCommand
 import com.sama.users.application.UpdateTimeZoneCommand
 import com.sama.users.application.UpdateWorkingHoursCommand
 import com.sama.users.application.UserSettingsApplicationService
@@ -226,6 +227,27 @@ class UserSettingsControllerTest(
             .andExpect(content().string("true"))
     }
 
+    @Test
+    fun `update meeting preferences`() {
+        whenever(userSettingsApplicationService.updateMeetingPreferences(UpdateMeetingPreferencesCommand("test", true)))
+            .thenReturn(true)
+
+        val requestBody = """
+            {
+                "defaultTitle": "test",
+                "blockOutSlots": true
+            }
+        """
+        mockMvc.perform(
+            post("/api/user/me/update-meeting-preferences")
+                .contentType(APPLICATION_JSON)
+                .header("Authorization", "Bearer $jwt")
+                .content(requestBody)
+        )
+            .andExpect(status().isOk)
+            .andExpect(content().string("true"))
+    }
+
     @TestFactory
     fun `endpoint authorization without jwt`() = listOf(
         post("/api/user/me/update-working-hours") to HttpStatus.UNAUTHORIZED,
@@ -233,6 +255,7 @@ class UserSettingsControllerTest(
         post("/api/user/me/grant-permissions") to HttpStatus.UNAUTHORIZED,
         post("/api/user/me/revoke-permissions") to HttpStatus.UNAUTHORIZED,
         post("/api/user/me/update-marketing-preferences") to HttpStatus.UNAUTHORIZED,
+        post("/api/user/me/update-meeting-preferences") to HttpStatus.UNAUTHORIZED,
         get("/api/user/me/settings") to HttpStatus.UNAUTHORIZED,
     )
         .mapIndexed { idx, (request, expectedStatus) ->
