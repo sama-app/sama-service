@@ -7,6 +7,7 @@ import com.sama.common.ApplicationService
 import com.sama.common.DomainValidationException
 import com.sama.common.NotFoundException
 import com.sama.common.checkAccess
+import com.sama.common.execute
 import com.sama.common.toMinutes
 import com.sama.comms.application.CommsEventConsumer
 import com.sama.connection.application.CreateUserConnectionCommand
@@ -44,7 +45,6 @@ import com.sama.users.application.InternalUserService
 import com.sama.users.domain.UserId
 import io.sentry.spring.tracing.SentryTransaction
 import java.time.Clock
-import java.time.Instant
 import java.time.ZoneOffset.UTC
 import java.time.ZonedDateTime
 import kotlin.math.ceil
@@ -162,11 +162,8 @@ class MeetingApplicationService(
             .also { meetingRepository.save(it) }
 
         val event = MeetingProposedEvent(userId, proposedMeeting)
-        taskScheduler.schedule(
-            { calendarEventConsumer.onMeetingProposed(event) },
-            Instant.now()
-        )
-        commsEventConsumer.onMeetingProposed(event)
+        taskScheduler.execute { calendarEventConsumer.onMeetingProposed(event) }
+        taskScheduler.execute { commsEventConsumer.onMeetingProposed(event) }
 
         return meetingInvitationView.render(proposedMeeting, meetingIntent.recipientTimeZone)
     }
@@ -346,17 +343,13 @@ class MeetingApplicationService(
 
         // TODO: temporary hack for permalinks
         if (!proposedMeeting.meetingPreferences.permanentLink) {
-            meetingRepository.save(confirmedMeeting)
+//            meetingRepository.save(confirmedMeeting)
         }
 
         // "manual" event publishing
         val event = MeetingConfirmedEvent(currentUserId, confirmedMeeting)
-        calendarEventConsumer.onMeetingConfirmed(event)
-
-        taskScheduler.schedule(
-            { commsEventConsumer.onMeetingConfirmed(event) },
-            Instant.now()
-        )
+        taskScheduler.execute { calendarEventConsumer.onMeetingConfirmed(event) }
+        taskScheduler.execute { commsEventConsumer.onMeetingConfirmed(event) }
         return true
     }
 

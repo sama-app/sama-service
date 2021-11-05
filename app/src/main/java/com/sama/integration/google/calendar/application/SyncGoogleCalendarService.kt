@@ -9,6 +9,8 @@ import com.google.api.services.calendar.model.EventDateTime
 import com.sama.common.ApplicationService
 import com.sama.common.NotFoundException
 import com.sama.common.checkAccess
+import com.sama.integration.google.GoogleApiRateLimitException
+import com.sama.integration.google.GoogleInternalServerException
 import com.sama.integration.google.GoogleServiceFactory
 import com.sama.integration.google.NoPrimaryGoogleAccountException
 import com.sama.integration.google.auth.domain.GoogleAccount
@@ -36,6 +38,8 @@ import java.time.ZonedDateTime
 import java.util.UUID
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.retry.annotation.Backoff
+import org.springframework.retry.annotation.Retryable
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -157,6 +161,10 @@ class SyncGoogleCalendarService(
 
     // https://developers.google.com/calendar/api/v3/reference/events/insert
     // https://developers.google.com/calendar/api/v3/reference/events/insert#request-body
+    @Retryable(
+        value = [GoogleInternalServerException::class, GoogleApiRateLimitException::class],
+        maxAttempts = 10, backoff = Backoff(delay = 1000, multiplier = 2.0, maxDelay = 60000)
+    )
     override fun insertEvent(userId: UserId, command: InsertGoogleCalendarEventCommand): Boolean {
         try {
             val timeZone = command.startDateTime.zone
@@ -206,6 +214,10 @@ class SyncGoogleCalendarService(
         }
     }
 
+    @Retryable(
+        value = [GoogleInternalServerException::class, GoogleApiRateLimitException::class],
+        maxAttempts = 10, backoff = Backoff(delay = 1000, multiplier = 2.0, maxDelay = 60000)
+    )
     override fun deleteEvent(userId: UserId, eventId: GoogleCalendarEventId) {
         val primaryAccountId = googleAccountRepository.findByUserIdAndPrimary(userId)
             ?: throw NoPrimaryGoogleAccountException(userId)

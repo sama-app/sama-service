@@ -48,7 +48,14 @@ spring:
         temp:
           use_jdbc_metadata_defaults: false
   task:
-    scheduling.pool.size: 1
+    execution:
+      await-termination: true
+      await-termination-period: 60
+    scheduling:
+      pool.size: 1
+      shutdown:
+        await-termination: true
+        await-termination-period: 60
   liquibase:
     enabled: true
     change-log: liquibase/db.changelog-sama.yml
@@ -59,8 +66,8 @@ spring:
       spec: maximumSize=0
   cloud:
     discovery.client:
-        composite-indicator:
-          enabled: false
+      composite-indicator:
+        enabled: false
 
 management:
   endpoints:
@@ -73,7 +80,7 @@ management:
             enabled: true
       exposure:
         include:
-          ['health', 'info', 'prometheus', 'threaddump', 'caches']
+          [ 'health', 'info', 'prometheus', 'threaddump', 'caches' ]
   endpoint:
     health:
       show-details: always

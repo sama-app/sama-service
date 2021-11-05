@@ -1,6 +1,8 @@
 package com.sama.common
 
+import java.time.Instant
 import org.springframework.data.repository.CrudRepository
+import org.springframework.scheduling.TaskScheduler
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.transaction.support.TransactionSynchronization
 import org.springframework.transaction.support.TransactionSynchronizationManager
@@ -38,3 +40,5 @@ fun afterCommit(runnable: Runnable) {
         }
     })
 }
+
+fun TaskScheduler.execute(runnable: Runnable) = schedule(runnable, Instant.now())

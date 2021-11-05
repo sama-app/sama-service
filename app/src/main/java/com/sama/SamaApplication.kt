@@ -18,6 +18,7 @@ import org.springframework.data.jdbc.repository.config.AbstractJdbcConfiguration
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories
 import org.springframework.data.relational.core.mapping.NamingStrategy
+import org.springframework.retry.annotation.EnableRetry
 import org.springframework.scheduling.annotation.EnableScheduling
 
 
@@ -33,6 +34,7 @@ fun main(args: Array<String>) {
 
 @Configuration
 @EnableScheduling
+@EnableRetry
 class AppConfiguration {
     @Bean
     fun clock(): Clock {
