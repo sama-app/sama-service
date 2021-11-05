@@ -21,6 +21,7 @@ data class UserSettings(
     val timeZone: ZoneId,
     val format24HourTime: Boolean,
     val dayWorkingHours: Map<DayOfWeek, WorkingHours>,
+    val meetingPreferences: MeetingPreferences,
     val newsletterSubscriptionEnabled: Boolean,
     val grantedPermissions: Set<UserPermission>,
 ) {
@@ -35,6 +36,7 @@ data class UserSettings(
                 format24HourTime = defaults?.format24HourTime ?: false,
                 dayWorkingHours = defaults?.workingHours ?: listOf(MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY)
                     .associateWith { WorkingHours.nineToFive() },
+                MeetingPreferences.default(),
                 newsletterSubscriptionEnabled = false,
                 grantedPermissions = emptySet()
             )
@@ -55,6 +57,10 @@ data class UserSettings(
 
     fun revokePermissions(permissions: Set<UserPermission>): UserSettings {
         return copy(grantedPermissions = grantedPermissions - permissions)
+    }
+
+    fun updateMeetingPreferences(update: MeetingPreferences): UserSettings {
+        return copy(meetingPreferences = update)
     }
 
     fun enableNewsletterSubscription(): UserSettings {
@@ -85,6 +91,20 @@ data class WorkingHours(
                 endTime = LocalTime.of(17, 0)
             )
         }
+    }
+}
+
+@ValueObject
+@Embeddable
+data class MeetingPreferences(
+    val defaultTitle: String?,
+    val blockOutSlots: Boolean
+) {
+    companion object {
+        fun default() = MeetingPreferences(
+            defaultTitle = null,
+            blockOutSlots = true
+        )
     }
 }
 

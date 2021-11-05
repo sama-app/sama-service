@@ -6,6 +6,7 @@ import com.sama.api.config.security.UserPrincipal
 import com.sama.users.application.UserInternalDTO
 import com.sama.users.application.toDTO
 import com.sama.users.application.toInternalDTO
+import com.sama.users.domain.MeetingPreferences
 import com.sama.users.domain.UserDetails
 import com.sama.users.domain.UserRepository
 import com.sama.users.domain.UserSettings
@@ -74,7 +75,7 @@ class BaseApplicationIntegrationTest {
         initiatorSettings = userSettingsRepository.save(
             UserSettings(
                 initiatorUser.id!!,
-                ENGLISH, UTC, true, emptyMap(), false, emptySet()
+                ENGLISH, UTC, true, emptyMap(), MeetingPreferences.default(), false, emptySet()
             )
         )
 
@@ -88,7 +89,7 @@ class BaseApplicationIntegrationTest {
         recipientSettings = userSettingsRepository.save(
             UserSettings(
                 recipientUser.id!!,
-                ENGLISH, UTC, true, emptyMap(), false, emptySet()
+                ENGLISH, UTC, true, emptyMap(), MeetingPreferences.default(), false, emptySet()
             )
         )
     }

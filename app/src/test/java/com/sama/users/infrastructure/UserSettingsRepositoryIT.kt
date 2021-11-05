@@ -1,6 +1,7 @@
 package com.sama.users.infrastructure
 
 import com.sama.common.BasePersistenceIT
+import com.sama.users.domain.MeetingPreferences
 import com.sama.users.domain.UserDetails
 import com.sama.users.domain.UserPermission
 import com.sama.users.domain.UserRepository
@@ -31,6 +32,7 @@ class UserSettingsRepositoryIT : BasePersistenceIT<UserSettingsRepository>() {
                 DayOfWeek.TUESDAY to WorkingHours.nineToFive(),
                 DayOfWeek.FRIDAY to WorkingHours.nineToFive()
             ),
+            MeetingPreferences.default(),
             true,
             emptySet()
         )
@@ -44,6 +46,7 @@ class UserSettingsRepositoryIT : BasePersistenceIT<UserSettingsRepository>() {
             mapOf(
                 DayOfWeek.WEDNESDAY to WorkingHours.nineToFive(),
             ),
+            MeetingPreferences.default(),
             false,
             setOf(UserPermission.PAST_EVENT_CONTACT_SCAN)
         )

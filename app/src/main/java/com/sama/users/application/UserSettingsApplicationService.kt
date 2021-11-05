@@ -2,6 +2,7 @@ package com.sama.users.application
 
 import com.sama.common.ApplicationService
 import com.sama.integration.mailerlite.MailerLiteClient
+import com.sama.users.domain.MeetingPreferences
 import com.sama.users.domain.UserId
 import com.sama.users.domain.UserRepository
 import com.sama.users.domain.UserSettings
@@ -58,6 +59,15 @@ class UserSettingsApplicationService(
         val userSettings = userSettingsRepository.findByIdOrThrow(userId)
             .updateTimeZone(command.timeZone)
 
+        userSettingsRepository.save(userSettings)
+        return true
+    }
+
+    @Transactional
+    override fun updateMeetingPreferences(command: UpdateMeetingPreferencesCommand): Boolean {
+        val userId = authUserService.currentUserId()
+        val userSettings = userSettingsRepository.findByIdOrThrow(userId)
+            .updateMeetingPreferences(MeetingPreferences(command.defaultTitle, command.blockOutSlots))
         userSettingsRepository.save(userSettings)
         return true
     }
@@ -120,6 +130,7 @@ fun UserSettings.toDTO(): UserSettingsDTO {
             .map { wh -> DayWorkingHoursDTO(wh.key, wh.value.startTime, wh.value.endTime) }
             .sortedBy { wh -> wh.dayOfWeek },
         grantedPermissions,
-        MarketingPreferencesDTO(newsletterSubscriptionEnabled)
+        MarketingPreferencesDTO(newsletterSubscriptionEnabled),
+        MeetingPreferencesDTO(meetingPreferences.defaultTitle, meetingPreferences.blockOutSlots)
     )
 }

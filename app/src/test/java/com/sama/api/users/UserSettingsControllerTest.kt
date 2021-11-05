@@ -2,16 +2,17 @@ package com.sama.api.users
 
 import com.sama.api.ApiTestConfiguration
 import com.sama.api.config.WebMvcConfiguration
+import com.sama.meeting.domain.Meeting
 import com.sama.users.application.DayWorkingHoursDTO
 import com.sama.users.application.GrantUserPermissionsCommand
 import com.sama.users.application.MarketingPreferencesDTO
+import com.sama.users.application.MeetingPreferencesDTO
 import com.sama.users.application.RevokeUserPermissionsCommand
 import com.sama.users.application.UpdateMarketingPreferencesCommand
 import com.sama.users.application.UpdateTimeZoneCommand
 import com.sama.users.application.UpdateWorkingHoursCommand
 import com.sama.users.application.UserSettingsApplicationService
 import com.sama.users.application.UserSettingsDTO
-import com.sama.users.domain.UserId
 import com.sama.users.domain.UserPermission.PAST_EVENT_CONTACT_SCAN
 import java.time.DayOfWeek.MONDAY
 import java.time.DayOfWeek.TUESDAY
@@ -71,7 +72,8 @@ class UserSettingsControllerTest(
                         DayWorkingHoursDTO(WEDNESDAY, LocalTime.of(13, 0), LocalTime.of(17, 30))
                     ),
                     setOf(PAST_EVENT_CONTACT_SCAN),
-                    MarketingPreferencesDTO(true)
+                    MarketingPreferencesDTO(true),
+                    MeetingPreferencesDTO("title", true)
                 )
             )
 
@@ -95,6 +97,10 @@ class UserSettingsControllerTest(
             "grantedPermissions": [ "PAST_EVENT_CONTACT_SCAN" ],
             "marketingPreferences": {
                 "newsletterSubscriptionEnabled": true
+            },
+            "meetingPreferences": {
+                "defaultTitle": "title",
+                "blockOutSlots": true
             }
         }
         """
