@@ -54,7 +54,8 @@ class UserSettingsApplicationServiceIT : BaseApplicationIntegrationTest() {
             listOf(MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY)
                 .map { DayWorkingHoursDTO(it, LocalTime.of(9, 0), LocalTime.of(17, 0)) },
             emptySet(),
-            MarketingPreferencesDTO(false)
+            MarketingPreferencesDTO(false),
+            MeetingPreferencesDTO(null, true)
         )
 
 
@@ -67,13 +68,21 @@ class UserSettingsApplicationServiceIT : BaseApplicationIntegrationTest() {
         underTest.create(userId)
 
         val newTimeZone = ZoneId.of("Europe/Vilnius")
-        asInitiator { underTest.updateTimeZone(UpdateTimeZoneCommand(newTimeZone)) }
-
-        assertThat(underTest.find(userId).timeZone).isEqualTo(newTimeZone)
+        asInitiator {
+            underTest.updateTimeZone(UpdateTimeZoneCommand(newTimeZone))
+            assertThat(underTest.me().timeZone).isEqualTo(newTimeZone)
+        }
 
         val newWorkingHours = listOf(DayWorkingHoursDTO(MONDAY, LocalTime.of(10, 0), LocalTime.of(12, 0)))
-        asInitiator { underTest.updateWorkingHours(UpdateWorkingHoursCommand(newWorkingHours)) }
+        asInitiator {
+            underTest.updateWorkingHours(UpdateWorkingHoursCommand(newWorkingHours))
+            assertThat(underTest.me().workingHours).isEqualTo(newWorkingHours)
+        }
 
-        assertThat(underTest.find(userId).workingHours).isEqualTo(newWorkingHours)
+        asInitiator {
+            underTest.updateMeetingPreferences(UpdateMeetingPreferencesCommand("Test", false))
+            assertThat(underTest.me().meetingPreferences)
+                .isEqualTo(MeetingPreferencesDTO("Test", false))
+        }
     }
 }

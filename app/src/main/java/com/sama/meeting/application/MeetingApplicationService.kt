@@ -172,7 +172,11 @@ class MeetingApplicationService(
     }
 
     private fun generateMeetingTitle(meetingIntent: MeetingIntent): String {
-        val initiatorName = userService.find(meetingIntent.initiatorId)
+        val initiatorUser = userService.findInternal(meetingIntent.initiatorId)
+        initiatorUser.settings.meetingPreferences.defaultTitle
+            ?.let { return it }
+
+        val initiatorName = initiatorUser
             .let { it.fullName ?: it.email }
         val recipientName = meetingIntent.recipientId
             ?.let { userService.find(it) }

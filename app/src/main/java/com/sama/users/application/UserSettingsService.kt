@@ -8,6 +8,7 @@ interface UserSettingsService {
     fun create(userId: UserId): Boolean
     fun updateWorkingHours(command: UpdateWorkingHoursCommand): Boolean
     fun updateTimeZone(command: UpdateTimeZoneCommand): Boolean
+    fun updateMeetingPreferences(command: UpdateMeetingPreferencesCommand): Boolean
     fun updateMarketingPreferences(command: UpdateMarketingPreferencesCommand): Boolean
     fun grantPermissions(command: GrantUserPermissionsCommand): Boolean
     fun revokePermissions(command: RevokeUserPermissionsCommand): Boolean

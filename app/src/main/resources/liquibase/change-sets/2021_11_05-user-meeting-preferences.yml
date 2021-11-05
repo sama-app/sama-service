@@ -1,0 +1,20 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-user-meeting-preferences
+      author: balys
+      changes:
+        - addColumn:
+            schemaName: sama
+            tableName: user_settings
+            columns:
+              - column:
+                  name: default_meeting_title
+                  type: VARCHAR
+                  constraints:
+                    nullable: true
+              - column:
+                  name: block_out_suggested_slots
+                  type: BOOLEAN
+                  constraints:
+                    nullable: false
+                  defaultValue: true

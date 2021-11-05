@@ -62,6 +62,10 @@ class UserSettingsEntity(
 
     var newsletterSubscriptionEnabledAt: Instant? = null
 
+    var defaultMeetingTitle: String? = null
+
+    var blockOutSuggestedSlots: Boolean? = null
+
     @LastModifiedDate
     var updatedAt: Instant? = null
 }
@@ -110,6 +114,8 @@ fun UserSettingsEntity.applyChanges(userSettings: UserSettings): UserSettingsEnt
     } else if (newsletterSubscriptionEnabledAt == null && userSettings.newsletterSubscriptionEnabled) {
         this.newsletterSubscriptionEnabledAt = Instant.now()
     }
+    this.defaultMeetingTitle = userSettings.meetingPreferences.defaultTitle
+    this.blockOutSuggestedSlots = userSettings.meetingPreferences.blockOutSlots
     this.updatedAt = Instant.now()
     return this
 }

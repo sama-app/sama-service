@@ -2,6 +2,7 @@ package com.sama.users.infrastructure
 
 import com.sama.common.findByIdOrThrow
 import com.sama.common.toNullable
+import com.sama.users.domain.MeetingPreferences
 import com.sama.users.domain.UserId
 import com.sama.users.domain.UserPermission.PAST_EVENT_CONTACT_SCAN
 import com.sama.users.domain.UserSettings
@@ -38,6 +39,7 @@ fun UserSettingsEntity.toDomainObject(): UserSettings {
         timezone!!,
         format24HourTime!!,
         dayWorkingHours.mapValues { it.value.workingHours },
+        MeetingPreferences(defaultMeetingTitle, blockOutSuggestedSlots!!),
         newsletterSubscriptionEnabledAt != null,
         setOfNotNull(
             if (pastEventContactScanEnabled!!) {
