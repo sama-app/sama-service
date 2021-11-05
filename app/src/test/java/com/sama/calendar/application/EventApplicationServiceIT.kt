@@ -186,8 +186,12 @@ class EventApplicationServiceIT : BaseApplicationIntegrationTest() {
                 InsertGoogleCalendarEventCommand(
                     startDateTime,
                     endDateTime,
-                    "Blocked for title",
-                    description = null,
+                    "Reserved by Sama",
+                    description = """
+                        Blocked for title
+                        
+                        Meeting link: http://localhost:3000/code
+                    """.trimIndent(),
                     attendees = emptyList(),
                     conferenceType = null,
                     privateExtendedProperties = mapOf(
