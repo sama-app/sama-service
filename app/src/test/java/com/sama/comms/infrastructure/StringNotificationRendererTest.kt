@@ -1,14 +1,15 @@
 package com.sama.comms.infrastructure
 
 import com.sama.comms.domain.CommsUser
-import com.sama.comms.domain.Notification
+import com.sama.comms.domain.Message
+import com.sama.comms.domain.NotificationData
 import com.sama.users.domain.UserId
-import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
 
 class StringNotificationRendererTest {
     private val underTest: StringNotificationRenderer = StringNotificationRenderer()
@@ -28,9 +29,11 @@ class StringNotificationRendererTest {
         )
 
         assertThat(actual).isEqualTo(
-            Notification(
-                "attendee@meetsama.com confirmed a meeting",
-                "Meet on Jun 1 on 8:00 AM in your time zone",
+            Message(
+                notification = NotificationData(
+                    title = "attendee@meetsama.com confirmed a meeting",
+                    body = "Meet on Jun 1 on 8:00 AM in your time zone"
+                ),
                 emptyMap()
             )
         )
@@ -51,9 +54,11 @@ class StringNotificationRendererTest {
         )
 
         assertThat(actual).isEqualTo(
-            Notification(
-                "attendee@meetsama.com confirmed a meeting",
-                "Meet on Jun 1 on 6:00 PM in your time zone",
+            Message(
+                notification = NotificationData(
+                    title = "attendee@meetsama.com confirmed a meeting",
+                    body = "Meet on Jun 1 on 6:00 PM in your time zone"
+                ),
                 emptyMap()
             )
         )

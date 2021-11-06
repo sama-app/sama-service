@@ -1,10 +1,10 @@
 package com.sama.integration.google.calendar.application
 
-import com.google.api.services.calendar.model.Calendar
-import com.google.api.services.calendar.model.CalendarListEntry
 import com.sama.common.component1
 import com.sama.common.component2
+import com.sama.common.execute
 import com.sama.common.to
+import com.sama.comms.application.CommsEventConsumer
 import com.sama.connection.application.AddDiscoveredUsersCommand
 import com.sama.connection.application.UserConnectionService
 import com.sama.integration.google.GoogleInvalidCredentialsException
@@ -14,6 +14,7 @@ import com.sama.integration.google.SyncConfiguration
 import com.sama.integration.google.auth.domain.GoogleAccountId
 import com.sama.integration.google.auth.domain.GoogleAccountRepository
 import com.sama.integration.google.calendar.domain.ACCEPTED_EVENT_STATUSES
+import com.sama.integration.google.calendar.domain.CalendarDatesUpdatedEvent
 import com.sama.integration.google.calendar.domain.CalendarEventRepository
 import com.sama.integration.google.calendar.domain.CalendarList
 import com.sama.integration.google.calendar.domain.CalendarListRepository
@@ -33,9 +34,11 @@ import com.sama.integration.google.translatedGoogleException
 import com.sama.users.application.UserSettingsService
 import com.sama.users.domain.UserPermission
 import java.time.Clock
+import java.time.LocalDate
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.dao.CannotAcquireLockException
+import org.springframework.scheduling.TaskScheduler
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 
@@ -51,6 +54,8 @@ class GoogleCalendarSyncer(
     private val userConnectionService: UserConnectionService,
     private val channelManager: GoogleChannelManager,
     private val syncConfiguration: SyncConfiguration,
+    private val commsEventConsumer: CommsEventConsumer,
+    private val taskScheduler: TaskScheduler,
     private val clock: Clock
 ) {
     private var logger: Logger = LoggerFactory.getLogger(GoogleCalendarSyncer::class.java)
@@ -215,12 +220,24 @@ class GoogleCalendarSyncer(
                     .findAllEvents(calendarId, calendarSync.syncToken!!)
 
                 val (toAdd, toRemove) = events.partition { it.status in ACCEPTED_EVENT_STATUSES }
-                calendarEventRepository.saveAll(toAdd.toDomain(googleAccount, calendarId, timeZone))
-                calendarEventRepository.deleteAll(toRemove.map { it.toKey(accountId, calendarId) })
+                val addedOrUpdatedEvents = toAdd.toDomain(googleAccount, calendarId, timeZone)
+                calendarEventRepository.saveAll(addedOrUpdatedEvents)
+
+                val keysToRemove = toRemove.map { it.toKey(accountId, calendarId) }
+                val removedEvents = calendarEventRepository.findAll(keysToRemove)
+                calendarEventRepository.deleteAll(keysToRemove)
 
                 if (pastEventContactScanEnabled) {
                     val attendeeEmails = events.attendeeEmails()
                     userConnectionService.addDiscoveredUsers(userId, AddDiscoveredUsersCommand(attendeeEmails))
+                }
+
+                taskScheduler.execute {
+                    val updatedDates = addedOrUpdatedEvents.plus(removedEvents)
+                        .mapTo(mutableSetOf<LocalDate>())
+                        { it.startDateTime.toLocalDate() }
+                    if (updatedDates.isEmpty()) return@execute
+                    commsEventConsumer.onCalendarDatesUpdated(CalendarDatesUpdatedEvent(userId, updatedDates))
                 }
 
                 calendarSync.complete(newSyncToken!!, syncConfiguration, clock)

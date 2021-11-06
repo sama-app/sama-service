@@ -2,11 +2,13 @@ package com.sama.comms.application
 
 import com.sama.comms.domain.CommsUser
 import com.sama.comms.domain.CommsUserRepository
+import com.sama.comms.domain.Message
 import com.sama.comms.domain.NotificationRenderer
 import com.sama.comms.domain.NotificationSender
 import com.sama.connection.domain.UserConnectedEvent
 import com.sama.connection.domain.UserConnectionRequestCreatedEvent
 import com.sama.connection.domain.UserConnectionRequestRejectedEvent
+import com.sama.integration.google.calendar.domain.CalendarDatesUpdatedEvent
 import com.sama.meeting.domain.EmailRecipient
 import com.sama.meeting.domain.MeetingConfirmedEvent
 import com.sama.meeting.domain.MeetingProposedEvent
@@ -116,6 +118,18 @@ class CommsEventConsumer(
 
         val notification = notificationRenderer.renderConnectionRequestRejected(sender)
         notificationSender.send(receiver.userId, notification)
+    }
+
+    fun onCalendarDatesUpdated(event: CalendarDatesUpdatedEvent) {
+        notificationSender.send(
+            event.userId,
+            Message(
+                additionalData = mapOf(
+                    "event_type" to "calendar_dates_updated",
+                    "dates" to event.dates.joinToString(separator = ",")
+                )
+            )
+        )
     }
 
     private fun receiverCommsUser(actorId: UserId?, initiatorId: UserId, recipientId: UserId?): CommsUser? {
