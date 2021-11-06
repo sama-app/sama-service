@@ -8,6 +8,10 @@ import java.time.ZonedDateTime
 import kotlin.streams.asSequence
 import org.threeten.extra.LocalDateRange
 
+interface ZonedDateTimeRange {
+    val startDateTime: ZonedDateTime
+    val endDateTime: ZonedDateTime
+}
 
 fun Long.toMinutes(): Duration = Duration.ofMinutes(this)
 

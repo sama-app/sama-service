@@ -343,7 +343,7 @@ class MeetingApplicationService(
 
         // TODO: temporary hack for permalinks
         if (!proposedMeeting.meetingPreferences.permanentLink) {
-//            meetingRepository.save(confirmedMeeting)
+            meetingRepository.save(confirmedMeeting)
         }
 
         // "manual" event publishing

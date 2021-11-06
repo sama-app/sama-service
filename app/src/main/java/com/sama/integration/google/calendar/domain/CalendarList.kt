@@ -8,14 +8,26 @@ import java.time.ZoneId
 data class CalendarList(
     val accountId: GoogleAccountId,
     val calendars: Map<GoogleCalendarId, Calendar>,
-    val selected: Set<GoogleCalendarId>
+    val selected: Set<GoogleCalendarId>,
+    val samaCalendarId: GoogleCalendarId?
 ) {
     companion object {
+        const val SAMA_CALENDAR_NAME = "Sama"
+
         fun new(accountId: GoogleAccountId, calendarList: List<GoogleCalendar>): CalendarList {
             val calendars = calendarList.filter { !(it.deleted ?: false) }
                 .associate { it.calendarId() to it.toDomain() }
-            return CalendarList(accountId, calendars, calendars.filter { it.value.selected }.keys)
+            return CalendarList(
+                accountId,
+                calendars,
+                calendars.filter { it.value.selected }.keys,
+                calendars.filterValues { it.summary?.equals(SAMA_CALENDAR_NAME) == true }.keys.firstOrNull()
+            )
         }
+    }
+
+    fun samaCalendar(): Calendar? {
+        return samaCalendarId?.let { calendars[it] }
     }
 
     fun mergeFromSource(newCalendarList: List<GoogleCalendar>): CalendarList {
@@ -38,7 +50,13 @@ data class CalendarList(
             .minus(deletedCalendars)
             .plus(newCalendars.filter { it.value.selected }.keys)
 
-        return copy(calendars = mergedCalendars, selected = selected)
+        val samaCalendarId = when (samaCalendarId) {
+            in deletedCalendars -> null
+            null -> mergedCalendars.filterValues { it.summary?.equals(SAMA_CALENDAR_NAME) == true }.keys.firstOrNull()
+            else -> samaCalendarId
+        }
+
+        return copy(calendars = mergedCalendars, selected = selected, samaCalendarId = samaCalendarId)
     }
 
     fun addSelection(calendarId: GoogleCalendarId): CalendarList {

@@ -1,6 +1,7 @@
 package com.sama.calendar.application
 
 import com.sama.common.ApplicationService
+import com.sama.integration.google.calendar.application.DeleteGoogleCalendarEventCommand
 import com.sama.integration.google.calendar.application.EventAttendee
 import com.sama.integration.google.calendar.application.GoogleCalendarService
 import com.sama.integration.google.calendar.application.InsertGoogleCalendarEventCommand
@@ -76,7 +77,7 @@ class EventApplicationService(
             EVENT_TYPE_PROPERTY_KEY to TYPE_MEETING_BLOCK
         )
 
-        val blockedOutTimesEventIds = googleCalendarService.findIdsByExtendedProperties(userId, extendedProperties)
+        val blockedOutTimesEventIds = googleCalendarService.findEventIdsByExtendedProperties(userId, extendedProperties, true)
 
         val insertCommand = InsertGoogleCalendarEventCommand(
             command.startDateTime.withZoneSameInstant(timeZone),
@@ -84,15 +85,16 @@ class EventApplicationService(
             command.title,
             description = "Time for this meeting was created via <a href=$samaWebUrl>Sama app</a>",
             listOf(EventAttendee(initiatorEmail), EventAttendee(recipientEmail)),
+            useSamaCalendar = false,
         )
 
         runBlocking(Dispatchers.IO) {
             val insertEvent = async {
-                googleCalendarService.insertEvent(userId = userId, command = insertCommand)
+                googleCalendarService.insertEvent(userId, insertCommand)
             }
 
             blockedOutTimesEventIds.forEach {
-                launch { googleCalendarService.deleteEvent(userId, it) }
+                launch { googleCalendarService.deleteEvent(userId, DeleteGoogleCalendarEventCommand(it, true)) }
             }
 
             insertEvent.await()
@@ -124,7 +126,8 @@ class EventApplicationService(
                     privateExtendedProperties = mapOf(
                         MEETING_CODE_PROPERTY_KEY to meetingCode,
                         EVENT_TYPE_PROPERTY_KEY to TYPE_MEETING_BLOCK
-                    )
+                    ),
+                    true
                 )
             }
 

@@ -1,7 +1,7 @@
 package com.sama.meeting.domain
 
-import com.sama.calendar.application.EventDTO
 import com.sama.common.ValueObject
+import com.sama.common.ZonedDateTimeRange
 import java.time.Duration
 import java.time.ZoneId
 import java.time.ZonedDateTime
@@ -12,9 +12,9 @@ val MEETING_SLOT_INTERVAL: Duration = Duration.ofMinutes(15)
 @Embeddable
 @ValueObject
 data class MeetingSlot(
-    val startDateTime: ZonedDateTime,
-    val endDateTime: ZonedDateTime
-) {
+    override val startDateTime: ZonedDateTime,
+    override val endDateTime: ZonedDateTime
+) : ZonedDateTimeRange {
 
     fun isRange(meetingDuration: Duration): Boolean {
         return duration() != meetingDuration
@@ -44,8 +44,8 @@ data class MeetingSlot(
         return MeetingSlot(startDateTime.withZoneSameInstant(zoneId), endDateTime.withZoneSameInstant(zoneId))
     }
 
-    fun overlaps(event: EventDTO): Boolean {
-        return startDateTime.isBefore(event.endDateTime) && endDateTime.isAfter(event.startDateTime)
+    fun overlaps(slot: ZonedDateTimeRange): Boolean {
+        return startDateTime.isBefore(slot.endDateTime) && endDateTime.isAfter(slot.startDateTime)
     }
 
     override fun equals(other: Any?): Boolean {

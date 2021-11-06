@@ -1,16 +1,14 @@
 package com.sama.calendar.application
 
 import com.sama.common.BaseApplicationIntegrationTest
-import com.sama.integration.google.auth.domain.GoogleAccountId
 import com.sama.integration.google.auth.domain.GoogleAccountPublicId
 import com.sama.integration.google.calendar.application.CalendarEventDTO
+import com.sama.integration.google.calendar.application.DeleteGoogleCalendarEventCommand
 import com.sama.integration.google.calendar.application.EventAttendee
 import com.sama.integration.google.calendar.application.GoogleCalendarService
 import com.sama.integration.google.calendar.application.InsertGoogleCalendarEventCommand
 import com.sama.integration.google.calendar.domain.AggregatedData
-import com.sama.integration.google.calendar.domain.CalendarEvent
 import com.sama.integration.google.calendar.domain.EventData
-import com.sama.integration.google.calendar.domain.GoogleCalendarEventKey
 import com.sama.meeting.domain.EmailRecipient
 import com.sama.meeting.domain.MeetingCode
 import com.sama.users.application.InternalUserService
@@ -153,7 +151,7 @@ class EventApplicationServiceIT : BaseApplicationIntegrationTest() {
         ).thenReturn(true)
 
         val blockedOutEventIds = listOf("event_id_1")
-        whenever(googleCalendarService.findIdsByExtendedProperties(user.id, extendedProperties))
+        whenever(googleCalendarService.findEventIdsByExtendedProperties(user.id, extendedProperties, true))
             .thenReturn(blockedOutEventIds)
 
         val actual = underTest.createEvent(
@@ -163,7 +161,10 @@ class EventApplicationServiceIT : BaseApplicationIntegrationTest() {
 
         assertThat(actual).isTrue()
 
-        verify(googleCalendarService).deleteEvent(user.id, blockedOutEventIds[0])
+        verify(googleCalendarService).deleteEvent(
+            user.id,
+            DeleteGoogleCalendarEventCommand(blockedOutEventIds[0], true)
+        )
     }
 
 
@@ -197,7 +198,8 @@ class EventApplicationServiceIT : BaseApplicationIntegrationTest() {
                     privateExtendedProperties = mapOf(
                         "event_type" to "meeting_block",
                         "meeting_code" to meetingCode.code
-                    )
+                    ),
+                    true
                 )
             )
     }

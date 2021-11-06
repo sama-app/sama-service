@@ -62,15 +62,16 @@ class JdbcCalendarListRepository(
     override fun save(calendarList: CalendarList) {
         jdbcTemplate.update(
             """
-                INSERT INTO gcal.calendar_list (google_account_id, calendars, selected, updated_at)  
-                VALUES (:account_id, :calendars, :selected, :updated_at)
+                INSERT INTO gcal.calendar_list (google_account_id, calendars, selected, sama_calendar_id, updated_at)  
+                VALUES (:account_id, :calendars, :selected, :sama_calendar_id, :updated_at)
                 ON CONFLICT (google_account_id) DO UPDATE 
-                SET calendars = :calendars, selected = :selected, updated_at = :updated_at
+                SET calendars = :calendars, selected = :selected, sama_calendar_id = :sama_calendar_id, updated_at = :updated_at
             """,
             MapSqlParameterSource()
                 .addValue("account_id", calendarList.accountId.id)
                 .addValue("calendars", objectMapper.writeValueAsString(calendarList.calendars), Types.OTHER)
                 .addValue("selected", objectMapper.writeValueAsString(calendarList.selected), Types.OTHER)
+                .addValue("sama_calendar_id", calendarList.samaCalendarId)
                 .addValue("updated_at", OffsetDateTime.now(ZoneId.of("UTC")))
         )
     }
@@ -97,6 +98,7 @@ class JdbcCalendarListRepository(
             rs.getLong("google_account_id").toGoogleAccountId(),
             objectMapper.readValue(rs.getBinaryStream("calendars"), calendarsTypeRef),
             objectMapper.readValue(rs.getBinaryStream("selected"), selectedTypeRef),
+            rs.getString("sama_calendar_id")
         )
     }
 }
