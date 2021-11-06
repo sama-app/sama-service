@@ -13,15 +13,15 @@ interface GoogleCalendarService {
         hasAttendees: Boolean? = null
     ): List<CalendarEventDTO>
 
-    fun findIdsByExtendedProperties(userId: UserId, extendedProperties: Map<String, String>): List<GoogleCalendarEventId>
+    fun findEventIdsByExtendedProperties(
+        userId: UserId, extendedProperties: Map<String, String>, useSamaCalendar: Boolean = false
+    ): List<GoogleCalendarEventId>
 
     fun insertEvent(userId: UserId, command: InsertGoogleCalendarEventCommand): Boolean
+    fun deleteEvent(userId: UserId, command: DeleteGoogleCalendarEventCommand): Boolean
 
-    fun deleteEvent(userId: UserId, eventId: GoogleCalendarEventId)
-
+    fun createSamaCalendar(userId: UserId)
     fun findCalendars(userId: UserId): CalendarsDTO
-
     fun addSelectedCalendar(userId: UserId, command: AddSelectedCalendarCommand): Boolean
-
     fun removeSelectedCalendar(userId: UserId, command: RemoveSelectedCalendarCommand): Boolean
 }

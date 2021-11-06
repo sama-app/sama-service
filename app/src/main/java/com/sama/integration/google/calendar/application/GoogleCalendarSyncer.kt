@@ -1,5 +1,7 @@
 package com.sama.integration.google.calendar.application
 
+import com.google.api.services.calendar.model.Calendar
+import com.google.api.services.calendar.model.CalendarListEntry
 import com.sama.common.component1
 import com.sama.common.component2
 import com.sama.common.to

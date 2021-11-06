@@ -1,6 +1,7 @@
 package com.sama.integration.google.calendar.application
 
 import com.sama.integration.google.auth.domain.GoogleAccountPublicId
+import com.sama.integration.google.calendar.domain.GoogleCalendarEventId
 import com.sama.integration.google.calendar.domain.GoogleCalendarId
 import java.time.ZonedDateTime
 
@@ -11,7 +12,13 @@ data class InsertGoogleCalendarEventCommand(
     val description: String?,
     val attendees: List<EventAttendee>,
     val conferenceType: ConferenceType? = ConferenceType.GOOGLE_MEET,
-    val privateExtendedProperties: Map<String, String> = emptyMap()
+    val privateExtendedProperties: Map<String, String> = emptyMap(),
+    val useSamaCalendar: Boolean = false,
+)
+
+data class DeleteGoogleCalendarEventCommand(
+    val eventId: GoogleCalendarEventId,
+    val useSamaCalendar: Boolean = false
 )
 
 data class EventAttendee(val email: String)

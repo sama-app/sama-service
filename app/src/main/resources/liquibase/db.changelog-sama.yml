@@ -59,3 +59,5 @@ databaseChangeLog:
       file: classpath*:liquibase/change-sets/2021_11_02_2-selected-calendars.yml
   - include:
       file: classpath*:liquibase/change-sets/2021_11_05-user-meeting-preferences.yml
+  - include:
+      file: classpath*:liquibase/change-sets/2021_11_06-sama-calendar.yml

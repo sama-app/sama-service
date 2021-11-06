@@ -4,6 +4,7 @@ import com.google.api.client.auth.oauth2.StoredCredential
 import com.google.api.client.util.store.DataStoreFactory
 import com.sama.common.ApplicationService
 import com.sama.common.checkAccess
+import com.sama.common.execute
 import com.sama.integration.google.GoogleServiceFactory
 import com.sama.integration.google.auth.domain.GoogleAccount
 import com.sama.integration.google.auth.domain.GoogleAccountId
@@ -11,11 +12,13 @@ import com.sama.integration.google.auth.domain.GoogleAccountPublicId
 import com.sama.integration.google.auth.domain.GoogleAccountRepository
 import com.sama.integration.google.auth.domain.GoogleCredentialRepository
 import com.sama.integration.google.auth.domain.toStorageKey
+import com.sama.integration.google.calendar.application.GoogleCalendarService
 import com.sama.integration.google.calendar.application.GoogleCalendarSyncer
 import com.sama.users.application.AuthUserService
 import com.sama.users.domain.UserId
 import io.sentry.spring.tracing.SentryTransaction
 import org.apache.commons.logging.LogFactory
+import org.springframework.scheduling.TaskScheduler
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import org.springframework.transaction.PlatformTransactionManager
@@ -30,6 +33,8 @@ class GoogleAccountApplicationService(
     private val credentialDataStoreFactory: DataStoreFactory,
     private val googleServiceFactory: GoogleServiceFactory,
     private val googleCalendarSyncer: GoogleCalendarSyncer,
+    private val googleCalendarService: GoogleCalendarService,
+    private val taskScheduler: TaskScheduler,
     transactionManager: PlatformTransactionManager,
 ) : GoogleAccountService {
     private val transactionTemplate = TransactionTemplate(transactionManager)
@@ -64,6 +69,9 @@ class GoogleAccountApplicationService(
 
         persistGoogleCredential(googleAccountId, command.credential)
         googleCalendarSyncer.enableCalendarListSync(googleAccountId)
+        if (googleAccount.primary) {
+            taskScheduler.execute { googleCalendarService.createSamaCalendar(userId) }
+        }
 
         return updated.publicId!!
     }

@@ -1,5 +1,7 @@
 package com.sama.integration.google.calendar.application
 
+import com.google.api.services.calendar.model.Calendar
+import com.google.api.services.calendar.model.CalendarListEntry
 import com.google.api.services.calendar.model.ConferenceData
 import com.google.api.services.calendar.model.ConferenceSolutionKey
 import com.google.api.services.calendar.model.CreateConferenceRequest
@@ -14,6 +16,7 @@ import com.sama.integration.google.GoogleInternalServerException
 import com.sama.integration.google.GoogleServiceFactory
 import com.sama.integration.google.NoPrimaryGoogleAccountException
 import com.sama.integration.google.auth.domain.GoogleAccount
+import com.sama.integration.google.auth.domain.GoogleAccountId
 import com.sama.integration.google.auth.domain.GoogleAccountRepository
 import com.sama.integration.google.calendar.domain.AggregatedData
 import com.sama.integration.google.calendar.domain.CalendarEventRepository
@@ -120,14 +123,13 @@ class SyncGoogleCalendarService(
         }
     }
 
-    override fun findIdsByExtendedProperties(
-        userId: UserId,
-        extendedProperties: Map<String, String>
+    override fun findEventIdsByExtendedProperties(
+        userId: UserId, extendedProperties: Map<String, String>, useSamaCalendar: Boolean
     ): List<GoogleCalendarEventId> {
         val primaryAccountId = googleAccountRepository.findByUserIdAndPrimary(userId)
             ?: throw NoPrimaryGoogleAccountException(userId)
-        val calendarId = PRIMARY_CALENDAR_ID
 
+        val calendarId = targetCalendarId(useSamaCalendar, primaryAccountId)
         val calendarService = googleServiceFactory.calendarService(primaryAccountId)
 
         return calendarService.events().list(calendarId)
@@ -202,7 +204,7 @@ class SyncGoogleCalendarService(
 
             val primaryAccountId = googleAccountRepository.findByUserIdAndPrimary(userId)
                 ?: throw NoPrimaryGoogleAccountException(userId)
-            val calendarId = PRIMARY_CALENDAR_ID
+            val calendarId = targetCalendarId(command.useSamaCalendar, primaryAccountId)
 
             val calendarService = googleServiceFactory.calendarService(primaryAccountId)
             calendarService.insert(calendarId, googleCalendarEvent)
@@ -218,15 +220,68 @@ class SyncGoogleCalendarService(
         value = [GoogleInternalServerException::class, GoogleApiRateLimitException::class],
         maxAttempts = 10, backoff = Backoff(delay = 1000, multiplier = 2.0, maxDelay = 60000)
     )
-    override fun deleteEvent(userId: UserId, eventId: GoogleCalendarEventId) {
-        val primaryAccountId = googleAccountRepository.findByUserIdAndPrimary(userId)
-            ?: throw NoPrimaryGoogleAccountException(userId)
-        val calendarId = PRIMARY_CALENDAR_ID
+    override fun deleteEvent(userId: UserId, command: DeleteGoogleCalendarEventCommand): Boolean {
+        try {
+            val primaryAccountId = googleAccountRepository.findByUserIdAndPrimary(userId)
+                ?: throw NoPrimaryGoogleAccountException(userId)
+            val calendarId = targetCalendarId(command.useSamaCalendar, primaryAccountId)
 
-        val calendarService = googleServiceFactory.calendarService(primaryAccountId)
+            val calendarService = googleServiceFactory.calendarService(primaryAccountId)
 
-        calendarService.events().delete(calendarId, eventId).execute()
+            calendarService.events().delete(calendarId, command.eventId).execute()
+            return true
+        } catch (e: Exception) {
+            throw translatedGoogleException(e)
+        }
     }
+
+    @Retryable(
+        value = [GoogleInternalServerException::class, GoogleApiRateLimitException::class],
+        maxAttempts = 10, backoff = Backoff(delay = 1000, multiplier = 2.0, maxDelay = 60000)
+    )
+    override fun createSamaCalendar(userId: UserId) {
+        val accountId = googleAccountRepository.findByUserIdAndPrimary(userId)
+            ?: throw NoPrimaryGoogleAccountException(userId)
+        val samaCalendar = calendarListRepository.find(accountId)?.samaCalendar()
+        if (samaCalendar != null) {
+            return
+        }
+
+        val calendarService = googleServiceFactory.calendarService(accountId)
+        val calendarId = try {
+            calendarService.Calendars().insert(
+                Calendar().apply {
+                    summary = "Sama"
+                    description = "Calendar managed by Sama"
+                }
+            ).execute().id
+        } catch (e: Exception) {
+            throw translatedGoogleException(e)
+        }
+
+        try {
+            calendarService.calendarList().patch(
+                calendarId,
+                CalendarListEntry().apply {
+                    accessRole = "owner"
+                    backgroundColor = "#E5E4E2"
+                    selected = true
+                }
+            ).apply { colorRgbFormat = true }
+                .execute()
+        } catch (ignored: Exception) {
+            logger.warn("Could not update Sama Calendar for User#${userId.id}")
+            // The calendar was created, it's okay if the colour is not updated due to an error
+            // as we'd need to write rollback logic
+        }
+    }
+
+    private fun targetCalendarId(useSamaCalendar: Boolean, primaryAccountId: GoogleAccountId) =
+        if (!useSamaCalendar) {
+            PRIMARY_CALENDAR_ID
+        } else {
+            calendarListRepository.find(primaryAccountId)?.samaCalendarId ?: PRIMARY_CALENDAR_ID
+        }
 
     @Transactional(readOnly = true)
     override fun findCalendars(userId: UserId): CalendarsDTO {

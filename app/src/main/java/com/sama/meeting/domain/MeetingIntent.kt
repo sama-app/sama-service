@@ -5,6 +5,7 @@ import com.sama.users.domain.UserId
 import java.time.Duration
 import java.time.ZoneId
 import java.time.ZonedDateTime
+import liquibase.pro.packaged.it
 
 @DomainEntity
 data class MeetingIntent(
@@ -65,17 +66,18 @@ data class MeetingIntent(
     }
 
     private fun List<MeetingSlot>.combineContinuous(): List<MeetingSlot> {
-        return fold(mutableListOf())
-        { acc, slot ->
-            val prevSlot = acc.lastOrNull()
-            if (prevSlot != null && prevSlot.endDateTime.isEqual(slot.startDateTime)) {
-                acc.removeLast()
-                acc.add(MeetingSlot(prevSlot.startDateTime, slot.endDateTime))
-            } else {
-                acc.add(slot)
+        return sortedBy { it.startDateTime }
+            .fold(mutableListOf())
+            { acc, slot ->
+                val prevSlot = acc.lastOrNull()
+                if (prevSlot != null && (prevSlot.overlaps(slot) || prevSlot.endDateTime.isEqual(slot.startDateTime))) {
+                    acc.removeLast()
+                    acc.add(MeetingSlot(prevSlot.startDateTime, slot.endDateTime))
+                } else {
+                    acc.add(slot)
+                }
+                acc
             }
-            acc
-        }
     }
 
     private fun List<MeetingSlot>.validate() {

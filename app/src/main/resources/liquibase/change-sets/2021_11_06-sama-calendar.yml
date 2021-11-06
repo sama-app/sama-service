@@ -1,0 +1,12 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-gcal-sama-calendar
+      author: balys
+      changes:
+        - addColumn:
+            schemaName: gcal
+            tableName: calendar_list
+            columns:
+              - column:
+                  name: sama_calendar_id
+                  type: VARCHAR

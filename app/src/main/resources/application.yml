@@ -154,6 +154,7 @@ integration:
   google:
     client-id: 690866307711-8nm12p73mo585k5njoaqepjupgm31im3.apps.googleusercontent.com
     scopes: |
+      https://www.googleapis.com/auth/calendar,
       https://www.googleapis.com/auth/calendar.events,
       https://www.googleapis.com/auth/calendar.readonly,
       https://www.googleapis.com/auth/userinfo.email,
