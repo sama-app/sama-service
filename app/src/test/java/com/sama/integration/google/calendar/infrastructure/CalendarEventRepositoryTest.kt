@@ -65,6 +65,24 @@ class CalendarEventRepositoryTest : BasePersistenceIT<JdbcCalendarEventRepositor
     }
 
     @Test
+    fun `save and find by keys`() {
+        val now = ZonedDateTime.now()
+        val eventKey = GoogleCalendarEventKey(googleAccount.id!!, "default", "event-id")
+        val event = CalendarEvent(
+            eventKey,
+            now, now.plusHours(1), EventData("title", false, 1, "recurring-id", now.minusHours(1)), emptySet()
+        )
+        underTest.save(event)
+
+        val actual = underTest.findAll(setOf(eventKey))
+
+        assertThat(actual.first())
+            .usingLaxDateTimePrecision()
+            .usingRecursiveComparison()
+            .isEqualTo(event)
+    }
+
+    @Test
     fun `save and find by date range`() {
         val now = ZonedDateTime.now()
         val eventData = EventData("title", false, 1, "recurring-id", now.minusHours(1))

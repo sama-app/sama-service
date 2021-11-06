@@ -49,6 +49,26 @@ class JdbcCalendarEventRepository(
         }
     }
 
+    override fun findAll(eventKeys: Collection<GoogleCalendarEventKey>): List<CalendarEvent> {
+        if (eventKeys.isEmpty()) {
+            return emptyList()
+        }
+
+        val params = eventKeys.map {
+            arrayOf(it.accountId.id, it.calendarId, it.eventId)
+        }
+
+        return jdbcTemplate.query(
+            """
+                   SELECT * FROM gcal.event e 
+                   WHERE (e.google_account_id, e.calendar_id, e.event_id) IN (:event_keys)
+                """,
+            MapSqlParameterSource()
+                .addValue("event_keys", params),
+            rowMapper
+        )
+    }
+
     override fun findAll(
         accountId: GoogleAccountId,
         calendarId: GoogleCalendarId,
