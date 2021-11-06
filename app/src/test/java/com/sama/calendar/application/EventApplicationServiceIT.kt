@@ -9,6 +9,7 @@ import com.sama.integration.google.calendar.application.GoogleCalendarService
 import com.sama.integration.google.calendar.application.InsertGoogleCalendarEventCommand
 import com.sama.integration.google.calendar.domain.AggregatedData
 import com.sama.integration.google.calendar.domain.EventData
+import com.sama.meeting.configuration.toUrl
 import com.sama.meeting.domain.EmailRecipient
 import com.sama.meeting.domain.MeetingCode
 import com.sama.users.application.InternalUserService
@@ -189,9 +190,9 @@ class EventApplicationServiceIT : BaseApplicationIntegrationTest() {
                     endDateTime,
                     "Reserved by Sama",
                     description = """
-                        Blocked for title
+                        This time is reserved for title via <a href=http://localhost:8080>Sama app</a> until the recipient confirms their selection.
                         
-                        Meeting link: http://localhost:3000/code
+                        You can view all suggested times for this meeting here: http://localhost:3000/code
                     """.trimIndent(),
                     attendees = emptyList(),
                     conferenceType = null,

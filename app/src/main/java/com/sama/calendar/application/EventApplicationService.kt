@@ -117,9 +117,9 @@ class EventApplicationService(
                     it.endDateTime,
                     "Reserved by Sama",
                     description = """
-                        Blocked for ${command.meetingTitle}
+                        This time is reserved for ${command.meetingTitle} via <a href=$samaWebUrl>Sama app</a> until the recipient confirms their selection.
                         
-                        Meeting link: ${command.meetingCode.toUrl(meetingUrlConfiguration)}
+                        You can view all suggested times for this meeting here: ${command.meetingCode.toUrl(meetingUrlConfiguration)}
                     """.trimIndent(),
                     attendees = emptyList(),
                     conferenceType = null,
