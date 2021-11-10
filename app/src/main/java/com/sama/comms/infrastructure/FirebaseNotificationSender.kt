@@ -54,7 +54,7 @@ class FirebaseNotificationSender(private val deviceRegistrationService: UserDevi
                         }
                     }
                 }
-                val code = if (e is FirebaseMessagingException) e.messagingErrorCode.toString() else "OTHER"
+                val code = if (e is FirebaseMessagingException) e.messagingErrorCode?.toString() ?: "UNKNOWN" else "OTHER"
                 logger.warn("Could not send Firebase notification to User#${receiverUserId.id} Device#${deviceId}: $code", e)
             }
         }

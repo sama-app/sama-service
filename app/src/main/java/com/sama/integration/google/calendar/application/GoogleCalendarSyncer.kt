@@ -35,6 +35,7 @@ import com.sama.users.application.UserSettingsService
 import com.sama.users.domain.UserPermission
 import java.time.Clock
 import java.time.LocalDate
+import java.time.ZonedDateTime
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.dao.CannotAcquireLockException
@@ -234,8 +235,11 @@ class GoogleCalendarSyncer(
 
                 taskScheduler.execute {
                     val updatedDates = addedOrUpdatedEvents.plus(removedEvents)
-                        .mapTo(mutableSetOf<LocalDate>())
-                        { it.startDateTime.toLocalDate() }
+                        .filter {
+                            val now = ZonedDateTime.now(clock)
+                            it.startDateTime.isBefore(now.plusMonths(3)) && it.startDateTime.isAfter(now.minusMonths(1))
+                        }
+                        .mapTo(mutableSetOf<LocalDate>()) { it.startDateTime.toLocalDate() }
                     if (updatedDates.isEmpty()) return@execute
                     commsEventConsumer.onCalendarDatesUpdated(CalendarDatesUpdatedEvent(userId, updatedDates))
                 }
