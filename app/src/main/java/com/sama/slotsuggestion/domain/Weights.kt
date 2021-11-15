@@ -1,7 +1,6 @@
 package com.sama.slotsuggestion.domain
 
 import com.sama.meeting.application.MeetingSlotDTO
-import java.time.Clock
 import java.time.DayOfWeek
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -122,14 +121,14 @@ class WorkingHoursWeigher(private val workingHours: Map<DayOfWeek, WorkingHours>
     }
 }
 
-class RecipientTimeZoneWeigher(private val clock: Clock, private val recipientTimeZone: ZoneId) : Weigher {
+class RecipientTimeZoneWeigher(private val recipientTimeZone: ZoneId) : Weigher {
     companion object {
         private const val baseWeight = -1000.0
         private const val weightStep = 10.0
     }
 
     override fun weight(heatMap: HeatMap): HeatMap {
-        val now = LocalDateTime.now(clock)
+        val now = LocalDateTime.now()
         val userOffsetSeconds = heatMap.userTimeZone.rules.getOffset(now).totalSeconds
         val requestOffsetSeconds = recipientTimeZone.rules.getOffset(now).totalSeconds
         val offsetDifference = userOffsetSeconds.toLong() - requestOffsetSeconds
@@ -147,13 +146,13 @@ class RecipientTimeZoneWeigher(private val clock: Clock, private val recipientTi
     }
 }
 
-class SearchBoundaryWeigher(private val clock: Clock) : Weigher {
+class SearchBoundaryWeigher : Weigher {
     companion object {
-        private const val weight = -100000.0
+        private const val weight = -10000.0
     }
 
     override fun weight(heatMap: HeatMap): HeatMap {
-        val searchStartDateTime = ZonedDateTime.now(clock).withZoneSameInstant(heatMap.userTimeZone)
+        val searchStartDateTime = ZonedDateTime.now(heatMap.userTimeZone)
         return heatMap
             .query { to(searchStartDateTime.plusMinutes(heatMap.intervalMinutes), heatMap.userTimeZone) }
             .addFixedWeight(weight) { "search boundary" }
@@ -161,7 +160,7 @@ class SearchBoundaryWeigher(private val clock: Clock) : Weigher {
     }
 }
 
-class RecencyWeigher(private val clock: Clock) : Weigher {
+class RecencyWeigher : Weigher {
     companion object {
         private const val hoursToBlockFromNow = 4L
         private const val currentTimeValue = -1000.0
@@ -173,7 +172,7 @@ class RecencyWeigher(private val clock: Clock) : Weigher {
     override fun weight(heatMap: HeatMap): HeatMap {
         var result = heatMap
         // block out time from now + X hours
-        val currentDateTimeBlockEnd = LocalDateTime.now(clock.withZone(heatMap.userTimeZone)).plusHours(hoursToBlockFromNow)
+        val currentDateTimeBlockEnd = LocalDateTime.now(heatMap.userTimeZone).plusHours(hoursToBlockFromNow)
         result = result.query { to(currentDateTimeBlockEnd) }
             .addFixedWeight(currentTimeValue) { "Suggestion too close to now" }
             .save(result)

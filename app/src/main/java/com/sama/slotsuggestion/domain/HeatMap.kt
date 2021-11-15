@@ -5,7 +5,6 @@ import com.sama.common.Factory
 import com.sama.common.chunkedBy
 import com.sama.common.datesUtil
 import com.sama.users.domain.UserId
-import java.time.Clock
 import java.time.DayOfWeek
 import java.time.Duration
 import java.time.LocalDate
@@ -14,7 +13,6 @@ import java.time.LocalTime
 import java.time.ZoneId
 import java.util.function.Predicate
 import kotlin.math.pow
-import org.threeten.extra.LocalDateRange
 
 @DomainEntity
 data class HeatMap(
@@ -35,11 +33,9 @@ data class HeatMap(
             endDate: LocalDate,
             intervalMinutes: Long,
         ): HeatMap {
-            val realStartDate = startDate.minusDays(1)
             val slotCount = 24 * 60 / intervalMinutes
             val duration = Duration.ofMinutes(intervalMinutes)
-            val slots = realStartDate
-                .datesUtil(endDate)
+            val slots = startDate.datesUtil(endDate)
                 .flatMap { date ->
                     (0L until slotCount).map {
                         val startDateTime = LocalTime.MIN.plus(duration.multipliedBy(it)).atDate(date)
@@ -48,57 +44,17 @@ data class HeatMap(
                 }
                 .toList()
 
-            return HeatMap(userId, userTimeZone, realStartDate, endDate, intervalMinutes, slots)
-        }
-
-        fun ensureDateRangesMatch(heatMaps: Collection<HeatMap>): List<HeatMap> {
-            val startDate = heatMaps.maxOf { it.startDate }
-            val endDate = heatMaps.minOf { it.endDate }
-
-            return heatMaps.map { it.withDateRange(startDate, endDate) }
+            return HeatMap(userId, userTimeZone, startDate, endDate, intervalMinutes, slots)
         }
     }
 
     fun normalize(): HeatMap {
-        val totalWeights = slots.map { it.totalWeight }.sorted()
+        val totalWeights = slots.map { it.totalWeight }
         val median = (totalWeights[totalWeights.size / 2] + totalWeights[totalWeights.size / 2 + 1]) / 2
 
         return copy(
             slots = slots.map { it.addWeight(-median, "Normalisation") }
         )
-    }
-
-    fun withTimeZone(clock: Clock, targetTimeZone: ZoneId): HeatMap {
-        val now = LocalDateTime.now(clock)
-        val userOffsetSeconds = userTimeZone.rules.getOffset(now).totalSeconds
-        val requestOffsetSeconds = targetTimeZone.rules.getOffset(now).totalSeconds
-        val offsetDifference = requestOffsetSeconds.toLong() - userOffsetSeconds
-        if (offsetDifference == 0L) {
-            return this
-        }
-
-        val newStartDate = slots.first().startDateTime.plusSeconds(offsetDifference).toLocalDate().plusDays(1)
-        val newEndDate = slots.last().startDateTime.plusSeconds(offsetDifference).toLocalDate()
-        val dateRange = LocalDateRange.of(newStartDate, newEndDate)
-
-        val newSlots = slots.map { slot ->
-            val newStartDateTime = slot.startDateTime.plusSeconds(offsetDifference)
-            val newEndDateTime = slot.endDateTime.plusSeconds(offsetDifference)
-            slot.copy(startDateTime = newStartDateTime, endDateTime = newEndDateTime)
-        }.filter { it.startDateTime.toLocalDate() in dateRange }
-
-
-        return copy(slots = newSlots, startDate = newStartDate, endDate = newEndDate, userTimeZone = targetTimeZone)
-    }
-
-    fun withDateRange(startDate: LocalDate, endDate: LocalDate): HeatMap {
-        if (this.startDate == startDate && this.endDate == endDate) {
-            return this
-        }
-
-        val dateRange = LocalDateRange.of(startDate, endDate)
-        val newSlots = slots.filter { it.startDateTime.toLocalDate() in dateRange }
-        return copy(slots = newSlots, startDate = startDate, endDate = endDate)
     }
 }
 

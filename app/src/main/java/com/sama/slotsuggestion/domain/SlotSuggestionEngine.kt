@@ -4,7 +4,6 @@ import com.sama.common.DomainService
 import java.time.Duration
 import java.time.ZonedDateTime
 import kotlin.math.ceil
-import liquibase.pro.packaged.it
 
 typealias SlotSuggestionWeigher = (suggestions: Collection<SlotSuggestion>) -> Weigher
 
@@ -24,17 +23,6 @@ data class SlotSuggestionEngine(private val baseHeatMap: HeatMap, private val ov
             heatMap.slots.asSequence()
                 .map { sigmoid(x = it.totalWeight, k = sigmoidK) }
         }
-
-    init {
-        if (overlayHeatMap != null) {
-            require(baseHeatMap.userTimeZone == overlayHeatMap.userTimeZone) {
-                "HeatMaps must have the same TimeZone"
-            }
-            require(baseHeatMap.startDate == overlayHeatMap.startDate && baseHeatMap.endDate == overlayHeatMap.endDate) {
-                "HeatMaps must have the same start and end dates"
-            }
-        }
-    }
 
     fun suggest(
         duration: Duration,

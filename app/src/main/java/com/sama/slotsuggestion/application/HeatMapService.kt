@@ -47,7 +47,7 @@ class HeatMapService(
             )
 
             val weigher = weigher {
-                searchBoundary(clock)
+                searchBoundary()
                 futureBlocks(futureBlocks)
                 workingHours(user.workingHours)
             }
@@ -84,13 +84,13 @@ class HeatMapService(
             )
 
             val weigher = weigher {
-                searchBoundary(clock)
+                searchBoundary()
                 pastBlocks(pastBlocks)
                 futureBlocks(futureBlocks)
                 futureProposedSlots(futureProposedSlots)
                 workingHours(user.workingHours)
-                recipientTimeZone(clock, targetTimeZone)
-                recency(clock)
+                recipientTimeZone(targetTimeZone)
+                recency()
             }
 
             val heatMap = weigher.apply(baseHeatMap)
