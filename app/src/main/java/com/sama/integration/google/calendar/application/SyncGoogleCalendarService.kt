@@ -158,6 +158,7 @@ class SyncGoogleCalendarService(
         )
         events.toDomain(account, PRIMARY_CALENDAR_ID, timeZone)
     } catch (e: Exception) {
+        logger.error("GoogleCalendarService#forceLoadCalendarEvents", e)
         throw translatedGoogleException(e)
     }
 
@@ -212,6 +213,7 @@ class SyncGoogleCalendarService(
             googleCalendarSyncer.syncUserCalendar(primaryAccountId, calendarId)
             return true
         } catch (e: Exception) {
+            logger.error("GoogleCalendarService#insertEvent", e)
             throw translatedGoogleException(e)
         }
     }
@@ -231,6 +233,7 @@ class SyncGoogleCalendarService(
             calendarService.events().delete(calendarId, command.eventId).execute()
             return true
         } catch (e: Exception) {
+            logger.error("GoogleCalendarService#deleteEvent", e)
             throw translatedGoogleException(e)
         }
     }
@@ -256,6 +259,7 @@ class SyncGoogleCalendarService(
                 }
             ).execute().id
         } catch (e: Exception) {
+            logger.error("GoogleCalendarService#createSamaCalendar", e)
             throw translatedGoogleException(e)
         }
 
