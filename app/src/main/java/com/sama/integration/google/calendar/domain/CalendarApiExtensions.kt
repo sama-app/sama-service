@@ -156,9 +156,13 @@ fun Calendar.findAllCalendars(syncToken: String?): GoogleCalendarListResponse {
 private fun Calendar.findCalendarsPage(nextPageToken: String?, syncToken: String? = null): Calendar.CalendarList.List {
     val requestBuilder = this.calendarList().list()
     requestBuilder.maxResults = 250
-    requestBuilder.syncToken = syncToken
-    requestBuilder.showDeleted = true
-    requestBuilder.showHidden = false
+    if (syncToken != null) {
+        requestBuilder.syncToken = syncToken
+    } else {
+        requestBuilder.showDeleted = true
+        requestBuilder.showHidden = false
+    }
+
     requestBuilder.fields =
         """
             nextPageToken,nextSyncToken,items(id,timeZone,accessRole,primary,selected,summary,summaryOverride,backgroundColor,foregroundColor,deleted)
