@@ -296,7 +296,13 @@ class SyncGoogleCalendarService(
             .flatMap { (googleAccountId, calendars, selected) ->
                 val accountId = accountIds[googleAccountId]!!.publicId!!
                 calendars.map { (calendarId, calendar) ->
-                    CalendarDTO(accountId, calendarId, calendarId in selected, calendar.summary, calendar.backgroundColor)
+                    CalendarDTO(
+                        accountId,
+                        calendarId,
+                        calendarId in selected,
+                        calendar.summary ?: "Unnamed Calendar",
+                        calendar.backgroundColor
+                    )
                 }
             }
             .let { CalendarsDTO(it) }
