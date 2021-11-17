@@ -10,7 +10,7 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class UserDeviceRegistrationApplicationService(
     private val userRepository: UserRepository,
-    private val authUserService: AuthUserService
+    private val authUserService: AuthUserService,
 ) : UserDeviceRegistrationService {
 
     @Transactional(readOnly = true)
@@ -35,11 +35,16 @@ class UserDeviceRegistrationApplicationService(
     }
 
     @Transactional
-    override fun unregister(command: UnregisterDeviceCommand): Boolean {
-        val userId = authUserService.currentUserId()
+    override fun unregister(userId: UserId, command: UnregisterDeviceCommand): Boolean {
         val changes = userRepository.findDeviceRegistrationsByIdOrThrow(userId)
             .unregister(command.deviceId)
         userRepository.save(changes)
         return true
+    }
+
+    @Transactional
+    override fun unregister(command: UnregisterDeviceCommand): Boolean {
+        val userId = authUserService.currentUserId()
+        return unregister(userId, command)
     }
 }

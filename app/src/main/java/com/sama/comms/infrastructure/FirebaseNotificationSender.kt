@@ -48,7 +48,7 @@ class FirebaseNotificationSender(private val deviceRegistrationService: UserDevi
                     // Remove unregistered devices
                     if (e.messagingErrorCode == MessagingErrorCode.UNREGISTERED) {
                         kotlin.runCatching {
-                            deviceRegistrationService.unregister(UnregisterDeviceCommand(deviceId))
+                            deviceRegistrationService.unregister(receiverUserId, UnregisterDeviceCommand(deviceId))
                         }.onFailure {
                             logger.error("Error unregistering device#${deviceId}", it)
                         }
