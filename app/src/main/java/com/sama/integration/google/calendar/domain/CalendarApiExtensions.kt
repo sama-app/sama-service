@@ -157,6 +157,8 @@ private fun Calendar.findCalendarsPage(nextPageToken: String?, syncToken: String
     val requestBuilder = this.calendarList().list()
     requestBuilder.maxResults = 250
     requestBuilder.syncToken = syncToken
+    requestBuilder.showDeleted = true
+    requestBuilder.showHidden = false
     requestBuilder.fields =
         """
             nextPageToken,nextSyncToken,items(id,timeZone,accessRole,primary,selected,summary,summaryOverride,backgroundColor,foregroundColor,deleted)
