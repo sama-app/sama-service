@@ -50,7 +50,7 @@ class GoogleOauth2ApplicationService(
             .setRedirectUri(redirectUri)
             .setState(stateKey)
         authorizationUrl.set("include_granted_scopes", true)
-        authorizationUrl.set("prompt", "select_account")
+        authorizationUrl.set("prompt", "consent")
         return GoogleOauth2Redirect(authorizationUrl.build())
     }
 
