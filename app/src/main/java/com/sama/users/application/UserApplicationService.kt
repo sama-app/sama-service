@@ -1,11 +1,14 @@
 package com.sama.users.application
 
 import com.sama.common.ApplicationService
+import com.sama.common.execute
+import com.sama.integration.mailerlite.MailerLiteClient
 import com.sama.users.domain.UserId
 import com.sama.users.domain.UserPublicId
 import com.sama.users.domain.UserRegistration
 import com.sama.users.domain.UserRepository
 import com.sama.users.domain.UserSettingsRepository
+import org.springframework.scheduling.TaskScheduler
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -14,7 +17,9 @@ import org.springframework.transaction.annotation.Transactional
 class UserApplicationService(
     private val userRepository: UserRepository,
     private val userSettingsRepository: UserSettingsRepository,
-    private val authUserService: AuthUserService
+    private val authUserService: AuthUserService,
+    private val taskScheduler: TaskScheduler,
+    private val mailerLiteClient: MailerLiteClient
 ) : InternalUserService, UserService {
 
     @Transactional(readOnly = true)
@@ -35,6 +40,10 @@ class UserApplicationService(
         val userDetails = UserRegistration(command.email, userExistsByEmail, command.fullName)
             .validate()
             .let { userRepository.save(it) }
+
+        taskScheduler.execute {
+            mailerLiteClient.addGroupSubscriber(email = userDetails.email, name = userDetails.fullName)
+        }
 
         return userDetails.id!!
     }
