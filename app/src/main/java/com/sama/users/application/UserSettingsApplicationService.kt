@@ -92,8 +92,6 @@ class UserSettingsApplicationService(
                 val user = userRepository.findByIdOrThrow(userId)
                 if (updated.newsletterSubscriptionEnabled) {
                     mailerLiteClient.addSubscriber(user.email, user.fullName)
-                } else {
-                    mailerLiteClient.removeSubscriber(user.email)
                 }
             }
         }

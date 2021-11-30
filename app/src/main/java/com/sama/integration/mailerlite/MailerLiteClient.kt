@@ -8,6 +8,7 @@ import org.springframework.web.client.HttpStatusCodeException
 import org.springframework.web.client.RestTemplate
 
 interface MailerLiteClient {
+    fun addGroupSubscriber(groupId: Long = 109603631, email: String, name: String?) // groupId taken from MailerLite
     fun addSubscriber(email: String, name: String?)
     fun removeSubscriber(email: String)
 }
@@ -15,6 +16,15 @@ interface MailerLiteClient {
 @Component
 class HttpMailerLiteClient(private val mailerLiteRestTemplate: RestTemplate) : MailerLiteClient {
     private var logger: Logger = LoggerFactory.getLogger(javaClass)
+
+    override fun addGroupSubscriber(groupId: Long, email: String, name: String?) {
+        val request = AddGroupSubscriberRequest(email, name)
+        mailerLiteRestTemplate.postForObject(
+            "/groups/$groupId/subscribers",
+            request,
+            Void::class.java
+        )
+    }
 
     override fun addSubscriber(email: String, name: String?) {
         val request = AddSubscriberRequest(email, name)
@@ -35,6 +45,8 @@ class HttpMailerLiteClient(private val mailerLiteRestTemplate: RestTemplate) : M
         mailerLiteRestTemplate.postForObject("/subscribers", request, MailerLiteSubscriber::class.java)
     }
 }
+
+private data class AddGroupSubscriberRequest(val email: String, val name: String?)
 
 private data class AddSubscriberRequest(
     val email: String,
