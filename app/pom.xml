@@ -42,6 +42,11 @@
         <lib.recur.version>0.12.2</lib.recur.version>
         <commons.validator.version>1.7</commons.validator.version>
         <threethen.extra.version>1.7.0</threethen.extra.version>
+        <!--
+            DO NOT USE LOWER VERSION:
+            https://www.lunasec.io/docs/blog/log4j-zero-day/
+            -->
+        <log4j.version>2.15.0</log4j.version>
         <!-- Testing -->
         <mockito.kotlin.version>4.0.0</mockito.kotlin.version>
         <springmockk.version>3.0.1</springmockk.version>
@@ -87,6 +92,16 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
+            <exclusions>
+                <exclusion>
+                    <!--
+                    REPLACED WITH VERSION WITHOUT KNOWN VULNERABILITIES
+                    https://www.lunasec.io/docs/blog/log4j-zero-day/
+                    -->
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>log4j-to-slf4j</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -212,6 +227,16 @@
             <groupId>org.threeten</groupId>
             <artifactId>threeten-extra</artifactId>
             <version>${threethen.extra.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+            <version>${log4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-to-slf4j</artifactId>
+            <version>${log4j.version}</version>
         </dependency>
 
         <!-- Templating -->
