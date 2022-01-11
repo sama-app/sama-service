@@ -2,7 +2,7 @@ name: Update release notes
 
 on:
   push:
-    branches: [ master ]
+    branches: [ your_main_branch ]
   workflow_dispatch:
 
 jobs:

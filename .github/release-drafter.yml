@@ -6,4 +6,4 @@ template: |
 name-template: Beta $NEXT_MAJOR_VERSION
 tag-template: beta-$NEXT_MAJOR_VERSION
 version-template: $MAJOR
-commitish: master
+commitish: your_main_branch

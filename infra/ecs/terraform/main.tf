@@ -110,7 +110,7 @@ resource "aws_ecs_task_definition" "sama_service" {
         logDriver = "awsfirelens"
         options = {
           Name     = "newrelic"
-          apiKey   = "eu01xx251df55d793dd5a5d3416900aded02NRAL"
+          apiKey   = "NEW_RELIC_API_KEY_DONT_WORRY_THE_OLD_ONE_IS_DISABLED"
           endpoint = "https://log-api.eu.newrelic.com/log/v1"
         }
       }

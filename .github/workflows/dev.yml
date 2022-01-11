@@ -2,7 +2,7 @@ name: dev
 
 on:
   push:
-    branches: [ master ]
+    branches: [ your_main_branch ]
   workflow_dispatch:
 
 jobs:
@@ -69,54 +69,55 @@ jobs:
           make webserver-upload-to-ecr VERSION=$(make version)
           make webserver-upload-to-ecr VERSION=latest
 
-#  deploy-ecs:
-#    runs-on: ubuntu-latest
-#    needs: [app-build, webserver-build]
-#
-#    steps:
-#      - uses: actions/checkout@v2
-#
-#      - name: Configure AWS credentials
-#        uses: aws-actions/configure-aws-credentials@v1
-#        with:
-#          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-#          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-#          aws-region: eu-central-1
-#
-#      - name: Init Terraform
-#        run: make ecs-terraform-init ENV=dev
-#
-#      - name: Update Infra
-#        run: make ecs-update-infra ENV=dev
-#
-#      - name: Pull ECS task definition
-#        run: make ecs-pull-task-definition ENV=dev
-#
-#      - name: Render sama-service task definition
-#        id: render-service
-#        uses: aws-actions/amazon-ecs-render-task-definition@v1
-#        with:
-#          task-definition: task-definition.json
-#          container-name: sama-service
-#          image: 216862985054.dkr.ecr.eu-central-1.amazonaws.com/sama-service:latest
-#
-#      - name: Render sama-webserver task definition
-#        id: render-webserver
-#        uses: aws-actions/amazon-ecs-render-task-definition@v1
-#        with:
-#          task-definition: ${{ steps.render-service.outputs.task-definition }}
-#          container-name: sama-webserver
-#          image: 216862985054.dkr.ecr.eu-central-1.amazonaws.com/sama-webserver:latest
-#
-#      - name: Deploy to Amazon ECS service
-#        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-#        with:
-#          task-definition: ${{ steps.render-webserver.outputs.task-definition }}
-#          service: sama-service
-#          cluster: ecs-dev
-#          wait-for-service-stability: false
-#        timeout-minutes: 10
+  deploy-ecs:
+    runs-on: ubuntu-latest
+    needs: [app-build, webserver-build]
 
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-central-1
+
+      - name: Init Terraform
+        run: make ecs-terraform-init ENV=dev
+
+      - name: Update Infra
+        run: make ecs-update-infra ENV=dev
+
+      - name: Pull ECS task definition
+        run: make ecs-pull-task-definition ENV=dev
+
+      - name: Render sama-service task definition
+        id: render-service
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: sama-service
+          image: 216862985054.dkr.ecr.eu-central-1.amazonaws.com/sama-service:latest
+
+      - name: Render sama-webserver task definition
+        id: render-webserver
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: ${{ steps.render-service.outputs.task-definition }}
+          container-name: sama-webserver
+          image: 216862985054.dkr.ecr.eu-central-1.amazonaws.com/sama-webserver:latest
+
+      - name: Deploy to Amazon ECS service
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.render-webserver.outputs.task-definition }}
+          service: sama-service
+          cluster: ecs-dev
+          wait-for-service-stability: false
+        timeout-minutes: 10
+
+# DEPRECATED:
 #  deploy-ec2:
 #    needs: [app-build, webserver-build]
 #    runs-on: ubuntu-latest
